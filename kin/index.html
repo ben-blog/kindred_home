@@ -79,15 +79,26 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   pointer-events:none;z-index:2;
 }
 
-/* action indicator on thumbnail */
-.thumb-action{
-  position:absolute;top:9px;right:9px;z-index:4;
-  width:7px;height:7px;border-radius:50%;
-  background:var(--kin);
-  animation:aPulse 2.2s ease infinite;
-  pointer-events:none;
+/* action glow on thumbnail */
+.thumb.has-action{
+  animation:thumbGlow 2.6s ease-in-out infinite;
 }
-@keyframes aPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+@keyframes thumbGlow{
+  0%,100%{box-shadow:0 0 0 2px rgba(255,229,0,.35), 0 0 14px 2px rgba(255,229,0,.10)}
+  50%    {box-shadow:0 0 0 2px rgba(255,229,0,.80), 0 0 28px 4px rgba(255,229,0,.22)}
+}
+
+/* action section in detail */
+#detail-action-section{
+  margin-top:20px;
+  padding:14px 16px;
+  border:1px solid rgba(255,229,0,.28);
+  background:rgba(255,229,0,.04);
+}
+.action-section-label{
+  font-size:7px;letter-spacing:.32em;color:rgba(255,229,0,.55);
+  text-transform:uppercase;margin-bottom:10px;
+}
 
 /* ── LOADING ── */
 #loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);}
@@ -269,7 +280,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <div class="perspective-text" id="detail-dred"></div>
       </div>
       <div id="detail-tags"></div>
-      <div id="detail-actions"></div>
+      <div id="detail-action-section" style="display:none">
+        <div class="action-section-label">↓ explore</div>
+        <div id="detail-actions"></div>
+      </div>
       <div id="detail-close">close ×</div>
     </div>
   </div>
@@ -354,10 +368,10 @@ function renderGallery() {
     t.className = 'thumb';
     const title = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
+    t.className = 'thumb' + (hasAct ? ' has-action' : '');
     t.innerHTML = `
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
-      <div class="thumb-label">${title}</div>
-      ${hasAct ? '<div class="thumb-action"></div>' : ''}`;
+      <div class="thumb-label">${title}</div>`;
     t.addEventListener('click', () => openViewer(i));
     if (!IS_TOUCH) {
       t.addEventListener('mouseenter', () => $cur.classList.add('big'));
@@ -390,17 +404,23 @@ async function fillDetail(i) {
   $img.alt = item[`title_${t}`] || '';
 
   // 액션 버튼
+  const $actSection = document.getElementById('detail-action-section');
   const $acts = document.getElementById('detail-actions');
   $acts.innerHTML = '';
   const actions = item.actions?.[t] || [];
-  actions.forEach(a => {
-    const btn = document.createElement('a');
-    btn.className = 'action-btn';
-    btn.textContent = a.label;
-    btn.href = a.url || '#';
-    btn.target = '_blank';
-    $acts.appendChild(btn);
-  });
+  if (actions.length) {
+    actions.forEach(a => {
+      const btn = document.createElement('a');
+      btn.className = 'action-btn';
+      btn.textContent = a.label;
+      btn.href = a.url || '#';
+      btn.target = '_blank';
+      $acts.appendChild(btn);
+    });
+    $actSection.style.display = 'block';
+  } else {
+    $actSection.style.display = 'none';
+  }
 
   // 태그 (비동기 — 나머지 콘텐츠 먼저 보이고 태그 나중에 채움)
   const $tags = document.getElementById('detail-tags');

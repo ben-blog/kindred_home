@@ -85,17 +85,29 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   text-transform:uppercase;line-height:1.6;
 }
 
-/* action indicator on frame */
-.frame-action{
-  position:absolute;top:10px;right:10px;z-index:4;
-  width:7px;height:7px;border-radius:50%;
-  background:var(--dred);
-  animation:aPulse 2.4s ease infinite;
-  pointer-events:none;
+/* action glow on frame — replaces dot */
+.frame.has-action{
+  box-shadow:0 0 0 2px rgba(91,79,207,.5),
+             0 0 18px 2px rgba(91,79,207,.18);
+  animation:frameGlow 2.6s ease-in-out infinite;
 }
-@keyframes aPulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+@keyframes frameGlow{
+  0%,100%{box-shadow:0 0 0 2px rgba(91,79,207,.4), 0 0 14px 2px rgba(91,79,207,.12)}
+  50%    {box-shadow:0 0 0 2px rgba(91,79,207,.8), 0 0 26px 4px rgba(91,79,207,.28)}
+}
 
-/* ── FOCUS DOTS ── */
+/* action section in detail */
+#detail-action-section{
+  margin-top:20px;
+  padding:14px 16px;
+  border:1px solid rgba(91,79,207,.3);
+  background:rgba(91,79,207,.06);
+}
+.action-section-label{
+  font-size:7px;letter-spacing:.32em;color:rgba(91,79,207,.6);
+  text-transform:uppercase;margin-bottom:10px;
+}
+#detail-actions{display:flex;flex-wrap:wrap;gap:8px;}
 #focus-dot{
   position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
   display:flex;gap:6px;align-items:center;z-index:50;pointer-events:none;
@@ -253,7 +265,10 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
         <div class="perspective-text" id="detail-dred"></div>
       </div>
       <div id="detail-tags"></div>
-      <div id="detail-actions"></div>
+      <div id="detail-action-section" style="display:none">
+        <div class="action-section-label">↓ explore</div>
+        <div id="detail-actions"></div>
+      </div>
       <div id="detail-close">close ×</div>
     </div>
   </div>
@@ -280,23 +295,53 @@ let hintHidden = false;
 let detailOpen = false;
 
 /* ── PHYSICS STATE ── */
-const FRAME_W   = IS_TOUCH ? 240 : 300;
-const FRAME_GAP = 24;
-const STEP      = FRAME_W + FRAME_GAP;
-const FRICTION  = 0.94;        // momentum decay per frame (higher = longer glide)
-const SNAP_SPD  = 0.09;        // spring speed when snapping (lower = softer)
-const SNAP_DONE = 0.8;         // px threshold to consider snap complete
-const EDGE_BOUNCE = 0.15;      // velocity multiplier on edge bounce
+const FRAME_W    = IS_TOUCH ? 240 : 300;
+const FRAME_GAP  = 24;
+const STEP       = FRAME_W + FRAME_GAP;
+const VEL_WINDOW = 120;    // ms — rolling average window
+const BOOST      = 1.40;   // velocity multiplier on release
+const EDGE_BOUNCE = 0.12;  // edge bounce damping
 
-let offset       = 0;          // current rendered position
-let physVel      = 0;          // momentum velocity (px/frame)
+// Spring constants (underdamped → overshoot)
+const SPRING_K   = 0.10;   // stiffness
+const SPRING_D   = 0.72;   // damping < 1 = underdamped
+
+let offset       = 0;
+let physVel      = 0;
+let springVel    = 0;       // separate spring velocity for snap phase
 let isSnapping   = false;
 let snapTarget   = 0;
 let isDragging   = false;
 let dragStartX   = 0;
 let dragStartOff = 0;
-let lastX        = 0;
-let lastT        = 0;
+
+// Rolling velocity buffer
+const velBuf = [];
+
+function pushVel(v) {
+  const now = performance.now();
+  velBuf.push({v, t: now});
+  while (velBuf.length && now - velBuf[0].t > VEL_WINDOW) velBuf.shift();
+}
+
+function rollingVel() {
+  if (!velBuf.length) return 0;
+  const now = performance.now();
+  let sw = 0, svw = 0;
+  velBuf.forEach(s => {
+    const w = 1 - (now - s.t) / VEL_WINDOW;
+    sw += w; svw += s.v * w;
+  });
+  return sw > 0 ? svw / sw : 0;
+}
+
+function dynamicFriction(vel) {
+  const a = Math.abs(vel);
+  if (a > 25) return 0.97;   // fast: keep momentum long
+  if (a > 10) return 0.94;
+  if (a > 3)  return 0.90;
+  return 0.85;               // slow: stop decisively
+}
 
 /* ── CURSOR ── */
 const $cur = document.getElementById('cur');
@@ -365,12 +410,12 @@ function renderStrip() {
     const title  = item[`title_${lang}`] || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
 
+    fr.className = 'frame' + (hasAct ? ' has-action' : '');
     fr.innerHTML = `
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
       <div class="frame-overlay">
         <div class="frame-caption">${title}</div>
-      </div>
-      ${hasAct ? '<div class="frame-action"></div>' : ''}`;
+      </div>`;
 
     fr.addEventListener('click', () => {
       if (isDragging) return;
@@ -410,9 +455,10 @@ function applyVelocityBlur(vel) {
 
 function goToIdx(idx) {
   idx = clamp(idx, 0, items.length - 1);
-  snapTarget  = -idx * STEP;
-  isSnapping  = true;
-  physVel     = 0;
+  snapTarget = -idx * STEP;
+  springVel  = physVel * 0.3; // carry a bit of momentum into spring
+  physVel    = 0;
+  isSnapping = true;
 }
 
 function hideHint() {
@@ -427,31 +473,29 @@ function hideHint() {
 ;(function loop() {
   if (!isDragging) {
     if (isSnapping) {
-      // spring to snap target
-      const diff = snapTarget - offset;
-      offset += diff * SNAP_SPD;
-      if (Math.abs(diff) < SNAP_DONE) {
+      // Underdamped spring — overshoot then settle
+      const force = SPRING_K * (snapTarget - offset);
+      springVel   = springVel * SPRING_D + force;
+      offset     += springVel;
+
+      // Settled when both displacement and velocity are tiny
+      if (Math.abs(snapTarget - offset) < 0.15 && Math.abs(springVel) < 0.15) {
         offset    = snapTarget;
-        isSnapping = false;
+        springVel = 0;
         physVel   = 0;
+        isSnapping = false;
       }
     } else {
-      // momentum coasting
+      // Momentum coast with dynamic friction
       offset  += physVel;
-      physVel *= FRICTION;
+      physVel *= dynamicFriction(physVel);
 
       const MIN = maxOffset();
-      if (offset > 0) {
-        offset  = 0;
-        physVel *= -EDGE_BOUNCE;
-      }
-      if (offset < MIN) {
-        offset  = MIN;
-        physVel *= -EDGE_BOUNCE;
-      }
+      if (offset > 0)   { offset = 0;   physVel *= -EDGE_BOUNCE; }
+      if (offset < MIN) { offset = MIN; physVel *= -EDGE_BOUNCE; }
 
-      // snap when nearly stopped
-      if (Math.abs(physVel) < 0.3) {
+      // Hand off to spring when nearly stopped
+      if (Math.abs(physVel) < 0.4) {
         physVel = 0;
         const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
         goToIdx(idx);
@@ -460,14 +504,11 @@ function hideHint() {
   }
 
   $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
-  applyVelocityBlur(isDragging ? physVel : physVel);
+  applyVelocityBlur(isSnapping ? springVel * 2.5 : physVel);
 
   if (!detailOpen) {
     const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-    if (idx !== currentIdx) {
-      currentIdx = idx;
-      updateDots(idx);
-    }
+    if (idx !== currentIdx) { currentIdx = idx; updateDots(idx); }
   }
 
   requestAnimationFrame(loop);
@@ -482,45 +523,45 @@ if (!IS_TOUCH) {
     isDragging   = true;
     isSnapping   = false;
     physVel      = 0;
+    springVel    = 0;
+    velBuf.length = 0;
     dragStartX   = e.clientX;
     dragStartOff = offset;
-    lastX        = e.clientX;
-    lastT        = performance.now();
     $cur.classList.add('drag');
     hideHint();
   });
 
   window.addEventListener('mousemove', e => {
     if (!isDragging) return;
-    const now = performance.now();
-    const dt  = Math.max(now - lastT, 1);
-    physVel   = (e.clientX - lastX) / dt * 16; // px/frame @ 60fps
-    lastX     = e.clientX;
-    lastT     = now;
-    offset    = clamp(dragStartOff + (e.clientX - dragStartX), maxOffset(), 0);
+    const now  = performance.now();
+    const prev = velBuf.length ? velBuf[velBuf.length-1] : null;
+    const dt   = prev ? Math.max(now - prev.t, 1) : 16;
+    const v    = prev ? (e.clientX - (dragStartX + (prev.t ? 0 : 0))) / dt * 16 : 0;
+    // simpler: track instant velocity
+    pushVel((e.clientX - dragStartX - (offset - dragStartOff)) / Math.max(dt, 1) * 16);
+    offset = clamp(dragStartOff + (e.clientX - dragStartX), maxOffset(), 0);
   });
 
-  window.addEventListener('mouseup', () => {
+  window.addEventListener('mouseup', e => {
     if (!isDragging) return;
     isDragging = false;
     $cur.classList.remove('drag');
-    // momentum continues — physVel already set from last mousemove
-    // if velocity is very low, snap immediately
+    velBuf.length = 0;
+    // rolling average of recent move deltas
+    const rawVel = rollingVel();
+    physVel = rawVel * BOOST;
     if (Math.abs(physVel) < 1) {
-      const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-      goToIdx(idx);
+      physVel = 0;
+      goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
     }
   });
 
-  // wheel
   $wrap.addEventListener('wheel', e => {
     e.preventDefault();
     if (detailOpen) return;
     hideHint();
-    // wheel: snap one step at a time
     const dir = Math.sign(e.deltaX !== 0 ? e.deltaX : e.deltaY);
-    const idx = clamp(Math.round(-offset / STEP) + dir, 0, items.length - 1);
-    goToIdx(idx);
+    goToIdx(clamp(Math.round(-offset / STEP) + dir, 0, items.length - 1));
   }, {passive:false});
 }
 
@@ -531,13 +572,15 @@ if (IS_TOUCH) {
 
   $wrap.addEventListener('touchstart', e => {
     if (detailOpen) return;
-    isDragging   = true;
-    isSnapping   = false;
-    physVel      = 0;
-    tStartX      = e.touches[0].clientX;
-    tStartOff    = offset;
-    tLastX       = tStartX;
-    tLastT       = performance.now();
+    isDragging    = true;
+    isSnapping    = false;
+    physVel       = 0;
+    springVel     = 0;
+    velBuf.length = 0;
+    tStartX       = e.touches[0].clientX;
+    tStartOff     = offset;
+    tLastX        = tStartX;
+    tLastT        = performance.now();
     hideHint();
   }, {passive:true});
 
@@ -547,20 +590,22 @@ if (IS_TOUCH) {
     const x   = e.touches[0].clientX;
     const now = performance.now();
     const dt  = Math.max(now - tLastT, 1);
-    physVel   = (x - tLastX) / dt * 16;
-    tLastX    = x;
-    tLastT    = now;
-    offset    = clamp(tStartOff + (x - tStartX), maxOffset(), 0);
+    pushVel((x - tLastX) / dt * 16);
+    tLastX = x;
+    tLastT = now;
+    offset = clamp(tStartOff + (x - tStartX), maxOffset(), 0);
   }, {passive:false});
 
   $wrap.addEventListener('touchend', () => {
     if (!isDragging) return;
     isDragging = false;
+    const rawVel = rollingVel();
+    velBuf.length = 0;
+    physVel = rawVel * BOOST;
     if (Math.abs(physVel) < 1) {
-      const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-      goToIdx(idx);
+      physVel = 0;
+      goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
     }
-    // else: momentum continues
   });
 }
 
@@ -584,16 +629,23 @@ async function fillDetail(i) {
   $img.alt = item[`title_${t}`] || '';
 
   // 액션
+  const $actSection = document.getElementById('detail-action-section');
   const $acts = document.getElementById('detail-actions');
   $acts.innerHTML = '';
-  (item.actions?.[t] || []).forEach(a => {
-    const btn = document.createElement('a');
-    btn.className = 'action-btn';
-    btn.textContent = a.label;
-    btn.href = a.url || '#';
-    btn.target = '_blank';
-    $acts.appendChild(btn);
-  });
+  const actions = item.actions?.[t] || [];
+  if (actions.length) {
+    actions.forEach(a => {
+      const btn = document.createElement('a');
+      btn.className = 'action-btn';
+      btn.textContent = a.label;
+      btn.href = a.url || '#';
+      btn.target = '_blank';
+      $acts.appendChild(btn);
+    });
+    $actSection.style.display = 'block';
+  } else {
+    $actSection.style.display = 'none';
+  }
 
   // 태그 (비동기 — 나머지 먼저 보임)
   const $tags = document.getElementById('detail-tags');

@@ -60,7 +60,6 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   width:300px;height:400px;
   position:relative;overflow:hidden;
   cursor:grab;
-  /* filter/opacity set by JS for velocity blur */
 }
 @media(max-width:680px){
   .frame{width:240px;height:320px;}
@@ -86,7 +85,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   text-transform:uppercase;line-height:1.6;
 }
 
-/* action glow on frame — replaces dot */
+/* action glow on frame */
 .frame.has-action{
   box-shadow:0 0 0 2px rgba(91,79,207,.5),
              0 0 18px 2px rgba(91,79,207,.18);
@@ -122,6 +121,8 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   text-transform:uppercase;margin-bottom:10px;
 }
 #detail-actions{display:flex;flex-wrap:wrap;gap:8px;}
+
+/* FIX: pointer-events:none so the fading loading screen never blocks clicks */
 #focus-dot{
   position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
   display:flex;gap:6px;align-items:center;z-index:50;pointer-events:none;
@@ -139,7 +140,9 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 }
 
 /* ── LOADING ── */
-#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+/* FIX: pointer-events:none — loading has no interactive children,
+   and this prevents the fading overlay from silently blocking frame clicks */
+#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);pointer-events:none;}
 #loading span{font-size:9px;letter-spacing:.4em;color:rgba(91,79,207,.4);text-transform:uppercase;animation:blink 1.4s ease infinite;}
 @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
 
@@ -334,12 +337,12 @@ let detailOpen = false;
 const FRAME_W     = IS_TOUCH ? 240 : 300;
 const FRAME_GAP   = 24;
 const STEP        = FRAME_W + FRAME_GAP;
-const VEL_WINDOW  = 100;   // ms — rolling average window
-const BOOST       = 1.20;  // velocity multiplier on release
-const FRICTION    = 0.95;  // per-frame momentum friction
-const EDGE_BOUNCE = 0.10;  // edge bounce damping
-const SPRING_K    = 0.12;  // snap spring stiffness
-const SPRING_D    = 0.84;  // snap spring damping (slightly underdamped)
+const VEL_WINDOW  = 100;
+const BOOST       = 1.20;
+const FRICTION    = 0.95;
+const EDGE_BOUNCE = 0.10;
+const SPRING_K    = 0.12;
+const SPRING_D    = 0.84;
 
 let offset       = 0;
 let physVel      = 0;
@@ -349,8 +352,15 @@ let snapTarget   = 0;
 let isDragging   = false;
 let dragStartX   = 0;
 let dragStartOff = 0;
-let lastMouseX   = 0;      // ← tracks incremental mouse position
+let lastMouseX   = 0;
 let lastMoveT    = 0;
+
+/* FIX: dragMoved tracks whether the pointer actually moved a meaningful distance.
+   Used in click handlers to distinguish a real tap from a drag-release.
+   isDragging is already false by the time click fires (reset in mouseup/touchend),
+   so we need a separate flag that persists through the event sequence. */
+let dragMoved = false;
+const DRAG_THRESHOLD = 4; // px — movement below this is treated as a tap
 
 // Rolling velocity buffer
 const velBuf = [];
@@ -394,7 +404,8 @@ function setLang(l) {
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
   if (items.length) renderStrip();
-  if (detailOpen) fillDetail(currentIdx);
+  /* FIX: fillDetail is async — catch silent failures */
+  if (detailOpen) fillDetail(currentIdx).catch(err => console.error('[DRED] fillDetail error:', err));
 }
 $ltKo.addEventListener('click', () => setLang('ko'));
 $ltEn.addEventListener('click', () => setLang('en'));
@@ -447,18 +458,27 @@ function renderStrip() {
       </div>
       ${hasAct ? '<div class="frame-action-badge">action</div>' : ''}`;
 
+    /* FIX: Root cause of the bug.
+       Original: checked `snapped === i` from live `offset`, which fails when:
+         (a) the spring is mid-animation (offset between two positions), or
+         (b) mousedown interrupted a previous spring, leaving offset misaligned.
+       The result was goToIdx always firing instead of openDetail,
+       causing the "shake with no detail" loop.
+
+       Fix: guard with `dragMoved` (real drag vs tap), then directly call
+       goToIdx(i) + openDetail(i) unconditionally. The strip snaps to the
+       clicked frame while the panel opens — identical to KIN's behavior.
+       Since the panel is full-screen, strip position during transition is invisible. */
     fr.addEventListener('click', () => {
-      if (isDragging) return;
-      const snapped = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-      if (snapped === i) openDetail(i);
-      else goToIdx(i);
+      if (dragMoved) return;
+      goToIdx(i);
+      openDetail(i).catch(err => console.error('[DRED] openDetail error:', err));
     });
 
     $strip.appendChild(fr);
     frameEls.push(fr);
 
     const dot = document.createElement('div');
-    // 언어 전환 시 현재 위치 유지
     const activeIdx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
     dot.className = 'fdot' + (i === activeIdx ? ' active' : '');
     $dots.appendChild(dot);
@@ -497,7 +517,6 @@ function hideHint() {
 ;(function loop() {
   if (!isDragging) {
     if (isSnapping) {
-      // Slightly underdamped spring → clean snap with minimal overshoot
       const force = SPRING_K * (snapTarget - offset);
       springVel   = springVel * SPRING_D + force;
       offset     += springVel;
@@ -505,7 +524,6 @@ function hideHint() {
         offset = snapTarget; springVel = physVel = 0; isSnapping = false;
       }
     } else {
-      // Momentum coast
       offset  += physVel;
       physVel *= FRICTION;
       const MIN = maxOffset();
@@ -535,6 +553,7 @@ if (!IS_TOUCH) {
   $wrap.addEventListener('mousedown', e => {
     if (detailOpen) return;
     isDragging    = true;
+    dragMoved     = false; /* FIX: reset drag flag on every new press */
     isSnapping    = false;
     physVel       = 0;
     springVel     = 0;
@@ -549,9 +568,13 @@ if (!IS_TOUCH) {
 
   window.addEventListener('mousemove', e => {
     if (!isDragging) return;
+    /* FIX: mark as a real drag once movement exceeds threshold */
+    if (!dragMoved && Math.abs(e.clientX - dragStartX) > DRAG_THRESHOLD) {
+      dragMoved = true;
+    }
     const now = performance.now();
     const dt  = Math.max(now - lastMoveT, 1);
-    pushVel((e.clientX - lastMouseX) / dt * 16); // px/frame @ 60fps
+    pushVel((e.clientX - lastMouseX) / dt * 16);
     lastMouseX = e.clientX;
     lastMoveT  = now;
     offset = clamp(dragStartOff + (e.clientX - dragStartX), maxOffset(), 0);
@@ -586,6 +609,7 @@ if (IS_TOUCH) {
   $wrap.addEventListener('touchstart', e => {
     if (detailOpen) return;
     isDragging    = true;
+    dragMoved     = false; /* FIX: reset drag flag on every new touch */
     isSnapping    = false;
     physVel       = 0;
     springVel     = 0;
@@ -599,6 +623,10 @@ if (IS_TOUCH) {
 
   $wrap.addEventListener('touchmove', e => {
     if (!isDragging) return;
+    /* FIX: mark as a real drag once movement exceeds threshold */
+    if (!dragMoved && Math.abs(e.touches[0].clientX - tStartX) > DRAG_THRESHOLD) {
+      dragMoved = true;
+    }
     e.preventDefault();
     const x   = e.touches[0].clientX;
     const now = performance.now();
@@ -626,6 +654,7 @@ const $panel = document.getElementById('detail-panel');
 
 async function fillDetail(i) {
   const item = items[i];
+  if (!item) return; /* FIX: guard against out-of-bounds index */
   const t = lang;
 
   document.getElementById('detail-eyebrow').textContent   = `DRED · ${String(i+1).padStart(2,'0')} / ${items.length}`;
@@ -640,7 +669,6 @@ async function fillDetail(i) {
   $img.src = `${IMG_BASE}${item.filename}`;
   $img.alt = item[`title_${t}`] || '';
 
-  // 액션
   const $actSection = document.getElementById('detail-action-section');
   const $acts = document.getElementById('detail-actions');
   $acts.innerHTML = '';
@@ -652,6 +680,7 @@ async function fillDetail(i) {
       btn.textContent = a.label;
       btn.href = a.url || '#';
       btn.target = '_blank';
+      btn.rel = 'noopener noreferrer'; /* FIX: security — external link */
       $acts.appendChild(btn);
     });
     $actSection.style.display = 'block';
@@ -659,12 +688,10 @@ async function fillDetail(i) {
     $actSection.style.display = 'none';
   }
 
-  // 좋아요
-  const itemId = item.item_id || item.id;
+  const itemId = item.item_id || String(item.id);
   updateLikeUI(itemId, 0);
-  fetchLikeCount(itemId).then(count => updateLikeUI(itemId, count));
+  fetchLikeCount(itemId).then(count => updateLikeUI(itemId, count)).catch(() => {});
 
-  // 태그 (비동기 — 나머지 먼저 보임)
   const $tags = document.getElementById('detail-tags');
   $tags.innerHTML = '';
   fetchTags(item.id).then(tags => {
@@ -674,15 +701,28 @@ async function fillDetail(i) {
       span.textContent = tag[`name_${t}`] || tag.name_ko;
       $tags.appendChild(span);
     });
-  });
+  }).catch(() => {}); /* FIX: catch tag fetch failures silently */
 }
 
+/* FIX: openDetail had no error boundary.
+   If fillDetail threw (or any DOM op failed), $panel.classList.add('open')
+   would never be called — panel silently stays closed while detailOpen=true.
+   Now: try/finally ensures detailOpen is rolled back on failure. */
 async function openDetail(i) {
+  /* Guard: don't re-open if already showing the same item */
+  if (detailOpen && currentIdx === i) return;
   currentIdx = i;
   detailOpen = true;
   document.getElementById('focus-dot').classList.add('hidden');
-  await fillDetail(i);
-  $panel.classList.add('open');
+  try {
+    await fillDetail(i);
+    $panel.classList.add('open');
+  } catch (err) {
+    console.error('[DRED] openDetail failed:', err);
+    /* Roll back state so the UI isn't stuck */
+    detailOpen = false;
+    document.getElementById('focus-dot').classList.remove('hidden');
+  }
 }
 
 function closeDetail() {
@@ -694,7 +734,8 @@ function closeDetail() {
 function nav(dir) {
   const next = (currentIdx + dir + items.length) % items.length;
   goToIdx(next);
-  openDetail(next);
+  /* FIX: openDetail is async — add error handling */
+  openDetail(next).catch(err => console.error('[DRED] nav error:', err));
 }
 
 /* ── LIKES ── */
@@ -748,7 +789,8 @@ function updateLikeUI(itemId, count) {
 document.getElementById('like-btn').addEventListener('click', async () => {
   if (!detailOpen) return;
   const item   = items[currentIdx];
-  const itemId = item.item_id || item.id;
+  if (!item) return; /* FIX: guard */
+  const itemId = item.item_id || String(item.id);
   const liked  = getLiked()[itemId];
   const $count = document.getElementById('like-count');
   const curCount = parseInt($count.textContent) || 0;
@@ -756,11 +798,11 @@ document.getElementById('like-btn').addEventListener('click', async () => {
   if (liked) {
     setLiked(itemId, false);
     updateLikeUI(itemId, curCount - 1);
-    await callLikeRpc('decrement_like', itemId);
+    callLikeRpc('decrement_like', itemId).catch(() => {});
   } else {
     setLiked(itemId, true);
     updateLikeUI(itemId, curCount + 1);
-    await callLikeRpc('increment_like', itemId);
+    callLikeRpc('increment_like', itemId).catch(() => {}); /* FIX: catch RPC failures */
   }
 });
 
@@ -810,7 +852,10 @@ fetchItems()
     $loading.style.opacity = '0';
     setTimeout(() => { $loading.style.display = 'none'; }, 400);
   })
-  .catch(() => { $loading.querySelector('span').textContent = 'error'; });
+  .catch(() => {
+    $loading.querySelector('span').textContent = 'error';
+    $loading.style.pointerEvents = 'none'; /* FIX: don't block UI on error state */
+  });
 </script>
 </body>
 </html>

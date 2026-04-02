@@ -29,24 +29,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* ── HEADER ── */
 #header{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 24px;
   display:flex;justify-content:space-between;align-items:center;
-  background:linear-gradient(rgba(8,8,6,.8),transparent)}
+  background:linear-gradient(rgba(8,8,6,.9),transparent)}
 .h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--kin)}
 .h-back{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.2);text-transform:uppercase;cursor:pointer;transition:color .2s}
 .h-back:hover{color:var(--kin)}
 
 /* ── LANG TOGGLE ── */
-#lang-toggle{
-  display:flex;gap:0;align-items:center;
-  font-size:8px;letter-spacing:.2em;
-}
-.lt{
-  padding:4px 8px;cursor:pointer;
-  color:rgba(255,255,255,.2);
-  transition:color .2s;
-  user-select:none;
-}
+#lang-toggle{display:flex;align-items:center;font-size:8px;letter-spacing:.2em;}
+.lt{padding:4px 8px;cursor:pointer;color:rgba(255,255,255,.2);transition:color .2s;user-select:none;}
 .lt.active{color:var(--kin);}
-.lt-sep{color:rgba(255,255,255,.1);font-size:8px}
+.lt-sep{color:rgba(255,255,255,.1)}
 
 /* ── GALLERY GRID ── */
 #gallery{
@@ -64,9 +56,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .thumb{
   position:relative;overflow:hidden;cursor:pointer;
   aspect-ratio:3/4;
-  transition:filter .2s,transform .2s;
   opacity:0;transform:scale(.94);
   background:#111;
+  transition:filter .2s,transform .2s;
 }
 .thumb.in{opacity:1;transform:scale(1);transition:opacity .35s ease,transform .35s cubic-bezier(.16,1,.3,1),filter .2s}
 .thumb:hover{filter:brightness(1.25);transform:scale(1.02)!important}
@@ -76,29 +68,31 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   pointer-events:none;z-index:3;transition:box-shadow .2s;
 }
 .thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
-
 .thumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 
 .thumb-label{
   position:absolute;bottom:0;left:0;right:0;
   padding:20px 10px 8px;
-  background:linear-gradient(transparent,rgba(0,0,0,.7));
+  background:linear-gradient(transparent,rgba(0,0,0,.72));
   font-size:7px;letter-spacing:.18em;
   color:rgba(255,229,0,.5);text-transform:lowercase;
   pointer-events:none;z-index:2;
 }
 
+/* action indicator on thumbnail */
+.thumb-action{
+  position:absolute;top:9px;right:9px;z-index:4;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--kin);
+  animation:aPulse 2.2s ease infinite;
+  pointer-events:none;
+}
+@keyframes aPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
 /* ── LOADING ── */
-#loading{
-  position:fixed;inset:0;z-index:300;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--bg);
-}
-#loading span{
-  font-size:9px;letter-spacing:.4em;color:rgba(255,229,0,.3);
-  text-transform:uppercase;animation:pulse 1.4s ease infinite;
-}
-@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+#loading span{font-size:9px;letter-spacing:.4em;color:rgba(255,229,0,.3);text-transform:uppercase;animation:blink 1.4s ease infinite;}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* ══════════════════════════════
    VIEWER
@@ -176,46 +170,61 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   font-size:clamp(24px,4vw,52px);
   color:var(--kin);letter-spacing:-.02em;line-height:1;margin-bottom:12px;
 }
-#detail-style{font-size:8px;letter-spacing:.2em;color:rgba(255,255,255,.18);margin-bottom:16px;}
+#detail-technique{font-size:8px;letter-spacing:.16em;line-height:1.7;color:rgba(255,255,255,.18);margin-bottom:16px;}
 #detail-desc{font-size:11px;line-height:1.85;color:rgba(255,255,255,.38);margin-bottom:16px;}
 
 .perspective-block{margin-bottom:12px;}
 .perspective-label{font-size:7px;letter-spacing:.28em;color:rgba(255,229,0,.25);text-transform:uppercase;margin-bottom:4px;}
-.perspective-text{font-size:11px;line-height:1.75;color:rgba(255,255,255,.3);}
+.perspective-text{font-size:11px;line-height:1.75;color:rgba(255,255,255,.28);}
 
-#detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
-.action-btn{
-  font-size:7px;letter-spacing:.22em;text-transform:uppercase;
-  padding:6px 12px;border:1px solid rgba(255,229,0,.25);
-  color:rgba(255,229,0,.5);cursor:pointer;
-  transition:border-color .2s,color .2s;
-  text-decoration:none;display:inline-block;
+#detail-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px;}
+.tag{
+  font-size:7px;letter-spacing:.18em;text-transform:uppercase;
+  padding:3px 9px;border:1px solid rgba(255,229,0,.15);
+  color:rgba(255,229,0,.32);
 }
-.action-btn:hover{border-color:var(--kin);color:var(--kin);}
+
+/* action: ghost (default) vs filled (has action) */
+#detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+.action-btn{
+  font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  padding:9px 16px;border:1.5px solid var(--kin);
+  background:var(--kin);color:#000;
+  cursor:pointer;text-decoration:none;display:inline-block;
+  font-family:'DM Mono',monospace;font-weight:400;
+  transition:background .2s,color .2s,transform .15s;
+  animation:actPulse 2.8s ease infinite;
+}
+.action-btn:hover{background:transparent;color:var(--kin);transform:translateY(-2px);}
+@keyframes actPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,229,0,.0)}
+  50%{box-shadow:0 0 0 6px rgba(255,229,0,.12)}
+}
 
 #detail-close{
   display:inline-block;font-size:8px;letter-spacing:.28em;
-  color:rgba(255,255,255,.22);text-transform:uppercase;cursor:pointer;
-  transition:color .2s;margin-top:16px;
+  color:rgba(255,255,255,.18);text-transform:uppercase;cursor:pointer;
+  transition:color .2s;margin-top:18px;
 }
 #detail-close:hover{color:var(--kin)}
 
 #detail-nav{
-  position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
   display:flex;gap:24px;z-index:5;
 }
 .dn{font-size:9px;letter-spacing:.28em;color:rgba(255,255,255,.18);
   cursor:pointer;transition:color .2s;padding:10px;user-select:none}
 .dn:hover{color:var(--kin)}
-#detail-counter{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.15);display:flex;align-items:center}
+#detail-counter{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.14);display:flex;align-items:center}
 
 @media(max-width:680px){
-  #detail{flex-direction:column;gap:14px;padding:0 16px;top:50%;width:94%;max-width:none;}
-  #detail-img{width:100%;aspect-ratio:16/9;}
+  #detail{flex-direction:column;gap:12px;padding:16px;top:48%;width:96%;max-width:none;}
+  #detail-img{width:100%;aspect-ratio:3/4;max-height:38vh;}
+  #detail-technique{display:none}
   #detail-desc{display:none}
   .perspective-block{display:none}
   #detail-title{font-size:clamp(20px,6vw,32px)}
-  #detail-nav{bottom:16px}
+  #detail-nav{bottom:14px}
   #sfx{font-size:clamp(36px,14vw,80px)}
 }
 </style>
@@ -249,7 +258,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <div id="detail-text">
       <div id="detail-eyebrow"></div>
       <div id="detail-title"></div>
-      <div id="detail-style"></div>
+      <div id="detail-technique"></div>
       <div id="detail-desc"></div>
       <div class="perspective-block">
         <div class="perspective-label">KIN</div>
@@ -259,6 +268,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
         <div class="perspective-label">DRED</div>
         <div class="perspective-text" id="detail-dred"></div>
       </div>
+      <div id="detail-tags"></div>
       <div id="detail-actions"></div>
       <div id="detail-close">close ×</div>
     </div>
@@ -273,9 +283,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <script>
 /* ── CONFIG ── */
 const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
-const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_'; // ← 여기 채워줘
+const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
 const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/kin/`;
-
 const SFXS = ['HA!','HEY','WOW','!!!','HMM','YO','haha','...','?!','zzz','YES'];
 
 /* ── STATE ── */
@@ -283,6 +292,9 @@ const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 let lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
 let items = [];
 let current = -1;
+
+/* ── HELPERS ── */
+const hasActions = item => (item.actions?.[lang]?.length || 0) > 0;
 
 /* ── CURSOR ── */
 const $cur = document.getElementById('cur');
@@ -304,46 +316,53 @@ function setLang(l) {
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
   if (items.length) renderGallery();
-  if (current >= 0) fillDetail(current);
+  if (current >= 0) fillDetail(current); // async — tags update when ready
 }
-
 $ltKo.addEventListener('click', () => setLang('ko'));
 $ltEn.addEventListener('click', () => setLang('en'));
 setLang(lang);
 
-/* ── FETCH FROM SUPABASE ── */
+/* ── FETCH ── */
 async function fetchItems() {
   const res = await fetch(
     `${SUPA_URL}/rest/v1/gallery_items?character=eq.kin&is_active=eq.true&order=order_num.asc`,
-    { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
+    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
   );
   if (!res.ok) throw new Error('fetch failed');
   return res.json();
 }
 
-/* ── BUILD GALLERY ── */
+async function fetchTags(itemId) {
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/gallery_item_tags?item_id=eq.${itemId}&select=tags(name_ko,name_en)`,
+    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.map(d => d.tags).filter(Boolean);
+}
+
+/* ── GALLERY ── */
 const $gallery = document.getElementById('gallery');
 const thumbEls = [];
 
 function renderGallery() {
   $gallery.innerHTML = '';
   thumbEls.length = 0;
-
   items.forEach((item, i) => {
     const t = document.createElement('div');
     t.className = 'thumb';
-
     const title = item[`title_${lang}`] || item.title_ko || '';
+    const hasAct = (item.actions?.[lang]?.length || 0) > 0;
     t.innerHTML = `
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
-      <div class="thumb-label">${title}</div>`;
-
+      <div class="thumb-label">${title}</div>
+      ${hasAct ? '<div class="thumb-action"></div>' : ''}`;
     t.addEventListener('click', () => openViewer(i));
     if (!IS_TOUCH) {
       t.addEventListener('mouseenter', () => $cur.classList.add('big'));
       t.addEventListener('mouseleave', () => $cur.classList.remove('big'));
     }
-
     $gallery.appendChild(t);
     thumbEls.push(t);
     setTimeout(() => t.classList.add('in'), 60 + i * 45);
@@ -351,30 +370,21 @@ function renderGallery() {
 }
 
 /* ── VIEWER ── */
-const $viewer  = document.getElementById('viewer');
-const $sfx     = document.getElementById('sfx');
+const $viewer   = document.getElementById('viewer');
+const $sfx      = document.getElementById('sfx');
 const $backdrop = document.getElementById('backdrop');
 
-function fillDetail(i) {
+async function fillDetail(i) {
   const item = items[i];
   const t = lang;
+  document.getElementById('detail-eyebrow').textContent   = `KIN · ${String(i+1).padStart(2,'0')} / ${items.length}`;
+  document.getElementById('detail-title').textContent     = item[`title_${t}`] || '';
+  document.getElementById('detail-technique').textContent = item[`technique_${t}`] || '';
+  document.getElementById('detail-desc').textContent      = item[`description_${t}`] || '';
+  document.getElementById('detail-kin').textContent       = item[`kin_perspective_${t}`] || '';
+  document.getElementById('detail-dred').textContent      = item[`dred_perspective_${t}`] || '';
+  document.getElementById('detail-counter').textContent   = `${String(i+1).padStart(2,'0')} / ${items.length}`;
 
-  document.getElementById('detail-eyebrow').textContent =
-    `KIN · ${String(i+1).padStart(2,'0')} / ${items.length}`;
-  document.getElementById('detail-title').textContent =
-    item[`title_${t}`] || '';
-  document.getElementById('detail-style').textContent =
-    item.style || '';
-  document.getElementById('detail-desc').textContent =
-    item[`description_${t}`] || '';
-  document.getElementById('detail-kin').textContent =
-    item[`kin_perspective_${t}`] || '';
-  document.getElementById('detail-dred').textContent =
-    item[`dred_perspective_${t}`] || '';
-  document.getElementById('detail-counter').textContent =
-    `${String(i+1).padStart(2,'0')} / ${items.length}`;
-
-  // 이미지
   const $img = document.getElementById('detail-img-el');
   $img.src = `${IMG_BASE}${item.filename}`;
   $img.alt = item[`title_${t}`] || '';
@@ -388,23 +398,37 @@ function fillDetail(i) {
     btn.className = 'action-btn';
     btn.textContent = a.label;
     btn.href = a.url || '#';
+    btn.target = '_blank';
     $acts.appendChild(btn);
+  });
+
+  // 태그 (비동기 — 나머지 콘텐츠 먼저 보이고 태그 나중에 채움)
+  const $tags = document.getElementById('detail-tags');
+  $tags.innerHTML = '';
+  fetchTags(item.id).then(tags => {
+    tags.forEach(tag => {
+      const span = document.createElement('span');
+      span.className = 'tag';
+      span.textContent = tag[`name_${t}`] || tag.name_ko;
+      $tags.appendChild(span);
+    });
   });
 }
 
-function openViewer(i) {
+async function openViewer(i) {
   current = i;
-  fillDetail(i);
 
+  // SFX + 뷰어 먼저 열고
   $sfx.textContent = SFXS[i % SFXS.length];
   $sfx.classList.remove('slam');
   void $sfx.offsetWidth;
   $sfx.classList.add('slam');
 
   $viewer.style.display = 'block';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { $viewer.classList.add('open'); });
-  });
+  requestAnimationFrame(() => requestAnimationFrame(() => $viewer.classList.add('open')));
+
+  // 콘텐츠 채우기 (animation과 병렬)
+  await fillDetail(i);
 }
 
 function closeViewer() {
@@ -430,6 +454,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// 뷰어 열려있을 때 스와이프로 이미지 전환
 let tx0 = 0;
 document.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, {passive:true});
 document.addEventListener('touchend', e => {
@@ -461,10 +486,7 @@ fetchItems()
     $loading.style.opacity = '0';
     setTimeout(() => { $loading.style.display = 'none'; }, 400);
   })
-  .catch(err => {
-    console.error(err);
-    $loading.querySelector('span').textContent = 'error loading';
-  });
+  .catch(() => { $loading.querySelector('span').textContent = 'error'; });
 </script>
 </body>
 </html>

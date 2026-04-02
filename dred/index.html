@@ -9,13 +9,12 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM Mono',monospace;cursor:none}
 @media(pointer:coarse){html,body{cursor:auto}}
-
 :root{--dred:#5B4FCF;--bg:#000}
 
 #cur{position:fixed;z-index:999;width:8px;height:8px;border-radius:50%;
   background:var(--dred);pointer-events:none;transform:translate(-50%,-50%);
-  mix-blend-mode:difference;transition:width .2s,height .2s}
-#cur.drag{width:20px;height:20px}
+  mix-blend-mode:difference;transition:width .15s,height .15s}
+#cur.drag{width:18px;height:18px;border-radius:2px}
 
 #grain{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.025;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
@@ -27,79 +26,124 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;justify-content:space-between;align-items:center;
   padding:22px 32px;
-  background:linear-gradient(rgba(0,0,0,.7),transparent);
+  background:linear-gradient(rgba(0,0,0,.8),transparent);
 }
 .h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--dred)}
-.h-back{font-size:9px;letter-spacing:.3em;color:rgba(255,255,255,.25);
+.h-back{font-size:9px;letter-spacing:.3em;color:rgba(255,255,255,.22);
   text-transform:uppercase;cursor:pointer;transition:color .2s}
 .h-back:hover{color:var(--dred)}
 
 /* ── LANG TOGGLE ── */
-#lang-toggle{display:flex;gap:0;align-items:center;font-size:8px;letter-spacing:.2em;}
+#lang-toggle{display:flex;align-items:center;font-size:8px;letter-spacing:.2em;}
 .lt{padding:4px 8px;cursor:pointer;color:rgba(255,255,255,.2);transition:color .2s;user-select:none;}
 .lt.active{color:var(--dred);}
-.lt-sep{color:rgba(255,255,255,.1);font-size:8px}
+.lt-sep{color:rgba(255,255,255,.1)}
 
 /* ── STRIP ── */
 #strip-wrap{
-  position:fixed;inset:0;top:60px;display:flex;align-items:center;
+  position:fixed;inset:0;top:66px;
+  display:flex;align-items:center;
+  overflow:hidden;
   user-select:none;-webkit-user-select:none;
+  touch-action:none;
 }
 #strip{
-  display:flex;align-items:center;gap:20px;
-  padding:0 calc(50vw - 160px);
+  display:flex;align-items:center;gap:24px;
   will-change:transform;
+  /* padding added by JS after items load */
 }
 
 /* ── FRAME ── */
 .frame{
   flex:0 0 auto;
-  width:280px;height:380px;
+  width:300px;height:400px;
   position:relative;overflow:hidden;
   cursor:grab;
-  transition:filter .12s linear, opacity .12s linear;
+  /* filter/opacity set by JS for velocity blur */
+}
+@media(max-width:680px){
+  .frame{width:240px;height:320px;}
 }
 .frame:active{cursor:grabbing}
 .frame img{
   width:100%;height:100%;object-fit:cover;
   display:block;pointer-events:none;
+  transition:transform .6s cubic-bezier(.16,1,.3,1);
 }
+.frame:hover img{transform:scale(1.03)}
 
 .frame-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.75) 100%);
-  opacity:0;transition:opacity .4s ease;
-  display:flex;align-items:flex-end;padding:16px;
+  background:linear-gradient(180deg,transparent 52%,rgba(0,0,0,.78) 100%);
+  opacity:0;transition:opacity .35s ease;
+  display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:flex-end;padding:18px;gap:4px;
 }
 .frame:hover .frame-overlay{opacity:1}
 .frame-caption{
-  font-size:9px;letter-spacing:.22em;color:rgba(91,79,207,.8);
-  text-transform:uppercase;line-height:1.8;
+  font-size:9px;letter-spacing:.2em;color:rgba(91,79,207,.85);
+  text-transform:uppercase;line-height:1.6;
 }
 
-/* ── DETAIL PANEL ── */
+/* action indicator on frame */
+.frame-action{
+  position:absolute;top:10px;right:10px;z-index:4;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--dred);
+  animation:aPulse 2.4s ease infinite;
+  pointer-events:none;
+}
+@keyframes aPulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+/* ── FOCUS DOTS ── */
+#focus-dot{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;align-items:center;z-index:50;pointer-events:none;
+  transition:opacity .4s;
+}
+#focus-dot.hidden{opacity:0}
+.fdot{width:4px;height:4px;border-radius:50%;background:rgba(91,79,207,.18);transition:all .3s}
+.fdot.active{background:var(--dred);transform:scale(1.5)}
+
+/* ── HINT ── */
+#hint{
+  position:fixed;bottom:42px;left:50%;transform:translateX(-50%);
+  font-size:8px;letter-spacing:.4em;color:rgba(255,255,255,.14);
+  text-transform:uppercase;pointer-events:none;transition:opacity .6s;
+}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+#loading span{font-size:9px;letter-spacing:.4em;color:rgba(91,79,207,.4);text-transform:uppercase;animation:blink 1.4s ease infinite;}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ══════════════════════════════
+   DETAIL PANEL
+══════════════════════════════ */
 #detail-panel{
   position:fixed;inset:0;z-index:200;
-  display:none;
-  background:rgba(0,0,0,.92);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.94);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  opacity:0;pointer-events:none;
+  transition:opacity .35s ease;
 }
-#detail-panel.open{display:flex;align-items:center;justify-content:center;}
+#detail-panel.open{opacity:1;pointer-events:all;}
 
 #detail-inner{
   display:flex;gap:clamp(24px,4vw,60px);align-items:flex-start;
   width:90%;max-width:860px;
-  animation:fadeUp .4s ease forwards;
+  transform:translateY(14px);
+  transition:transform .4s cubic-bezier(.16,1,.3,1);
 }
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+#detail-panel.open #detail-inner{transform:translateY(0);}
 
 #detail-img{
   flex:0 0 auto;
   width:clamp(140px,24vw,280px);
   aspect-ratio:3/4;
   overflow:hidden;
-  border:1px solid rgba(91,79,207,.2);
+  border:1px solid rgba(91,79,207,.22);
 }
 #detail-img img{width:100%;height:100%;object-fit:cover;display:block;}
 
@@ -110,75 +154,63 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   font-size:clamp(22px,3.5vw,48px);
   color:var(--dred);letter-spacing:-.02em;line-height:1;margin-bottom:10px;
 }
-#detail-style{font-size:8px;letter-spacing:.2em;color:rgba(255,255,255,.15);margin-bottom:16px;}
-#detail-desc{font-size:11px;line-height:1.85;color:rgba(255,255,255,.35);margin-bottom:16px;}
+#detail-technique{font-size:8px;letter-spacing:.16em;line-height:1.7;color:rgba(255,255,255,.15);margin-bottom:16px;}
+#detail-desc{font-size:11px;line-height:1.85;color:rgba(255,255,255,.34);margin-bottom:16px;}
 
 .perspective-block{margin-bottom:12px;}
-.perspective-label{font-size:7px;letter-spacing:.28em;color:rgba(91,79,207,.3);text-transform:uppercase;margin-bottom:4px;}
-.perspective-text{font-size:11px;line-height:1.75;color:rgba(255,255,255,.28);}
+.perspective-label{font-size:7px;letter-spacing:.28em;color:rgba(91,79,207,.28);text-transform:uppercase;margin-bottom:4px;}
+.perspective-text{font-size:11px;line-height:1.75;color:rgba(255,255,255,.26);}
 
-#detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
-.action-btn{
-  font-size:7px;letter-spacing:.22em;text-transform:uppercase;
-  padding:6px 12px;border:1px solid rgba(91,79,207,.25);
-  color:rgba(91,79,207,.5);cursor:pointer;
-  transition:border-color .2s,color .2s;
-  text-decoration:none;display:inline-block;
+#detail-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:14px;}
+.tag{
+  font-size:7px;letter-spacing:.18em;text-transform:uppercase;
+  padding:3px 9px;border:1px solid rgba(91,79,207,.18);
+  color:rgba(91,79,207,.38);
 }
-.action-btn:hover{border-color:var(--dred);color:var(--dred);}
+
+#detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+.action-btn{
+  font-size:8px;letter-spacing:.18em;text-transform:uppercase;
+  padding:9px 16px;border:1.5px solid var(--dred);
+  background:var(--dred);color:#fff;
+  cursor:pointer;text-decoration:none;display:inline-block;
+  font-family:'DM Mono',monospace;
+  transition:background .2s,color .2s,transform .15s;
+  animation:actPulse 2.8s ease infinite;
+}
+.action-btn:hover{background:transparent;color:var(--dred);transform:translateY(-2px);}
+@keyframes actPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(91,79,207,0)}
+  50%{box-shadow:0 0 0 6px rgba(91,79,207,.12)}
+}
 
 #detail-close{
   display:inline-block;font-size:8px;letter-spacing:.28em;
-  color:rgba(255,255,255,.18);text-transform:uppercase;
-  cursor:pointer;transition:color .2s;margin-top:16px;
+  color:rgba(255,255,255,.16);text-transform:uppercase;
+  cursor:pointer;transition:color .2s;margin-top:18px;
 }
 #detail-close:hover{color:var(--dred)}
 
+/* NAV — shown only when detail is open */
 #detail-nav{
-  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
-  display:none;gap:24px;z-index:201;
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  display:flex;gap:24px;z-index:201;
+  opacity:0;pointer-events:none;transition:opacity .3s;
 }
-#detail-panel.open ~ #detail-nav,
-#detail-panel.open + * #detail-nav{display:flex}
+#detail-panel.open ~ #detail-nav{opacity:1;pointer-events:all;}
 .dn{font-size:9px;letter-spacing:.28em;color:rgba(255,255,255,.18);
   cursor:pointer;transition:color .2s;padding:10px;user-select:none}
 .dn:hover{color:var(--dred)}
 #detail-counter{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.12);display:flex;align-items:center}
 
-/* ── FOCUS DOTS ── */
-#focus-dot{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-  display:flex;gap:6px;align-items:center;z-index:50;pointer-events:none;
-}
-.fdot{width:4px;height:4px;border-radius:50%;background:rgba(91,79,207,.2);transition:all .3s}
-.fdot.active{background:var(--dred);transform:scale(1.4)}
-
-/* ── LOADING ── */
-#loading{
-  position:fixed;inset:0;z-index:300;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--bg);
-}
-#loading span{
-  font-size:9px;letter-spacing:.4em;color:rgba(91,79,207,.4);
-  text-transform:uppercase;animation:pulse 1.4s ease infinite;
-}
-@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
-
-/* ── HINT ── */
-#hint{
-  position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
-  font-size:8px;letter-spacing:.4em;color:rgba(255,255,255,.15);
-  text-transform:uppercase;pointer-events:none;transition:opacity .5s;
-}
-
 @media(max-width:680px){
-  .frame{width:220px;height:300px;}
-  #strip{padding:0 calc(50vw - 110px);}
-  #detail-inner{flex-direction:column;gap:14px;padding:0 16px;}
-  #detail-img{width:100%;aspect-ratio:16/9;}
+  #detail-inner{flex-direction:column;gap:12px;padding:16px;width:96%;}
+  #detail-img{width:100%;aspect-ratio:3/4;max-height:36vh;}
+  #detail-technique{display:none}
   #detail-desc{display:none}
   .perspective-block{display:none}
+  #detail-title{font-size:clamp(20px,6vw,32px)}
+  #detail-nav{bottom:14px}
 }
 </style>
 </head>
@@ -210,7 +242,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
     <div id="detail-text">
       <div id="detail-eyebrow"></div>
       <div id="detail-title"></div>
-      <div id="detail-style"></div>
+      <div id="detail-technique"></div>
       <div id="detail-desc"></div>
       <div class="perspective-block">
         <div class="perspective-label">KIN</div>
@@ -220,6 +252,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
         <div class="perspective-label">DRED</div>
         <div class="perspective-text" id="detail-dred"></div>
       </div>
+      <div id="detail-tags"></div>
       <div id="detail-actions"></div>
       <div id="detail-close">close ×</div>
     </div>
@@ -235,7 +268,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 <script>
 /* ── CONFIG ── */
 const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
-const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_'; // ← 여기 채워줘
+const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
 const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/dred/`;
 
 /* ── STATE ── */
@@ -243,14 +276,27 @@ const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 let lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
 let items = [];
 let currentIdx = 0;
-let offset = 0, targetOffset = 0;
-let isDragging = false, dragStartX = 0, dragStartOffset = 0;
-let velocity = 0, lastX = 0, lastT = 0;
 let hintHidden = false;
+let detailOpen = false;
 
-const FRAME_W = IS_TOUCH ? 220 : 280;
-const FRAME_GAP = 20;
-const STEP = FRAME_W + FRAME_GAP;
+/* ── PHYSICS STATE ── */
+const FRAME_W   = IS_TOUCH ? 240 : 300;
+const FRAME_GAP = 24;
+const STEP      = FRAME_W + FRAME_GAP;
+const FRICTION  = 0.88;        // momentum decay per frame (lower = more friction)
+const SNAP_SPD  = 0.12;        // spring speed when snapping
+const SNAP_DONE = 0.5;         // px threshold to consider snap complete
+const EDGE_BOUNCE = 0.25;      // velocity multiplier on edge bounce
+
+let offset       = 0;          // current rendered position
+let physVel      = 0;          // momentum velocity (px/frame)
+let isSnapping   = false;
+let snapTarget   = 0;
+let isDragging   = false;
+let dragStartX   = 0;
+let dragStartOff = 0;
+let lastX        = 0;
+let lastT        = 0;
 
 /* ── CURSOR ── */
 const $cur = document.getElementById('cur');
@@ -272,9 +318,7 @@ function setLang(l) {
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
   if (items.length) renderStrip();
-  if (document.getElementById('detail-panel').classList.contains('open')) {
-    fillDetail(currentIdx);
-  }
+  if (detailOpen) fillDetail(currentIdx);
 }
 $ltKo.addEventListener('click', () => setLang('ko'));
 $ltEn.addEventListener('click', () => setLang('en'));
@@ -284,13 +328,23 @@ setLang(lang);
 async function fetchItems() {
   const res = await fetch(
     `${SUPA_URL}/rest/v1/gallery_items?character=eq.dred&is_active=eq.true&order=order_num.asc`,
-    { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
+    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
   );
   if (!res.ok) throw new Error('fetch failed');
   return res.json();
 }
 
-/* ── BUILD STRIP ── */
+async function fetchTags(itemId) {
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/gallery_item_tags?item_id=eq.${itemId}&select=tags(name_ko,name_en)`,
+    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.map(d => d.tags).filter(Boolean);
+}
+
+/* ── STRIP ── */
 const $strip = document.getElementById('strip');
 const $dots  = document.getElementById('focus-dot');
 let frameEls = [];
@@ -300,23 +354,29 @@ function renderStrip() {
   $dots.innerHTML  = '';
   frameEls = [];
 
-  const MAX_OFF = -(items.length - 1) * STEP;
+  // center padding so first/last frame is centered
+  const pad = `calc(50vw - ${FRAME_W/2}px)`;
+  $strip.style.padding = `0 ${pad}`;
 
   items.forEach((item, i) => {
     const fr = document.createElement('div');
     fr.className = 'frame';
 
-    const title = item[`title_${lang}`] || '';
+    const title  = item[`title_${lang}`] || '';
+    const hasAct = (item.actions?.[lang]?.length || 0) > 0;
+
     fr.innerHTML = `
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
       <div class="frame-overlay">
         <div class="frame-caption">${title}</div>
-      </div>`;
+      </div>
+      ${hasAct ? '<div class="frame-action"></div>' : ''}`;
 
     fr.addEventListener('click', () => {
-      const snapped = Math.round(-offset / STEP);
+      if (isDragging) return;
+      const snapped = clamp(Math.round(-offset / STEP), 0, items.length - 1);
       if (snapped === i) openDetail(i);
-      else snapTo(i);
+      else goToIdx(i);
     });
 
     $strip.appendChild(fr);
@@ -328,46 +388,32 @@ function renderStrip() {
   });
 }
 
-/* ── STRIP ANIMATION ── */
+/* ── HELPERS ── */
 function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
 
-function snapTo(idx) {
-  idx = clamp(idx, 0, items.length - 1);
-  targetOffset = -idx * STEP;
-}
-
-function getActiveIdx() {
-  return clamp(Math.round(-offset / STEP), 0, items.length - 1);
-}
-
-function applyVelocityBlur(vel) {
-  const absV = Math.abs(vel);
-  const blurPx = clamp(absV * 0.18, 0, 14);
-  const op = clamp(1 - absV * 0.004, 0.3, 1);
-  frameEls.forEach(fr => {
-    fr.style.filter  = blurPx > 0.5 ? `blur(${blurPx.toFixed(1)}px)` : '';
-    fr.style.opacity = op.toFixed(3);
-  });
-}
+function maxOffset() { return -(items.length - 1) * STEP; }
 
 function updateDots(idx) {
   document.querySelectorAll('.fdot').forEach((d, i) =>
     d.classList.toggle('active', i === idx));
 }
 
-;(function loop() {
-  const diff = targetOffset - offset;
-  offset += diff * 0.09;
-  velocity = diff * 0.09;
-  $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
-  applyVelocityBlur(velocity);
-  const idx = getActiveIdx();
-  if (idx !== currentIdx && !document.getElementById('detail-panel').classList.contains('open')) {
-    currentIdx = idx;
-    updateDots(idx);
-  }
-  requestAnimationFrame(loop);
-})();
+function applyVelocityBlur(vel) {
+  const absV = Math.abs(vel);
+  const blur  = clamp(absV * 0.35, 0, 20);
+  const opac  = clamp(1 - absV * 0.007, 0.22, 1);
+  frameEls.forEach(fr => {
+    fr.style.filter  = blur > 0.4 ? `blur(${blur.toFixed(1)}px)` : '';
+    fr.style.opacity = opac.toFixed(3);
+  });
+}
+
+function goToIdx(idx) {
+  idx = clamp(idx, 0, items.length - 1);
+  snapTarget  = -idx * STEP;
+  isSnapping  = true;
+  physVel     = 0;
+}
 
 function hideHint() {
   if (hintHidden) return;
@@ -375,87 +421,169 @@ function hideHint() {
   document.getElementById('hint').style.opacity = '0';
 }
 
-/* ── MOUSE DRAG ── */
+/* ══════════════════════════════
+   PHYSICS LOOP
+══════════════════════════════ */
+;(function loop() {
+  if (!isDragging) {
+    if (isSnapping) {
+      // spring to snap target
+      const diff = snapTarget - offset;
+      offset += diff * SNAP_SPD;
+      if (Math.abs(diff) < SNAP_DONE) {
+        offset    = snapTarget;
+        isSnapping = false;
+        physVel   = 0;
+      }
+    } else {
+      // momentum coasting
+      offset  += physVel;
+      physVel *= FRICTION;
+
+      const MIN = maxOffset();
+      if (offset > 0) {
+        offset  = 0;
+        physVel *= -EDGE_BOUNCE;
+      }
+      if (offset < MIN) {
+        offset  = MIN;
+        physVel *= -EDGE_BOUNCE;
+      }
+
+      // snap when nearly stopped
+      if (Math.abs(physVel) < 0.3) {
+        physVel = 0;
+        const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
+        goToIdx(idx);
+      }
+    }
+  }
+
+  $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
+  applyVelocityBlur(isDragging ? physVel : physVel);
+
+  if (!detailOpen) {
+    const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
+    if (idx !== currentIdx) {
+      currentIdx = idx;
+      updateDots(idx);
+    }
+  }
+
+  requestAnimationFrame(loop);
+})();
+
+/* ── DRAG — DESKTOP ── */
 if (!IS_TOUCH) {
   const $wrap = document.getElementById('strip-wrap');
+
   $wrap.addEventListener('mousedown', e => {
-    isDragging = true;
-    dragStartX = e.clientX;
-    dragStartOffset = offset;
-    lastX = e.clientX; lastT = performance.now();
+    if (detailOpen) return;
+    isDragging   = true;
+    isSnapping   = false;
+    physVel      = 0;
+    dragStartX   = e.clientX;
+    dragStartOff = offset;
+    lastX        = e.clientX;
+    lastT        = performance.now();
     $cur.classList.add('drag');
     hideHint();
   });
+
   window.addEventListener('mousemove', e => {
     if (!isDragging) return;
-    const dx = e.clientX - dragStartX;
     const now = performance.now();
-    velocity = (e.clientX - lastX) / (now - lastT + 1) * 16;
-    lastX = e.clientX; lastT = now;
-    const MAX_OFF = -(items.length - 1) * STEP;
-    targetOffset = clamp(dragStartOffset + dx, MAX_OFF, 0);
+    const dt  = Math.max(now - lastT, 1);
+    physVel   = (e.clientX - lastX) / dt * 16; // px/frame @ 60fps
+    lastX     = e.clientX;
+    lastT     = now;
+    offset    = clamp(dragStartOff + (e.clientX - dragStartX), maxOffset(), 0);
   });
+
   window.addEventListener('mouseup', () => {
     if (!isDragging) return;
     isDragging = false;
     $cur.classList.remove('drag');
-    if (Math.abs(velocity) > 3) {
-      snapTo(getActiveIdx() + (velocity < 0 ? 1 : -1));
-    } else {
-      snapTo(getActiveIdx());
+    // momentum continues — physVel already set from last mousemove
+    // if velocity is very low, snap immediately
+    if (Math.abs(physVel) < 1) {
+      const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
+      goToIdx(idx);
     }
   });
+
+  // wheel
   $wrap.addEventListener('wheel', e => {
     e.preventDefault();
+    if (detailOpen) return;
     hideHint();
-    snapTo(getActiveIdx() + Math.sign(e.deltaX || e.deltaY));
+    // wheel: snap one step at a time
+    const dir = Math.sign(e.deltaX !== 0 ? e.deltaX : e.deltaY);
+    const idx = clamp(Math.round(-offset / STEP) + dir, 0, items.length - 1);
+    goToIdx(idx);
   }, {passive:false});
 }
 
-/* ── TOUCH ── */
+/* ── DRAG — TOUCH ── */
 if (IS_TOUCH) {
   const $wrap = document.getElementById('strip-wrap');
-  let tStartX = 0, tStartOff = 0, tLastX = 0, tLastT = 0, tVel = 0;
+  let tStartX = 0, tStartOff = 0, tLastX = 0, tLastT = 0;
+
   $wrap.addEventListener('touchstart', e => {
-    tStartX = e.touches[0].clientX;
-    tStartOff = offset; tLastX = tStartX; tLastT = performance.now(); tVel = 0;
+    if (detailOpen) return;
+    isDragging   = true;
+    isSnapping   = false;
+    physVel      = 0;
+    tStartX      = e.touches[0].clientX;
+    tStartOff    = offset;
+    tLastX       = tStartX;
+    tLastT       = performance.now();
     hideHint();
   }, {passive:true});
+
   $wrap.addEventListener('touchmove', e => {
+    if (!isDragging) return;
     e.preventDefault();
-    const dx = e.touches[0].clientX - tStartX;
+    const x   = e.touches[0].clientX;
     const now = performance.now();
-    tVel = (e.touches[0].clientX - tLastX) / (now - tLastT + 1) * 16;
-    tLastX = e.touches[0].clientX; tLastT = now;
-    const MAX_OFF = -(items.length - 1) * STEP;
-    targetOffset = clamp(tStartOff + dx, MAX_OFF, 0);
+    const dt  = Math.max(now - tLastT, 1);
+    physVel   = (x - tLastX) / dt * 16;
+    tLastX    = x;
+    tLastT    = now;
+    offset    = clamp(tStartOff + (x - tStartX), maxOffset(), 0);
   }, {passive:false});
+
   $wrap.addEventListener('touchend', () => {
-    if (Math.abs(tVel) > 3) snapTo(getActiveIdx() + (tVel < 0 ? 1 : -1));
-    else snapTo(getActiveIdx());
+    if (!isDragging) return;
+    isDragging = false;
+    if (Math.abs(physVel) < 1) {
+      const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
+      goToIdx(idx);
+    }
+    // else: momentum continues
   });
 }
 
 /* ── DETAIL ── */
 const $panel = document.getElementById('detail-panel');
 
-function fillDetail(i) {
+async function fillDetail(i) {
   const item = items[i];
   const t = lang;
-  document.getElementById('detail-eyebrow').textContent =
-    `DRED · ${String(i+1).padStart(2,'0')} / ${items.length}`;
-  document.getElementById('detail-title').textContent = item[`title_${t}`] || '';
-  document.getElementById('detail-style').textContent = item.style || '';
-  document.getElementById('detail-desc').textContent  = item[`description_${t}`] || '';
-  document.getElementById('detail-kin').textContent   = item[`kin_perspective_${t}`] || '';
-  document.getElementById('detail-dred').textContent  = item[`dred_perspective_${t}`] || '';
-  document.getElementById('detail-counter').textContent =
-    `${String(i+1).padStart(2,'0')} / ${items.length}`;
+
+  document.getElementById('detail-eyebrow').textContent   = `DRED · ${String(i+1).padStart(2,'0')} / ${items.length}`;
+  document.getElementById('detail-title').textContent     = item[`title_${t}`] || '';
+  document.getElementById('detail-technique').textContent = item[`technique_${t}`] || '';
+  document.getElementById('detail-desc').textContent      = item[`description_${t}`] || '';
+  document.getElementById('detail-kin').textContent       = item[`kin_perspective_${t}`] || '';
+  document.getElementById('detail-dred').textContent      = item[`dred_perspective_${t}`] || '';
+  document.getElementById('detail-counter').textContent   = `${String(i+1).padStart(2,'0')} / ${items.length}`;
 
   const $img = document.getElementById('detail-img-el');
   $img.src = `${IMG_BASE}${item.filename}`;
   $img.alt = item[`title_${t}`] || '';
 
+  // 액션
   const $acts = document.getElementById('detail-actions');
   $acts.innerHTML = '';
   (item.actions?.[t] || []).forEach(a => {
@@ -463,25 +591,40 @@ function fillDetail(i) {
     btn.className = 'action-btn';
     btn.textContent = a.label;
     btn.href = a.url || '#';
+    btn.target = '_blank';
     $acts.appendChild(btn);
+  });
+
+  // 태그 (비동기 — 나머지 먼저 보임)
+  const $tags = document.getElementById('detail-tags');
+  $tags.innerHTML = '';
+  fetchTags(item.id).then(tags => {
+    tags.forEach(tag => {
+      const span = document.createElement('span');
+      span.className = 'tag';
+      span.textContent = tag[`name_${t}`] || tag.name_ko;
+      $tags.appendChild(span);
+    });
   });
 }
 
-function openDetail(i) {
+async function openDetail(i) {
   currentIdx = i;
-  fillDetail(i);
+  detailOpen = true;
+  document.getElementById('focus-dot').classList.add('hidden');
+  await fillDetail(i);
   $panel.classList.add('open');
-  document.getElementById('detail-nav').style.display = 'flex';
 }
 
 function closeDetail() {
   $panel.classList.remove('open');
-  document.getElementById('detail-nav').style.display = 'none';
+  detailOpen = false;
+  document.getElementById('focus-dot').classList.remove('hidden');
 }
 
 function nav(dir) {
-  const next = (currentIdx + dir + items.length) % items.length;
-  snapTo(next);
+  const next = clamp(currentIdx + dir, 0, items.length - 1);
+  goToIdx(next);
   openDetail(next);
 }
 
@@ -492,10 +635,19 @@ document.getElementById('dn-next').addEventListener('click', () => nav(1));
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeDetail();
-  if ($panel.classList.contains('open')) {
+  if (detailOpen) {
     if (e.key === 'ArrowRight') nav(1);
     if (e.key === 'ArrowLeft')  nav(-1);
   }
+});
+
+// 디테일 열려있을 때 터치 스와이프로 이미지 전환
+let dtx0 = 0;
+document.addEventListener('touchstart', e => { dtx0 = e.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchend', e => {
+  if (!detailOpen) return;
+  const dx = e.changedTouches[0].clientX - dtx0;
+  if (Math.abs(dx) > 50) nav(dx < 0 ? 1 : -1);
 });
 
 /* ── BACK ── */
@@ -518,14 +670,11 @@ fetchItems()
   .then(data => {
     items = data;
     renderStrip();
-    snapTo(0);
+    goToIdx(0);
     $loading.style.opacity = '0';
     setTimeout(() => { $loading.style.display = 'none'; }, 400);
   })
-  .catch(err => {
-    console.error(err);
-    $loading.querySelector('span').textContent = 'error loading';
-  });
+  .catch(() => { $loading.querySelector('span').textContent = 'error'; });
 </script>
 </body>
 </html>

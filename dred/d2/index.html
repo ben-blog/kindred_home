@@ -495,7 +495,8 @@ const DRED_QUOTES = {
   en: ['already knew.','watching.','so.','your pick.','you already know.',"doesn't matter."]
 };
 const BIG_TEXTS = ['.','..','D','R','E','D','..'];
-const API_URL = 'https://d2-api-production.up.railway.app/api/d2/now';
+const API_URL   = 'https://d2-api-production.up.railway.app/api/d2/now';
+const STATE2_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp';
 const OVERLAY_DURATION = 700; /* ms — keep in sync with --overlay-dur in CSS */
 
 /* ─── STATE ─── */
@@ -882,8 +883,7 @@ function openShare() {
   if (!currentResult) return;
   const c = COPY[currentLang];
 
-  /* 배경 이미지 설정 (background-image: html2canvas가 cover 비율 올바르게 처리) */
-  const STATE2_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp';
+  /* 배경 이미지 설정 */
   document.getElementById('scBg').style.backgroundImage = `url('${STATE2_URL}')`;
 
   /* 키워드 채우기 */
@@ -918,40 +918,93 @@ async function saveShareImage() {
   btn.textContent = c.generating;
   btn.disabled    = true;
 
-  try {
-    /* 폰트 로드 완료 후 캡처 */
-    await document.fonts.ready;
-    const canvas = await html2canvas(document.getElementById('shareCard'), {
-      useCORS:         true,
-      scale:           4,
-      backgroundColor: '#000',
-      logging:         false,
-    });
+  /* 출력 해상도: 카드 300×400 × scale 4 = 1200×1600px */
+  const SCALE     = 4;
+  const CARD_W    = 300;
+  const CARD_H    = 400;
+  const OUT_W     = CARD_W * SCALE;  // 1200
+  const OUT_H     = CARD_H * SCALE;  // 1600
+  /* iOS Canvas 메모리 안전 한도 — 원본(1664×2496) 최장변을 1800px으로 제한 */
+  const MAX_BG_PX = 1800;
 
-    /* 모바일 Web Share API */
+  try {
+    await document.fonts.ready;
+
+    /* ── 1. 배경 이미지 로드 + 다운샘플 ── */
+    const bgCanvas = await loadAndResizeBg(STATE2_URL, MAX_BG_PX);
+
+    /* ── 2. 최종 캔버스 생성 ── */
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width  = OUT_W;
+    finalCanvas.height = OUT_H;
+    const ctx = finalCanvas.getContext('2d');
+
+    /* ── 3. 배경 이미지 — cover + center-top ── */
+    drawCoverTop(ctx, bgCanvas, OUT_W, OUT_H);
+
+    /* ── 4. 그라데이션 오버레이 (CSS sc-overlay와 동일) ── */
+    const grad = ctx.createLinearGradient(0, 0, 0, OUT_H);
+    grad.addColorStop(0,    'rgba(0,0,0,0.72)');
+    grad.addColorStop(0.35, 'rgba(0,0,0,0.18)');
+    grad.addColorStop(0.55, 'rgba(0,0,0,0.18)');
+    grad.addColorStop(1.0,  'rgba(0,0,0,0.85)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, OUT_W, OUT_H);
+
+    /* ── 5. 텍스트 레이어 캡처 (sc-bg, sc-overlay 임시 숨김) ── */
+    const $card    = document.getElementById('shareCard');
+    const $bg      = document.getElementById('scBg');
+    const $overlay = $card.querySelector('.sc-overlay');
+
+    const prevBgDisplay      = $bg.style.display;
+    const prevOverlayDisplay = $overlay.style.display;
+    const prevCardBg         = $card.style.background;
+
+    $bg.style.display      = 'none';
+    $overlay.style.display = 'none';
+    $card.style.background = 'transparent';
+
+    let textCanvas;
+    try {
+      textCanvas = await html2canvas($card, {
+        useCORS:         true,
+        scale:           SCALE,
+        backgroundColor: null,  /* 투명 — 텍스트/아이콘만 캡처 */
+        logging:         false,
+      });
+    } finally {
+      /* 캡처 성공/실패 무관하게 반드시 DOM 복원 */
+      $bg.style.display      = prevBgDisplay;
+      $overlay.style.display = prevOverlayDisplay;
+      $card.style.background = prevCardBg;
+    }
+
+    /* ── 6. 텍스트 레이어를 최종 캔버스에 합성 ── */
+    ctx.drawImage(textCanvas, 0, 0, OUT_W, OUT_H);
+
+    /* ── 7. 출력 — 모바일 Web Share / PC 다운로드 ── */
     const IS_MOBILE = window.matchMedia('(max-width:767px)').matches;
     if (IS_MOBILE && navigator.share) {
-      canvas.toBlob(async blob => {
+      finalCanvas.toBlob(async blob => {
         const file = new File([blob], 'dred-d2.png', { type: 'image/png' });
         try {
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: 'D2 · DRED' });
           } else {
-            triggerDownload(canvas);
+            triggerDownload(finalCanvas);
           }
         } catch (err) {
-          /* 공유 취소 또는 실패 → 다운로드로 폴백 */
-          if (err.name !== 'AbortError') triggerDownload(canvas);
+          if (err.name !== 'AbortError') triggerDownload(finalCanvas);
         }
         btn.textContent = c.save;
         btn.disabled    = false;
       }, 'image/png');
     } else {
-      /* PC: 다운로드 */
-      triggerDownload(canvas);
+      triggerDownload(finalCanvas);
       btn.textContent = c.save;
       btn.disabled    = false;
     }
+
   } catch (err) {
     console.error('[D2] share image error:', err);
     btn.textContent = c.save;
@@ -959,10 +1012,43 @@ async function saveShareImage() {
   }
 }
 
+/* 이미지 로드 후 최장변이 maxPx 이하가 되도록 다운샘플 — 오프스크린 canvas 반환 */
+function loadAndResizeBg(url, maxPx) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const { naturalWidth: w, naturalHeight: h } = img;
+      const ratio     = Math.min(1, maxPx / Math.max(w, h));
+      const rw        = Math.round(w * ratio);
+      const rh        = Math.round(h * ratio);
+      const offscreen = document.createElement('canvas');
+      offscreen.width  = rw;
+      offscreen.height = rh;
+      offscreen.getContext('2d').drawImage(img, 0, 0, rw, rh);
+      resolve(offscreen);
+    };
+    img.onerror = () => reject(new Error('[D2] bg image load failed'));
+    img.src = url;
+  });
+}
+
+/* ctx에 src(canvas)를 cover 비율 + center-top으로 그림 */
+function drawCoverTop(ctx, src, cw, ch) {
+  const sw    = src.width;
+  const sh    = src.height;
+  const scale = Math.max(cw / sw, ch / sh);
+  const dw    = sw * scale;
+  const dh    = sh * scale;
+  const dx    = (cw - dw) / 2;  /* 가로 중앙 */
+  const dy    = 0;               /* 세로 상단 고정 */
+  ctx.drawImage(src, dx, dy, dw, dh);
+}
+
 function triggerDownload(canvas) {
-  const a      = document.createElement('a');
-  a.download   = 'dred-d2.png';
-  a.href       = canvas.toDataURL('image/png');
+  const a    = document.createElement('a');
+  a.download = 'dred-d2.png';
+  a.href     = canvas.toDataURL('image/png');
   a.click();
 }
 

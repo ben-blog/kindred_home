@@ -23,7 +23,7 @@
       color: var(--white); font-family: var(--font-main); overflow: hidden;
     }
 
-    /* CURSOR — PC only */
+    /* CURSOR */
     .cursor-dot {
       position: fixed; width: 5px; height: 5px;
       background: rgba(237,237,237,0.5); border-radius: 50%;
@@ -31,13 +31,8 @@
       transform: translate(-50%,-50%);
       transition: width 0.1s, height 0.1s, background 0.1s;
     }
-    .cursor-dot.on-btn {
-      width: 28px; height: 28px; background: transparent;
-      border: 1px solid rgba(91,79,207,0.65);
-    }
-    .cursor-dot.on-random {
-      width: 3px; height: 3px; background: rgba(91,79,207,0.5);
-    }
+    .cursor-dot.on-btn { width: 28px; height: 28px; background: transparent; border: 1px solid rgba(91,79,207,0.65); }
+    .cursor-dot.on-random { width: 3px; height: 3px; background: rgba(91,79,207,0.5); }
 
     /* GRAIN */
     body::after {
@@ -49,32 +44,55 @@
     /* LAYOUT */
     .layout { display: flex; height: 100vh; width: 100vw; }
 
-    /* LEFT: DRED */
+    /* ═══ LEFT: DRED SPACE ═══ */
     .dred-space {
       width: 60%; height: 100%;
       position: relative; overflow: hidden;
       border-right: 1px solid #0f0f0f; flex-shrink: 0;
     }
-    .dred-state {
+
+    /* Primary image layers */
+    .dred-img-layer {
       position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 1.4s ease;
+      transition: opacity 0.5s ease;
     }
-    .dred-state.active { opacity: 1; }
-    .dred-state-img { background: #000; }
-    .dred-state-img img {
+    .dred-img-layer img {
       width: 100%; height: 100%;
       object-fit: cover; object-position: center top;
-      opacity: 0.72; filter: grayscale(15%);
+      filter: grayscale(15%);
     }
-    .dred-state-text { background: #000; }
+    #dredImg1 { opacity: 1; z-index: 1; }
+    #dredImg1 img { opacity: 0.72; }
+    #dredImg2 { opacity: 0; z-index: 2; }
+    #dredImg2 img { opacity: 0.85; }
+
+    /* Dark overlay for transition */
+    .dred-overlay {
+      position: absolute; inset: 0;
+      background: #000; opacity: 0;
+      pointer-events: none; z-index: 3;
+      transition: opacity 0.7s ease-in;
+    }
+    .dred-overlay.darkening { opacity: 1; }
+    .dred-overlay.revealing { opacity: 0; transition: opacity 0.6s ease-out; }
+
+    /* Ambient cycling states (above overlay) */
+    .dred-ambient {
+      position: absolute; inset: 0; z-index: 4;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 1.4s ease; pointer-events: none;
+    }
+    .dred-ambient.active { opacity: 1; }
+
     .dred-big-text {
       font-family: var(--font-main);
       font-size: clamp(7rem,15vw,15rem); font-weight: 800;
       color: var(--white); letter-spacing: -0.05em; opacity: 0.04; user-select: none;
     }
     .dred-state-glow {
-      background: radial-gradient(ellipse at 35% 65%, rgba(91,79,207,0.14) 0%, transparent 68%), #000;
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 35% 65%, rgba(91,79,207,0.14) 0%, transparent 68%);
+      display: flex; align-items: center; justify-content: center;
     }
     .dred-glow-dot {
       width: 2px; height: 2px; background: var(--purple); border-radius: 50%;
@@ -82,9 +100,12 @@
       animation: glow-pulse 5s ease-in-out infinite;
     }
     @keyframes glow-pulse { 0%,100%{opacity:.3;transform:scale(1);}50%{opacity:.85;transform:scale(2);} }
+
     .dred-state-quote {
-      background: #000; padding: 3rem;
-      flex-direction: column; align-items: flex-start; justify-content: flex-end;
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: flex-start; justify-content: flex-end;
+      padding: 3rem;
     }
     .dred-quote-label {
       font-family: var(--font-mono); font-size: 0.58rem;
@@ -95,13 +116,14 @@
       font-family: var(--font-mono); font-size: clamp(0.78rem,1vw,0.95rem);
       font-weight: 300; color: #3a3a3a; line-height: 1.8; max-width: 320px;
     }
+
     .dred-space::before {
       content: ''; position: absolute; bottom: 0; left: 0;
       width: 1px; height: 26%;
       background: linear-gradient(to top, var(--purple), transparent); z-index: 10;
     }
 
-    /* RIGHT: INTERACT */
+    /* ═══ RIGHT: INTERACT ═══ */
     .interact-space {
       width: 40%; height: 100%;
       display: flex; flex-direction: column;
@@ -114,16 +136,9 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 1.6rem 2rem; z-index: 20;
     }
-    .d2-label {
-      font-family: var(--font-mono); font-size: 0.58rem;
-      letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase;
-    }
+    .d2-label { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase; }
     .lang-toggle { display: flex; border: 1px solid #181818; }
-    .lang-btn {
-      background: none; border: none; padding: 0.28rem 0.6rem;
-      font-family: var(--font-mono); font-size: 0.58rem;
-      letter-spacing: 0.1em; color: #2a2a2a; transition: all 0.15s;
-    }
+    .lang-btn { background: none; border: none; padding: 0.28rem 0.6rem; font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; color: #2a2a2a; transition: all 0.15s; }
     .lang-btn.active { background: var(--purple); color: var(--white); }
 
     /* SCREENS */
@@ -132,31 +147,22 @@
 
     /* SELECT */
     #screen-select { padding-top: 4rem; }
+    .scatter-area { position: relative; flex: 1; overflow: hidden; }
 
-    /* Scatter area — same for PC and mobile */
-    .scatter-area {
-      position: relative; flex: 1; overflow: hidden;
-    }
-
-    /* KEYWORD */
+    /* KEYWORDS */
     .kw-btn {
       position: absolute;
       background: none; border: none;
-      font-family: var(--font-kw); font-weight: 700;
-      font-size: 0.9rem;
+      font-family: var(--font-kw); font-weight: 700; font-size: 0.9rem;
       letter-spacing: -0.01em; white-space: nowrap;
       line-height: 1; padding: 0.15rem 0;
       color: var(--white);
-      transform-origin: center center;
-      will-change: transform;
+      transform-origin: center center; will-change: transform;
       transition: opacity 0.22s ease, color 0.2s ease;
       -webkit-tap-highlight-color: transparent;
     }
     .kw-btn.selected { color: var(--purple) !important; }
-    .kw-btn.fading {
-      opacity: 0 !important; pointer-events: none;
-      transition: opacity 0.2s ease !important;
-    }
+    .kw-btn.fading { opacity: 0 !important; pointer-events: none; transition: opacity 0.2s ease !important; }
 
     /* RANDOM */
     .random-area { position: absolute; bottom: 1.8rem; left: 2rem; }
@@ -191,110 +197,48 @@
     /* RESULT */
     #screen-result { padding: 4.5rem 2rem 1.8rem; justify-content: space-between; overflow-y: auto; }
     .result-top { flex: 1; }
-    .result-meta {
-      font-family: var(--font-mono); font-size: 0.56rem;
-      letter-spacing: 0.22em; color: var(--purple);
-      text-transform: uppercase; margin-bottom: 2rem;
-    }
-    .result-artist {
-      font-family: var(--font-mono); font-size: 0.68rem;
-      font-weight: 300; color: #3a3a3a; letter-spacing: 0.05em; margin-bottom: 0.25rem;
-    }
-    .result-title {
-      font-family: var(--font-main);
-      font-size: clamp(1.8rem,4.2vw,3.8rem);
-      font-weight: 800; letter-spacing: -0.04em;
-      line-height: 1.05; color: var(--white); margin-bottom: 1.6rem;
-    }
-    .result-dred-line {
-      font-family: var(--font-mono); font-size: clamp(0.9rem,1.3vw,1.05rem);
-      font-weight: 300; font-style: italic;
-      color: #5a5a5a; line-height: 1.75;
-      border-left: 1px solid var(--purple);
-      padding-left: 1rem; margin-bottom: 1.8rem; max-width: 310px;
-    }
+    .result-meta { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase; margin-bottom: 2rem; }
+    .result-artist { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 300; color: #3a3a3a; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    .result-title { font-family: var(--font-main); font-size: clamp(1.8rem,4.2vw,3.8rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1.05; color: var(--white); margin-bottom: 1.6rem; }
+    .result-dred-line { font-family: var(--font-mono); font-size: clamp(0.9rem,1.3vw,1.05rem); font-weight: 300; font-style: italic; color: #5a5a5a; line-height: 1.75; border-left: 1px solid var(--purple); padding-left: 1rem; margin-bottom: 1.8rem; max-width: 310px; }
     .spotify-wrap { margin-bottom: 1.5rem; }
     .spotify-wrap iframe { border-radius: 2px; width: 100%; }
-    .result-actions {
-      display: flex; gap: 2rem;
-      justify-content: flex-end; align-items: center; flex-shrink: 0;
-    }
-    .action-btn {
-      background: none; border: none;
-      font-family: var(--font-mono); font-size: 0.6rem;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: #282828; transition: color 0.15s; padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    .result-actions { display: flex; gap: 2rem; justify-content: flex-end; align-items: center; flex-shrink: 0; }
+    .action-btn { background: none; border: none; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: #282828; transition: color 0.15s; padding: 0; -webkit-tap-highlight-color: transparent; }
     .action-btn:hover { color: var(--white); }
     .action-btn.primary { color: var(--purple); }
     .action-btn.primary:hover { color: var(--white); }
 
     /* SHARE */
-    .share-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.88);
-      display: none; align-items: center; justify-content: center; z-index: 200;
-    }
+    .share-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: none; align-items: center; justify-content: center; z-index: 200; }
     .share-overlay.visible { display: flex; }
-    .share-card {
-      background: #000; border: 1px solid #181818;
-      width: 300px; aspect-ratio: 1;
-      display: flex; flex-direction: column; justify-content: space-between;
-      padding: 1.5rem; position: relative; overflow: hidden;
-    }
-    .share-card::after {
-      content: ''; position: absolute; bottom: 0; right: 0;
-      width: 80px; height: 80px;
-      background: radial-gradient(at 100% 100%, rgba(91,79,207,0.16) 0%, transparent 70%);
-    }
+    .share-card { background: #000; border: 1px solid #181818; width: 300px; aspect-ratio: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 1.5rem; position: relative; overflow: hidden; }
+    .share-card::after { content: ''; position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; background: radial-gradient(at 100% 100%, rgba(91,79,207,0.16) 0%, transparent 70%); }
     .sc-top { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase; }
     .sc-artist { font-family: var(--font-mono); font-size: 0.62rem; color: #2e2e2e; margin-bottom: 0.2rem; }
     .sc-title { font-family: var(--font-main); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; color: var(--white); margin-bottom: 0.6rem; }
     .sc-line { font-family: var(--font-mono); font-size: 0.65rem; font-style: italic; color: #333; line-height: 1.6; }
     .sc-footer { font-family: var(--font-mono); font-size: 0.48rem; letter-spacing: 0.15em; color: #181818; text-transform: uppercase; }
-    .share-close {
-      position: absolute; top: -1.8rem; right: 0;
-      background: none; border: none; color: #2a2a2a;
-      font-size: 1.2rem; padding: 0.5rem; transition: color 0.15s;
-    }
+    .share-close { position: absolute; top: -1.8rem; right: 0; background: none; border: none; color: #2a2a2a; font-size: 1.2rem; padding: 0.5rem; transition: color 0.15s; }
     .share-close:hover, .share-close:active { color: var(--white); }
-    .share-hint {
-      margin-top: 0.7rem; font-family: var(--font-mono);
-      font-size: 0.52rem; color: #1e1e1e; letter-spacing: 0.1em; text-align: center;
-    }
+    .share-hint { margin-top: 0.7rem; font-family: var(--font-mono); font-size: 0.52rem; color: #1e1e1e; letter-spacing: 0.1em; text-align: center; }
 
-    /* MOBILE */
+    /* ═══ MOBILE ═══ */
     @media (max-width: 767px) {
       .cursor-dot { display: none; }
       *, *::before, *::after { cursor: auto !important; }
 
-      /* DRED as full background */
-      .dred-space {
-        position: fixed; inset: 0; width: 100%;
-        border-right: none; z-index: 0;
-      }
-      .dred-state-img img { opacity: 0.12; }
-      .dred-big-text { opacity: 0.025; }
-      .dred-quote-text { opacity: 0; }
+      .dred-space { position: fixed; inset: 0; width: 100%; border-right: none; z-index: 0; }
+      #dredImg1 img, #dredImg2 img { opacity: 0.18; }
 
-      /* Interact fills screen */
-      .interact-space {
-        position: fixed; inset: 0; width: 100%;
-        z-index: 10; background: transparent;
-      }
-
-      /* Larger font on mobile */
+      .interact-space { position: fixed; inset: 0; width: 100%; z-index: 10; background: transparent; }
       .kw-btn { font-size: 1.1rem !important; }
-
-      /* Random btn bigger tap target */
       .random-btn { font-size: 0.72rem; padding: 0.5rem 0; }
       .random-area { bottom: 2rem; left: 1.5rem; }
 
-      /* Result: full bottom sheet */
       #screen-result {
         position: fixed; bottom: 0; left: 0; right: 0;
-        height: 70vh;
-        background: rgba(0,0,0,0.95);
+        height: 70vh; background: rgba(0,0,0,0.95);
         backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
         border-top: 1px solid #111; border-radius: 12px 12px 0 0;
         padding: 1.8rem 1.5rem 2.5rem;
@@ -306,11 +250,7 @@
       .result-title { font-size: 1.9rem; margin-bottom: 1.2rem; }
       .result-dred-line { font-size: 0.92rem; }
 
-      /* Loading */
-      #screen-loading {
-        position: fixed; inset: 0; z-index: 30;
-        background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
-      }
+      #screen-loading { position: fixed; inset: 0; z-index: 30; background: transparent; }
     }
   </style>
 </head>
@@ -322,20 +262,36 @@
 
   <!-- LEFT: DRED -->
   <div class="dred-space">
-    <div class="dred-state dred-state-img active" id="state1">
-      <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_g3_music.webp" alt=""
-        onerror="this.style.display='none'">
+
+    <!-- State 1: selection (DRED not looking) -->
+    <div class="dred-img-layer" id="dredImg1">
+      <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state1.webp" alt="">
     </div>
-    <div class="dred-state dred-state-text" id="state2">
+
+    <!-- State 2: result (DRED watching) -->
+    <div class="dred-img-layer" id="dredImg2">
+      <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp" alt="">
+    </div>
+
+    <!-- Transition overlay -->
+    <div class="dred-overlay" id="dredOverlay"></div>
+
+    <!-- Ambient cycling (text / glow / quote) -->
+    <div class="dred-ambient" id="ambText">
       <div class="dred-big-text" id="bigText">.</div>
     </div>
-    <div class="dred-state dred-state-glow" id="state3">
-      <div class="dred-glow-dot"></div>
+    <div class="dred-ambient" id="ambGlow">
+      <div class="dred-state-glow">
+        <div class="dred-glow-dot"></div>
+      </div>
     </div>
-    <div class="dred-state dred-state-quote" id="state4">
-      <div class="dred-quote-label">DRED</div>
-      <div class="dred-quote-text" id="quoteText"></div>
+    <div class="dred-ambient" id="ambQuote">
+      <div class="dred-state-quote">
+        <div class="dred-quote-label">DRED</div>
+        <div class="dred-quote-text" id="quoteText"></div>
+      </div>
     </div>
+
   </div>
 
   <!-- RIGHT: INTERACT -->
@@ -406,13 +362,14 @@ const DRED_QUOTES = {
 };
 const BIG_TEXTS = ['.','..','D','R','E','D','..'];
 const API_URL = 'https://d2-api-production.up.railway.app/api/d2/now';
+const OVERLAY_DURATION = 700; // ms for overlay to go dark
 
 let currentLang = 'ko';
 let selectedTags = [];
 let currentResult = null;
 let autoSubmitTimer = null;
-let dredStateIndex = 0;
-let dredStateTimer = null;
+let ambStateIndex = 0;
+let ambTimer = null;
 const isMobile = window.innerWidth < 768;
 
 /* CURSOR */
@@ -431,129 +388,111 @@ document.addEventListener('mouseover', e => {
 /* ═══ ANIMATOR ═══ */
 class KWAnimator {
   constructor(el) {
-    this.el    = el;
-    this.floatAnim = null;
-    this.hoverAnim = null;
-    this.phase = 'float';
-
+    this.el = el; this.floatAnim = null; this.hoverAnim = null; this.phase = 'float';
     this.startFloat();
-
-    /* PC: mouse hover */
     if (!isMobile) {
       el.addEventListener('mouseenter', () => this.onHover());
       el.addEventListener('mouseleave', () => this.onLeave());
     }
   }
-
   startFloat() {
-    const dur  = 8000 + Math.random() * 5000;
-    const del  = -Math.random() * dur;
-    const dx1  = (Math.random() - 0.5) * (isMobile ? 18 : 22);
-    const dy1  = (Math.random() - 0.5) * (isMobile ? 14 : 18);
-    const dx2  = (Math.random() - 0.5) * (isMobile ? 18 : 22);
-    const dy2  = (Math.random() - 0.5) * (isMobile ? 14 : 18);
-
+    const dur = 8000 + Math.random() * 5000;
+    const del = -Math.random() * dur;
+    const dx1 = (Math.random()-.5)*(isMobile?18:22), dy1 = (Math.random()-.5)*(isMobile?14:18);
+    const dx2 = (Math.random()-.5)*(isMobile?18:22), dy2 = (Math.random()-.5)*(isMobile?14:18);
     this.floatAnim = this.el.animate([
-      { transform: `translate(0px,0px) scale(0.93)` },
-      { transform: `translate(${dx1}px,${dy1}px) scale(1.07)` },
-      { transform: `translate(${dx2}px,${dy2*.5}px) scale(0.96)` },
-      { transform: `translate(${dx1*.3}px,${dy2}px) scale(1.09)` },
-      { transform: `translate(0px,0px) scale(0.93)` },
-    ], { duration: dur, delay: del, iterations: Infinity, easing: 'ease-in-out' });
+      {transform:`translate(0px,0px) scale(0.93)`},
+      {transform:`translate(${dx1}px,${dy1}px) scale(1.07)`},
+      {transform:`translate(${dx2}px,${dy2*.5}px) scale(0.96)`},
+      {transform:`translate(${dx1*.3}px,${dy2}px) scale(1.09)`},
+      {transform:`translate(0px,0px) scale(0.93)`},
+    ], {duration:dur, delay:del, iterations:Infinity, easing:'ease-in-out'});
   }
-
-  getScale() {
-    const m = new DOMMatrix(window.getComputedStyle(this.el).transform);
-    return Math.sqrt(m.a * m.a + m.b * m.b) || 1;
-  }
-
-  cancelHover() {
-    if (this.hoverAnim) { this.hoverAnim.cancel(); this.hoverAnim = null; }
-  }
-
+  getScale() { const m = new DOMMatrix(window.getComputedStyle(this.el).transform); return Math.sqrt(m.a*m.a+m.b*m.b)||1; }
+  cancelHover() { if (this.hoverAnim) { this.hoverAnim.cancel(); this.hoverAnim = null; } }
   onHover() {
-    if (this.phase === 'selected') return;
-    this.phase = 'approaching';
+    if (this.phase==='selected') return;
+    this.phase='approaching';
     if (this.floatAnim) this.floatAnim.pause();
-    const s0 = this.getScale();
-    this.cancelHover();
-
-    this.hoverAnim = this.el.animate([
-      { transform: `scale(${s0})` },
-      { transform: 'scale(1.4)' }
-    ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
-
+    const s0 = this.getScale(); this.cancelHover();
+    this.hoverAnim = this.el.animate([{transform:`scale(${s0})`},{transform:'scale(1.4)'}],{duration:1000,easing:'ease-out',fill:'forwards'});
     this.hoverAnim.onfinish = () => {
-      if (this.phase !== 'approaching') return;
-      this.phase = 'oscillating';
-      this.cancelHover();
-      this.hoverAnim = this.el.animate([
-        { transform: 'scale(1.4)' },
-        { transform: 'scale(1.2)' },
-        { transform: 'scale(1.4)' }
-      ], { duration: 1400, easing: 'ease-in-out', iterations: Infinity });
+      if (this.phase!=='approaching') return;
+      this.phase='oscillating'; this.cancelHover();
+      this.hoverAnim = this.el.animate([{transform:'scale(1.4)'},{transform:'scale(1.2)'},{transform:'scale(1.4)'}],{duration:1400,easing:'ease-in-out',iterations:Infinity});
     };
   }
-
   onLeave() {
-    if (this.phase === 'selected') return;
-    this.phase = 'leaving';
-    const s0 = this.getScale();
-    this.cancelHover();
-    const under = Math.max(s0 * 0.82, 0.88);
-
-    this.hoverAnim = this.el.animate([
-      { transform: `scale(${s0})` },
-      { transform: `scale(${under})` },
-      { transform: 'scale(1.05)' },
-      { transform: 'scale(0.97)' },
-      { transform: 'scale(1.0)' }
-    ], { duration: 480, easing: 'ease-out', fill: 'forwards' });
-
+    if (this.phase==='selected') return;
+    this.phase='leaving';
+    const s0 = this.getScale(); this.cancelHover();
+    const under = Math.max(s0*.82,.88);
+    this.hoverAnim = this.el.animate([{transform:`scale(${s0})`},{transform:`scale(${under})`},{transform:'scale(1.05)'},{transform:'scale(0.97)'},{transform:'scale(1.0)'}],{duration:480,easing:'ease-out',fill:'forwards'});
     this.hoverAnim.onfinish = () => {
-      if (this.phase !== 'leaving') return;
-      this.cancelHover();
-      this.el.style.transform = '';
-      this.phase = 'float';
+      if (this.phase!=='leaving') return;
+      this.cancelHover(); this.el.style.transform=''; this.phase='float';
       if (this.floatAnim) this.floatAnim.play();
     };
   }
-
   select() {
-    this.phase = 'selected';
-    const s0 = this.getScale();
-    this.cancelHover();
+    this.phase='selected'; const s0=this.getScale(); this.cancelHover();
     if (this.floatAnim) this.floatAnim.pause();
-    this.hoverAnim = this.el.animate([
-      { transform: `scale(${s0})` },
-      { transform: 'scale(1.28)', offset: 0.3 },
-      { transform: 'scale(1.2)' }
-    ], { duration: 360, easing: 'ease-out', fill: 'forwards' });
+    this.hoverAnim = this.el.animate([{transform:`scale(${s0})`},{transform:'scale(1.28)',offset:0.3},{transform:'scale(1.2)'}],{duration:360,easing:'ease-out',fill:'forwards'});
   }
-
   deselect() {
-    this.phase = 'float';
-    this.cancelHover();
-    this.el.style.transform = '';
+    this.phase='float'; this.cancelHover(); this.el.style.transform='';
     if (this.floatAnim) this.floatAnim.play();
   }
-
   fadeOut() {
-    this.phase = 'selected';
-    this.cancelHover();
+    this.phase='selected'; this.cancelHover();
     if (this.floatAnim) this.floatAnim.pause();
     this.el.classList.add('fading');
   }
 }
 
-/* LANG */
-function setLang(lang) {
-  currentLang = lang;
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-  renderKeywords();
-  updateCopy();
+/* ═══ IMAGE TRANSITION ═══ */
+function startOverlay() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('dredOverlay');
+    overlay.classList.remove('revealing');
+    // Force reflow
+    void overlay.offsetWidth;
+    overlay.classList.add('darkening');
+    setTimeout(resolve, OVERLAY_DURATION);
+  });
 }
 
+function revealState2() {
+  const img1    = document.getElementById('dredImg1');
+  const img2    = document.getElementById('dredImg2');
+  const overlay = document.getElementById('dredOverlay');
+
+  // Swap images while screen is black
+  img1.style.opacity = '0';
+  img2.style.opacity = '1';
+
+  // Fade overlay back out
+  overlay.classList.remove('darkening');
+  void overlay.offsetWidth;
+  overlay.classList.add('revealing');
+}
+
+function resetImages() {
+  const img1    = document.getElementById('dredImg1');
+  const img2    = document.getElementById('dredImg2');
+  const overlay = document.getElementById('dredOverlay');
+  img1.style.opacity = '1';
+  img2.style.opacity = '0';
+  overlay.classList.remove('darkening','revealing');
+  overlay.style.opacity = '';
+}
+
+/* ═══ LANG ═══ */
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang===lang));
+  renderKeywords(); updateCopy();
+}
 function updateCopy() {
   const c = COPY[currentLang];
   document.getElementById('randomBtn').textContent   = c.random;
@@ -565,210 +504,173 @@ function updateCopy() {
   if (qt.textContent) qt.textContent = pick(DRED_QUOTES[currentLang]);
 }
 
-/* PLACEMENT */
+/* ═══ PLACEMENT ═══ */
 function placeKeywords(buttons, area) {
   const rect = area.getBoundingClientRect();
-  const W = rect.width, H = rect.height;
-  const xPad = W * 0.05;
-  const yTop = H * (isMobile ? 0.05 : 0.30); /* mobile: no top dead zone */
-  const yPad = H * 0.05;
-  const xMax = W - xPad;
-  const yMax = H - yPad;
-  const GAP  = isMobile ? 20 : 14;
-
-  const placed = [];
-
+  const W=rect.width, H=rect.height;
+  const xPad=W*.05, yTop=H*(isMobile?.05:.30), yPad=H*.05;
+  const xMax=W-xPad, yMax=H-yPad, GAP=isMobile?20:14;
+  const placed=[];
   buttons.forEach(btn => {
-    const bw = btn.offsetWidth;
-    const bh = btn.offsetHeight;
-    let best = null;
-
-    for (let tries = 0; tries < 400; tries++) {
-      const l = xPad + Math.random() * Math.max(1, xMax - xPad - bw);
-      const t = yTop + Math.random() * Math.max(1, yMax - yTop - bh);
-      const r = l + bw + GAP, b = t + bh + GAP;
-      const hit = placed.some(p => l < p.r && r > p.l && t < p.b && b > p.t);
-      if (!hit) { best = { l, t, r, b }; break; }
+    const bw=btn.offsetWidth, bh=btn.offsetHeight;
+    let best=null;
+    for (let t=0; t<400; t++) {
+      const l=xPad+Math.random()*Math.max(1,xMax-xPad-bw);
+      const t2=yTop+Math.random()*Math.max(1,yMax-yTop-bh);
+      const r=l+bw+GAP, b=t2+bh+GAP;
+      if (!placed.some(p=>l<p.r&&r>p.l&&t2<p.b&&b>p.t)) { best={l,t:t2,r,b}; break; }
     }
-
-    if (!best) {
-      const l = xPad + Math.random() * Math.max(1, xMax - xPad - bw);
-      const t = yTop + Math.random() * Math.max(1, yMax - yTop - bh);
-      best = { l, t, r: l + bw + GAP, b: t + bh + GAP };
-    }
-
-    placed.push(best);
-    btn.style.left = best.l + 'px';
-    btn.style.top  = best.t + 'px';
+    if (!best) { const l=xPad+Math.random()*Math.max(1,xMax-xPad-bw); const t2=yTop+Math.random()*Math.max(1,yMax-yTop-bh); best={l,t:t2,r:l+bw+GAP,b:t2+bh+GAP}; }
+    placed.push(best); btn.style.left=best.l+'px'; btn.style.top=best.t+'px';
   });
 }
 
-/* RENDER */
-let animators = [];
-
+/* ═══ RENDER ═══ */
+let animators=[];
 function renderKeywords() {
-  clearTimeout(autoSubmitTimer);
-  selectedTags = [];
-  animators = [];
-  const area = document.getElementById('scatterArea');
-  area.innerHTML = '';
-
-  const buttons = KEYWORDS[currentLang].map((kw, i) => {
-    const btn = mkBtn(kw, i);
-    btn.style.visibility = 'hidden';
-    btn.style.left = '0'; btn.style.top = '0';
-    area.appendChild(btn);
-    return btn;
+  clearTimeout(autoSubmitTimer); selectedTags=[]; animators=[];
+  const area=document.getElementById('scatterArea'); area.innerHTML='';
+  const buttons=KEYWORDS[currentLang].map((kw,i)=>{
+    const btn=mkBtn(kw,i); btn.style.visibility='hidden'; btn.style.left='0'; btn.style.top='0';
+    area.appendChild(btn); return btn;
   });
-
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    placeKeywords(buttons, area);
-    buttons.forEach((btn, i) => {
-      btn.style.visibility = 'visible';
-      animators.push(new KWAnimator(btn));
-    });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    placeKeywords(buttons,area);
+    buttons.forEach((btn,i)=>{ btn.style.visibility='visible'; animators.push(new KWAnimator(btn)); });
   }));
 }
-
-function mkBtn(kw, i) {
-  const btn = document.createElement('button');
-  btn.className = 'kw-btn';
-  btn.dataset.index = i;
-  btn.textContent = kw;
-  btn.onclick = () => toggle(btn, i);
-  return btn;
+function mkBtn(kw,i) {
+  const btn=document.createElement('button'); btn.className='kw-btn'; btn.dataset.index=i; btn.textContent=kw;
+  btn.onclick=()=>toggle(btn,i); return btn;
 }
 
-/* TOGGLE */
+/* ═══ TOGGLE ═══ */
 function toggle(btn, index) {
   clearTimeout(autoSubmitTimer);
-  const kw    = KEYWORDS[currentLang][index];
-  const isSel = btn.classList.contains('selected');
-
+  const kw=KEYWORDS[currentLang][index], isSel=btn.classList.contains('selected');
   if (isSel) {
-    btn.classList.remove('selected');
-    selectedTags = selectedTags.filter(t => t !== kw);
-    animators[index].deselect();
-    document.querySelectorAll('.kw-btn').forEach(b => {
-      b.classList.remove('fading');
-      b.style.opacity = '';
-      if (!b.classList.contains('selected')) {
-        const ai = parseInt(b.dataset.index);
-        if (!isNaN(ai) && animators[ai]) animators[ai].deselect();
-      }
-    });
+    btn.classList.remove('selected'); selectedTags=selectedTags.filter(t=>t!==kw); animators[index].deselect();
+    document.querySelectorAll('.kw-btn').forEach(b=>{ b.classList.remove('fading'); b.style.opacity=''; if(!b.classList.contains('selected')){ const ai=parseInt(b.dataset.index); if(!isNaN(ai)&&animators[ai]) animators[ai].deselect(); } });
     return;
   }
-
-  if (selectedTags.length >= 2) return;
-  btn.classList.add('selected');
-  selectedTags.push(kw);
-  animators[index].select();
-
-  if (selectedTags.length === 1) {
-    document.querySelectorAll('.kw-btn:not(.selected)').forEach(b => {
-      b.style.opacity = '0.35';
-    });
+  if (selectedTags.length>=2) return;
+  btn.classList.add('selected'); selectedTags.push(kw); animators[index].select();
+  if (selectedTags.length===1) {
+    document.querySelectorAll('.kw-btn:not(.selected)').forEach(b=>{ b.style.opacity='0.35'; });
   } else {
-    const flash = document.createElement('div');
-    flash.className = 'panel-flash';
+    /* Panel flash */
+    const flash=document.createElement('div'); flash.className='panel-flash';
     document.getElementById('interactSpace').appendChild(flash);
-    setTimeout(() => flash.remove(), 700);
-
-    document.querySelectorAll('.kw-btn:not(.selected)').forEach(b => {
-      const ai = parseInt(b.dataset.index);
-      if (!isNaN(ai) && animators[ai]) animators[ai].fadeOut();
-    });
-    autoSubmitTimer = setTimeout(submitSelection, 680);
+    setTimeout(()=>flash.remove(),700);
+    /* Fade others */
+    document.querySelectorAll('.kw-btn:not(.selected)').forEach(b=>{ const ai=parseInt(b.dataset.index); if(!isNaN(ai)&&animators[ai]) animators[ai].fadeOut(); });
+    /* Go */
+    autoSubmitTimer = setTimeout(()=>submitSelection(), 300);
   }
 }
 
-/* API */
+/* ═══ API ═══ */
 async function submitSelection() {
-  const koTags = selectedTags.map(tag => {
-    const ei = KEYWORDS.en.indexOf(tag);
-    return ei >= 0 ? KEYWORDS.ko[ei] : tag;
-  });
+  const koTags=selectedTags.map(tag=>{ const ei=KEYWORDS.en.indexOf(tag); return ei>=0?KEYWORDS.ko[ei]:tag; });
   await callAPI(koTags, false);
 }
 async function submitRandom() { await callAPI([], true); }
 
 async function callAPI(tags, isRandom) {
+  /* Show loading in right panel */
   showScreen('loading');
+
+  /* Stop ambient cycling during transition */
+  stopAmbient();
+
+  /* Run overlay animation + API call simultaneously */
+  const overlayPromise = startOverlay();
+  const apiPromise = fetch(API_URL, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({tags, is_random: isRandom, lang: currentLang})
+  }).then(r => { if (!r.ok) throw new Error('err'); return r.json(); });
+
   try {
-    const res = await fetch(API_URL, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tags, is_random: isRandom, lang: currentLang })
-    });
-    if (!res.ok) throw new Error('err');
-    const data = await res.json();
+    /* Wait for BOTH to finish */
+    const [_, data] = await Promise.all([overlayPromise, apiPromise]);
     currentResult = data;
+    /* Reveal state2 and result simultaneously */
+    revealState2();
     showResult(data);
-  } catch { showScreen('select'); }
+  } catch {
+    /* On error: reverse overlay, back to select */
+    const overlay = document.getElementById('dredOverlay');
+    overlay.classList.remove('darkening');
+    void overlay.offsetWidth;
+    overlay.classList.add('revealing');
+    showScreen('select');
+    startAmbient();
+  }
 }
 
 function showResult(data) {
-  const c = COPY[currentLang];
-  document.getElementById('resultMeta').textContent   = c.meta;
-  document.getElementById('resultArtist').textContent = data.track.artist;
-  document.getElementById('resultTitle').textContent  = data.track.title;
-  document.getElementById('resultDredLine').textContent = data.dred_line;
-  document.getElementById('spotifyWrap').innerHTML =
+  const c=COPY[currentLang];
+  document.getElementById('resultMeta').textContent    = c.meta;
+  document.getElementById('resultArtist').textContent  = data.track.artist;
+  document.getElementById('resultTitle').textContent   = data.track.title;
+  document.getElementById('resultDredLine').textContent= data.dred_line;
+  document.getElementById('spotifyWrap').innerHTML=
     `<iframe src="https://open.spotify.com/embed/track/${data.track.spotify_id}?utm_source=generator&theme=0"
       height="80" frameBorder="0"
       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
       loading="lazy"></iframe>`;
-  switchDredToWatching();
   showScreen('result');
 }
 
 function showScreen(name) {
-  ['select','loading','result'].forEach(s =>
-    document.getElementById(`screen-${s}`).classList.toggle('visible', s === name)
+  ['select','loading','result'].forEach(s=>
+    document.getElementById(`screen-${s}`).classList.toggle('visible', s===name)
   );
 }
 
 function resetToSelect() {
-  document.getElementById('spotifyWrap').innerHTML = '';
+  document.getElementById('spotifyWrap').innerHTML='';
+  resetImages();
   renderKeywords(); updateCopy(); showScreen('select');
+  startAmbient();
 }
 
-/* SHARE */
+/* ═══ SHARE ═══ */
 function openShare() {
   if (!currentResult) return;
-  document.getElementById('sc-artist').textContent = currentResult.track.artist;
-  document.getElementById('sc-title').textContent  = currentResult.track.title;
-  document.getElementById('sc-line').textContent   = currentResult.dred_line;
+  document.getElementById('sc-artist').textContent=currentResult.track.artist;
+  document.getElementById('sc-title').textContent =currentResult.track.title;
+  document.getElementById('sc-line').textContent  =currentResult.dred_line;
   document.getElementById('shareOverlay').classList.add('visible');
 }
 function closeShare() { document.getElementById('shareOverlay').classList.remove('visible'); }
-document.getElementById('shareOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeShare();
-});
+document.getElementById('shareOverlay').addEventListener('click', function(e){ if(e.target===this) closeShare(); });
 
-/* DRED STATES */
-const STATES = ['state1','state2','state3','state4'];
-function switchDredToWatching() {
-  clearTimeout(dredStateTimer);
-  STATES.forEach(s => document.getElementById(s).classList.remove('active'));
-  document.getElementById('state1').classList.add('active');
-  dredStateIndex = 0;
-  dredStateTimer = setTimeout(cycleDredState, 12000);
+/* ═══ AMBIENT CYCLING ═══ */
+const AMB_STATES = ['ambText','ambGlow','ambQuote'];
+
+function startAmbient() {
+  ambTimer = setTimeout(cycleAmbient, 10000);
 }
-function cycleDredState() {
-  document.getElementById(STATES[dredStateIndex]).classList.remove('active');
-  dredStateIndex = (dredStateIndex + 1) % STATES.length;
-  if (dredStateIndex === 1) document.getElementById('bigText').textContent = pick(BIG_TEXTS);
-  if (dredStateIndex === 3) document.getElementById('quoteText').textContent = pick(DRED_QUOTES[currentLang]);
-  document.getElementById(STATES[dredStateIndex]).classList.add('active');
-  dredStateTimer = setTimeout(cycleDredState, [10000,6000,8000,11000][dredStateIndex]);
+function stopAmbient() {
+  clearTimeout(ambTimer);
+  AMB_STATES.forEach(s=>document.getElementById(s).classList.remove('active'));
+}
+function cycleAmbient() {
+  AMB_STATES.forEach(s=>document.getElementById(s).classList.remove('active'));
+  ambStateIndex = (ambStateIndex+1) % AMB_STATES.length;
+  if (ambStateIndex===0) document.getElementById('bigText').textContent=pick(BIG_TEXTS);
+  if (ambStateIndex===2) document.getElementById('quoteText').textContent=pick(DRED_QUOTES[currentLang]);
+  document.getElementById(AMB_STATES[ambStateIndex]).classList.add('active');
+  ambTimer = setTimeout(cycleAmbient, [8000,6000,10000][ambStateIndex]);
 }
 
-function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
 
+/* INIT */
 renderKeywords();
 updateCopy();
-dredStateTimer = setTimeout(cycleDredState, 10000);
+startAmbient();
 </script>
 </body>
 </html>

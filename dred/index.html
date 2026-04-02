@@ -375,6 +375,10 @@ let lastMoveT    = 0;
 let dragMoved = false;
 const DRAG_THRESHOLD = 4; // px — movement below this is treated as a tap
 
+/* wheel 직접 이동 상태 — isDragging과 별도로 관리 */
+let isWheeling   = false;
+let wheelEndTimer = null;
+
 // Rolling velocity buffer
 const velBuf = [];
 
@@ -531,7 +535,7 @@ function hideHint() {
 }
 
 ;(function loop() {
-  if (!isDragging) {
+  if (!isDragging && !isWheeling) {
     if (isSnapping) {
       /* Lerp snap — no overshoot, eigenvalue=(1-SNAP_EASE)=0.74 */
       const d = snapTarget - offset;
@@ -574,6 +578,9 @@ if (!IS_TOUCH) {
     /* FIX: mid-snap interrupt — snap to destination before drag starts
        so dragStartOff is always frame-aligned, not a mid-spring position */
     if (isSnapping) { offset = snapTarget; isSnapping = false; }
+    /* wheel 제스처 잔류 차단 */
+    isWheeling = false;
+    clearTimeout(wheelEndTimer);
     isDragging    = true;
     dragMoved     = false;
     physVel       = 0;
@@ -614,39 +621,34 @@ if (!IS_TOUCH) {
     }
   });
 
-  let wheelAcc      = 0;
-  let wheelResetTimer = null;
-  let wheelBlocked  = false;
-  const WHEEL_THRESHOLD = 80;
+  /* WHEEL_SENSITIVITY: 1.0 = 트랙패드 1:1, 높이면 마우스 휠 반응 강화 */
+  const WHEEL_SENSITIVITY = 1.0;
+  /* 이벤트 하나당 최대 이동량 cap — Windows 고DPI 휠(deltaY≈800) 폭주 방지 */
+  const WHEEL_CAP = 120;
 
   $wrap.addEventListener('wheel', e => {
     e.preventDefault();
     if (detailOpen) return;
     hideHint();
 
-    // deltaMode 정규화: 0=pixel(기본), 1=line(Firefox), 2=page
+    /* 진행 중인 snap/momentum 즉시 중단 */
+    if (isSnapping) { offset = snapTarget; isSnapping = false; }
+    physVel    = 0;
+    isWheeling = true;
+
+    /* deltaMode 정규화: 0=pixel, 1=line(Firefox 3→90), 2=page */
     const multiplier = e.deltaMode === 1 ? 30 : e.deltaMode === 2 ? 300 : 1;
-    const delta = (e.deltaX !== 0 ? e.deltaX : e.deltaY) * multiplier;
+    const raw   = (e.deltaX !== 0 ? e.deltaX : e.deltaY) * multiplier;
+    const capped = Math.sign(raw) * Math.min(Math.abs(raw), WHEEL_CAP);
 
-    // 200ms 무입력 시 누산 초기화 (제스처 간 잔류 방지)
-    clearTimeout(wheelResetTimer);
-    wheelResetTimer = setTimeout(() => { wheelAcc = 0; }, 200);
+    offset = clamp(offset - capped * WHEEL_SENSITIVITY, maxOffset(), 0);
 
-    // 한 칸 이동 직후 모멘텀 이벤트 차단 (350ms)
-    if (wheelBlocked) return;
-
-    wheelAcc += delta;
-    if (Math.abs(wheelAcc) < WHEEL_THRESHOLD) return;
-
-    const dir = Math.sign(wheelAcc);
-    wheelAcc = 0;
-    wheelBlocked = true;
-    setTimeout(() => { wheelBlocked = false; }, 350);
-
-    const baseIdx = isSnapping
-      ? Math.round(-snapTarget / STEP)
-      : Math.round(-offset / STEP);
-    goToIdx(clamp(baseIdx + dir, 0, items.length - 1));
+    /* 80ms 무입력 시 제스처 종료 → 가장 가까운 카드로 snap */
+    clearTimeout(wheelEndTimer);
+    wheelEndTimer = setTimeout(() => {
+      isWheeling = false;
+      snapToNearest();
+    }, 80);
   }, {passive:false});
 }
 

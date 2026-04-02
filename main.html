@@ -17,11 +17,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 #cur{position:fixed;z-index:999;width:8px;height:8px;border-radius:50%;background:#fff;
   pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:difference;
   transition:width .28s,height .28s,border-radius .28s,background .28s}
-#skip-btn{position:fixed;top:22px;right:26px;z-index:200;background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.38);
+#skip-btn{position:fixed;top:22px;right:26px;z-index:200;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.60);
   font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.35em;text-transform:uppercase;
   padding:8px 16px;cursor:pointer;opacity:0;transition:opacity 1s,background .3s,color .3s}
-#skip-btn:hover{background:rgba(255,255,255,.09);color:rgba(255,255,255,.65)}
+#skip-btn:hover{background:rgba(255,255,255,.13);color:rgba(255,255,255,.88)}
 #kin-char,#dred-char{position:fixed;bottom:0;z-index:30;pointer-events:none;
   height:clamp(360px,65vh,680px);width:auto;opacity:0;filter:brightness(0);mix-blend-mode:screen}
 .sl{position:fixed;top:50%;z-index:40;font-size:8px;letter-spacing:.52em;
@@ -46,7 +46,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 .scb{width:1px;height:36px;background:linear-gradient(180deg,rgba(255,255,255,.25),transparent);
   animation:scba 2.2s ease-in-out infinite}
 @keyframes scba{0%,100%{opacity:.3}50%{opacity:.9}}
-.sct{font-size:8px;letter-spacing:.48em;color:rgba(255,255,255,.16);text-transform:uppercase}
+.sct{
+  font-size:8px;letter-spacing:.48em;color:rgba(255,255,255,.42);
+  text-transform:uppercase;
+  transition:opacity .6s ease;
+}
 @media(max-width:700px){
   .sl{display:none}
   .tk,.td{font-size:clamp(40px,13vw,72px)}
@@ -184,7 +188,7 @@ function getPhase(t) {
 }
 
 /* ── GEOMETRY ── */
-const charH   = () => clamp(H*(IS_TOUCH?.50:.65), IS_TOUCH?240:360, 680);
+const charH   = () => clamp(H*(IS_TOUCH?.34:.65), IS_TOUCH?160:360, 680);
 const kinCX   = () => W*.24;
 const dredCX  = () => W*.76;
 const PLANET_Y = () => H*.50;
@@ -715,6 +719,19 @@ function frame(ts) {
 initParts();
 requestAnimationFrame(frame);
 
+/* ── EXPLORE TEXT CYCLE ── */
+const $sct = document.querySelector('.sct');
+const SCT_TEXTS = ['explore', 'coming soon'];
+let sctIdx = 0;
+setInterval(() => {
+  $sct.style.opacity = '0';
+  setTimeout(() => {
+    sctIdx = (sctIdx + 1) % SCT_TEXTS.length;
+    $sct.textContent = SCT_TEXTS[sctIdx];
+    $sct.style.opacity = '1';
+  }, 600);
+}, 3000);
+
 /* ══════════════════════════════════════════════════
    KIN BUBBLE SYSTEM
 ══════════════════════════════════════════════════ */
@@ -852,22 +869,37 @@ function hideBubble() {
 function syncZones() {
   const ph = getPhase(elapsed).n;
   const active = ph === 'WORLDS';
+  const pe = active ? 'all' : 'none';
 
-  const ki   = document.getElementById('kin-char');
-  const dr   = document.getElementById('dred-char');
-  const kiR  = ki.getBoundingClientRect();
-  const drR  = dr.getBoundingClientRect();
+  if (IS_TOUCH) {
+    // 모바일: 화면 정확히 절반씩 분할
+    $kinZone.style.left   = '0px';
+    $kinZone.style.width  = (W/2) + 'px';
+    $kinZone.style.height = H + 'px';
+    $kinZone.style.pointerEvents = pe;
 
-  $kinZone.style.left   = kiR.left   + 'px';
-  $kinZone.style.width  = kiR.width  + 'px';
-  $kinZone.style.height = kiR.height + 'px';
-  $kinZone.style.pointerEvents = active ? 'all' : 'none';
-  $kinZone.style.cursor = active ? 'pointer' : 'default';
+    $dredZone.style.left   = (W/2) + 'px';
+    $dredZone.style.width  = (W/2) + 'px';
+    $dredZone.style.height = H + 'px';
+    $dredZone.style.pointerEvents = pe;
+  } else {
+    // 데스크탑: 이미지 영역 기반
+    const ki  = document.getElementById('kin-char');
+    const dr  = document.getElementById('dred-char');
+    const kiR = ki.getBoundingClientRect();
+    const drR = dr.getBoundingClientRect();
 
-  $dredZone.style.left   = drR.left   + 'px';
-  $dredZone.style.width  = drR.width  + 'px';
-  $dredZone.style.height = drR.height + 'px';
-  $dredZone.style.pointerEvents = active ? 'all' : 'none';
+    $kinZone.style.left   = kiR.left   + 'px';
+    $kinZone.style.width  = kiR.width  + 'px';
+    $kinZone.style.height = kiR.height + 'px';
+    $kinZone.style.pointerEvents = pe;
+    $kinZone.style.cursor = active ? 'pointer' : 'default';
+
+    $dredZone.style.left   = drR.left   + 'px';
+    $dredZone.style.width  = drR.width  + 'px';
+    $dredZone.style.height = drR.height + 'px';
+    $dredZone.style.pointerEvents = pe;
+  }
 }
 
 setInterval(syncZones, 120);
@@ -875,16 +907,50 @@ setInterval(syncZones, 120);
 // KIN: show on enter, hide on leave
 $kinZone.addEventListener('mouseenter', showBubble);
 $kinZone.addEventListener('mouseleave', hideBubble);
-$kinZone.addEventListener('touchstart', e => { e.preventDefault(); showBubble(); }, { passive:false });
-$kinZone.addEventListener('touchend',   () => setTimeout(hideBubble, 1400));
+
+// 모바일: tap 판별 후 네비게이션
+if (IS_TOUCH) {
+  let kinTx0 = 0, kinTy0 = 0;
+  $kinZone.addEventListener('touchstart', e => {
+    kinTx0 = e.touches[0].clientX;
+    kinTy0 = e.touches[0].clientY;
+    showBubble();
+  }, {passive:true});
+  $kinZone.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - kinTx0;
+    const dy = e.changedTouches[0].clientY - kinTy0;
+    if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
+      hideBubble();
+      navTo('./kin/');
+    } else {
+      setTimeout(hideBubble, 1400);
+    }
+  }, {passive:true});
+}
 
 /* ══════════════════════════════════════════════════
    DRED HOVER — silence with three micro-signals
 ══════════════════════════════════════════════════ */
 $dredZone.addEventListener('mouseenter', () => { dredHovered = true;  });
 $dredZone.addEventListener('mouseleave', () => { dredHovered = false; });
-$dredZone.addEventListener('touchstart', () => { dredHovered = true;  }, { passive:true });
-$dredZone.addEventListener('touchend',   () => { setTimeout(() => { dredHovered = false; }, 800); });
+
+if (IS_TOUCH) {
+  let dredTx0 = 0, dredTy0 = 0;
+  $dredZone.addEventListener('touchstart', e => {
+    dredTx0 = e.touches[0].clientX;
+    dredTy0 = e.touches[0].clientY;
+    dredHovered = true;
+  }, {passive:true});
+  $dredZone.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - dredTx0;
+    const dy = e.changedTouches[0].clientY - dredTy0;
+    if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
+      navTo('./dred/');
+    } else {
+      setTimeout(() => { dredHovered = false; }, 800);
+    }
+  }, {passive:true});
+}
 
 /* ══════════════════════════════════════════════════
    NAVIGATION — KIN → kin.html / DRED → dred.html

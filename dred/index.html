@@ -213,9 +213,24 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 #detail-close{
   display:inline-block;font-size:9px;letter-spacing:.28em;
   color:rgba(255,255,255,.4);text-transform:uppercase;
-  cursor:pointer;transition:color .2s;margin-top:18px;
+  cursor:pointer;transition:color .2s;
 }
 #detail-close:hover{color:var(--dred)}
+
+/* ── LIKE BUTTON ── */
+#detail-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:18px;}
+#like-btn{
+  display:flex;align-items:center;gap:7px;
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;
+  color:rgba(255,255,255,.35);cursor:pointer;
+  transition:color .2s,transform .15s;
+  user-select:none;background:none;border:none;padding:0;
+}
+#like-btn:hover{color:rgba(91,79,207,.7)}
+#like-btn.liked{color:var(--dred)}
+#like-btn.liked .like-heart{transform:scale(1.2)}
+.like-heart{font-size:14px;transition:transform .2s cubic-bezier(.16,1,.3,1)}
+#like-count{font-size:11px;}
 
 /* NAV — shown only when detail is open */
 #detail-nav{
@@ -284,7 +299,13 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
         <div class="action-section-label">↓ explore</div>
         <div id="detail-actions"></div>
       </div>
-      <div id="detail-close">close ×</div>
+      <div id="detail-bottom">
+        <button id="like-btn">
+          <span class="like-heart">♡</span>
+          <span id="like-count">0</span>
+        </button>
+        <div id="detail-close">close ×</div>
+      </div>
     </div>
   </div>
 </div>
@@ -638,6 +659,11 @@ async function fillDetail(i) {
     $actSection.style.display = 'none';
   }
 
+  // 좋아요
+  const itemId = item.item_id || item.id;
+  updateLikeUI(itemId, 0);
+  fetchLikeCount(itemId).then(count => updateLikeUI(itemId, count));
+
   // 태그 (비동기 — 나머지 먼저 보임)
   const $tags = document.getElementById('detail-tags');
   $tags.innerHTML = '';
@@ -670,6 +696,73 @@ function nav(dir) {
   goToIdx(next);
   openDetail(next);
 }
+
+/* ── LIKES ── */
+const LIKED_KEY = 'kxd_liked';
+
+function getLiked() {
+  try { return JSON.parse(localStorage.getItem(LIKED_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function setLiked(itemId, val) {
+  try {
+    const liked = getLiked();
+    if (val) liked[itemId] = true;
+    else delete liked[itemId];
+    localStorage.setItem(LIKED_KEY, JSON.stringify(liked));
+  } catch(e) {}
+}
+
+async function fetchLikeCount(itemId) {
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/gallery_likes?item_id=eq.${itemId}&select=count`,
+    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+  );
+  if (!res.ok) return 0;
+  const data = await res.json();
+  return data[0]?.count || 0;
+}
+
+async function callLikeRpc(fn, itemId) {
+  await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPA_KEY,
+      Authorization: `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_item_id: itemId }),
+  });
+}
+
+function updateLikeUI(itemId, count) {
+  const $btn   = document.getElementById('like-btn');
+  const $heart = $btn.querySelector('.like-heart');
+  const $count = document.getElementById('like-count');
+  const liked  = getLiked()[itemId];
+  $count.textContent = count;
+  if (liked) { $btn.classList.add('liked'); $heart.textContent = '❤'; }
+  else        { $btn.classList.remove('liked'); $heart.textContent = '♡'; }
+}
+
+document.getElementById('like-btn').addEventListener('click', async () => {
+  if (!detailOpen) return;
+  const item   = items[currentIdx];
+  const itemId = item.item_id || item.id;
+  const liked  = getLiked()[itemId];
+  const $count = document.getElementById('like-count');
+  const curCount = parseInt($count.textContent) || 0;
+
+  if (liked) {
+    setLiked(itemId, false);
+    updateLikeUI(itemId, curCount - 1);
+    await callLikeRpc('decrement_like', itemId);
+  } else {
+    setLiked(itemId, true);
+    updateLikeUI(itemId, curCount + 1);
+    await callLikeRpc('increment_like', itemId);
+  }
+});
 
 document.getElementById('detail-close').addEventListener('click', closeDetail);
 $panel.addEventListener('click', e => { if (e.target === $panel) closeDetail(); });

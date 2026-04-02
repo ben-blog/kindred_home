@@ -239,7 +239,7 @@
     .result-dred-line {
       font-family: var(--font-mono); font-size: clamp(0.9rem,1.3vw,1.05rem);
       font-weight: 300; font-style: italic;
-      color: #5a5a5a; line-height: 1.75;
+      color: #909090; line-height: 1.75;
       border-left: 1px solid var(--purple);
       padding-left: 1rem; margin-bottom: 1.8rem; max-width: 310px;
     }
@@ -309,22 +309,24 @@
       .random-btn { font-size: 0.72rem; }
       .random-area { bottom: 2rem; left: 1.5rem; }
 
-      /* Result: slide up from 30% mark */
+      /* Result: slide up from 50% mark */
       #screen-result {
         position: absolute !important;
-        top: 30%; left: 0; right: 0; bottom: 0;
+        top: 50%; left: 0; right: 0; bottom: 0;
         height: auto !important;
         background: rgba(0,0,0,0.93);
         backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
         border-top: 1px solid #1a1a1a; border-radius: 12px 12px 0 0;
-        padding: 1.8rem 1.5rem 2.5rem;
+        padding: 1.5rem 1.5rem 2rem;
+        justify-content: flex-start !important;
         transform: translateY(100%);
         transition: transform 0.38s cubic-bezier(0.16,1,0.3,1);
         overflow-y: auto; z-index: 30;
       }
       #screen-result.visible { display: flex; transform: translateY(0); }
-      .result-title { font-size: 1.9rem; margin-bottom: 1.2rem; }
-      .result-dred-line { font-size: 0.92rem; }
+      #screen-result .result-actions { margin-top: auto; padding-top: 1rem; }
+      .result-title { font-size: 1.75rem; margin-bottom: 1rem; }
+      .result-dred-line { font-size: 0.88rem; margin-bottom: 1.2rem; }
 
       /* Loading: transparent so overlay shows through */
       #screen-loading { position: absolute; inset: 0; z-index: 30; background: transparent; }
@@ -620,7 +622,7 @@ function placeKeywords(buttons, area) {
   const W = rect.width, H = rect.height;
   /* Zone: x 5%–95%, y 30%–(95% minus random btn buffer on mobile) */
   const xPad = W * .05;
-  const yTop  = H * .30;
+  const yTop  = H * (isMobile ? .35 : .30); /* mobile +5% buffer for float animation */
   const yMax  = H - H*.05 - (isMobile ? 70 : 0); /* 70px buffer for random btn */
   const xMax  = W - xPad;
   const GAP   = isMobile ? 20 : 14;

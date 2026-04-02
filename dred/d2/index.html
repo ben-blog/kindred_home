@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D2 — DRED</title>
+  <link rel="icon" type="image/svg+xml" href="dred_favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Gowun+Batang:wght@400;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
+
+    :root {
+      --black: #000;
+      --purple: #5B4FCF;
+      --white: #EDEDED;
+      --font-main: 'Syne', sans-serif;
+      --font-kw: 'Courier Prime', 'Gowun Batang', serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    html, body {
+      height: 100%; background: var(--black);
+      color: var(--white); font-family: var(--font-main); overflow: hidden;
+    }
+
+    /* CURSOR */
+    .cursor-dot {
+      position: fixed; width: 5px; height: 5px;
+      background: rgba(237,237,237,0.5); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: width 0.1s, height 0.1s, background 0.1s;
+    }
+    .cursor-dot.on-btn {
+      width: 28px; height: 28px; background: transparent;
+      border: 1px solid rgba(91,79,207,0.65);
+    }
+    .cursor-dot.on-random {
+      width: 3px; height: 3px; background: rgba(91,79,207,0.5);
+    }
+
+    /* GRAIN */
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9997; opacity: 0.5;
+    }
+
+    /* LAYOUT */
+    .layout { display: flex; height: 100vh; width: 100vw; }
+
+    /* LEFT: DRED */
+    .dred-space {
+      width: 60%; height: 100%;
+      position: relative; overflow: hidden;
+      border-right: 1px solid #0f0f0f; flex-shrink: 0;
+    }
+    .dred-state {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 1.4s ease;
+    }
+    .dred-state.active { opacity: 1; }
+    .dred-state-img { background: #000; }
+    .dred-state-img img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center top;
+      opacity: 0.72; filter: grayscale(15%);
+    }
+    .dred-state-text { background: #000; }
+    .dred-big-text {
+      font-family: var(--font-main);
+      font-size: clamp(7rem, 15vw, 15rem);
+      font-weight: 800; color: var(--white);
+      letter-spacing: -0.05em; opacity: 0.04; user-select: none;
+    }
+    .dred-state-glow {
+      background: radial-gradient(ellipse at 35% 65%, rgba(91,79,207,0.14) 0%, transparent 68%), #000;
+    }
+    .dred-glow-dot {
+      width: 2px; height: 2px; background: var(--purple); border-radius: 50%;
+      box-shadow: 0 0 80px 40px rgba(91,79,207,0.22), 0 0 160px 100px rgba(91,79,207,0.07);
+      animation: glow-pulse 5s ease-in-out infinite;
+    }
+    @keyframes glow-pulse { 0%,100% { opacity:0.3; transform:scale(1); } 50% { opacity:0.85; transform:scale(2); } }
+    .dred-state-quote {
+      background: #000; padding: 3rem;
+      flex-direction: column; align-items: flex-start; justify-content: flex-end;
+    }
+    .dred-quote-label {
+      font-family: var(--font-mono); font-size: 0.58rem;
+      color: var(--purple); letter-spacing: 0.22em;
+      text-transform: uppercase; margin-bottom: 0.9rem;
+    }
+    .dred-quote-text {
+      font-family: var(--font-mono); font-size: clamp(0.78rem,1vw,0.95rem);
+      font-weight: 300; color: #3a3a3a; line-height: 1.8; max-width: 320px;
+    }
+    .dred-space::before {
+      content: ''; position: absolute; bottom: 0; left: 0;
+      width: 1px; height: 26%;
+      background: linear-gradient(to top, var(--purple), transparent); z-index: 10;
+    }
+
+    /* RIGHT: INTERACT */
+    .interact-space {
+      width: 40%; height: 100%;
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.6rem 2rem; z-index: 20;
+    }
+    .d2-label {
+      font-family: var(--font-mono); font-size: 0.58rem;
+      letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase;
+    }
+    .lang-toggle { display: flex; border: 1px solid #181818; }
+    .lang-btn {
+      background: none; border: none; padding: 0.28rem 0.6rem;
+      font-family: var(--font-mono); font-size: 0.58rem;
+      letter-spacing: 0.1em; color: #2a2a2a; transition: all 0.15s;
+    }
+    .lang-btn.active { background: var(--purple); color: var(--white); }
+
+    /* SCREENS */
+    .screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+    .screen.visible { display: flex; }
+
+    /* SELECT */
+    #screen-select { padding-top: 4rem; }
+
+    /* Scatter area: full remaining height */
+    .scatter-area {
+      position: relative; flex: 1; overflow: hidden;
+    }
+
+    /* KEYWORD — always bold, white; selected = purple */
+    .kw-btn {
+      position: absolute;
+      background: none; border: none;
+      font-family: var(--font-kw); font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: -0.01em; white-space: nowrap;
+      line-height: 1; padding: 0.15rem 0;
+      color: var(--white);
+      transform-origin: center center;
+      will-change: transform;
+      transition: opacity 0.22s ease, color 0.2s ease;
+    }
+    .kw-btn.selected {
+      color: var(--purple) !important;
+    }
+    .kw-btn.fading {
+      opacity: 0 !important;
+      pointer-events: none;
+      transition: opacity 0.2s ease !important;
+    }
+
+    /* RANDOM */
+    .random-area { position: absolute; bottom: 1.8rem; left: 2rem; }
+    .random-btn {
+      background: none; border: none;
+      font-family: var(--font-mono); font-size: 0.6rem;
+      color: #1e1e1e; letter-spacing: 0.08em;
+      transition: color 0.2s; padding: 0;
+    }
+    .random-btn:hover { color: #404040; }
+
+    /* Panel flash */
+    .panel-flash {
+      position: absolute; inset: 0;
+      background: rgba(91,79,207,0.06);
+      pointer-events: none; z-index: 30;
+      animation: panel-flash-out 0.6s ease forwards;
+    }
+    @keyframes panel-flash-out { 0% { opacity:1; } 100% { opacity:0; } }
+
+    /* LOADING */
+    #screen-loading { align-items: center; justify-content: center; }
+    .loading-text {
+      font-family: var(--font-main);
+      font-size: clamp(2rem,4vw,3.2rem);
+      font-weight: 800; letter-spacing: -0.04em; color: var(--white);
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+    @keyframes breathe { 0%,100% { opacity:1; } 50% { opacity:0.1; } }
+
+    /* RESULT */
+    #screen-result { padding: 4.5rem 2rem 1.8rem; justify-content: space-between; overflow-y: auto; }
+    .result-top { flex: 1; }
+    .result-meta {
+      font-family: var(--font-mono); font-size: 0.56rem;
+      letter-spacing: 0.22em; color: var(--purple);
+      text-transform: uppercase; margin-bottom: 2rem;
+    }
+    .result-artist {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      font-weight: 300; color: #3a3a3a; letter-spacing: 0.05em; margin-bottom: 0.25rem;
+    }
+    .result-title {
+      font-family: var(--font-main);
+      font-size: clamp(2rem,4.2vw,3.8rem);
+      font-weight: 800; letter-spacing: -0.04em;
+      line-height: 1.05; color: var(--white); margin-bottom: 1.6rem;
+    }
+    .result-dred-line {
+      font-family: var(--font-mono); font-size: clamp(0.9rem,1.3vw,1.05rem);
+      font-weight: 300; font-style: italic;
+      color: #5a5a5a; line-height: 1.75;
+      border-left: 1px solid var(--purple);
+      padding-left: 1rem; margin-bottom: 1.8rem; max-width: 310px;
+    }
+    .spotify-wrap { margin-bottom: 1.5rem; }
+    .spotify-wrap iframe { border-radius: 2px; width: 100%; }
+    .result-actions {
+      display: flex; gap: 2rem;
+      justify-content: flex-end; align-items: center; flex-shrink: 0;
+    }
+    .action-btn {
+      background: none; border: none;
+      font-family: var(--font-mono); font-size: 0.6rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #282828; transition: color 0.15s; padding: 0;
+    }
+    .action-btn:hover { color: var(--white); }
+    .action-btn.primary { color: var(--purple); }
+    .action-btn.primary:hover { color: var(--white); }
+
+    /* SHARE */
+    .share-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+    }
+    .share-overlay.visible { display: flex; }
+    .share-card {
+      background: #000; border: 1px solid #181818;
+      width: 330px; aspect-ratio: 1;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 1.7rem; position: relative; overflow: hidden;
+    }
+    .share-card::after {
+      content: ''; position: absolute; bottom: 0; right: 0;
+      width: 90px; height: 90px;
+      background: radial-gradient(at 100% 100%, rgba(91,79,207,0.16) 0%, transparent 70%);
+    }
+    .sc-top { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase; }
+    .sc-artist { font-family: var(--font-mono); font-size: 0.62rem; color: #2e2e2e; margin-bottom: 0.2rem; }
+    .sc-title { font-family: var(--font-main); font-size: 1.6rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; color: var(--white); margin-bottom: 0.7rem; }
+    .sc-line { font-family: var(--font-mono); font-size: 0.68rem; font-style: italic; color: #333; line-height: 1.6; }
+    .sc-footer { font-family: var(--font-mono); font-size: 0.48rem; letter-spacing: 0.15em; color: #181818; text-transform: uppercase; }
+    .share-close {
+      position: absolute; top: -1.8rem; right: 0;
+      background: none; border: none; color: #2a2a2a;
+      font-size: 0.9rem; padding: 0.3rem; transition: color 0.15s;
+    }
+    .share-close:hover { color: var(--white); }
+    .share-hint {
+      margin-top: 0.7rem; font-family: var(--font-mono);
+      font-size: 0.52rem; color: #1e1e1e; letter-spacing: 0.1em; text-align: center;
+    }
+
+    /* MOBILE */
+    @media (max-width: 767px) {
+      .cursor-dot { display: none; }
+      *, *::before, *::after { cursor: auto !important; }
+      .dred-space { position: fixed; inset: 0; width: 100%; border-right: none; z-index: 0; }
+      .dred-state-img img { opacity: 0.09; }
+      .dred-big-text { opacity: 0.02; }
+      .dred-quote-text { opacity: 0; }
+      .interact-space { position: fixed; inset: 0; width: 100%; z-index: 10; background: transparent; }
+      .scatter-area {
+        position: static;
+        display: flex; flex-wrap: wrap;
+        align-content: center; gap: 0.6rem 1.2rem;
+        padding: 0 1.5rem; overflow: visible; flex: 1;
+      }
+      .kw-btn { position: static; font-size: 0.8rem !important; }
+      .random-area { bottom: 2.2rem; left: 1.5rem; }
+      #screen-result {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: 68vh; background: rgba(0,0,0,0.93);
+        backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+        border-top: 1px solid #111; border-radius: 10px 10px 0 0;
+        padding: 1.5rem 1.5rem 2rem;
+        transform: translateY(100%);
+        transition: transform 0.38s cubic-bezier(0.16,1,0.3,1);
+        overflow-y: auto; z-index: 30;
+      }
+      #screen-result.visible { display: flex; transform: translateY(0); }
+      .result-title { font-size: 1.9rem; }
+      .result-dred-line { font-size: 0.9rem; }
+      #screen-loading {
+        position: fixed; inset: 0; z-index: 30;
+        background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+      }
+      .share-card { width: 285px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor-dot" id="cursorDot"></div>
+
+<div class="layout">
+
+  <!-- LEFT: DRED -->
+  <div class="dred-space">
+    <div class="dred-state dred-state-img active" id="state1">
+      <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_g3_music.webp" alt=""
+        onerror="this.style.display='none'">
+    </div>
+    <div class="dred-state dred-state-text" id="state2">
+      <div class="dred-big-text" id="bigText">.</div>
+    </div>
+    <div class="dred-state dred-state-glow" id="state3">
+      <div class="dred-glow-dot"></div>
+    </div>
+    <div class="dred-state dred-state-quote" id="state4">
+      <div class="dred-quote-label">DRED</div>
+      <div class="dred-quote-text" id="quoteText"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: INTERACT -->
+  <div class="interact-space" id="interactSpace">
+    <div class="top-bar">
+      <span class="d2-label">D2</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">KO</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+
+    <div class="screen visible" id="screen-select">
+      <div class="scatter-area" id="scatterArea"></div>
+      <div class="random-area">
+        <button class="random-btn" id="randomBtn" onclick="submitRandom()"></button>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-loading">
+      <div class="loading-text" id="loadingText">잠깐 기다려..</div>
+    </div>
+
+    <div class="screen" id="screen-result">
+      <div class="result-top">
+        <div class="result-meta" id="resultMeta"></div>
+        <div class="result-artist" id="resultArtist"></div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-dred-line" id="resultDredLine"></div>
+        <div class="spotify-wrap" id="spotifyWrap"></div>
+      </div>
+      <div class="result-actions">
+        <button class="action-btn" onclick="resetToSelect()" id="btnAgain"></button>
+        <button class="action-btn primary" onclick="openShare()" id="btnShare"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="share-overlay" id="shareOverlay">
+  <div style="position:relative">
+    <div class="share-card">
+      <div class="sc-top">D2 · DRED</div>
+      <div>
+        <div class="sc-artist" id="sc-artist"></div>
+        <div class="sc-title" id="sc-title"></div>
+        <div class="sc-line" id="sc-line"></div>
+      </div>
+      <div class="sc-footer">kinxdred.com/dred/d2</div>
+    </div>
+    <button class="share-close" onclick="closeShare()">×</button>
+    <div class="share-hint" id="shareHint"></div>
+  </div>
+</div>
+
+<script>
+/* DATA */
+const KEYWORDS = {
+  ko: ['퇴근하는 길','새벽인데','밥은 혼자','잠이 안 와','그냥 걷고 싶어','어딘가 가는 중','그냥 지쳤어','멍때리는 중','뭔가 놓친 것 같아','할 말이 있는데','결정을 못 하겠어','괜찮다고 했는데','끝난 것 같은데','이유 없이 별로','설레면 안 되는데'],
+  en: ['on the way home',"it's 3am",'eating alone',"can't sleep",'just walking','going somewhere','just tired','zoning out','feels like i missed something','i have something to say',"can't decide",'said i was fine',"feels like it's over",'off for no reason',"shouldn't be excited"]
+};
+const COPY = {
+  ko: { random:'— 그냥 줘', again:'다시', share:'공유', hint:'스크린샷으로 저장하세요', meta:'DRED의 선곡', loading:'잠깐 기다려..' },
+  en: { random:'— just give it', again:'again', share:'share', hint:'screenshot to save', meta:"DRED's pick", loading:'hold on..' }
+};
+const DRED_QUOTES = {
+  ko: ['알고 있어.','봐.','그래서.','네가 고른 거야.','이미 답 알잖아.','상관없어.'],
+  en: ['already knew.','watching.','so.','your pick.','you already know.',"doesn't matter."]
+};
+const BIG_TEXTS = ['.','..','D','R','E','D','..'];
+const API_URL = 'https://d2-api-production.up.railway.app/api/d2/now';
+
+let currentLang = 'ko';
+let selectedTags = [];
+let currentResult = null;
+let autoSubmitTimer = null;
+let dredStateIndex = 0;
+let dredStateTimer = null;
+const isMobile = window.innerWidth < 768;
+
+/* CURSOR */
+const cursorDot = document.getElementById('cursorDot');
+document.addEventListener('mousemove', e => {
+  cursorDot.style.left = e.clientX + 'px';
+  cursorDot.style.top  = e.clientY + 'px';
+});
+document.addEventListener('mouseover', e => {
+  const t = e.target.closest('.kw-btn') || e.target;
+  cursorDot.classList.remove('on-btn','on-random');
+  if (t.classList.contains('kw-btn')) cursorDot.classList.add('on-btn');
+  else if (t.classList.contains('random-btn')) cursorDot.classList.add('on-random');
+});
+
+/* ═══ KEYWORD ANIMATOR ═══ */
+class KWAnimator {
+  constructor(el) {
+    this.el = el;
+    this.floatAnim   = null;
+    this.hoverAnim   = null;
+    this.phase       = 'float'; // float | approaching | oscillating | leaving | selected
+    if (!isMobile) {
+      this.startFloat();
+      el.addEventListener('mouseenter', () => this.onHover());
+      el.addEventListener('mouseleave', () => this.onLeave());
+    }
+  }
+
+  startFloat() {
+    const dur  = 8000 + Math.random() * 5000;
+    const del  = -Math.random() * dur;
+    /* Drift path: 4 distinct positions for organic feel */
+    const dx1 = (Math.random() - 0.5) * 22;
+    const dy1 = (Math.random() - 0.5) * 18;
+    const dx2 = (Math.random() - 0.5) * 22;
+    const dy2 = (Math.random() - 0.5) * 18;
+
+    this.floatAnim = this.el.animate([
+      { transform: `translate(0px, 0px) scale(0.93)` },
+      { transform: `translate(${dx1}px, ${dy1}px) scale(1.07)` },
+      { transform: `translate(${dx2}px, ${dy2 * 0.5}px) scale(0.96)` },
+      { transform: `translate(${dx1 * 0.3}px, ${dy2}px) scale(1.09)` },
+      { transform: `translate(0px, 0px) scale(0.93)` },
+    ], { duration: dur, delay: del, iterations: Infinity, easing: 'ease-in-out' });
+  }
+
+  getScale() {
+    const m = new DOMMatrix(window.getComputedStyle(this.el).transform);
+    return Math.sqrt(m.a * m.a + m.b * m.b) || 1;
+  }
+
+  cancelHover() {
+    if (this.hoverAnim) { this.hoverAnim.cancel(); this.hoverAnim = null; }
+  }
+
+  onHover() {
+    if (this.phase === 'selected') return;
+    this.phase = 'approaching';
+    if (this.floatAnim) this.floatAnim.pause();
+    const s0 = this.getScale();
+    this.cancelHover();
+
+    /* Grow to 1.4 over 1000ms */
+    this.hoverAnim = this.el.animate([
+      { transform: `scale(${s0})` },
+      { transform: `scale(1.4)` }
+    ], { duration: 1000, easing: 'ease-out', fill: 'forwards' });
+
+    this.hoverAnim.onfinish = () => {
+      if (this.phase !== 'approaching') return;
+      this.phase = 'oscillating';
+      this.cancelHover();
+      /* Oscillate 1.4 ↔ 1.2 */
+      this.hoverAnim = this.el.animate([
+        { transform: 'scale(1.4)' },
+        { transform: 'scale(1.2)' },
+        { transform: 'scale(1.4)' }
+      ], { duration: 1400, easing: 'ease-in-out', iterations: Infinity });
+    };
+  }
+
+  onLeave() {
+    if (this.phase === 'selected') return;
+    this.phase = 'leaving';
+    const s0 = this.getScale();
+    this.cancelHover();
+
+    /* Bounce back to 1.0 */
+    const under = Math.max(s0 * 0.82, 0.88);
+    this.hoverAnim = this.el.animate([
+      { transform: `scale(${s0})` },
+      { transform: `scale(${under})` },
+      { transform: `scale(1.05)` },
+      { transform: `scale(0.97)` },
+      { transform: `scale(1.0)` }
+    ], { duration: 480, easing: 'ease-out', fill: 'forwards' });
+
+    this.hoverAnim.onfinish = () => {
+      if (this.phase !== 'leaving') return;
+      this.cancelHover();
+      this.el.style.transform = '';
+      this.phase = 'float';
+      if (this.floatAnim) this.floatAnim.play();
+    };
+  }
+
+  select() {
+    this.phase = 'selected';
+    const s0 = this.getScale();
+    this.cancelHover();
+    if (this.floatAnim) this.floatAnim.pause();
+    /* Flash purple → settle at 1.2 */
+    this.hoverAnim = this.el.animate([
+      { transform: `scale(${s0})` },
+      { transform: 'scale(1.28)', offset: 0.3 },
+      { transform: 'scale(1.2)' }
+    ], { duration: 360, easing: 'ease-out', fill: 'forwards' });
+  }
+
+  deselect() {
+    this.phase = 'float';
+    this.cancelHover();
+    this.el.style.transform = '';
+    if (this.floatAnim) this.floatAnim.play();
+  }
+
+  fadeOut() {
+    this.phase = 'selected';
+    this.cancelHover();
+    if (this.floatAnim) this.floatAnim.pause();
+    this.el.classList.add('fading');
+  }
+}
+
+/* LANG */
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  renderKeywords();
+  updateCopy();
+}
+
+function updateCopy() {
+  const c = COPY[currentLang];
+  document.getElementById('randomBtn').textContent    = c.random;
+  document.getElementById('btnAgain').textContent     = c.again;
+  document.getElementById('btnShare').textContent     = c.share;
+  document.getElementById('shareHint').textContent    = c.hint;
+  document.getElementById('loadingText').textContent  = c.loading;
+  const qt = document.getElementById('quoteText');
+  if (qt.textContent) qt.textContent = pick(DRED_QUOTES[currentLang]);
+}
+
+/* PLACEMENT: collision-aware */
+function placeKeywords(buttons, area) {
+  const rect = area.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+
+  /* Placement zone:
+     X: 5% … 95%   (inner 5% padding)
+     Y: 30% … 95%  (top 30% empty + 5% bottom pad) */
+  const xPad  = W * 0.05;
+  const yTop  = H * 0.30;
+  const yPad  = H * 0.05;
+  const xMax  = W - xPad;
+  const yMax  = H - yPad;
+  const GAP   = 14; /* px clearance between keywords */
+
+  const placed = []; /* {l, t, r, b} */
+
+  buttons.forEach(btn => {
+    const bw = btn.offsetWidth;
+    const bh = btn.offsetHeight;
+
+    let best = null;
+    let tries = 0;
+
+    while (tries < 300) {
+      const l = xPad   + Math.random() * Math.max(0, xMax - xPad - bw);
+      const t = yTop   + Math.random() * Math.max(0, yMax - yTop - bh);
+      const r = l + bw + GAP;
+      const b = t + bh + GAP;
+
+      const hit = placed.some(p =>
+        l < p.r && r > p.l && t < p.b && b > p.t
+      );
+
+      if (!hit) { best = { l, t, r, b }; break; }
+      tries++;
+    }
+
+    /* Fallback if no collision-free spot */
+    if (!best) {
+      const l = xPad + Math.random() * Math.max(0, xMax - xPad - bw);
+      const t = yTop + Math.random() * Math.max(0, yMax - yTop - bh);
+      best = { l, t, r: l + bw + GAP, b: t + bh + GAP };
+    }
+
+    placed.push(best);
+    btn.style.left = best.l + 'px';
+    btn.style.top  = best.t + 'px';
+  });
+}
+
+/* RENDER KEYWORDS */
+let animators = [];
+
+function renderKeywords() {
+  clearTimeout(autoSubmitTimer);
+  selectedTags = [];
+  animators = [];
+
+  const area = document.getElementById('scatterArea');
+  area.innerHTML = '';
+  const kws = KEYWORDS[currentLang];
+
+  if (isMobile) {
+    kws.forEach((kw, i) => {
+      const btn = mkBtn(kw, i);
+      area.appendChild(btn);
+      animators.push(new KWAnimator(btn));
+    });
+    return;
+  }
+
+  /* PC: create hidden, measure, place, show */
+  const buttons = kws.map((kw, i) => {
+    const btn = mkBtn(kw, i);
+    btn.style.visibility = 'hidden';
+    btn.style.left = '0';
+    btn.style.top  = '0';
+    area.appendChild(btn);
+    return btn;
+  });
+
+  /* Two rAF to ensure layout is done */
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    placeKeywords(buttons, area);
+    buttons.forEach((btn, i) => {
+      btn.style.visibility = 'visible';
+      animators.push(new KWAnimator(btn));
+    });
+  }));
+}
+
+function mkBtn(kw, i) {
+  const btn = document.createElement('button');
+  btn.className = 'kw-btn';
+  btn.dataset.index = i;
+  btn.textContent = kw;
+  btn.onclick = () => toggle(btn, i);
+  return btn;
+}
+
+/* TOGGLE */
+function toggle(btn, index) {
+  clearTimeout(autoSubmitTimer);
+  const kw = KEYWORDS[currentLang][index];
+  const isSel = btn.classList.contains('selected');
+
+  if (isSel) {
+    btn.classList.remove('selected');
+    selectedTags = selectedTags.filter(t => t !== kw);
+    animators[index].deselect();
+    /* Restore all others */
+    document.querySelectorAll('.kw-btn').forEach((b, j) => {
+      b.classList.remove('fading');
+      b.style.opacity = '';
+      if (!b.classList.contains('selected')) animators[parseInt(b.dataset.index)]?.deselect();
+    });
+    return;
+  }
+
+  if (selectedTags.length >= 2) return;
+  btn.classList.add('selected');
+  selectedTags.push(kw);
+  animators[index].select();
+
+  if (selectedTags.length === 1) {
+    /* Dim others slightly */
+    document.querySelectorAll('.kw-btn:not(.selected)').forEach(b => {
+      b.style.opacity = '0.38';
+    });
+  } else {
+    /* Panel flash + fade others + auto-submit */
+    const flash = document.createElement('div');
+    flash.className = 'panel-flash';
+    document.getElementById('interactSpace').appendChild(flash);
+    setTimeout(() => flash.remove(), 700);
+
+    document.querySelectorAll('.kw-btn:not(.selected)').forEach(b => {
+      const ai = parseInt(b.dataset.index);
+      if (!isNaN(ai) && animators[ai]) animators[ai].fadeOut();
+    });
+
+    autoSubmitTimer = setTimeout(submitSelection, 680);
+  }
+}
+
+/* API */
+async function submitSelection() {
+  const koTags = selectedTags.map(tag => {
+    const ei = KEYWORDS.en.indexOf(tag);
+    return ei >= 0 ? KEYWORDS.ko[ei] : tag;
+  });
+  await callAPI(koTags, false);
+}
+async function submitRandom() { await callAPI([], true); }
+
+async function callAPI(tags, isRandom) {
+  showScreen('loading');
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tags, is_random: isRandom, lang: currentLang })
+    });
+    if (!res.ok) throw new Error('err');
+    const data = await res.json();
+    currentResult = data;
+    showResult(data);
+  } catch { showScreen('select'); }
+}
+
+function showResult(data) {
+  const c = COPY[currentLang];
+  document.getElementById('resultMeta').textContent = c.meta;
+  document.getElementById('resultArtist').textContent = data.track.artist;
+  document.getElementById('resultTitle').textContent = data.track.title;
+  document.getElementById('resultDredLine').textContent = data.dred_line;
+  document.getElementById('spotifyWrap').innerHTML =
+    `<iframe src="https://open.spotify.com/embed/track/${data.track.spotify_id}?utm_source=generator&theme=0"
+      height="80" frameBorder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"></iframe>`;
+  switchDredToWatching();
+  showScreen('result');
+}
+
+function showScreen(name) {
+  ['select','loading','result'].forEach(s =>
+    document.getElementById(`screen-${s}`).classList.toggle('visible', s === name)
+  );
+}
+
+function resetToSelect() {
+  document.getElementById('spotifyWrap').innerHTML = '';
+  renderKeywords();
+  updateCopy();
+  showScreen('select');
+}
+
+/* SHARE */
+function openShare() {
+  if (!currentResult) return;
+  document.getElementById('sc-artist').textContent = currentResult.track.artist;
+  document.getElementById('sc-title').textContent  = currentResult.track.title;
+  document.getElementById('sc-line').textContent   = currentResult.dred_line;
+  document.getElementById('shareOverlay').classList.add('visible');
+}
+function closeShare() { document.getElementById('shareOverlay').classList.remove('visible'); }
+document.getElementById('shareOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeShare();
+});
+
+/* DRED STATES */
+const STATES = ['state1','state2','state3','state4'];
+function switchDredToWatching() {
+  clearTimeout(dredStateTimer);
+  STATES.forEach(s => document.getElementById(s).classList.remove('active'));
+  document.getElementById('state1').classList.add('active');
+  dredStateIndex = 0;
+  dredStateTimer = setTimeout(cycleDredState, 12000);
+}
+function cycleDredState() {
+  document.getElementById(STATES[dredStateIndex]).classList.remove('active');
+  dredStateIndex = (dredStateIndex + 1) % STATES.length;
+  if (dredStateIndex === 1) document.getElementById('bigText').textContent = pick(BIG_TEXTS);
+  if (dredStateIndex === 3) document.getElementById('quoteText').textContent = pick(DRED_QUOTES[currentLang]);
+  document.getElementById(STATES[dredStateIndex]).classList.add('active');
+  dredStateTimer = setTimeout(cycleDredState, [10000,6000,8000,11000][dredStateIndex]);
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* INIT */
+renderKeywords();
+updateCopy();
+dredStateTimer = setTimeout(cycleDredState, 10000);
+</script>
+</body>
+</html>

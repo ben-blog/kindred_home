@@ -170,11 +170,10 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 #detail-img{
   flex:0 0 auto;
   width:clamp(140px,24vw,280px);
-  aspect-ratio:3/4;
   overflow:hidden;
   border:1px solid rgba(91,79,207,.22);
 }
-#detail-img img{width:100%;height:100%;object-fit:cover;display:block;}
+#detail-img img{width:100%;height:auto;display:block;}
 
 #detail-text{flex:1 1 auto;overflow-y:auto;max-height:80vh;padding-right:8px;}
 #detail-eyebrow{font-size:8px;letter-spacing:.32em;color:rgba(91,79,207,.55);text-transform:uppercase;margin-bottom:10px;}
@@ -249,7 +248,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 
 @media(max-width:680px){
   #detail-inner{flex-direction:column;gap:12px;padding:16px;width:96%;}
-  #detail-img{width:100%;aspect-ratio:3/4;max-height:36vh;}
+  #detail-img{width:100%;}
   #detail-technique{display:none}
   #detail-desc{display:block;font-size:11px;}
   .perspective-block{display:none}

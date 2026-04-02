@@ -276,8 +276,9 @@
     }
     .sc-bg {
       position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover; object-position: center top;
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
     }
     /* 그라데이션 오버레이 — 상단/하단 텍스트 가독성 확보 */
     .sc-overlay {
@@ -459,9 +460,7 @@
 <div class="share-overlay" id="shareOverlay">
   <div style="position:relative">
     <div class="share-card" id="shareCard">
-      <img class="sc-bg" id="scBg"
-        src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp"
-        crossorigin="anonymous" alt="">
+      <div class="sc-bg" id="scBg"></div>
       <div class="sc-overlay"></div>
       <div class="sc-content">
         <div>
@@ -882,6 +881,10 @@ function resetToSelect() {
 function openShare() {
   if (!currentResult) return;
   const c = COPY[currentLang];
+
+  /* 배경 이미지 설정 (background-image: html2canvas가 cover 비율 올바르게 처리) */
+  const STATE2_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp';
+  document.getElementById('scBg').style.backgroundImage = `url('${STATE2_URL}')`;
 
   /* 키워드 채우기 */
   const kwEl = document.getElementById('sc-keywords');

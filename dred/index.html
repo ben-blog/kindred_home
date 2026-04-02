@@ -604,7 +604,9 @@ if (!IS_TOUCH) {
     if (!isDragging) return;
     isDragging = false;
     $cur.classList.remove('drag');
-    physVel = rollingVel() * BOOST;
+    const rawVel = rollingVel() * BOOST;
+    const MAX_VEL = STEP * 0.3;
+    physVel = Math.max(-MAX_VEL, Math.min(MAX_VEL, rawVel));
     velBuf.length = 0;
     if (Math.abs(physVel) < MIN_VEL) {
       physVel = 0;
@@ -612,12 +614,19 @@ if (!IS_TOUCH) {
     }
   });
 
+  let lastWheelTime = 0;
   $wrap.addEventListener('wheel', e => {
     e.preventDefault();
     if (detailOpen) return;
     hideHint();
+    const now = performance.now();
+    if (now - lastWheelTime < 250) return;
+    lastWheelTime = now;
     const dir = Math.sign(e.deltaX !== 0 ? e.deltaX : e.deltaY);
-    goToIdx(clamp(Math.round(-offset / STEP) + dir, 0, items.length - 1));
+    const baseIdx = isSnapping
+      ? Math.round(-snapTarget / STEP)
+      : Math.round(-offset / STEP);
+    goToIdx(clamp(baseIdx + dir, 0, items.length - 1));
   }, {passive:false});
 }
 

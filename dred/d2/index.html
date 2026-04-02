@@ -23,7 +23,7 @@
       color: var(--white); font-family: var(--font-main); overflow: hidden;
     }
 
-    /* CURSOR */
+    .dred-img-gradient { display: none; } /* PC: hidden */
     .cursor-dot {
       position: fixed; width: 5px; height: 5px;
       background: rgba(237,237,237,0.5); border-radius: 50%;
@@ -229,7 +229,19 @@
       *, *::before, *::after { cursor: auto !important; }
 
       .dred-space { position: fixed; inset: 0; width: 100%; border-right: none; z-index: 0; }
-      #dredImg1 img, #dredImg2 img { opacity: 0.18; }
+      #dredImg1 img, #dredImg2 img { opacity: 0.55; }
+
+      /* Gradient: top bright, bottom dark */
+      .dred-img-gradient {
+        position: absolute; inset: 0; z-index: 2; pointer-events: none;
+        background: linear-gradient(
+          to bottom,
+          rgba(0,0,0,0)   0%,
+          rgba(0,0,0,0)   25%,
+          rgba(0,0,0,0.5) 55%,
+          rgba(0,0,0,0.7) 100%
+        );
+      }
 
       .interact-space { position: fixed; inset: 0; width: 100%; z-index: 10; background: transparent; }
       .kw-btn { font-size: 1.1rem !important; }
@@ -238,9 +250,9 @@
 
       #screen-result {
         position: fixed; bottom: 0; left: 0; right: 0;
-        height: 70vh; background: rgba(0,0,0,0.95);
+        height: 72vh; background: rgba(0,0,0,0.92);
         backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-        border-top: 1px solid #111; border-radius: 12px 12px 0 0;
+        border-top: 1px solid #1a1a1a; border-radius: 12px 12px 0 0;
         padding: 1.8rem 1.5rem 2.5rem;
         transform: translateY(100%);
         transition: transform 0.38s cubic-bezier(0.16,1,0.3,1);
@@ -272,6 +284,9 @@
     <div class="dred-img-layer" id="dredImg2">
       <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp" alt="">
     </div>
+
+    <!-- Gradient overlay (mobile only) -->
+    <div class="dred-img-gradient"></div>
 
     <!-- Transition overlay -->
     <div class="dred-overlay" id="dredOverlay"></div>
@@ -508,7 +523,7 @@ function updateCopy() {
 function placeKeywords(buttons, area) {
   const rect = area.getBoundingClientRect();
   const W=rect.width, H=rect.height;
-  const xPad=W*.05, yTop=H*(isMobile?.05:.30), yPad=H*.05;
+  const xPad=W*.05, yTop=H*(isMobile?.30:.30), yPad=H*.05;
   const xMax=W-xPad, yMax=H-yPad, GAP=isMobile?20:14;
   const placed=[];
   buttons.forEach(btn => {

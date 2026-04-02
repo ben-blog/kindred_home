@@ -257,8 +257,23 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #detail-counter{font-size:9px;letter-spacing:.22em;color:rgba(255,255,255,.35);display:flex;align-items:center}
 
 @media(max-width:680px){
-  #detail{flex-direction:column;gap:12px;padding:16px;top:48%;width:96%;max-width:none;}
+  /* FIX: 모바일 상세 패널 스크롤
+     기존: #detail이 top:48% + translateY(-50%)로 뷰포트 중앙 고정.
+     콘텐츠가 길면 아래가 잘려서 close 버튼이 안 보임.
+     수정: top:0에서 시작, 패널 전체를 overflow-y:auto로 스크롤 가능하게. */
+  #detail{
+    flex-direction:column;gap:12px;
+    top:0;left:0;right:0;bottom:0;
+    transform:none;
+    width:100%;max-width:none;
+    padding:56px 16px 96px; /* top: 헤더 여백, bottom: nav 버튼 여백 */
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    align-items:center;
+    justify-content:flex-start;
+  }
   #detail-img{width:100%;}
+  #detail-text{max-height:none;overflow-y:visible;}
   #detail-technique{display:none}
   #detail-desc{display:block;font-size:11px;}
   .perspective-block{display:none}

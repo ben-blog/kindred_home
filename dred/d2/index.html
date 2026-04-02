@@ -923,7 +923,7 @@ async function saveShareImage() {
     await document.fonts.ready;
     const canvas = await html2canvas(document.getElementById('shareCard'), {
       useCORS:         true,
-      scale:           2,
+      scale:           4,
       backgroundColor: '#000',
       logging:         false,
     });

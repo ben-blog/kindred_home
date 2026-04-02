@@ -51,7 +51,6 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 #strip{
   display:flex;align-items:center;gap:24px;
   will-change:transform;
-  /* padding added by JS after items load */
 }
 
 /* ── FRAME ── */
@@ -68,7 +67,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 .frame img{
   width:100%;height:100%;object-fit:cover;
   display:block;pointer-events:none;
-  transition:transform .6s cubic-bezier(.16,1,.3,1);
+  transition:transform .5s cubic-bezier(.16,1,.3,1);
 }
 .frame:hover img{transform:scale(1.03)}
 
@@ -86,11 +85,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 }
 
 /* action glow on frame */
-.frame.has-action{
-  box-shadow:0 0 0 2px rgba(91,79,207,.5),
-             0 0 18px 2px rgba(91,79,207,.18);
-  animation:frameGlow 2.6s ease-in-out infinite;
-}
+.frame.has-action{animation:frameGlow 2.6s ease-in-out infinite;}
 @keyframes frameGlow{
   0%,100%{box-shadow:0 0 0 2px rgba(91,79,207,.4), 0 0 14px 2px rgba(91,79,207,.12)}
   50%    {box-shadow:0 0 0 2px rgba(91,79,207,.8), 0 0 26px 4px rgba(91,79,207,.28)}
@@ -111,8 +106,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 
 /* action section in detail */
 #detail-action-section{
-  margin-top:20px;
-  padding:14px 16px;
+  margin-top:20px;padding:14px 16px;
   border:1px solid rgba(91,79,207,.3);
   background:rgba(91,79,207,.06);
 }
@@ -120,9 +114,14 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   font-size:7px;letter-spacing:.32em;color:rgba(91,79,207,.6);
   text-transform:uppercase;margin-bottom:10px;
 }
-#detail-actions{display:flex;flex-wrap:wrap;gap:8px;}
 
-/* FIX: pointer-events:none so the fading loading screen never blocks clicks */
+/* FIX: pointer-events:none — no interactive children */
+#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;
+  justify-content:center;background:var(--bg);pointer-events:none;}
+#loading span{font-size:9px;letter-spacing:.4em;color:rgba(91,79,207,.4);
+  text-transform:uppercase;animation:blink 1.4s ease infinite;}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
 #focus-dot{
   position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
   display:flex;gap:6px;align-items:center;z-index:50;pointer-events:none;
@@ -132,19 +131,11 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 .fdot{width:4px;height:4px;border-radius:50%;background:rgba(91,79,207,.18);transition:all .3s}
 .fdot.active{background:var(--dred);transform:scale(1.5)}
 
-/* ── HINT ── */
 #hint{
   position:fixed;bottom:42px;left:50%;transform:translateX(-50%);
   font-size:8px;letter-spacing:.4em;color:rgba(255,255,255,.14);
   text-transform:uppercase;pointer-events:none;transition:opacity .6s;
 }
-
-/* ── LOADING ── */
-/* FIX: pointer-events:none — loading has no interactive children,
-   and this prevents the fading overlay from silently blocking frame clicks */
-#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);pointer-events:none;}
-#loading span{font-size:9px;letter-spacing:.4em;color:rgba(91,79,207,.4);text-transform:uppercase;animation:blink 1.4s ease infinite;}
-@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* ══════════════════════════════
    DETAIL PANEL
@@ -168,10 +159,8 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 #detail-panel.open #detail-inner{transform:translateY(0);}
 
 #detail-img{
-  flex:0 0 auto;
-  width:clamp(140px,24vw,280px);
-  aspect-ratio:3/4;
-  overflow:hidden;
+  flex:0 0 auto;width:clamp(140px,24vw,280px);
+  aspect-ratio:3/4;overflow:hidden;
   border:1px solid rgba(91,79,207,.22);
 }
 #detail-img img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -193,8 +182,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 #detail-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:16px;}
 .tag{
   font-size:8px;letter-spacing:.15em;text-transform:uppercase;
-  padding:4px 10px;border:1px solid rgba(91,79,207,.4);
-  color:rgba(91,79,207,.8);
+  padding:4px 10px;border:1px solid rgba(91,79,207,.4);color:rgba(91,79,207,.8);
 }
 
 #detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
@@ -215,12 +203,10 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 
 #detail-close{
   display:inline-block;font-size:9px;letter-spacing:.28em;
-  color:rgba(255,255,255,.4);text-transform:uppercase;
-  cursor:pointer;transition:color .2s;
+  color:rgba(255,255,255,.4);text-transform:uppercase;cursor:pointer;transition:color .2s;
 }
 #detail-close:hover{color:var(--dred)}
 
-/* ── LIKE BUTTON ── */
 #detail-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:18px;}
 #like-btn{
   display:flex;align-items:center;gap:7px;
@@ -235,7 +221,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 .like-heart{font-size:14px;transition:transform .2s cubic-bezier(.16,1,.3,1)}
 #like-count{font-size:11px;}
 
-/* NAV — shown only when detail is open */
+/* NAV */
 #detail-nav{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   display:flex;gap:24px;z-index:201;
@@ -333,41 +319,56 @@ let currentIdx = 0;
 let hintHidden = false;
 let detailOpen = false;
 
-/* ── PHYSICS STATE ── */
-const FRAME_W     = IS_TOUCH ? 240 : 300;
-const FRAME_GAP   = 24;
-const STEP        = FRAME_W + FRAME_GAP;
-const VEL_WINDOW  = 100;
-const BOOST       = 1.20;
-const FRICTION    = 0.95;
-const EDGE_BOUNCE = 0.10;
-const SPRING_K    = 0.12;
-const SPRING_D    = 0.84;
+/* ══════════════════════════════════════════════════════════
+   PHYSICS — complete redesign
 
-let offset       = 0;
-let physVel      = 0;
-let springVel    = 0;
-let isSnapping   = false;
-let snapTarget   = 0;
-let isDragging   = false;
-let dragStartX   = 0;
+   PROBLEM with previous system (SPRING_K=0.12, SPRING_D=0.84):
+   Eigenvalue magnitude ≈ 0.917 — underdamped oscillation.
+   Moving 1 frame (324px) caused ~150px of visible overshoot.
+   mousedown also froze the spring mid-flight, leaving offset at
+   non-aligned positions and making drag start from wrong origins.
+
+   SOLUTION: Replace oscillating spring with lerp-based snap.
+   - No overshoot (eigenvalue is real, always < 1)
+   - Settles in ~15 frames (~250ms at 60fps) — fast and decisive
+   - Works identically on mobile and desktop
+   - mousedown instantly snaps offset to nearest frame to prevent
+     mid-snap drag starts
+
+   SNAP_EASE: lerp factor per frame. 0.26 = snappy but smooth.
+   FRICTION:  momentum decay per frame. 0.90 = crisp deceleration.
+   MIN_VEL:   below this px/frame, momentum → snap transition.
+              Higher than before (2.5) to reduce the glide-then-snap jolt.
+   BOOST:     velocity multiplier on release — kept low (1.10) for
+              more predictable momentum on mobile.
+══════════════════════════════════════════════════════════ */
+const FRAME_W   = IS_TOUCH ? 240 : 300;
+const FRAME_GAP = 24;
+const STEP      = FRAME_W + FRAME_GAP;
+const VEL_WINDOW = 100;  // ms for rolling velocity average
+const BOOST      = 1.10; // velocity multiplier on release
+const FRICTION   = 0.90; // per-frame momentum friction (was 0.95 — too slow)
+const MIN_VEL    = 2.5;  // px/frame below which momentum → snap
+const SNAP_EASE  = 0.26; // lerp factor per frame for snap animation
+
+const DRAG_THRESHOLD = 4; // px — tap vs drag
+
+let offset     = 0;
+let physVel    = 0;
+let isSnapping = false;
+let snapTarget = 0;
+let isDragging = false;
+let dragMoved  = false;
+let dragStartX = 0;
 let dragStartOff = 0;
-let lastMouseX   = 0;
-let lastMoveT    = 0;
+let lastMouseX = 0;
+let lastMoveT  = 0;
 
-/* FIX: dragMoved tracks whether the pointer actually moved a meaningful distance.
-   Used in click handlers to distinguish a real tap from a drag-release.
-   isDragging is already false by the time click fires (reset in mouseup/touchend),
-   so we need a separate flag that persists through the event sequence. */
-let dragMoved = false;
-const DRAG_THRESHOLD = 4; // px — movement below this is treated as a tap
-
-// Rolling velocity buffer
 const velBuf = [];
 
 function pushVel(v) {
   const now = performance.now();
-  velBuf.push({v, t: now});
+  velBuf.push({ v, t: now });
   while (velBuf.length && now - velBuf[0].t > VEL_WINDOW) velBuf.shift();
 }
 
@@ -404,8 +405,7 @@ function setLang(l) {
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
   if (items.length) renderStrip();
-  /* FIX: fillDetail is async — catch silent failures */
-  if (detailOpen) fillDetail(currentIdx).catch(err => console.error('[DRED] fillDetail error:', err));
+  if (detailOpen) fillDetail(currentIdx).catch(err => console.error('[DRED] fillDetail:', err));
 }
 $ltKo.addEventListener('click', () => setLang('ko'));
 $ltEn.addEventListener('click', () => setLang('en'));
@@ -431,18 +431,98 @@ async function fetchTags(itemId) {
   return data.map(d => d.tags).filter(Boolean);
 }
 
+/* ── HELPERS ── */
+function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+function maxOffset()    { return -(items.length - 1) * STEP; }
+
+function nearestIdx(off) {
+  return clamp(Math.round(-off / STEP), 0, items.length - 1);
+}
+
+function updateDots(idx) {
+  document.querySelectorAll('.fdot').forEach((d, i) =>
+    d.classList.toggle('active', i === idx));
+}
+
+/* FIX: goToIdx now checks if already at target to prevent infinite loop.
+   Previous: always set isSnapping=true even when offset=snapTarget,
+   causing a two-frame oscillation between snapping/momentum state at rest. */
+function goToIdx(idx) {
+  idx = clamp(idx, 0, items.length - 1);
+  const target = -idx * STEP;
+  if (Math.abs(offset - target) < 0.3 && !isSnapping) return; // already there
+  snapTarget = target;
+  physVel    = 0;
+  isSnapping = true;
+}
+
+function snapToNearest() {
+  goToIdx(nearestIdx(offset));
+}
+
+function hideHint() {
+  if (hintHidden) return;
+  hintHidden = true;
+  document.getElementById('hint').style.opacity = '0';
+}
+
+/* ══════════════════════════════
+   PHYSICS LOOP
+   Replaces oscillating spring with lerp-based snap.
+   Lerp: offset += (target - offset) * EASE
+   Eigenvalue = (1 - EASE) = 0.74. Real, positive, < 1 → NO overshoot.
+   Settles to within 0.3px in ~15 frames at 60fps.
+══════════════════════════════ */
+;(function loop() {
+  if (!isDragging) {
+    if (isSnapping) {
+      /* Lerp snap — smooth, no bounce */
+      const d = snapTarget - offset;
+      if (Math.abs(d) < 0.3) {
+        offset     = snapTarget;
+        isSnapping = false;
+        physVel    = 0;
+      } else {
+        offset += d * SNAP_EASE;
+      }
+    } else if (Math.abs(physVel) >= MIN_VEL) {
+      /* Momentum coast */
+      offset  += physVel;
+      physVel *= FRICTION;
+      const MIN = maxOffset();
+      /* FIX: no bounce at edges — just clamp. Bounce caused visible jitter
+         when the strip hit the first/last frame at speed. */
+      if (offset > 0)   { offset = 0;   physVel = 0; snapToNearest(); }
+      if (offset < MIN) { offset = MIN; physVel = 0; snapToNearest(); }
+    } else if (physVel !== 0) {
+      /* Velocity dropped below threshold → snap to nearest frame */
+      physVel = 0;
+      snapToNearest();
+    }
+    /* else: fully settled, nothing to do — no more infinite goToIdx loop */
+  }
+
+  $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
+
+  if (!detailOpen) {
+    const idx = nearestIdx(offset);
+    if (idx !== currentIdx) { currentIdx = idx; updateDots(idx); }
+  }
+
+  requestAnimationFrame(loop);
+})();
+
 /* ── STRIP ── */
 const $strip = document.getElementById('strip');
 const $dots  = document.getElementById('focus-dot');
 let frameEls = [];
-let stripInited = false;
 
 function renderStrip() {
   $strip.innerHTML = '';
   $dots.innerHTML  = '';
   frameEls = [];
 
-  const pad = `calc(50vw - ${FRAME_W/2}px)`;
+  const pad = `calc(50vw - ${FRAME_W / 2}px)`;
   $strip.style.padding = `0 ${pad}`;
 
   items.forEach((item, i) => {
@@ -458,93 +538,24 @@ function renderStrip() {
       </div>
       ${hasAct ? '<div class="frame-action-badge">action</div>' : ''}`;
 
-    /* FIX: Root cause of the bug.
-       Original: checked `snapped === i` from live `offset`, which fails when:
-         (a) the spring is mid-animation (offset between two positions), or
-         (b) mousedown interrupted a previous spring, leaving offset misaligned.
-       The result was goToIdx always firing instead of openDetail,
-       causing the "shake with no detail" loop.
-
-       Fix: guard with `dragMoved` (real drag vs tap), then directly call
-       goToIdx(i) + openDetail(i) unconditionally. The strip snaps to the
-       clicked frame while the panel opens — identical to KIN's behavior.
-       Since the panel is full-screen, strip position during transition is invisible. */
+    /* FIX: Click handler simplified.
+       No longer checks snapped===i (unreliable mid-animation).
+       openDetail handles strip positioning instantly before panel opens,
+       so there's no spring running behind the panel. */
     fr.addEventListener('click', () => {
       if (dragMoved) return;
-      goToIdx(i);
-      openDetail(i).catch(err => console.error('[DRED] openDetail error:', err));
+      openDetail(i).catch(err => console.error('[DRED] openDetail:', err));
     });
 
     $strip.appendChild(fr);
     frameEls.push(fr);
 
     const dot = document.createElement('div');
-    const activeIdx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
+    const activeIdx = nearestIdx(offset);
     dot.className = 'fdot' + (i === activeIdx ? ' active' : '');
     $dots.appendChild(dot);
   });
-
-  stripInited = true;
 }
-
-/* ── HELPERS ── */
-function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
-
-function maxOffset() { return -(items.length - 1) * STEP; }
-
-function updateDots(idx) {
-  document.querySelectorAll('.fdot').forEach((d, i) =>
-    d.classList.toggle('active', i === idx));
-}
-
-function goToIdx(idx) {
-  idx = clamp(idx, 0, items.length - 1);
-  snapTarget = -idx * STEP;
-  springVel  = 0;
-  physVel    = 0;
-  isSnapping = true;
-}
-
-function hideHint() {
-  if (hintHidden) return;
-  hintHidden = true;
-  document.getElementById('hint').style.opacity = '0';
-}
-
-/* ══════════════════════════════
-   PHYSICS LOOP
-══════════════════════════════ */
-;(function loop() {
-  if (!isDragging) {
-    if (isSnapping) {
-      const force = SPRING_K * (snapTarget - offset);
-      springVel   = springVel * SPRING_D + force;
-      offset     += springVel;
-      if (Math.abs(snapTarget - offset) < 0.3 && Math.abs(springVel) < 0.3) {
-        offset = snapTarget; springVel = physVel = 0; isSnapping = false;
-      }
-    } else {
-      offset  += physVel;
-      physVel *= FRICTION;
-      const MIN = maxOffset();
-      if (offset > 0)   { offset = 0;   physVel *= -EDGE_BOUNCE; }
-      if (offset < MIN) { offset = MIN; physVel *= -EDGE_BOUNCE; }
-      if (Math.abs(physVel) < 0.5) {
-        physVel = 0;
-        goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
-      }
-    }
-  }
-
-  $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
-
-  if (!detailOpen) {
-    const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-    if (idx !== currentIdx) { currentIdx = idx; updateDots(idx); }
-  }
-
-  requestAnimationFrame(loop);
-})();
 
 /* ── DRAG — DESKTOP ── */
 if (!IS_TOUCH) {
@@ -552,23 +563,28 @@ if (!IS_TOUCH) {
 
   $wrap.addEventListener('mousedown', e => {
     if (detailOpen) return;
-    isDragging    = true;
-    dragMoved     = false; /* FIX: reset drag flag on every new press */
-    isSnapping    = false;
-    physVel       = 0;
-    springVel     = 0;
+    /* FIX: If spring is mid-animation, snap offset to nearest frame
+       so dragStartOff is always frame-aligned. Prevents the strip from
+       "launching" from a weird position when the user starts dragging
+       during a snap animation. */
+    if (isSnapping) {
+      offset     = snapTarget;
+      isSnapping = false;
+    }
+    isDragging   = true;
+    dragMoved    = false;
+    physVel      = 0;
     velBuf.length = 0;
-    dragStartX    = e.clientX;
-    dragStartOff  = offset;
-    lastMouseX    = e.clientX;
-    lastMoveT     = performance.now();
+    dragStartX   = e.clientX;
+    dragStartOff = offset;
+    lastMouseX   = e.clientX;
+    lastMoveT    = performance.now();
     $cur.classList.add('drag');
     hideHint();
   });
 
   window.addEventListener('mousemove', e => {
     if (!isDragging) return;
-    /* FIX: mark as a real drag once movement exceeds threshold */
     if (!dragMoved && Math.abs(e.clientX - dragStartX) > DRAG_THRESHOLD) {
       dragMoved = true;
     }
@@ -586,9 +602,11 @@ if (!IS_TOUCH) {
     $cur.classList.remove('drag');
     physVel = rollingVel() * BOOST;
     velBuf.length = 0;
-    if (Math.abs(physVel) < 1.5) {
+    /* FIX: threshold raised to MIN_VEL (2.5) so slow drags snap immediately
+       without a glide-then-jolt transition. */
+    if (Math.abs(physVel) < MIN_VEL) {
       physVel = 0;
-      goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
+      snapToNearest();
     }
   });
 
@@ -597,8 +615,8 @@ if (!IS_TOUCH) {
     if (detailOpen) return;
     hideHint();
     const dir = Math.sign(e.deltaX !== 0 ? e.deltaX : e.deltaY);
-    goToIdx(clamp(Math.round(-offset / STEP) + dir, 0, items.length - 1));
-  }, {passive:false});
+    goToIdx(nearestIdx(offset) + dir);
+  }, { passive: false });
 }
 
 /* ── DRAG — TOUCH ── */
@@ -608,22 +626,24 @@ if (IS_TOUCH) {
 
   $wrap.addEventListener('touchstart', e => {
     if (detailOpen) return;
+    /* FIX: same mid-snap guard as desktop mousedown */
+    if (isSnapping) {
+      offset     = snapTarget;
+      isSnapping = false;
+    }
     isDragging    = true;
-    dragMoved     = false; /* FIX: reset drag flag on every new touch */
-    isSnapping    = false;
+    dragMoved     = false;
     physVel       = 0;
-    springVel     = 0;
     velBuf.length = 0;
     tStartX       = e.touches[0].clientX;
     tStartOff     = offset;
     tLastX        = tStartX;
     tLastT        = performance.now();
     hideHint();
-  }, {passive:true});
+  }, { passive: true });
 
   $wrap.addEventListener('touchmove', e => {
     if (!isDragging) return;
-    /* FIX: mark as a real drag once movement exceeds threshold */
     if (!dragMoved && Math.abs(e.touches[0].clientX - tStartX) > DRAG_THRESHOLD) {
       dragMoved = true;
     }
@@ -635,16 +655,16 @@ if (IS_TOUCH) {
     tLastX = x;
     tLastT = now;
     offset = clamp(tStartOff + (x - tStartX), maxOffset(), 0);
-  }, {passive:false});
+  }, { passive: false });
 
   $wrap.addEventListener('touchend', () => {
     if (!isDragging) return;
     isDragging = false;
     physVel = rollingVel() * BOOST;
     velBuf.length = 0;
-    if (Math.abs(physVel) < 1.5) {
+    if (Math.abs(physVel) < MIN_VEL) {
       physVel = 0;
-      goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
+      snapToNearest();
     }
   });
 }
@@ -654,7 +674,7 @@ const $panel = document.getElementById('detail-panel');
 
 async function fillDetail(i) {
   const item = items[i];
-  if (!item) return; /* FIX: guard against out-of-bounds index */
+  if (!item) return;
   const t = lang;
 
   document.getElementById('detail-eyebrow').textContent   = `DRED · ${String(i+1).padStart(2,'0')} / ${items.length}`;
@@ -670,17 +690,17 @@ async function fillDetail(i) {
   $img.alt = item[`title_${t}`] || '';
 
   const $actSection = document.getElementById('detail-action-section');
-  const $acts = document.getElementById('detail-actions');
-  $acts.innerHTML = '';
+  const $acts       = document.getElementById('detail-actions');
+  $acts.innerHTML   = '';
   const actions = item.actions?.[t] || [];
   if (actions.length) {
     actions.forEach(a => {
       const btn = document.createElement('a');
-      btn.className = 'action-btn';
+      btn.className  = 'action-btn';
       btn.textContent = a.label;
-      btn.href = a.url || '#';
-      btn.target = '_blank';
-      btn.rel = 'noopener noreferrer'; /* FIX: security — external link */
+      btn.href       = a.url || '#';
+      btn.target     = '_blank';
+      btn.rel        = 'noopener noreferrer';
       $acts.appendChild(btn);
     });
     $actSection.style.display = 'block';
@@ -697,29 +717,35 @@ async function fillDetail(i) {
   fetchTags(item.id).then(tags => {
     tags.forEach(tag => {
       const span = document.createElement('span');
-      span.className = 'tag';
+      span.className   = 'tag';
       span.textContent = tag[`name_${t}`] || tag.name_ko;
       $tags.appendChild(span);
     });
-  }).catch(() => {}); /* FIX: catch tag fetch failures silently */
+  }).catch(() => {});
 }
 
-/* FIX: openDetail had no error boundary.
-   If fillDetail threw (or any DOM op failed), $panel.classList.add('open')
-   would never be called — panel silently stays closed while detailOpen=true.
-   Now: try/finally ensures detailOpen is rolled back on failure. */
+/* FIX: openDetail now instantly positions the strip before showing the panel.
+   Previous: goToIdx was called from the click handler, causing a spring animation
+   that was visible through the semi-transparent panel during its fade-in (0.35s).
+   Now: offset is set directly. The panel opens on a perfectly still strip. */
 async function openDetail(i) {
-  /* Guard: don't re-open if already showing the same item */
   if (detailOpen && currentIdx === i) return;
+
+  /* Instantly position strip — no animation visible behind the panel */
+  offset     = -i * STEP;
+  isSnapping = false;
+  physVel    = 0;
+  updateDots(i);
+
   currentIdx = i;
   detailOpen = true;
   document.getElementById('focus-dot').classList.add('hidden');
+
   try {
     await fillDetail(i);
     $panel.classList.add('open');
   } catch (err) {
     console.error('[DRED] openDetail failed:', err);
-    /* Roll back state so the UI isn't stuck */
     detailOpen = false;
     document.getElementById('focus-dot').classList.remove('hidden');
   }
@@ -729,13 +755,19 @@ function closeDetail() {
   $panel.classList.remove('open');
   detailOpen = false;
   document.getElementById('focus-dot').classList.remove('hidden');
+  /* Strip is already at currentIdx position (set in openDetail).
+     No snap needed — just let physics loop resume from settled state. */
 }
 
+/* FIX: nav instantly repositions strip (same as openDetail).
+   Previous: goToIdx in nav caused spring animation while the panel was open,
+   which was visible through the panel. */
 function nav(dir) {
   const next = (currentIdx + dir + items.length) % items.length;
-  goToIdx(next);
-  /* FIX: openDetail is async — add error handling */
-  openDetail(next).catch(err => console.error('[DRED] nav error:', err));
+  offset     = -next * STEP;
+  isSnapping = false;
+  physVel    = 0;
+  openDetail(next).catch(err => console.error('[DRED] nav:', err));
 }
 
 /* ── LIKES ── */
@@ -744,16 +776,13 @@ const LIKED_KEY = 'kxd_liked';
 function getLiked() {
   try { return JSON.parse(localStorage.getItem(LIKED_KEY) || '{}'); } catch(e) { return {}; }
 }
-
 function setLiked(itemId, val) {
   try {
     const liked = getLiked();
-    if (val) liked[itemId] = true;
-    else delete liked[itemId];
+    if (val) liked[itemId] = true; else delete liked[itemId];
     localStorage.setItem(LIKED_KEY, JSON.stringify(liked));
   } catch(e) {}
 }
-
 async function fetchLikeCount(itemId) {
   const res = await fetch(
     `${SUPA_URL}/rest/v1/gallery_likes?item_id=eq.${itemId}&select=count`,
@@ -763,19 +792,13 @@ async function fetchLikeCount(itemId) {
   const data = await res.json();
   return data[0]?.count || 0;
 }
-
 async function callLikeRpc(fn, itemId) {
   await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
     method: 'POST',
-    headers: {
-      apikey: SUPA_KEY,
-      Authorization: `Bearer ${SUPA_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ p_item_id: itemId }),
   });
 }
-
 function updateLikeUI(itemId, count) {
   const $btn   = document.getElementById('like-btn');
   const $heart = $btn.querySelector('.like-heart');
@@ -783,18 +806,17 @@ function updateLikeUI(itemId, count) {
   const liked  = getLiked()[itemId];
   $count.textContent = count;
   if (liked) { $btn.classList.add('liked'); $heart.textContent = '❤'; }
-  else        { $btn.classList.remove('liked'); $heart.textContent = '♡'; }
+  else       { $btn.classList.remove('liked'); $heart.textContent = '♡'; }
 }
 
 document.getElementById('like-btn').addEventListener('click', async () => {
   if (!detailOpen) return;
   const item   = items[currentIdx];
-  if (!item) return; /* FIX: guard */
-  const itemId = item.item_id || String(item.id);
-  const liked  = getLiked()[itemId];
-  const $count = document.getElementById('like-count');
+  if (!item) return;
+  const itemId   = item.item_id || String(item.id);
+  const liked    = getLiked()[itemId];
+  const $count   = document.getElementById('like-count');
   const curCount = parseInt($count.textContent) || 0;
-
   if (liked) {
     setLiked(itemId, false);
     updateLikeUI(itemId, curCount - 1);
@@ -802,7 +824,7 @@ document.getElementById('like-btn').addEventListener('click', async () => {
   } else {
     setLiked(itemId, true);
     updateLikeUI(itemId, curCount + 1);
-    callLikeRpc('increment_like', itemId).catch(() => {}); /* FIX: catch RPC failures */
+    callLikeRpc('increment_like', itemId).catch(() => {});
   }
 });
 
@@ -819,9 +841,9 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// 디테일 열려있을 때 터치 스와이프로 이미지 전환
+/* 디테일 열려있을 때 스와이프로 이미지 전환 */
 let dtx0 = 0;
-document.addEventListener('touchstart', e => { dtx0 = e.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchstart', e => { dtx0 = e.touches[0].clientX; }, { passive: true });
 document.addEventListener('touchend', e => {
   if (!detailOpen) return;
   const dx = e.changedTouches[0].clientX - dtx0;
@@ -832,8 +854,8 @@ document.addEventListener('touchend', e => {
 const $back = document.querySelector('.h-back');
 const $backOverlay = document.createElement('div');
 Object.assign($backOverlay.style, {
-  position:'fixed',inset:'0',background:'#000',opacity:'0',
-  pointerEvents:'none',zIndex:'9000',transition:'opacity 0.4s ease'
+  position:'fixed', inset:'0', background:'#000', opacity:'0',
+  pointerEvents:'none', zIndex:'9000', transition:'opacity 0.4s ease'
 });
 document.body.appendChild($backOverlay);
 $back.addEventListener('click', () => {
@@ -848,13 +870,14 @@ fetchItems()
   .then(data => {
     items = data;
     renderStrip();
-    goToIdx(0);
+    /* Position strip at frame 0 instantly — no animation on load */
+    offset     = 0;
+    isSnapping = false;
     $loading.style.opacity = '0';
     setTimeout(() => { $loading.style.display = 'none'; }, 400);
   })
   .catch(() => {
     $loading.querySelector('span').textContent = 'error';
-    $loading.style.pointerEvents = 'none'; /* FIX: don't block UI on error state */
   });
 </script>
 </body>

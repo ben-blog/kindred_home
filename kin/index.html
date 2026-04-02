@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KIN — Panel Crack</title>
+<title>KIN — Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -21,7 +21,6 @@ html,body{width:100%;height:100%;background:#080806;overflow:hidden;font-family:
   background-size:200px;animation:gr .3s steps(1) infinite}
 @keyframes gr{0%{background-position:0 0}50%{background-position:-40px 30px}}
 
-/* ambient */
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
     radial-gradient(ellipse 55% 55% at 20% 80%,rgba(140,100,0,.10),transparent),
@@ -35,26 +34,39 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .h-back{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.2);text-transform:uppercase;cursor:pointer;transition:color .2s}
 .h-back:hover{color:var(--kin)}
 
-/* ── CONTACT SHEET ── */
+/* ── LANG TOGGLE ── */
+#lang-toggle{
+  display:flex;gap:0;align-items:center;
+  font-size:8px;letter-spacing:.2em;
+}
+.lt{
+  padding:4px 8px;cursor:pointer;
+  color:rgba(255,255,255,.2);
+  transition:color .2s;
+  user-select:none;
+}
+.lt.active{color:var(--kin);}
+.lt-sep{color:rgba(255,255,255,.1);font-size:8px}
+
+/* ── GALLERY GRID ── */
 #gallery{
   position:fixed;inset:0;top:56px;z-index:2;
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  grid-template-rows:repeat(2,1fr);
+  grid-auto-rows:1fr;
   gap:3px;padding:3px;
+  overflow-y:auto;
 }
-
 @media(max-width:680px){
-  #gallery{
-    grid-template-columns:repeat(2,1fr);
-    grid-template-rows:repeat(5,1fr);
-  }
+  #gallery{grid-template-columns:repeat(2,1fr);}
 }
 
 .thumb{
   position:relative;overflow:hidden;cursor:pointer;
+  aspect-ratio:3/4;
   transition:filter .2s,transform .2s;
   opacity:0;transform:scale(.94);
+  background:#111;
 }
 .thumb.in{opacity:1;transform:scale(1);transition:opacity .35s ease,transform .35s cubic-bezier(.16,1,.3,1),filter .2s}
 .thumb:hover{filter:brightness(1.25);transform:scale(1.02)!important}
@@ -65,54 +77,41 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
 
-.thumb-ph{
-  width:100%;height:100%;
-  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+
+.thumb-label{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:20px 10px 8px;
+  background:linear-gradient(transparent,rgba(0,0,0,.7));
+  font-size:7px;letter-spacing:.18em;
+  color:rgba(255,229,0,.5);text-transform:lowercase;
+  pointer-events:none;z-index:2;
 }
-.thumb-n{
-  font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(22px,3.5vw,54px);
-  color:rgba(255,229,0,.55);letter-spacing:-.04em;pointer-events:none;
+
+/* ── LOADING ── */
+#loading{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
 }
-.thumb-cap{
-  font-size:7px;letter-spacing:.18em;color:rgba(255,229,0,.28);
-  text-transform:lowercase;pointer-events:none;
+#loading span{
+  font-size:9px;letter-spacing:.4em;color:rgba(255,229,0,.3);
+  text-transform:uppercase;animation:pulse 1.4s ease infinite;
 }
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 
 /* ══════════════════════════════
    VIEWER
 ══════════════════════════════ */
-#viewer{
-  position:fixed;inset:0;z-index:200;
-  display:none;
-}
+#viewer{position:fixed;inset:0;z-index:200;display:none;}
 
-/* ── 4 crack pieces — each covers a quadrant ── */
 #crack-wrap{position:absolute;inset:0;z-index:1;pointer-events:none}
-.cp{
-  position:absolute;
-  background:var(--bg);
-  transition:transform .5s cubic-bezier(.87,0,.13,1);
-  /* yellow border on inner edges = crack lines */
-}
-/* top-left */
-.cp.tl{top:0;left:0;width:50%;height:50%;
-  border-right:2px solid rgba(255,229,0,.25);
-  border-bottom:2px solid rgba(255,229,0,.25);}
-/* top-right */
-.cp.tr{top:0;right:0;width:50%;height:50%;
-  border-left:2px solid rgba(255,229,0,.25);
-  border-bottom:2px solid rgba(255,229,0,.25);}
-/* bottom-left */
-.cp.bl{bottom:0;left:0;width:50%;height:50%;
-  border-right:2px solid rgba(255,229,0,.25);
-  border-top:2px solid rgba(255,229,0,.25);}
-/* bottom-right */
-.cp.br{bottom:0;right:0;width:50%;height:50%;
-  border-left:2px solid rgba(255,229,0,.25);
-  border-top:2px solid rgba(255,229,0,.25);}
+.cp{position:absolute;background:var(--bg);transition:transform .5s cubic-bezier(.87,0,.13,1);}
+.cp.tl{top:0;left:0;width:50%;height:50%;border-right:2px solid rgba(255,229,0,.25);border-bottom:2px solid rgba(255,229,0,.25);}
+.cp.tr{top:0;right:0;width:50%;height:50%;border-left:2px solid rgba(255,229,0,.25);border-bottom:2px solid rgba(255,229,0,.25);}
+.cp.bl{bottom:0;left:0;width:50%;height:50%;border-right:2px solid rgba(255,229,0,.25);border-top:2px solid rgba(255,229,0,.25);}
+.cp.br{bottom:0;right:0;width:50%;height:50%;border-left:2px solid rgba(255,229,0,.25);border-top:2px solid rgba(255,229,0,.25);}
 
-/* open state — fly out dramatically */
 #viewer.open .cp.tl{transform:translate(-30%,-30%)}
 #viewer.open .cp.tr{transform:translate( 30%,-30%)}
 #viewer.open .cp.bl{transform:translate(-30%, 30%)}
@@ -125,16 +124,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   #viewer.open .cp.br{transform:translate( 18%, 18%)}
 }
 
-/* ── dark backdrop shown after crack ── */
 #backdrop{
   position:absolute;inset:0;z-index:0;
-  background:rgba(4,4,3,.85);
+  background:rgba(4,4,3,.88);
   opacity:0;pointer-events:none;
   transition:opacity .35s ease .15s;
 }
 #viewer.open #backdrop{opacity:1;pointer-events:all}
 
-/* ── SFX burst ── */
 #sfx{
   position:absolute;z-index:3;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(2.5) rotate(-15deg);
@@ -142,14 +139,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   font-size:clamp(48px,12vw,140px);
   color:var(--kin);letter-spacing:-.03em;
   text-shadow:0 0 50px rgba(255,229,0,.35), 3px 3px 0 rgba(0,0,0,.95);
-  pointer-events:none;
-  opacity:0;
-  transition:none;
+  pointer-events:none;opacity:0;transition:none;
 }
-/* SFX slams in then fades */
-#sfx.slam{
-  animation:sfxPop .55s cubic-bezier(.16,1,.3,1) forwards;
-}
+#sfx.slam{animation:sfxPop .55s cubic-bezier(.16,1,.3,1) forwards;}
 @keyframes sfxPop{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(2.5) rotate(-15deg)}
   25% {opacity:1;transform:translate(-50%,-50%) scale(0.95) rotate(-15deg)}
@@ -157,12 +149,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   100%{opacity:0;transform:translate(-50%,-50%) scale(0.9) rotate(-15deg)}
 }
 
-/* ── DETAIL CARD ── */
+/* ── DETAIL ── */
 #detail{
   position:absolute;z-index:4;
   top:50%;left:50%;transform:translate(-50%,-50%);
-  display:flex;gap:clamp(20px,4vw,56px);align-items:center;
-  width:90%;max-width:820px;
+  display:flex;gap:clamp(20px,4vw,56px);align-items:flex-start;
+  width:90%;max-width:900px;
   opacity:0;pointer-events:none;
   transition:opacity .4s ease .3s;
 }
@@ -170,34 +162,44 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 #detail-img{
   flex:0 0 auto;
-  width:clamp(180px,30vw,360px);
-  height:clamp(230px,40vw,460px);
+  width:clamp(160px,28vw,320px);
+  aspect-ratio:3/4;
   overflow:hidden;
   border:1px solid rgba(255,229,0,.18);
 }
-#detail-img-inner{width:100%;height:100%}
+#detail-img img{width:100%;height:100%;object-fit:cover;display:block;}
 
-#detail-text{flex:1 1 auto}
-#detail-eyebrow{
-  font-size:8px;letter-spacing:.32em;color:rgba(255,229,0,.3);
-  text-transform:uppercase;margin-bottom:14px;
-}
+#detail-text{flex:1 1 auto;overflow-y:auto;max-height:80vh;padding-right:8px;}
+#detail-eyebrow{font-size:8px;letter-spacing:.32em;color:rgba(255,229,0,.3);text-transform:uppercase;margin-bottom:10px;}
 #detail-title{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(28px,5vw,60px);
-  color:var(--kin);letter-spacing:-.02em;line-height:1;margin-bottom:16px;
+  font-size:clamp(24px,4vw,52px);
+  color:var(--kin);letter-spacing:-.02em;line-height:1;margin-bottom:12px;
 }
-#detail-desc{
-  font-size:12px;line-height:1.85;color:rgba(255,255,255,.38);
-  max-width:320px;margin-bottom:24px;
+#detail-style{font-size:8px;letter-spacing:.2em;color:rgba(255,255,255,.18);margin-bottom:16px;}
+#detail-desc{font-size:11px;line-height:1.85;color:rgba(255,255,255,.38);margin-bottom:16px;}
+
+.perspective-block{margin-bottom:12px;}
+.perspective-label{font-size:7px;letter-spacing:.28em;color:rgba(255,229,0,.25);text-transform:uppercase;margin-bottom:4px;}
+.perspective-text{font-size:11px;line-height:1.75;color:rgba(255,255,255,.3);}
+
+#detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+.action-btn{
+  font-size:7px;letter-spacing:.22em;text-transform:uppercase;
+  padding:6px 12px;border:1px solid rgba(255,229,0,.25);
+  color:rgba(255,229,0,.5);cursor:pointer;
+  transition:border-color .2s,color .2s;
+  text-decoration:none;display:inline-block;
 }
+.action-btn:hover{border-color:var(--kin);color:var(--kin);}
+
 #detail-close{
   display:inline-block;font-size:8px;letter-spacing:.28em;
-  color:rgba(255,255,255,.22);text-transform:uppercase;cursor:pointer;transition:color .2s;
+  color:rgba(255,255,255,.22);text-transform:uppercase;cursor:pointer;
+  transition:color .2s;margin-top:16px;
 }
 #detail-close:hover{color:var(--kin)}
 
-/* nav arrows */
 #detail-nav{
   position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
   display:flex;gap:24px;z-index:5;
@@ -205,36 +207,31 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .dn{font-size:9px;letter-spacing:.28em;color:rgba(255,255,255,.18);
   cursor:pointer;transition:color .2s;padding:10px;user-select:none}
 .dn:hover{color:var(--kin)}
-#detail-counter{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.15);
-  display:flex;align-items:center}
+#detail-counter{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.15);display:flex;align-items:center}
 
 @media(max-width:680px){
-  #detail{
-    flex-direction:column;
-    gap:14px;
-    padding:0 16px;
-    top:52%;
-    width:92%;
-    max-width:none;
-  }
-  #detail-img{
-    width:100%;
-    height:clamp(160px,42vw,240px);
-    flex:0 0 auto;
-  }
+  #detail{flex-direction:column;gap:14px;padding:0 16px;top:50%;width:94%;max-width:none;}
+  #detail-img{width:100%;aspect-ratio:16/9;}
   #detail-desc{display:none}
-  #detail-title{font-size:clamp(22px,6vw,36px)}
-  #detail-eyebrow{margin-bottom:8px}
+  .perspective-block{display:none}
+  #detail-title{font-size:clamp(20px,6vw,32px)}
   #detail-nav{bottom:16px}
   #sfx{font-size:clamp(36px,14vw,80px)}
 }
 </style>
 </head>
 <body>
+<div id="loading"><span>loading</span></div>
 <div id="grain"></div>
 <div id="cur"></div>
+
 <div id="header">
   <div class="h-name">KIN</div>
+  <div id="lang-toggle">
+    <span class="lt" id="lt-ko">KO</span>
+    <span class="lt-sep">·</span>
+    <span class="lt" id="lt-en">EN</span>
+  </div>
   <div class="h-back">← back</div>
 </div>
 
@@ -243,18 +240,26 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <div id="viewer">
   <div id="backdrop"></div>
   <div id="crack-wrap">
-    <div class="cp tl"></div>
-    <div class="cp tr"></div>
-    <div class="cp bl"></div>
-    <div class="cp br"></div>
+    <div class="cp tl"></div><div class="cp tr"></div>
+    <div class="cp bl"></div><div class="cp br"></div>
   </div>
   <div id="sfx"></div>
   <div id="detail">
-    <div id="detail-img"><div id="detail-img-inner"></div></div>
+    <div id="detail-img"><img id="detail-img-el" src="" alt=""></div>
     <div id="detail-text">
       <div id="detail-eyebrow"></div>
       <div id="detail-title"></div>
+      <div id="detail-style"></div>
       <div id="detail-desc"></div>
+      <div class="perspective-block">
+        <div class="perspective-label">KIN</div>
+        <div class="perspective-text" id="detail-kin"></div>
+      </div>
+      <div class="perspective-block">
+        <div class="perspective-label">DRED</div>
+        <div class="perspective-text" id="detail-dred"></div>
+      </div>
+      <div id="detail-actions"></div>
       <div id="detail-close">close ×</div>
     </div>
   </div>
@@ -266,135 +271,200 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 </div>
 
 <script>
-const IS_TOUCH=window.matchMedia('(pointer:coarse)').matches;
-const $cur=document.getElementById('cur');
+/* ── CONFIG ── */
+const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
+const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_'; // ← 여기 채워줘
+const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/kin/`;
 
-const ITEMS=10;
-// Brighter colors
-const COLORS=[
-  '#3a3600','#002230','#300a0a','#0a2e0a','#28200a',
-  '#0a1828','#281c00','#0a2038','#2e0808','#0a2418',
-];
-const CAPTIONS=['so what.','late night.','reading the room.','default.','thinking.','cool.','happy.','serious.','shocked.','liedown.'];
-const DESCS=[
-  'KIN이 아무것도 아닌 것처럼 보이는 순간. 근데 다 보고 있어.',
-  '새벽 두 시. 아무 계획 없이 깨어있는 사람들이 KIN이랑 제일 잘 맞아.',
-  '들어가기 전에 이미 다 파악했어. 그게 KIN의 방식이야.',
-  '아무 감정 없는 것처럼 보이지만 — 이게 KIN의 베이스라인이야.',
-  '안경 위에 손을 올리는 버릇. 뭔가 계산 중이라는 신호야.',
-  '팔짱 끼고 기대있어. 눈빛에 장난기 섞임.',
-  '웃을 때 얼굴 전체가 같이 움직여. 눈이 먼저 웃고 입이 따라와.',
-  '팔짱 + 눈살. 폭발 안 해. 근데 이때 하는 말은 기억해둬야 해.',
-  '눈 크게 뜨고 손이 얼굴로 간다. 전신으로 반응함.',
-  '바닥에 누워 두 팔 벌린 거. KIN의 완전한 평온 상태야.',
-];
-const SFXS=['HA!','HEY','WOW','...','HMM','YO','haha','!!!','?!','zzz'];
+const SFXS = ['HA!','HEY','WOW','!!!','HMM','YO','haha','...','?!','zzz','YES'];
 
-const $gallery=document.getElementById('gallery');
-const $viewer=document.getElementById('viewer');
-const $sfx=document.getElementById('sfx');
-const thumbs=[];
-let current=-1;
+/* ── STATE ── */
+const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
+let lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
+let items = [];
+let current = -1;
 
-// Build thumbnails
-for(let i=0;i<ITEMS;i++){
-  const t=document.createElement('div');
-  t.className='thumb';
-  t.innerHTML=`
-    <div class="thumb-ph" style="background:${COLORS[i]}">
-      <div class="thumb-n">${String(i+1).padStart(2,'0')}</div>
-      <div class="thumb-cap">${CAPTIONS[i]}</div>
-    </div>`;
-  t.addEventListener('click',()=>open(i));
-  $gallery.appendChild(t);
-  thumbs.push(t);
-  setTimeout(()=>t.classList.add('in'),60+i*45);
-
-  if(!IS_TOUCH){
-    t.addEventListener('mouseenter',()=>$cur.classList.add('big'));
-    t.addEventListener('mouseleave',()=>$cur.classList.remove('big'));
-  }
+/* ── CURSOR ── */
+const $cur = document.getElementById('cur');
+if (!IS_TOUCH) {
+  document.addEventListener('mousemove', e => {
+    $cur.style.left = e.clientX + 'px';
+    $cur.style.top  = e.clientY + 'px';
+  });
+} else {
+  $cur.style.display = 'none';
 }
 
-function open(i){
-  current=i;
+/* ── LANG TOGGLE ── */
+const $ltKo = document.getElementById('lt-ko');
+const $ltEn = document.getElementById('lt-en');
 
-  // Fill detail
-  document.getElementById('detail-img-inner').innerHTML=`
-    <div style="width:100%;height:100%;background:${COLORS[i]};display:flex;align-items:center;justify-content:center">
-      <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(60px,14vw,160px);color:rgba(255,229,0,.08);letter-spacing:-.05em">${String(i+1).padStart(2,'0')}</span>
-    </div>`;
-  document.getElementById('detail-eyebrow').textContent=`KIN · ${String(i+1).padStart(2,'0')} / ${ITEMS}`;
-  document.getElementById('detail-title').textContent=CAPTIONS[i];
-  document.getElementById('detail-desc').textContent=DESCS[i];
-  document.getElementById('detail-counter').textContent=`${String(i+1).padStart(2,'0')} / ${ITEMS}`;
+function setLang(l) {
+  lang = l;
+  $ltKo.classList.toggle('active', l === 'ko');
+  $ltEn.classList.toggle('active', l === 'en');
+  if (items.length) renderGallery();
+  if (current >= 0) fillDetail(current);
+}
 
-  // SFX slam
-  $sfx.textContent=SFXS[i];
+$ltKo.addEventListener('click', () => setLang('ko'));
+$ltEn.addEventListener('click', () => setLang('en'));
+setLang(lang);
+
+/* ── FETCH FROM SUPABASE ── */
+async function fetchItems() {
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/gallery_items?character=eq.kin&is_active=eq.true&order=order_num.asc`,
+    { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}` } }
+  );
+  if (!res.ok) throw new Error('fetch failed');
+  return res.json();
+}
+
+/* ── BUILD GALLERY ── */
+const $gallery = document.getElementById('gallery');
+const thumbEls = [];
+
+function renderGallery() {
+  $gallery.innerHTML = '';
+  thumbEls.length = 0;
+
+  items.forEach((item, i) => {
+    const t = document.createElement('div');
+    t.className = 'thumb';
+
+    const title = item[`title_${lang}`] || item.title_ko || '';
+    t.innerHTML = `
+      <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
+      <div class="thumb-label">${title}</div>`;
+
+    t.addEventListener('click', () => openViewer(i));
+    if (!IS_TOUCH) {
+      t.addEventListener('mouseenter', () => $cur.classList.add('big'));
+      t.addEventListener('mouseleave', () => $cur.classList.remove('big'));
+    }
+
+    $gallery.appendChild(t);
+    thumbEls.push(t);
+    setTimeout(() => t.classList.add('in'), 60 + i * 45);
+  });
+}
+
+/* ── VIEWER ── */
+const $viewer  = document.getElementById('viewer');
+const $sfx     = document.getElementById('sfx');
+const $backdrop = document.getElementById('backdrop');
+
+function fillDetail(i) {
+  const item = items[i];
+  const t = lang;
+
+  document.getElementById('detail-eyebrow').textContent =
+    `KIN · ${String(i+1).padStart(2,'0')} / ${items.length}`;
+  document.getElementById('detail-title').textContent =
+    item[`title_${t}`] || '';
+  document.getElementById('detail-style').textContent =
+    item.style || '';
+  document.getElementById('detail-desc').textContent =
+    item[`description_${t}`] || '';
+  document.getElementById('detail-kin').textContent =
+    item[`kin_perspective_${t}`] || '';
+  document.getElementById('detail-dred').textContent =
+    item[`dred_perspective_${t}`] || '';
+  document.getElementById('detail-counter').textContent =
+    `${String(i+1).padStart(2,'0')} / ${items.length}`;
+
+  // 이미지
+  const $img = document.getElementById('detail-img-el');
+  $img.src = `${IMG_BASE}${item.filename}`;
+  $img.alt = item[`title_${t}`] || '';
+
+  // 액션 버튼
+  const $acts = document.getElementById('detail-actions');
+  $acts.innerHTML = '';
+  const actions = item.actions?.[t] || [];
+  actions.forEach(a => {
+    const btn = document.createElement('a');
+    btn.className = 'action-btn';
+    btn.textContent = a.label;
+    btn.href = a.url || '#';
+    $acts.appendChild(btn);
+  });
+}
+
+function openViewer(i) {
+  current = i;
+  fillDetail(i);
+
+  $sfx.textContent = SFXS[i % SFXS.length];
   $sfx.classList.remove('slam');
-  void $sfx.offsetWidth; // reflow
+  void $sfx.offsetWidth;
   $sfx.classList.add('slam');
 
-  // Show viewer — crack pieces fly out
-  $viewer.style.display='block';
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{ $viewer.classList.add('open'); });
+  $viewer.style.display = 'block';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { $viewer.classList.add('open'); });
   });
 }
 
-function close(){
+function closeViewer() {
   $viewer.classList.remove('open');
-  setTimeout(()=>{ $viewer.style.display='none'; current=-1; }, 500);
+  setTimeout(() => { $viewer.style.display = 'none'; current = -1; }, 500);
 }
 
-function nav(dir){
-  if(current<0)return;
-  open((current+dir+ITEMS)%ITEMS);
+function nav(dir) {
+  if (current < 0) return;
+  openViewer((current + dir + items.length) % items.length);
 }
 
-document.getElementById('detail-close').addEventListener('click',close);
-document.getElementById('backdrop').addEventListener('click',close);
-document.getElementById('dn-prev').addEventListener('click',()=>nav(-1));
-document.getElementById('dn-next').addEventListener('click',()=>nav(1));
+document.getElementById('detail-close').addEventListener('click', closeViewer);
+$backdrop.addEventListener('click', closeViewer);
+document.getElementById('dn-prev').addEventListener('click', () => nav(-1));
+document.getElementById('dn-next').addEventListener('click', () => nav(1));
 
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')close();
-  if($viewer.classList.contains('open')){
-    if(e.key==='ArrowRight')nav(1);
-    if(e.key==='ArrowLeft') nav(-1);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeViewer();
+  if ($viewer.classList.contains('open')) {
+    if (e.key === 'ArrowRight') nav(1);
+    if (e.key === 'ArrowLeft')  nav(-1);
   }
 });
 
-// Touch swipe
-let tx0=0;
-document.addEventListener('touchstart',e=>{tx0=e.touches[0].clientX;},{passive:true});
-document.addEventListener('touchend',e=>{
-  if(!$viewer.classList.contains('open'))return;
-  const dx=e.changedTouches[0].clientX-tx0;
-  if(Math.abs(dx)>50) nav(dx<0?1:-1);
+let tx0 = 0;
+document.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, {passive:true});
+document.addEventListener('touchend', e => {
+  if (!$viewer.classList.contains('open')) return;
+  const dx = e.changedTouches[0].clientX - tx0;
+  if (Math.abs(dx) > 50) nav(dx < 0 ? 1 : -1);
 });
 
-if(!IS_TOUCH){
-  document.addEventListener('mousemove',e=>{
-    $cur.style.left=e.clientX+'px';
-    $cur.style.top=e.clientY+'px';
-  });
-}
-
-/* ── BACK → main.html ── */
+/* ── BACK ── */
 const $back = document.querySelector('.h-back');
 const $backOverlay = document.createElement('div');
-Object.assign($backOverlay.style,{
+Object.assign($backOverlay.style, {
   position:'fixed',inset:'0',background:'#000',opacity:'0',
   pointerEvents:'none',zIndex:'9000',transition:'opacity 0.4s ease'
 });
 document.body.appendChild($backOverlay);
-
 $back.addEventListener('click', () => {
   $backOverlay.style.pointerEvents = 'all';
   $backOverlay.style.opacity = '1';
   setTimeout(() => { window.location.href = '../main.html'; }, 400);
 });
+
+/* ── INIT ── */
+const $loading = document.getElementById('loading');
+fetchItems()
+  .then(data => {
+    items = data;
+    renderGallery();
+    $loading.style.opacity = '0';
+    setTimeout(() => { $loading.style.display = 'none'; }, 400);
+  })
+  .catch(err => {
+    console.error(err);
+    $loading.querySelector('span').textContent = 'error loading';
+  });
 </script>
 </body>
 </html>

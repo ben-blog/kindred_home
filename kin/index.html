@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>KIN — Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -45,7 +46,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   position:fixed;inset:0;top:56px;z-index:2;
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  grid-auto-rows:1fr;
+  grid-auto-rows:auto;
   gap:3px;padding:3px;
   overflow-y:auto;
 }
@@ -87,6 +88,19 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   0%,100%{box-shadow:0 0 0 2px rgba(255,229,0,.35), 0 0 14px 2px rgba(255,229,0,.10)}
   50%    {box-shadow:0 0 0 2px rgba(255,229,0,.80), 0 0 28px 4px rgba(255,229,0,.22)}
 }
+
+/* ACTION badge */
+.thumb-action-badge{
+  position:absolute;top:9px;right:9px;z-index:4;
+  font-family:'DM Mono',monospace;
+  font-size:7px;letter-spacing:.22em;
+  padding:3px 8px;
+  background:var(--kin);color:#000;
+  text-transform:uppercase;
+  pointer-events:none;
+  animation:badgeBlink 1.4s step-end infinite;
+}
+@keyframes badgeBlink{0%,100%{opacity:1}50%{opacity:0}}
 
 /* action section in detail */
 #detail-action-section{
@@ -230,10 +244,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 @media(max-width:680px){
   #detail{flex-direction:column;gap:12px;padding:16px;top:48%;width:96%;max-width:none;}
-  #detail-img{width:100%;aspect-ratio:3/4;max-height:38vh;}
+  #detail-img{width:100%;aspect-ratio:3/4;max-height:36vh;}
   #detail-technique{display:none}
-  #detail-desc{display:none}
+  #detail-desc{display:block;font-size:11px;}
   .perspective-block{display:none}
+  .perspective-block.show-mobile{display:block}
   #detail-title{font-size:clamp(20px,6vw,32px)}
   #detail-nav{bottom:14px}
   #sfx{font-size:clamp(36px,14vw,80px)}
@@ -271,7 +286,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <div id="detail-title"></div>
       <div id="detail-technique"></div>
       <div id="detail-desc"></div>
-      <div class="perspective-block">
+      <div class="perspective-block show-mobile">
         <div class="perspective-label">KIN</div>
         <div class="perspective-text" id="detail-kin"></div>
       </div>
@@ -306,9 +321,7 @@ const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 let lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
 let items = [];
 let current = -1;
-
-/* ── HELPERS ── */
-const hasActions = item => (item.actions?.[lang]?.length || 0) > 0;
+let galleryInited = false;
 
 /* ── CURSOR ── */
 const $cur = document.getElementById('cur');
@@ -358,29 +371,32 @@ async function fetchTags(itemId) {
 
 /* ── GALLERY ── */
 const $gallery = document.getElementById('gallery');
-const thumbEls = [];
 
 function renderGallery() {
   $gallery.innerHTML = '';
-  thumbEls.length = 0;
   items.forEach((item, i) => {
     const t = document.createElement('div');
-    t.className = 'thumb';
-    const title = item[`title_${lang}`] || item.title_ko || '';
+    const title  = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
     t.className = 'thumb' + (hasAct ? ' has-action' : '');
     t.innerHTML = `
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
-      <div class="thumb-label">${title}</div>`;
+      <div class="thumb-label">${title}</div>
+      ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}`;
     t.addEventListener('click', () => openViewer(i));
     if (!IS_TOUCH) {
       t.addEventListener('mouseenter', () => $cur.classList.add('big'));
       t.addEventListener('mouseleave', () => $cur.classList.remove('big'));
     }
     $gallery.appendChild(t);
-    thumbEls.push(t);
-    setTimeout(() => t.classList.add('in'), 60 + i * 45);
+    // 초기 로드 시에만 애니메이션
+    if (!galleryInited) {
+      setTimeout(() => t.classList.add('in'), 60 + i * 45);
+    } else {
+      t.classList.add('in');
+    }
   });
+  galleryInited = true;
 }
 
 /* ── VIEWER ── */

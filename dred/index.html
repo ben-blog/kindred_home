@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>DRED — Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -95,6 +96,19 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   0%,100%{box-shadow:0 0 0 2px rgba(91,79,207,.4), 0 0 14px 2px rgba(91,79,207,.12)}
   50%    {box-shadow:0 0 0 2px rgba(91,79,207,.8), 0 0 26px 4px rgba(91,79,207,.28)}
 }
+
+/* ACTION badge */
+.frame-action-badge{
+  position:absolute;top:10px;right:10px;z-index:4;
+  font-family:'DM Mono',monospace;
+  font-size:7px;letter-spacing:.22em;
+  padding:3px 8px;
+  background:var(--dred);color:#fff;
+  text-transform:uppercase;
+  pointer-events:none;
+  animation:badgeBlink 1.4s step-end infinite;
+}
+@keyframes badgeBlink{0%,100%{opacity:1}50%{opacity:0}}
 
 /* action section in detail */
 #detail-action-section{
@@ -219,8 +233,9 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   #detail-inner{flex-direction:column;gap:12px;padding:16px;width:96%;}
   #detail-img{width:100%;aspect-ratio:3/4;max-height:36vh;}
   #detail-technique{display:none}
-  #detail-desc{display:none}
+  #detail-desc{display:block;font-size:11px;}
   .perspective-block{display:none}
+  .perspective-block.show-mobile{display:block}
   #detail-title{font-size:clamp(20px,6vw,32px)}
   #detail-nav{bottom:14px}
 }
@@ -260,7 +275,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
         <div class="perspective-label">KIN</div>
         <div class="perspective-text" id="detail-kin"></div>
       </div>
-      <div class="perspective-block">
+      <div class="perspective-block show-mobile">
         <div class="perspective-label">DRED</div>
         <div class="perspective-text" id="detail-dred"></div>
       </div>
@@ -295,25 +310,26 @@ let hintHidden = false;
 let detailOpen = false;
 
 /* ── PHYSICS STATE ── */
-const FRAME_W    = IS_TOUCH ? 240 : 300;
-const FRAME_GAP  = 24;
-const STEP       = FRAME_W + FRAME_GAP;
-const VEL_WINDOW = 120;    // ms — rolling average window
-const BOOST      = 1.40;   // velocity multiplier on release
-const EDGE_BOUNCE = 0.12;  // edge bounce damping
-
-// Spring constants (underdamped → overshoot)
-const SPRING_K   = 0.10;   // stiffness
-const SPRING_D   = 0.72;   // damping < 1 = underdamped
+const FRAME_W     = IS_TOUCH ? 240 : 300;
+const FRAME_GAP   = 24;
+const STEP        = FRAME_W + FRAME_GAP;
+const VEL_WINDOW  = 100;   // ms — rolling average window
+const BOOST       = 1.20;  // velocity multiplier on release
+const FRICTION    = 0.95;  // per-frame momentum friction
+const EDGE_BOUNCE = 0.10;  // edge bounce damping
+const SPRING_K    = 0.12;  // snap spring stiffness
+const SPRING_D    = 0.84;  // snap spring damping (slightly underdamped)
 
 let offset       = 0;
 let physVel      = 0;
-let springVel    = 0;       // separate spring velocity for snap phase
+let springVel    = 0;
 let isSnapping   = false;
 let snapTarget   = 0;
 let isDragging   = false;
 let dragStartX   = 0;
 let dragStartOff = 0;
+let lastMouseX   = 0;      // ← tracks incremental mouse position
+let lastMoveT    = 0;
 
 // Rolling velocity buffer
 const velBuf = [];
@@ -328,19 +344,13 @@ function rollingVel() {
   if (!velBuf.length) return 0;
   const now = performance.now();
   let sw = 0, svw = 0;
-  velBuf.forEach(s => {
-    const w = 1 - (now - s.t) / VEL_WINDOW;
+  for (const s of velBuf) {
+    const age = now - s.t;
+    if (age >= VEL_WINDOW) continue;
+    const w = (VEL_WINDOW - age) / VEL_WINDOW;
     sw += w; svw += s.v * w;
-  });
-  return sw > 0 ? svw / sw : 0;
-}
-
-function dynamicFriction(vel) {
-  const a = Math.abs(vel);
-  if (a > 25) return 0.97;   // fast: keep momentum long
-  if (a > 10) return 0.94;
-  if (a > 3)  return 0.90;
-  return 0.85;               // slow: stop decisively
+  }
+  return sw > 0.01 ? svw / sw : 0;
 }
 
 /* ── CURSOR ── */
@@ -393,20 +403,18 @@ async function fetchTags(itemId) {
 const $strip = document.getElementById('strip');
 const $dots  = document.getElementById('focus-dot');
 let frameEls = [];
+let stripInited = false;
 
 function renderStrip() {
   $strip.innerHTML = '';
   $dots.innerHTML  = '';
   frameEls = [];
 
-  // center padding so first/last frame is centered
   const pad = `calc(50vw - ${FRAME_W/2}px)`;
   $strip.style.padding = `0 ${pad}`;
 
   items.forEach((item, i) => {
     const fr = document.createElement('div');
-    fr.className = 'frame';
-
     const title  = item[`title_${lang}`] || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
 
@@ -415,7 +423,8 @@ function renderStrip() {
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
       <div class="frame-overlay">
         <div class="frame-caption">${title}</div>
-      </div>`;
+      </div>
+      ${hasAct ? '<div class="frame-action-badge">action</div>' : ''}`;
 
     fr.addEventListener('click', () => {
       if (isDragging) return;
@@ -428,9 +437,13 @@ function renderStrip() {
     frameEls.push(fr);
 
     const dot = document.createElement('div');
-    dot.className = 'fdot' + (i === 0 ? ' active' : '');
+    // 언어 전환 시 현재 위치 유지
+    const activeIdx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
+    dot.className = 'fdot' + (i === activeIdx ? ' active' : '');
     $dots.appendChild(dot);
   });
+
+  stripInited = true;
 }
 
 /* ── HELPERS ── */
@@ -443,20 +456,10 @@ function updateDots(idx) {
     d.classList.toggle('active', i === idx));
 }
 
-function applyVelocityBlur(vel) {
-  const absV = Math.abs(vel);
-  const blur  = clamp(absV * 0.35, 0, 20);
-  const opac  = clamp(1 - absV * 0.007, 0.22, 1);
-  frameEls.forEach(fr => {
-    fr.style.filter  = blur > 0.4 ? `blur(${blur.toFixed(1)}px)` : '';
-    fr.style.opacity = opac.toFixed(3);
-  });
-}
-
 function goToIdx(idx) {
   idx = clamp(idx, 0, items.length - 1);
   snapTarget = -idx * STEP;
-  springVel  = physVel * 0.3; // carry a bit of momentum into spring
+  springVel  = 0;
   physVel    = 0;
   isSnapping = true;
 }
@@ -473,38 +476,28 @@ function hideHint() {
 ;(function loop() {
   if (!isDragging) {
     if (isSnapping) {
-      // Underdamped spring — overshoot then settle
+      // Slightly underdamped spring → clean snap with minimal overshoot
       const force = SPRING_K * (snapTarget - offset);
       springVel   = springVel * SPRING_D + force;
       offset     += springVel;
-
-      // Settled when both displacement and velocity are tiny
-      if (Math.abs(snapTarget - offset) < 0.15 && Math.abs(springVel) < 0.15) {
-        offset    = snapTarget;
-        springVel = 0;
-        physVel   = 0;
-        isSnapping = false;
+      if (Math.abs(snapTarget - offset) < 0.3 && Math.abs(springVel) < 0.3) {
+        offset = snapTarget; springVel = physVel = 0; isSnapping = false;
       }
     } else {
-      // Momentum coast with dynamic friction
+      // Momentum coast
       offset  += physVel;
-      physVel *= dynamicFriction(physVel);
-
+      physVel *= FRICTION;
       const MIN = maxOffset();
       if (offset > 0)   { offset = 0;   physVel *= -EDGE_BOUNCE; }
       if (offset < MIN) { offset = MIN; physVel *= -EDGE_BOUNCE; }
-
-      // Hand off to spring when nearly stopped
-      if (Math.abs(physVel) < 0.4) {
+      if (Math.abs(physVel) < 0.5) {
         physVel = 0;
-        const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-        goToIdx(idx);
+        goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
       }
     }
   }
 
   $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
-  applyVelocityBlur(isSnapping ? springVel * 2.5 : physVel);
 
   if (!detailOpen) {
     const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
@@ -520,37 +513,36 @@ if (!IS_TOUCH) {
 
   $wrap.addEventListener('mousedown', e => {
     if (detailOpen) return;
-    isDragging   = true;
-    isSnapping   = false;
-    physVel      = 0;
-    springVel    = 0;
+    isDragging    = true;
+    isSnapping    = false;
+    physVel       = 0;
+    springVel     = 0;
     velBuf.length = 0;
-    dragStartX   = e.clientX;
-    dragStartOff = offset;
+    dragStartX    = e.clientX;
+    dragStartOff  = offset;
+    lastMouseX    = e.clientX;
+    lastMoveT     = performance.now();
     $cur.classList.add('drag');
     hideHint();
   });
 
   window.addEventListener('mousemove', e => {
     if (!isDragging) return;
-    const now  = performance.now();
-    const prev = velBuf.length ? velBuf[velBuf.length-1] : null;
-    const dt   = prev ? Math.max(now - prev.t, 1) : 16;
-    const v    = prev ? (e.clientX - (dragStartX + (prev.t ? 0 : 0))) / dt * 16 : 0;
-    // simpler: track instant velocity
-    pushVel((e.clientX - dragStartX - (offset - dragStartOff)) / Math.max(dt, 1) * 16);
+    const now = performance.now();
+    const dt  = Math.max(now - lastMoveT, 1);
+    pushVel((e.clientX - lastMouseX) / dt * 16); // px/frame @ 60fps
+    lastMouseX = e.clientX;
+    lastMoveT  = now;
     offset = clamp(dragStartOff + (e.clientX - dragStartX), maxOffset(), 0);
   });
 
-  window.addEventListener('mouseup', e => {
+  window.addEventListener('mouseup', () => {
     if (!isDragging) return;
     isDragging = false;
     $cur.classList.remove('drag');
+    physVel = rollingVel() * BOOST;
     velBuf.length = 0;
-    // rolling average of recent move deltas
-    const rawVel = rollingVel();
-    physVel = rawVel * BOOST;
-    if (Math.abs(physVel) < 1) {
+    if (Math.abs(physVel) < 1.5) {
       physVel = 0;
       goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
     }
@@ -599,10 +591,9 @@ if (IS_TOUCH) {
   $wrap.addEventListener('touchend', () => {
     if (!isDragging) return;
     isDragging = false;
-    const rawVel = rollingVel();
+    physVel = rollingVel() * BOOST;
     velBuf.length = 0;
-    physVel = rawVel * BOOST;
-    if (Math.abs(physVel) < 1) {
+    if (Math.abs(physVel) < 1.5) {
       physVel = 0;
       goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
     }
@@ -675,7 +666,7 @@ function closeDetail() {
 }
 
 function nav(dir) {
-  const next = clamp(currentIdx + dir, 0, items.length - 1);
+  const next = (currentIdx + dir + items.length) % items.length;
   goToIdx(next);
   openDetail(next);
 }

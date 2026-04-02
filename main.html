@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <title>KIN × DRED</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -41,7 +42,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 #bot{position:fixed;bottom:0;left:0;right:0;padding:0 6vw 26px;z-index:40;
   display:flex;align-items:flex-end;justify-content:space-between;opacity:0}
 .bn{font-size:9px;letter-spacing:.28em;text-transform:uppercase;line-height:1.95}
-.bn-k{color:rgba(255,232,0,.32)}.bn-d{color:rgba(91,79,207,.32);text-align:right}
+.bn-k{color:rgba(255,232,0,.52)}.bn-d{color:rgba(91,79,207,.52);text-align:right}
 .sc{display:flex;flex-direction:column;align-items:center;gap:8px}
 .scb{width:1px;height:36px;background:linear-gradient(180deg,rgba(255,255,255,.25),transparent);
   animation:scba 2.2s ease-in-out infinite}
@@ -125,6 +126,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 /* ── MOBILE DETECTION ── */
 const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 
+/* ── 24H RETURNING VISITOR ── */
+const KXD_VISIT_KEY = 'kxd_last_visit';
+const isReturning = (() => {
+  try {
+    const last = parseInt(localStorage.getItem(KXD_VISIT_KEY) || '0');
+    return Date.now() - last < 24 * 60 * 60 * 1000;
+  } catch(e) { return false; }
+})();
+
 /* ── CURSOR (desktop only) ── */
 const $cur = document.getElementById('cur');
 let mx = innerWidth/2, my = innerHeight/2;
@@ -164,22 +174,22 @@ const eOut  = t => 1 - Math.pow(1-t, 3);
 const eIO   = t => t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
 
 /* ── PHASES ──────────────────────────────────────────
-  DARK     0.0 →  0.4
-  EMERGE   0.4 →  1.6
-  ORBIT    1.6 →  5.1
-  CAPTURE  5.1 → 11.1
-  WRIGGLE 11.1 → 21.1
-  WORLDS  21.1 →  ∞
+  DARK     0.0 →  0.3
+  EMERGE   0.3 →  1.2
+  ORBIT    1.2 →  3.8
+  CAPTURE  3.8 →  8.2
+  WRIGGLE  8.2 → 15.0
+  WORLDS  15.0 →  ∞
 ──────────────────────────────────────────────────── */
 const PHASES = [
-  {n:'DARK',    s:0,    e:0.4 },
-  {n:'EMERGE',  s:0.4,  e:1.6 },
-  {n:'ORBIT',   s:1.6,  e:5.1 },
-  {n:'CAPTURE', s:5.1,  e:11.1},
-  {n:'WRIGGLE', s:11.1, e:21.1},
-  {n:'WORLDS',  s:21.1, e:1e9 },
+  {n:'DARK',    s:0,    e:0.3 },
+  {n:'EMERGE',  s:0.3,  e:1.2 },
+  {n:'ORBIT',   s:1.2,  e:3.8 },
+  {n:'CAPTURE', s:3.8,  e:8.2 },
+  {n:'WRIGGLE', s:8.2,  e:15.0},
+  {n:'WORLDS',  s:15.0, e:1e9 },
 ];
-const CAPTURE_START = 5.1;
+const CAPTURE_START = 3.8;
 
 function getPhase(t) {
   for (const ph of PHASES) if (t >= ph.s && t < ph.e)
@@ -192,9 +202,7 @@ const charH   = () => clamp(H*(IS_TOUCH?.34:.65), IS_TOUCH?160:360, 680);
 const kinCX   = () => W*.24;
 const dredCX  = () => W*.76;
 const PLANET_Y = () => H*.50;
-const TRANSIT_DUR = 3.5;
-const KIN_EXIT  = Math.PI/2;    // bottom of CW center orbit
-const DRED_EXIT = Math.PI*3/2;  // top of CW center orbit
+const TRANSIT_DUR = 2.4;
 
 /* ── PIXEL SAMPLING ── */
 let kinTargets = null, dredTargets = null;
@@ -376,6 +384,8 @@ function doTitleReveal() {
 
 function doWorldsReveal() {
   if (worldsFired) return; worldsFired = true;
+  // 방문 시각 저장
+  try { localStorage.setItem(KXD_VISIT_KEY, Date.now().toString()); } catch(e) {}
 }
 
 /* ── WORLD GRADIENT ── */
@@ -717,6 +727,15 @@ function frame(ts) {
 }
 
 initParts();
+
+// 재방문자: WORLDS로 바로 진입
+if (isReturning) {
+  elapsed     = 15.0;
+  worldFade   = 1;
+  skipMode    = false;
+  document.getElementById('skip-btn').style.display = 'none';
+}
+
 requestAnimationFrame(frame);
 
 /* ── EXPLORE TEXT CYCLE ── */

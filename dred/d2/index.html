@@ -6,6 +6,7 @@
   <title>D2 — DRED</title>
   <link rel="icon" type="image/svg+xml" href="/dred/d2/dred_favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Gowun+Batang:wght@400;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
 
@@ -263,35 +264,88 @@
     /* SHARE */
     .share-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.88);
-      display: none; align-items: center; justify-content: center; z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      z-index: 200; flex-direction: column; gap: 1rem;
     }
     .share-overlay.visible { display: flex; }
+
+    /* 카드: 3:4 비율, state2 이미지 배경 */
     .share-card {
-      background: #000; border: 1px solid #181818;
-      width: 300px; aspect-ratio: 1;
+      width: 300px; height: 400px;
+      position: relative; overflow: hidden; flex-shrink: 0;
+    }
+    .sc-bg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center top;
+    }
+    /* 그라데이션 오버레이 — 상단/하단 텍스트 가독성 확보 */
+    .sc-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.72) 0%,
+        rgba(0,0,0,0.18) 35%,
+        rgba(0,0,0,0.18) 55%,
+        rgba(0,0,0,0.85) 100%
+      );
+    }
+    .sc-content {
+      position: absolute; inset: 0;
       display: flex; flex-direction: column; justify-content: space-between;
-      padding: 1.5rem; position: relative; overflow: hidden;
+      padding: 1.4rem;
     }
-    .share-card::after {
-      content: ''; position: absolute; bottom: 0; right: 0;
-      width: 80px; height: 80px;
-      background: radial-gradient(at 100% 100%, rgba(91,79,207,0.16) 0%, transparent 70%);
+    /* 상단 영역 */
+    .sc-top {
+      font-family: var(--font-mono); font-size: 0.52rem;
+      letter-spacing: 0.22em; color: var(--purple);
+      text-transform: uppercase; margin-bottom: 0.5rem;
     }
-    .sc-top { font-family: var(--font-mono); font-size: 0.52rem; letter-spacing: 0.22em; color: var(--purple); text-transform: uppercase; }
-    .sc-artist { font-family: var(--font-mono); font-size: 0.62rem; color: #2e2e2e; margin-bottom: 0.2rem; }
-    .sc-title { font-family: var(--font-main); font-size: 1.4rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; color: var(--white); margin-bottom: 0.6rem; }
-    .sc-line { font-family: var(--font-mono); font-size: 0.65rem; font-style: italic; color: #333; line-height: 1.6; }
-    .sc-footer { font-family: var(--font-mono); font-size: 0.48rem; letter-spacing: 0.15em; color: #181818; text-transform: uppercase; }
+    .sc-keywords { display: flex; flex-direction: column; gap: 0.18rem; }
+    .sc-kw {
+      font-family: var(--font-kw); font-size: 0.78rem; font-weight: 700;
+      color: rgba(237,237,237,0.75); letter-spacing: 0.01em;
+    }
+    /* 하단 영역 */
+    .sc-bottom { display: flex; flex-direction: column; gap: 0; }
+    .sc-artist {
+      font-family: var(--font-mono); font-size: 0.6rem; font-weight: 300;
+      color: rgba(237,237,237,0.55); margin-bottom: 0.22rem; letter-spacing: 0.05em;
+    }
+    .sc-title {
+      font-family: var(--font-main); font-size: 1.45rem; font-weight: 800;
+      letter-spacing: -0.04em; line-height: 1.1;
+      color: #fff; margin-bottom: 0.65rem;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+    }
+    .sc-line {
+      font-family: var(--font-mono); font-size: 0.62rem; font-style: italic;
+      color: rgba(237,237,237,0.7); line-height: 1.65;
+      border-left: 1px solid var(--purple); padding-left: 0.7rem;
+      margin-bottom: 1rem;
+    }
+    .sc-footer {
+      font-family: var(--font-mono); font-size: 0.45rem;
+      letter-spacing: 0.15em; color: rgba(237,237,237,0.28);
+      text-transform: uppercase;
+    }
+
+    /* 공유/저장 버튼 */
     .share-close {
       position: absolute; top: -1.8rem; right: 0;
       background: none; border: none; color: #2a2a2a;
       font-size: 1.2rem; padding: 0.5rem; transition: color 0.15s;
     }
     .share-close:hover, .share-close:active { color: var(--white); }
-    .share-hint {
-      margin-top: 0.7rem; font-family: var(--font-mono);
-      font-size: 0.52rem; color: #1e1e1e; letter-spacing: 0.1em; text-align: center;
+    .share-save-btn {
+      font-family: var(--font-mono); font-size: 0.58rem;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      background: none; border: 1px solid rgba(91,79,207,0.5);
+      color: var(--purple); padding: 0.6rem 1.8rem;
+      transition: all 0.15s; width: 300px; text-align: center;
     }
+    .share-save-btn:hover:not(:disabled) { background: var(--purple); color: var(--white); }
+    .share-save-btn:disabled { opacity: 0.35; }
 
     /* ═══ MOBILE ═══ */
     @media (max-width: 767px) {
@@ -404,18 +458,27 @@
 
 <div class="share-overlay" id="shareOverlay">
   <div style="position:relative">
-    <div class="share-card">
-      <div class="sc-top">D2 · DRED</div>
-      <div>
-        <div class="sc-artist" id="sc-artist"></div>
-        <div class="sc-title" id="sc-title"></div>
-        <div class="sc-line" id="sc-line"></div>
+    <div class="share-card" id="shareCard">
+      <img class="sc-bg" id="scBg"
+        src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp"
+        crossorigin="anonymous" alt="">
+      <div class="sc-overlay"></div>
+      <div class="sc-content">
+        <div>
+          <div class="sc-top">D2 · DRED</div>
+          <div class="sc-keywords" id="sc-keywords"></div>
+        </div>
+        <div class="sc-bottom">
+          <div class="sc-artist" id="sc-artist"></div>
+          <div class="sc-title" id="sc-title"></div>
+          <div class="sc-line" id="sc-line"></div>
+          <div class="sc-footer">kinxdred.com/dred/d2</div>
+        </div>
       </div>
-      <div class="sc-footer">kinxdred.com/dred/d2</div>
     </div>
     <button class="share-close" onclick="closeShare()">×</button>
-    <div class="share-hint" id="shareHint"></div>
   </div>
+  <button class="share-save-btn" id="shareSaveBtn" onclick="saveShareImage()"></button>
 </div>
 
 <script>
@@ -425,8 +488,8 @@ const KEYWORDS = {
   en: ['on the way home',"it's 3am",'eating alone',"can't sleep",'just walking','going somewhere','just tired','zoning out','feels like i missed something','i have something to say',"can't decide",'said i was fine',"feels like it's over",'off for no reason',"shouldn't be excited"]
 };
 const COPY = {
-  ko: { random:'— 그냥 줘', again:'다시', share:'공유', hint:'스크린샷으로 저장하세요', meta:'DRED의 선곡', loading:'잠깐 기다려..' },
-  en: { random:'— just give it', again:'again', share:'share', hint:'screenshot to save', meta:"DRED's pick", loading:'hold on..' }
+  ko: { random:'— 그냥 줘', again:'다시', share:'공유', save:'이미지 저장', generating:'생성 중...', meta:'DRED의 선곡', loading:'잠깐 기다려..' },
+  en: { random:'— just give it', again:'again', share:'share', save:'save image', generating:'generating...', meta:"DRED's pick", loading:'hold on..' }
 };
 const DRED_QUOTES = {
   ko: ['알고 있어.','봐.','그래서.','네가 고른 거야.','이미 답 알잖아.','상관없어.'],
@@ -439,6 +502,7 @@ const OVERLAY_DURATION = 700; /* ms — keep in sync with --overlay-dur in CSS *
 /* ─── STATE ─── */
 let currentLang = 'ko';
 let selectedTags = [];
+let currentTags  = []; /* 공유 카드용 — API 호출 시점의 태그 스냅샷 */
 let currentResult = null;
 let autoSubmitTimer = null;
 let ambStateIndex = 0;
@@ -610,7 +674,7 @@ function updateCopy() {
   document.getElementById('randomBtn').textContent   = c.random;
   document.getElementById('btnAgain').textContent    = c.again;
   document.getElementById('btnShare').textContent    = c.share;
-  document.getElementById('shareHint').textContent   = c.hint;
+  document.getElementById('shareSaveBtn').textContent = c.save;
   document.getElementById('loadingText').textContent = c.loading;
   const qt = document.getElementById('quoteText');
   if (qt.textContent) qt.textContent = pick(DRED_QUOTES[currentLang]);
@@ -754,6 +818,8 @@ async function submitRandom() { await callAPI([], true); }
 async function callAPI(tags, isRandom) {
   showScreen('loading');
   stopAmbient();
+  /* 공유 카드에 쓸 태그 스냅샷 저장 (랜덤이면 빈 배열) */
+  currentTags = isRandom ? [] : [...selectedTags];
 
   const overlayPromise = startOverlay();
   const apiPromise = fetch(API_URL, {
@@ -815,17 +881,87 @@ function resetToSelect() {
 /* ─── SHARE ─── */
 function openShare() {
   if (!currentResult) return;
+  const c = COPY[currentLang];
+
+  /* 키워드 채우기 */
+  const kwEl = document.getElementById('sc-keywords');
+  kwEl.innerHTML = currentTags.length
+    ? currentTags.map(t => `<div class="sc-kw">${t}</div>`).join('')
+    : '';
+
   document.getElementById('sc-artist').textContent = currentResult.track.artist;
   document.getElementById('sc-title').textContent  = currentResult.track.title;
   document.getElementById('sc-line').textContent   = currentResult.dred_line;
+
+  /* 저장 버튼 초기화 */
+  const btn = document.getElementById('shareSaveBtn');
+  btn.textContent = c.save;
+  btn.disabled    = false;
+
   document.getElementById('shareOverlay').classList.add('visible');
 }
+
 function closeShare() {
   document.getElementById('shareOverlay').classList.remove('visible');
 }
+
 document.getElementById('shareOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeShare();
 });
+
+async function saveShareImage() {
+  const c   = COPY[currentLang];
+  const btn = document.getElementById('shareSaveBtn');
+  btn.textContent = c.generating;
+  btn.disabled    = true;
+
+  try {
+    /* 폰트 로드 완료 후 캡처 */
+    await document.fonts.ready;
+    const canvas = await html2canvas(document.getElementById('shareCard'), {
+      useCORS:         true,
+      scale:           2,
+      backgroundColor: '#000',
+      logging:         false,
+    });
+
+    /* 모바일 Web Share API */
+    const IS_MOBILE = window.matchMedia('(max-width:767px)').matches;
+    if (IS_MOBILE && navigator.share) {
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'dred-d2.png', { type: 'image/png' });
+        try {
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'D2 · DRED' });
+          } else {
+            triggerDownload(canvas);
+          }
+        } catch (err) {
+          /* 공유 취소 또는 실패 → 다운로드로 폴백 */
+          if (err.name !== 'AbortError') triggerDownload(canvas);
+        }
+        btn.textContent = c.save;
+        btn.disabled    = false;
+      }, 'image/png');
+    } else {
+      /* PC: 다운로드 */
+      triggerDownload(canvas);
+      btn.textContent = c.save;
+      btn.disabled    = false;
+    }
+  } catch (err) {
+    console.error('[D2] share image error:', err);
+    btn.textContent = c.save;
+    btn.disabled    = false;
+  }
+}
+
+function triggerDownload(canvas) {
+  const a      = document.createElement('a');
+  a.download   = 'dred-d2.png';
+  a.href       = canvas.toDataURL('image/png');
+  a.click();
+}
 
 /* ─── AMBIENT CYCLING ─── */
 const AMB_IDS = ['ambText', 'ambGlow', 'ambQuote'];

@@ -614,15 +614,35 @@ if (!IS_TOUCH) {
     }
   });
 
-  let lastWheelTime = 0;
+  let wheelAcc      = 0;
+  let wheelResetTimer = null;
+  let wheelBlocked  = false;
+  const WHEEL_THRESHOLD = 80;
+
   $wrap.addEventListener('wheel', e => {
     e.preventDefault();
     if (detailOpen) return;
     hideHint();
-    const now = performance.now();
-    if (now - lastWheelTime < 150) return;
-    lastWheelTime = now;
-    const dir = Math.sign(e.deltaX !== 0 ? e.deltaX : e.deltaY);
+
+    // deltaMode 정규화: 0=pixel(기본), 1=line(Firefox), 2=page
+    const multiplier = e.deltaMode === 1 ? 30 : e.deltaMode === 2 ? 300 : 1;
+    const delta = (e.deltaX !== 0 ? e.deltaX : e.deltaY) * multiplier;
+
+    // 200ms 무입력 시 누산 초기화 (제스처 간 잔류 방지)
+    clearTimeout(wheelResetTimer);
+    wheelResetTimer = setTimeout(() => { wheelAcc = 0; }, 200);
+
+    // 한 칸 이동 직후 모멘텀 이벤트 차단 (350ms)
+    if (wheelBlocked) return;
+
+    wheelAcc += delta;
+    if (Math.abs(wheelAcc) < WHEEL_THRESHOLD) return;
+
+    const dir = Math.sign(wheelAcc);
+    wheelAcc = 0;
+    wheelBlocked = true;
+    setTimeout(() => { wheelBlocked = false; }, 350);
+
     const baseIdx = isSnapping
       ? Math.round(-snapTarget / STEP)
       : Math.round(-offset / STEP);

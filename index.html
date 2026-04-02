@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>kinxdred</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300&display=swap" rel="stylesheet" />
+
+  <!-- Prefetch main experience -->
+  <link rel="prefetch" href="./main.html" />
+  <link rel="prefetch" href="./kin_default.webp" />
+  <link rel="prefetch" href="./dred_default2.webp" />
+  <link rel="prefetch" href="./kin_sowhat.webp" />
+  <link rel="prefetch" href="./kin_latenight.webp" />
+  <link rel="prefetch" href="./kin_readingtheroom.webp" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:  #0a0a0a;
+      --yellow: #FFE500;
+      --dred:   #5B4FCF;
+      --white:  #f5f5f0;
+      --muted:  #555;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Syne', sans-serif;
+      overflow: hidden;
+      cursor: none;
+    }
+
+    @media (pointer: coarse) {
+      html, body { cursor: auto; }
+      #cursor { display: none !important; }
+    }
+
+    /* Fade-to-black overlay */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: opacity 0.55s ease;
+    }
+    #overlay.fading {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Custom cursor */
+    #cursor {
+      position: fixed;
+      left: -50px; top: -50px;
+      width: 10px; height: 10px;
+      background: #fff;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s ease, height 0.2s ease;
+    }
+    #cursor.grow { width: 36px; height: 36px; }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.35;
+    }
+
+    /* Layout */
+    .wrapper {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 2.5rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.1s forwards;
+    }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      background: #3dffa0;
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 0;
+    }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.3s forwards;
+    }
+
+    .headline {
+      font-size: clamp(4rem, 10vw, 9rem);
+      font-weight: 800;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.4s forwards;
+    }
+
+    /* "kind." cycles yellow → DRED → yellow */
+    .accent {
+      display: inline-block;
+      position: relative;
+      animation: kindCycle 3.6s ease-in-out infinite;
+    }
+
+    @keyframes kindCycle {
+      0%, 100% { color: var(--yellow); }
+      50%       { color: var(--dred); }
+    }
+
+    /* Underline follows text color */
+    .accent::after {
+      content: '';
+      position: absolute;
+      bottom: 0.05em; left: 0;
+      width: 100%; height: 3px;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: lineGrow 0.6s ease 1.2s forwards;
+    }
+
+    @keyframes lineGrow { to { transform: scaleX(1); } }
+
+    .actions {
+      margin-top: 3.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.8s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.8rem;
+      min-height: 44px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1.5px solid var(--yellow);
+      cursor: pointer;
+      background: var(--yellow);
+      color: var(--black);
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--black);
+      color: var(--dred);
+      border-color: var(--dred);
+      transform: translateY(-2px);
+    }
+
+    .arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+    .btn:hover .arrow { transform: translateX(4px); }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 1s forwards;
+    }
+
+    .footer-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      line-height: 2;
+    }
+
+    .bg-number {
+      position: fixed;
+      bottom: -0.1em; right: -0.05em;
+      font-size: clamp(200px, 30vw, 380px);
+      font-weight: 800;
+      color: transparent;
+      -webkit-text-stroke: 1px #1a1a1a;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      opacity: 0;
+      animation: fadeIn 1s ease 1.2s forwards;
+    }
+
+    .vert-text {
+      position: fixed;
+      right: 2rem; top: 50%;
+      transform: translateY(-50%) rotate(90deg);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      color: #2a2a2a;
+      text-transform: uppercase;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    @media (max-width: 600px) {
+      .wrapper   { padding: 1.8rem 1.5rem; }
+      .vert-text { display: none; }
+      .bg-number { font-size: 120px; overflow: hidden; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="overlay"></div>
+  <div id="cursor"></div>
+  <div class="bg-number">01</div>
+  <div class="vert-text">kinxdred.com</div>
+
+  <div class="wrapper">
+    <header>
+      <div class="status-dot">
+        <span class="dot"></span>
+        live
+      </div>
+    </header>
+
+    <main class="hero">
+      <p class="eyebrow">they've been here.</p>
+      <h1 class="headline">
+        know<br>your<br><span class="accent">kind.</span>
+      </h1>
+      <div class="actions">
+        <button class="btn" id="enterBtn">
+          Enter <span class="arrow">→</span>
+        </button>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer-meta">
+        <div>© 2025 kinxdred</div>
+        <div>kinxdred.com</div>
+      </div>
+
+    </footer>
+  </div>
+
+  <script>
+    /* ── CURSOR ── */
+    const $cur = document.getElementById('cursor');
+    document.addEventListener('mousemove', e => {
+      $cur.style.left = e.clientX + 'px';
+      $cur.style.top  = e.clientY + 'px';
+    });
+    const $btn = document.getElementById('enterBtn');
+    $btn.addEventListener('mouseenter', () => $cur.classList.add('grow'));
+    $btn.addEventListener('mouseleave', () => $cur.classList.remove('grow'));
+
+    /* ── ENTER → main.html ── */
+    const overlay = document.getElementById('overlay');
+    let gone = false;
+
+    function goToMain() {
+      if (gone) return;
+      gone = true;
+      overlay.classList.add('fading');
+      setTimeout(() => { window.location.href = './main.html'; }, 550);
+    }
+
+    $btn.addEventListener('click', goToMain);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') goToMain();
+    });
+  </script>
+</body>
+</html>

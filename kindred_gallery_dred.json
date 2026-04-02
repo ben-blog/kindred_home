@@ -1,0 +1,265 @@
+{
+  "character": "DRED",
+  "version": "1.0",
+  "updated": "2026",
+  "images": [
+    {
+      "id": "dred_a1_camera_black",
+      "filename": "dred_a1_camera_black.webp",
+      "style": "A — Korean Webtoon Flat",
+      "ko": {
+        "title": "뭘 찍는지는 말 안 해도 돼",
+        "technique": "Korean Webtoon Flat 스타일. 순수 블랙 배경, 화이트 아웃라인. 플랫 컬러, 굵은 라인. 필름 카메라 디테일 정밀 묘사.",
+        "description": "블랙 배경. DRED가 필름 카메라를 한 손에 쥐고 약간 옆을 응시한다. 시선은 카메라 렌즈가 아닌 다른 곳을 향한다. 무엇을 찍을지 이미 정해져 있거나, 아직 결정하지 않았거나. 표정은 읽히지 않는다.",
+        "kin_perspective": "야, 뭐 찍어? 나 찍어줘. 근데 진짜 뭐 찍는 거야, 저 눈빛이 뭔가 있는데. DRED가 카메라 들면 진짜 뭔가 나오거든, 경험상.",
+        "dred_perspective": "렌즈를 통해 보면 불필요한 것들이 사라진다. 그게 좋아서 찍는다.",
+        "actions": [{ "type": "service", "label": "DRED 소개 보기", "url": "/character/dred" }]
+      },
+      "en": {
+        "title": "You Don't Have to Say What You're Shooting",
+        "technique": "Korean Webtoon Flat style. Pure black background, white outline. Flat color, bold line. Film camera rendered in precise detail.",
+        "description": "Black background. DRED holds a film camera in one hand, gaze turned slightly to the side. Eyes aren't on the lens — they're somewhere else. Maybe already decided what to shoot. Maybe not. The expression gives nothing away.",
+        "kin_perspective": "Hey, what are you shooting? Shoot me. Wait, what are you actually looking at — that expression means something. When DRED picks up a camera, something always comes out. Personal experience.",
+        "dred_perspective": "Through a lens, the unnecessary things disappear. That's why I shoot.",
+        "actions": [{ "type": "service", "label": "Meet DRED", "url": "/character/dred" }]
+      }
+    },
+    {
+      "id": "dred_a2_rain_window",
+      "filename": "dred_a2_rain_window.webp",
+      "style": "A — Korean Webtoon Flat",
+      "ko": {
+        "title": "비가 오면 생각이 정리된다",
+        "technique": "Korean Webtoon Flat 스타일. 화이트 아웃라인. 빗방울이 흐르는 창문 유리 디테일, 흐릿한 도시 배경.",
+        "description": "비 오는 날, 창가에 선 DRED. 옆모습. 시선은 창밖 도시를 향한다. 빗방울이 유리를 타고 흘러내린다. 무표정하지만 무언가를 보고 있다. 말이 없는 게 아니라, 말할 필요가 없는 상태.",
+        "kin_perspective": "비 오는 날 창문 보는 거 나도 좋아해. 근데 DRED는 뭔가 달라. 나는 그냥 멍 때리는데, DRED는 진짜 뭔가 보고 있는 것 같거든.",
+        "dred_perspective": "비는 소음을 지운다. 그 안에서 들려야 할 것들이 들린다.",
+        "actions": []
+      },
+      "en": {
+        "title": "Rain Clears the Head",
+        "technique": "Korean Webtoon Flat style. White outline. Raindrops running down window glass, blurred city background.",
+        "description": "A rainy day. DRED stands at the window, seen from the side. Gaze fixed on the city outside. Rain trails down the glass. Expressionless — but looking at something. Not silent because there's nothing to say. Silent because nothing needs to be said.",
+        "kin_perspective": "I like watching windows on rainy days too. But DRED's different. I just zone out. DRED looks like they're actually seeing something.",
+        "dred_perspective": "Rain cancels the noise. What needs to be heard — gets heard.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_c1_escalator",
+      "filename": "dred_c1_escalator.webp",
+      "style": "C — 차차(@cha_cha_9_9) Style",
+      "ko": {
+        "title": "혼자 올라가는 방향",
+        "technique": "차차 스타일. 탑뷰 내려다보기 시점. 에스컬레이터 사선 구도. 군중은 올라가는 방향, DRED만 내려가는 에스컬레이터. 컬러는 DRED만 퍼플+화이트, 주변은 모노크롬.",
+        "description": "에스컬레이터. 올라가는 사람들 사이, DRED만 내려가는 방향으로 올라서 있다. 위에서 내려다보는 시점. 고개는 약간 숙이고 있다. 주변 군중은 회색, DRED만 컬러. 거스르는 방향을 선택한 게 아니라, 그냥 그 방향이 맞을 뿐이다.",
+        "kin_perspective": "저거 반대 방향 아닌가? 맞네. 근데 표정을 보면 틀린 줄도 모르는 것 같기도 하고... 아니면 알면서 그러는 건가? DRED는 항상 이래서 모르겠어.",
+        "dred_perspective": "다수가 가는 방향이 맞는 방향이라는 보장은 없다.",
+        "actions": []
+      },
+      "en": {
+        "title": "Going the Other Way",
+        "technique": "Cha_cha style. Top-down overhead view. Diagonal escalator composition. Crowd going up, DRED alone going down. Only DRED in color (purple + white), crowd in monochrome.",
+        "description": "Escalator. Everyone going up — DRED alone on the one going down. Seen from above. Head slightly lowered. The crowd is grey. DRED is color. Not a choice to go against the current. Just the direction that makes sense.",
+        "kin_perspective": "Wait, isn't that the wrong direction? Yeah it is. But the expression — it doesn't even look like they know. Or maybe they do. DRED is always like this, I can never tell.",
+        "dred_perspective": "The direction everyone's going isn't necessarily the right one.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_c2_parking_worm",
+      "filename": "dred_c2_parking_worm.webp",
+      "style": "C — 차차(@cha_cha_9_9) Style",
+      "ko": {
+        "title": "내릴 준비가 됐을 때 내린다",
+        "technique": "차차 스타일. 극단적 worm's eye view. 지하 주차장 바닥에서 올려다보는 시점. 차 문 열린 구도, 발이 화면 하단을 압도.",
+        "description": "지하 주차장. 열린 차 문 사이에 걸터앉은 DRED. 바닥에서 올려다보는 극단적인 시점. 한 발은 차 안, 한 발은 밖. 내리려는 건지 타려는 건지 모른다. 표정은 카메라를 의식하지 않는다. 결정은 DRED가 한다.",
+        "kin_perspective": "야 빨리 내려. 뭐야, 타는 거야 내리는 거야? 저 표정은 뭐... 아 진짜, DRED 보면 서두르는 법이 없어. 근데 신기하게 늦은 적도 없고.",
+        "dred_perspective": "급하게 내릴 이유가 없다. 준비됐을 때 움직이면 된다.",
+        "actions": []
+      },
+      "en": {
+        "title": "I'll Get Out When I'm Ready",
+        "technique": "Cha_cha style. Extreme worm's eye view. Looking up from underground parking lot floor. Car door open frame, feet dominating the lower image.",
+        "description": "Underground parking lot. DRED perched in an open car door. Extreme upward angle from the floor. One foot in the car, one foot out. Hard to tell if they're getting in or out. Not looking at the camera. The decision belongs to DRED.",
+        "kin_perspective": "Come on, get out already. Are you getting in or out? That expression... DRED never hurries. But weirdly, never late either.",
+        "dred_perspective": "There's no reason to rush. Move when you're ready.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_d1_2_rush_hour",
+      "filename": "dred_d1-2_rush_hour.webp",
+      "style": "D1 — Graphic Novel",
+      "ko": {
+        "title": "Rush Hour",
+        "technique": "Graphic Novel 스타일. 세밀한 건축 라인워크, 시네마틱 구도. 앰버+쿨블루 조명 분할. 유럽풍 도시 애비뉴 배경.",
+        "description": "유럽풍 건물 발코니 난간. DRED가 다리를 내려뜨리고 앉아 도시를 내려다본다. 황혼의 러시아워, 차들의 헤드라이트가 도로를 길게 수놓는다. 왼쪽 창문에서 새어나오는 앰버 빛과 오른쪽 쿨블루 도시 빛이 DRED 위에서 나뉜다. 사람들은 어딘가로 향하고, DRED는 그걸 내려다본다.",
+        "kin_perspective": "저기 어떻게 올라간 거야? 위험하지 않아? 근데 저 뷰는 진짜 대박이긴 하다. 나도 저기 앉아보고 싶은데... DRED는 저런 데서 뭔 생각해?",
+        "dred_perspective": "다들 어딘가로 가고 있다. 어디로 가는지 알고 가는 사람이 몇이나 될까.",
+        "actions": [{ "type": "quiz", "label": "지금 너는 어디로 가고 있어?", "url": "/quiz/where-are-you-going" }]
+      },
+      "en": {
+        "title": "Rush Hour",
+        "technique": "Graphic Novel style. Detailed architectural linework, cinematic composition. Amber + cool blue split lighting. European city avenue background.",
+        "description": "A balcony ledge on a European-style building. DRED sits with legs dangling over the city below. Dusk rush hour — headlights stretch endlessly down the avenue. Amber light from the window on the left, cool blue city light on the right, both landing on DRED. Everyone is going somewhere. DRED watches.",
+        "kin_perspective": "How did you even get up there? Isn't that dangerous? That view though — actually incredible. I want to sit there too... what does DRED think about up there?",
+        "dred_perspective": "Everyone's going somewhere. How many of them actually know where.",
+        "actions": [{ "type": "quiz", "label": "Where are you going right now?", "url": "/quiz/where-are-you-going" }]
+      }
+    },
+    {
+      "id": "dred_d2_gas_station_worm",
+      "filename": "dred_d2_gas_station_worm.webp",
+      "style": "D2 — City Pop Illustration",
+      "ko": {
+        "title": "네온 아래",
+        "technique": "City Pop 스타일. 80-90년대 레트로 애니 감성. 극단적 worm's eye view. 주유소 네온사인 핑크+퍼플+옐로우 조명. 야간 배경.",
+        "description": "심야 주유소. 네온사인이 퍼플과 핑크로 가득한 캐노피 아래 DRED가 서있다. 바닥에서 올려다보는 시점. 두 손은 허리에, 시선은 아래를 내려다본다. 바람에 머리카락이 살짝 날린다. 네온이 DRED를 감싸고, DRED는 그 안에서 완전히 자연스럽다.",
+        "kin_perspective": "이 각도 완전 멋있다. 네온 색이랑 DRED 분위기가 딱 맞아. 근데 심야 주유소에 혼자 있는 건 좀 무섭지 않나? 나한테는 그래도.",
+        "dred_perspective": "네온은 거짓말을 하지 않는다. 있는 그대로를 밝힐 뿐이다.",
+        "actions": []
+      },
+      "en": {
+        "title": "Under the Neon",
+        "technique": "City Pop style. 80-90s retro anime aesthetic. Extreme worm's eye view. Gas station neon sign in pink + purple + yellow. Night background.",
+        "description": "Late-night gas station. DRED stands under a canopy saturated in purple and pink neon. Looking up from the floor. Both hands on hips, gaze downward. Hair catches a slight wind. The neon wraps around DRED — and DRED is completely at home in it.",
+        "kin_perspective": "This angle is so good. The neon matches DRED's whole vibe perfectly. But being alone at a gas station at 2am — that'd freak me out honestly.",
+        "dred_perspective": "Neon doesn't lie. It just lights what's there.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_d3_painterly_solitude",
+      "filename": "dred_d3_painterly_solitude.webp",
+      "style": "D3 — Painterly Solitude",
+      "ko": {
+        "title": "아무도 없을 때의 얼굴",
+        "technique": "하이퍼리얼 디지털 페인팅. 구름 가득한 여름 하늘 배경. 아래에서 올려다보는 시점. 눈을 감은 DRED, 빛과 그림자의 디테일한 표현.",
+        "description": "여름 낮, 구름이 빠르게 흐르는 하늘 아래. DRED가 눈을 감고 고개를 들었다. 아무도 없다. 전봇대 하나, 새 몇 마리. 바람이 있는 게 느껴진다. 이 표정을 DRED는 다른 누구에게도 보여주지 않는다. 이게 DRED의 진짜 얼굴인지도 모른다.",
+        "kin_perspective": "이거 진짜야? DRED 눈 감은 거 처음 봤어. 뭔가 다른 사람 같은데. 원래 이런 표정 하는 사람이었어? 나 몰랐다.",
+        "dred_perspective": "가끔은 아무것도 생각하지 않아도 되는 시간이 필요하다.",
+        "actions": []
+      },
+      "en": {
+        "title": "The Face Nobody Sees",
+        "technique": "Hyperreal digital painting. Summer sky filled with moving clouds. Low-angle upward view. DRED with eyes closed, detailed light and shadow.",
+        "description": "Summer afternoon, clouds moving fast. DRED has their head tilted up, eyes closed. No one around. One telephone pole, a few birds. You can feel the wind. This expression — DRED doesn't show it to anyone. This might be the real face.",
+        "kin_perspective": "Wait, is this real? I've never seen DRED with their eyes closed. Looks like a completely different person. Were you always like this? I didn't know.",
+        "dred_perspective": "Sometimes you just need time where you don't have to think about anything.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_g2_kin_dred",
+      "filename": "dred_g2_kin_dred_1.webp",
+      "style": "G — Risograph Print",
+      "ko": {
+        "title": "둘이면 완전하다",
+        "technique": "Risograph 오버프린트 듀얼. KIN 옐로우+DRED 퍼플 레이어가 경계에서 겹치며 제3의 색 생성. 블랙 배경, 화이트 아웃라인. 등을 맞댄 구도.",
+        "description": "블랙 배경. KIN과 DRED가 등을 맞대고 서있다. 각자의 컬러가 경계에서 만나 오버프린트된다. 옐로우와 퍼플이 겹치는 곳에서 오렌지가 스며든다. 서로를 보지 않아도, 등이 닿아있다. 이게 이 둘의 방식이다.",
+        "kin_perspective": "나랑 DRED가 같이 있으면 이런 느낌인 거야? 색이 섞이는 거 봐봐. 뭔가 새로운 색이 되잖아. 오, 이거 생각보다 멋있는데.",
+        "dred_perspective": "KIN 없는 나는 냉혹하기만 하다. 이미 알고 있다.",
+        "actions": [
+          { "type": "service", "label": "KIN과 DRED 함께 만나기", "url": "/onboarding/both" },
+          { "type": "video", "label": "KINDRED 소개 영상", "url": "/video/kindred-intro" }
+        ]
+      },
+      "en": {
+        "title": "Together, Complete",
+        "technique": "Risograph dual overprint. KIN yellow + DRED purple layers meet at the border, generating a third color. Black background, white outline. Back-to-back composition.",
+        "description": "Black background. KIN and DRED stand back to back. Their colors meet at the edge and overprint. Where yellow and purple overlap, orange bleeds in. They're not looking at each other — but their backs are touching. That's how these two work.",
+        "kin_perspective": "So this is what it looks like when we're together? Look at the colors mixing. Something new comes out. Oh — this is actually pretty cool.",
+        "dred_perspective": "Without KIN, I'm only cold. I already know that.",
+        "actions": [
+          { "type": "service", "label": "Meet KIN and DRED Together", "url": "/onboarding/both" },
+          { "type": "video", "label": "KINDRED Intro", "url": "/video/kindred-intro" }
+        ]
+      }
+    },
+    {
+      "id": "dred_g2_turnback",
+      "filename": "dred_g2_turnback.webp",
+      "style": "G — Risograph Print",
+      "ko": {
+        "title": "돌아보는 이유는 하나야",
+        "technique": "Risograph 단색 인쇄. 퍼플+블랙 2도. 망점, 그레인 텍스처. 화이트 아웃라인. 3/4 뒷모습에서 돌아보는 구도.",
+        "description": "블랙 배경. DRED가 몸은 앞을 향한 채 고개만 돌려 카메라를 본다. 시선이 날카롭다. 뒤를 돌아보는 게 아니라, 이쪽을 확인하는 것에 가깝다. 퍼플+블랙 2도 인쇄. 이 한 번의 시선이 전부를 말한다.",
+        "kin_perspective": "저 눈빛 봐봐. 뭔가 할 말 있는 것 같은데 안 하잖아. DRED가 돌아볼 때는 진짜 뭔가 있을 때야. 그냥 돌아보는 법이 없거든.",
+        "dred_perspective": "확인할 게 있을 때만 돌아본다.",
+        "actions": []
+      },
+      "en": {
+        "title": "There's Only One Reason I Look Back",
+        "technique": "Risograph single-color print. Purple + black 2-color. Halftone dots, grain texture. White outline. 3/4 rear view turning back composition.",
+        "description": "Black background. DRED's body faces forward, head turned back to look at the camera. Sharp gaze. Not looking back — more like checking. Purple + black 2-color Risograph. This one glance says everything.",
+        "kin_perspective": "Look at those eyes. Like there's something to say but they're not saying it. When DRED looks back, there's always a reason. Never does it for nothing.",
+        "dred_perspective": "I only look back when there's something to verify.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_g3_music",
+      "filename": "dred_g3_music.webp",
+      "style": "G — Risograph Print",
+      "ko": {
+        "title": "소리가 공간을 채울 때",
+        "technique": "Risograph 스타일. 퍼플 계열 플랫 컬러. 레트로 음악 소품들 — 붐박스, LP, 카세트테이프. 맨발, 바닥에 앉은 포즈.",
+        "description": "퍼플빛 방. DRED가 붐박스 옆 바닥에 가부좌로 앉아있다. 헤드폰을 끼고, 주변에는 LP와 카세트테이프가 흩어져있다. 눈은 반쯤 내려깔려 있다. 소리를 듣는 게 아니라, 소리 속에 있는 상태다. 이 방의 온도는 바깥과 다르다.",
+        "kin_perspective": "DRED 음악 취향이 뭐야? 이런 데서 뭘 들어? 붐박스도 있고, LP도 있고... 나한테도 알려줘. 나는 뭐든 다 들어.",
+        "dred_perspective": "좋은 음악은 설명이 필요없다. 그냥 듣기만 하면 된다.",
+        "actions": [{ "type": "link", "label": "DRED의 플레이리스트", "url": "/playlist/dred" }]
+      },
+      "en": {
+        "title": "When Sound Fills the Room",
+        "technique": "Risograph style. Purple-toned flat color. Retro music props — boombox, vinyl records, cassette tapes. Barefoot, seated on the floor.",
+        "description": "A purple-lit room. DRED sits cross-legged on the floor beside a boombox. Headphones on. Vinyl records and cassette tapes scattered around. Eyes half-closed. Not listening to the music — inside it. The temperature of this room is different from outside.",
+        "kin_perspective": "What does DRED even listen to? What do you put on in a room like this? Boombox, vinyl, the whole thing... tell me. I'll listen to anything.",
+        "dred_perspective": "Good music doesn't need an explanation. You just listen.",
+        "actions": [{ "type": "link", "label": "DRED's Playlist", "url": "/playlist/dred" }]
+      }
+    },
+    {
+      "id": "dred_g4_highway_wall",
+      "filename": "dred_g4_highway_wall.webp",
+      "style": "G — Risograph Print",
+      "ko": {
+        "title": "다 지나간다",
+        "technique": "Risograph 2도 오버프린트. 네이비+오렌지 팔레트. 망점, 그레인, 잉크 번짐. 고속도로 모션블러와 방음벽 그래피티. 화이트 아웃라인 없이 컬러 레이어 분리.",
+        "description": "심야 고속도로 방음벽. DRED가 콘크리트 벽에 한쪽 어깨를 기대고 서있다. 차들이 쌩하고 지나가며 빛 줄기를 남긴다. 바람에 머리가 날린다. 모든 것이 움직이는데 DRED만 정지해있다. 그래피티 벽, 오렌지+네이비 조명이 겹친다.",
+        "kin_perspective": "저기 서있으면 무섭지 않아? 차가 엄청 빠르게 지나가잖아. 근데 DRED 표정은 진짜 아무것도 아닌 것 같아. 어떻게 저래.",
+        "dred_perspective": "빠르게 지나가는 것들은 결국 지나간다. 거기에 흔들릴 이유가 없다.",
+        "actions": []
+      },
+      "en": {
+        "title": "It All Passes",
+        "technique": "Risograph 2-color overprint. Navy + orange palette. Halftone dots, grain, ink bleed. Highway motion blur and sound barrier graffiti. Color layer separation without white outline.",
+        "description": "Late-night highway sound barrier. DRED leans one shoulder against the concrete wall. Cars streak past, leaving trails of light. Hair catches the wind. Everything is moving. DRED is still. Graffiti wall, orange + navy light overlapping.",
+        "kin_perspective": "Doesn't standing there scare you? The cars are going so fast. But DRED's face — completely unbothered. How.",
+        "dred_perspective": "Things that pass quickly — pass. No reason to be moved by them.",
+        "actions": []
+      }
+    },
+    {
+      "id": "dred_room_studio",
+      "filename": "dred_room_studio_01.webp",
+      "style": "D1 — Graphic Novel",
+      "ko": {
+        "title": "떠난 것 같은데 돌아올지 모르는",
+        "technique": "Graphic Novel 스타일. 페리윙클 벽, 쿨블루 도시 빛만의 단일 광원. 꺼진 스탠드, 인화 사진, 필름 카메라, LP, 헤드폰. 캐릭터 부재 씬.",
+        "description": "DRED의 작업실. 아무도 없다. 페리윙클 벽에 도시 사진들이 테이프로 붙어있다. 책상 위 필름 카메라, 빈 커피잔, 흩어진 종이들. 꺼진 스탠드. 바닥에는 LP와 펼쳐진 책, 헤드폰. 창문 너머 도시 빛만이 방을 채운다. DRED가 있던 자리인지, 아직 오지 않은 자리인지 알 수 없다.",
+        "kin_perspective": "이 방에 들어가도 돼? 뭔가 함부로 들어가면 안 될 것 같은 느낌인데. 근데 저 사진들, 다 어디서 찍은 거야? DRED가 직접 찍은 거야?",
+        "dred_perspective": "이 공간은 나다. 설명하지 않아도 알 수 있어야 한다.",
+        "actions": [{ "type": "link", "label": "DRED의 세계 탐험하기", "url": "/explore/dred" }]
+      },
+      "en": {
+        "title": "Left — Or Never Arrived",
+        "technique": "Graphic Novel style. Periwinkle wall, single light source from cool blue city light only. Lamp turned off, printed photos, film camera, vinyl records, headphones. Character-absent scene.",
+        "description": "DRED's studio. No one here. City photographs taped to a periwinkle wall. Film camera on the desk, empty coffee cup, scattered papers. Lamp off. Vinyl records on the floor, a book left open, headphones. Only city light through the window fills the room. Can't tell if DRED was here and left — or hasn't come yet.",
+        "kin_perspective": "Can I go in? Feels like you're not supposed to just walk in. But those photos — where were they taken? Did DRED shoot all of these?",
+        "dred_perspective": "This space is me. You should be able to tell without an explanation.",
+        "actions": [{ "type": "link", "label": "Explore DRED's World", "url": "/explore/dred" }]
+      }
+    }
+  ]
+}

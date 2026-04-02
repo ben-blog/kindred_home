@@ -1,151 +1,165 @@
 {
   "character": "KIN",
-  "version": "1.0",
+  "version": "2.0",
   "updated": "2026",
   "images": [
     {
       "id": "kin_g3_bus_risograph",
       "filename": "kin_g3_bus_risograph.webp",
       "style": "G — Risograph Print",
+      "order_num": 1,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "Two Stops Away",
         "technique": "Risograph 2도 오버프린트. teal과 red 잉크 레이어가 어긋나며 동일 인물의 두 시선이 한 프레임에 겹침. 크림 페이퍼 베이스, 망점, 잉크 번짐.",
         "description": "버스 창가 좌석. 이어폰을 낀 KIN이 두 개의 컬러 레이어로 분열되어 있다. teal 레이어는 창밖을 보고, red 레이어는 정면을 본다. 같은 사람, 같은 순간, 다른 방향. 주변 승객들은 흐릿하게 탈색되어 있고 KIN만 선명하다.",
         "kin_perspective": "어, 이거 나야. 근데 나 둘이네. 창밖 보는 나랑 앞 보는 나. 솔직히 버스에서 이런 거 매일 하지 않아? 가야 할 곳이랑 가고 싶은 곳이 달라서 그냥 둘 다 보는 거. 뭐 어때, 어떻게든 다음 정류장에서 내리면 되니까.",
-        "dred_perspective": "몸은 가고 있는데 마음은 아직 결정 못 했다는 거. 그게 보여.",
-        "actions": [
-          { "type": "quiz", "label": "지금 네 마음은 어느 방향?", "url": "/quiz/direction" }
-        ]
+        "dred_perspective": "몸은 가고 있는데 마음은 아직 결정 못 했다는 거. 그게 보여."
       },
       "en": {
         "title": "Two Stops Away",
         "technique": "Risograph 2-color overprint. Teal and red ink layers misregistered, overlapping two gazes of the same person in one frame. Cream paper base, halftone dots, ink bleed.",
         "description": "Window seat on a bus. KIN splits into two color layers. The teal layer looks out the window. The red layer faces forward. Same person, same moment, different directions. Passengers around them fade to grey — only KIN stays vivid.",
         "kin_perspective": "Oh wait, that's me. Two of me though. One looking out the window, one looking straight ahead. Honestly, isn't this just what riding the bus feels like? Where you're supposed to go versus where you want to go. Whatever, I'll figure it out at the next stop.",
-        "dred_perspective": "Body's moving. Mind hasn't decided yet. It shows.",
-        "actions": [
-          { "type": "quiz", "label": "Which direction is your mind right now?", "url": "/quiz/direction" }
-        ]
+        "dred_perspective": "Body's moving. Mind hasn't decided yet. It shows."
+      },
+      "actions": {
+        "ko": [{ "type": "quiz", "label": "지금 네 마음은 어느 방향?", "url": "/quiz/direction" }],
+        "en": [{ "type": "quiz", "label": "Which direction is your mind right now?", "url": "/quiz/direction" }]
       }
     },
     {
       "id": "kin_room_mangacafe",
       "filename": "kin_room_mangacafe_01.webp",
       "style": "K — Adachi Mitsuru Style",
+      "order_num": 2,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "곧 돌아올 자리",
         "technique": "아다치 미쓰루 스타일 인테리어 일러스트. 따뜻한 선화, 소프트 채색. 옐로우 컬러 팔레트 중심. 캐릭터 부재 씬.",
         "description": "KIN의 만화카페 자리. 펼쳐진 만화책, 반쯤 남은 에너지드링크 캔, 이어폰 케이블. 노란 쿠션이 눌려있다. 잔디 카펫, 나무 부스, 벽 가득한 책장. KIN은 없지만 KIN의 흔적이 전부 여기 있다.",
         "kin_perspective": "아 맞다, 나 여기 있었지. 잠깐 화장실 갔다 온다고 했는데 어쩌다 이렇게 됐지. 에너지드링크는 따뜻해졌겠다. 근데 다음 권이 너무 궁금해서 일단 가야겠어.",
-        "dred_perspective": "자리를 봐. 사람이 없어도 에너지가 남아있다. KIN이 있던 자리는 항상 이래.",
-        "actions": [
-          { "type": "link", "label": "KIN의 세계 탐험하기", "url": "/explore/kin" }
-        ]
+        "dred_perspective": "자리를 봐. 사람이 없어도 에너지가 남아있다. KIN이 있던 자리는 항상 이래."
       },
       "en": {
         "title": "Be Right Back",
         "technique": "Adachi Mitsuru style interior illustration. Warm linework, soft coloring. Yellow color palette dominant. Character-absent scene.",
         "description": "KIN's seat at a manga café. No one's here. An open manga left face-down, a half-finished energy drink, an earphone cable draped over the edge. Yellow cushion pressed in. Grass carpet, wooden booth, shelves full of books. KIN is gone — but everything KIN left behind still is.",
         "kin_perspective": "Oh right, I was sitting here. Said I'd be back in a sec and somehow ended up... wherever. The energy drink's probably warm now. But I need to know what happens next, so.",
-        "dred_perspective": "Look at the seat. The energy stays even when the person's gone. KIN's spot is always like this.",
-        "actions": [
-          { "type": "link", "label": "Explore KIN's World", "url": "/explore/kin" }
-        ]
+        "dred_perspective": "Look at the seat. The energy stays even when the person's gone. KIN's spot is always like this."
+      },
+      "actions": {
+        "ko": [{ "type": "link", "label": "KIN의 세계 탐험하기", "url": "/explore/kin" }],
+        "en": [{ "type": "link", "label": "Explore KIN's World", "url": "/explore/kin" }]
       }
     },
     {
       "id": "kin_a1_laptop_night",
       "filename": "kin_a1_laptop_night.webp",
       "style": "A — Korean Webtoon Flat",
+      "order_num": 3,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "찾았다",
         "technique": "Korean Webtoon Flat 스타일. 플랫 컬러, 굵은 블랙 아웃라인, 화이트 아웃라인. 네이비 블루 배경에 랩탑 화면 빛이 캐릭터를 조명.",
         "description": "심야, 어두운 방. 바닥에 앉아 랩탑을 들여다보는 KIN. 화면에서 쏟아지는 파란 빛이 얼굴을 밝힌다. 주먹 쥔 오른손, 크게 벌린 입. 방금 뭔가를 발견한 순간이다.",
         "kin_perspective": "야, 이거 진짜야? 진짜잖아. 이런 게 있었다고? 왜 아무도 안 알려줬어. 지금 몇 시야, 자야 하는데... 아 근데 이거 일단 다 봐야 해.",
-        "dred_perspective": "저 얼굴. 뭔가를 찾은 사람 얼굴이다. 저게 뭔지가 중요한 게 아니라, 저 순간 자체가 KIN이다.",
-        "actions": [
-          { "type": "service", "label": "KIN이 발견한 것 같이 보기", "url": "/features/discover" }
-        ]
+        "dred_perspective": "저 얼굴. 뭔가를 찾은 사람 얼굴이다. 저게 뭔지가 중요한 게 아니라, 저 순간 자체가 KIN이다."
       },
       "en": {
         "title": "Found It",
         "technique": "Korean Webtoon Flat style. Flat color, bold black outline, white outline. Navy blue background lit by laptop screen glow.",
         "description": "Late night, dark room. KIN sits on the floor, staring into a laptop. Blue light from the screen floods their face. Fist clenched, mouth wide open. Something was just discovered.",
         "kin_perspective": "Wait, is this real? This exists? Why did nobody tell me about this. What time is it, I should sleep... but I need to finish this first.",
-        "dred_perspective": "That face. Someone who found something. What it is doesn't matter — that moment is KIN.",
-        "actions": [
-          { "type": "service", "label": "See What KIN Discovered", "url": "/features/discover" }
-        ]
+        "dred_perspective": "That face. Someone who found something. What it is doesn't matter — that moment is KIN."
+      },
+      "actions": {
+        "ko": [{ "type": "service", "label": "KIN이 발견한 것 같이 보기", "url": "/features/discover" }],
+        "en": [{ "type": "service", "label": "See What KIN Discovered", "url": "/features/discover" }]
       }
     },
     {
       "id": "kin_a2_convenience_store",
       "filename": "kin_a2_convenience_store.webp",
       "style": "A — Korean Webtoon Flat",
+      "order_num": 4,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "이게 맞을 것 같은데",
         "technique": "Korean Webtoon Flat 스타일. 편의점 형광등 아래 자연스러운 채광. 선반과 냉장고 배경이 디테일하게 묘사됨.",
         "description": "심야 편의점 과자 코너. KIN이 한 손으로 선반에 기대며 상품을 고르고 있다. 살짝 올라간 입꼬리. 냉장 코너 너머로 밤 거리가 보인다. 계획 없이 들어왔지만 이미 고를 것을 안다.",
         "kin_perspective": "이거 먹어봤어? 생각보다 진짜 맛있어. 근데 사람들이 잘 모르더라고. 새벽에 편의점 와서 이런 거 고르는 게 은근 재밌어. 선택지가 딱 이 정도여야 결정이 빠르거든.",
-        "dred_perspective": "밤 편의점에서 과자 고르는 거. 별거 아닌 것 같지만 저게 KIN한테는 진심이다.",
-        "actions": []
+        "dred_perspective": "밤 편의점에서 과자 고르는 거. 별거 아닌 것 같지만 저게 KIN한테는 진심이다."
       },
       "en": {
         "title": "This One",
         "technique": "Korean Webtoon Flat style. Natural fluorescent lighting inside convenience store. Shelves and refrigerator cases detailed in background.",
         "description": "Late-night convenience store snack aisle. KIN leans against a shelf with one hand, picking something out. Slight smile. The night street visible beyond the refrigerator cases. Came in with no plan — already knows what to get.",
         "kin_perspective": "Have you tried this one? It's actually really good. People just don't know about it. There's something weirdly fun about coming to a convenience store at 2am and picking stuff out. Just enough options to decide fast.",
-        "dred_perspective": "A midnight convenience store and a snack pick. Sounds like nothing. For KIN it's genuine.",
-        "actions": []
+        "dred_perspective": "A midnight convenience store and a snack pick. Sounds like nothing. For KIN it's genuine."
+      },
+      "actions": {
+        "ko": [],
+        "en": []
       }
     },
     {
       "id": "kin_c1_crowd_subway",
       "filename": "kin_c1_crowd_subway.webp",
       "style": "C — 차차(@cha_cha_9_9) Style",
+      "order_num": 5,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "나만 이 방향",
         "technique": "차차 스타일. 극단적 원근법 탑뷰, 군중 속 KIN을 위에서 내려다보는 시점. KIN만 선명하고 채도 높게, 군중은 모노크롬.",
         "description": "지하철 안 또는 역사 내 밀집된 군중. 위에서 내려다보는 시점. 수십 명이 제각각 방향을 보는 가운데 KIN만 정면 — 즉, 카메라를 — 보고 있다. 옐로우 컬러블록 셔츠가 회색빛 군중 속에서 유일하게 빛난다.",
         "kin_perspective": "어, 안녕. 다들 어디 봐? 나만 이쪽 보네. 뭐, 원래 나 이런 거 신경 안 써. 어차피 각자 자기 방향 있는 거잖아. 나는 그냥 내 방향 보는 거고.",
-        "dred_perspective": "군중 속에서 혼자만 다른 방향을 보고 있어도 불안해하지 않는다. 그게 KIN이 가진 거다.",
-        "actions": [
-          { "type": "quiz", "label": "군중 속 내 방향은?", "url": "/quiz/direction-crowd" }
-        ]
+        "dred_perspective": "군중 속에서 혼자만 다른 방향을 보고 있어도 불안해하지 않는다. 그게 KIN이 가진 거다."
       },
       "en": {
         "title": "Just Me Looking This Way",
         "technique": "Cha_cha style. Extreme top-down perspective inside a crowd. KIN rendered in full color and saturation, surrounding crowd desaturated to grey.",
         "description": "Subway car or station corridor, packed with people. Top-down view. Dozens of people facing every direction — except KIN, who looks straight up at the camera. Yellow colorblock shirt blazes against the grey crowd.",
         "kin_perspective": "Oh, hey. What's everyone else looking at? Guess I'm the only one looking this way. Whatever, everyone's got their own direction. I'm just looking at mine.",
-        "dred_perspective": "Standing alone facing a different direction in a crowd — and not anxious about it. That's what KIN has.",
-        "actions": [
-          { "type": "quiz", "label": "Which way are you facing in the crowd?", "url": "/quiz/direction-crowd" }
-        ]
+        "dred_perspective": "Standing alone facing a different direction in a crowd — and not anxious about it. That's what KIN has."
+      },
+      "actions": {
+        "ko": [{ "type": "quiz", "label": "군중 속 내 방향은?", "url": "/quiz/direction-crowd" }],
+        "en": [{ "type": "quiz", "label": "Which way are you facing in the crowd?", "url": "/quiz/direction-crowd" }]
       }
     },
     {
       "id": "kin_c2_convenience_night",
       "filename": "kin_c2_convenience_night.webp",
       "style": "C — 차차(@cha_cha_9_9) Style",
+      "order_num": 6,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "KIN",
         "technique": "차차 스타일. 극단적 worm's eye view. 편의점 앞 바닥에서 올려다보는 시점. 피시아이 렌즈 왜곡, 발이 화면 하단을 가득 채움. KIN 레터링 타이포.",
         "description": "새벽 편의점 앞. 카세트 플레이어를 손에 쥔 KIN이 바닥에 앉아 카메라를 내려다보고 있다. 극단적인 아래에서 위로 올려다보는 시점. 와이드 데님, 흰 스니커즈, 발이 화면을 압도한다. 하단에 'KIN' 레터링.",
         "kin_perspective": "뭐야 왜 밑에서 찍어. 어색하잖아. 근데 뭐, 나쁘진 않네. 이 각도 은근 내가 커 보이는 거 알지? 카세트는 그냥 갖고 다녀, 요즘 또 이런 거 유행이더라고.",
-        "dred_perspective": "저 각도. 우러러보게 만드는 구도를 자연스럽게 소화한다. 본인은 모르겠지만.",
-        "actions": [
-          { "type": "video", "label": "KIN 인트로 영상 보기", "url": "/video/kin-intro" },
-          { "type": "service", "label": "KIN 만나러 가기", "url": "/onboarding/kin" }
-        ]
+        "dred_perspective": "저 각도. 우러러보게 만드는 구도를 자연스럽게 소화한다. 본인은 모르겠지만."
       },
       "en": {
         "title": "KIN",
         "technique": "Cha_cha style. Extreme worm's eye view. Looking up from the ground in front of a convenience store. Fisheye lens distortion, feet dominate the lower frame. KIN lettering typography.",
         "description": "Early morning in front of a convenience store. KIN sits on the ground, cassette player in hand, looking down at the camera. Extreme upward angle. Wide denim, white sneakers, feet fill the frame. 'KIN' lettering at the bottom.",
         "kin_perspective": "Why are you shooting from down there. That's kind of weird. Not bad though — I look taller from this angle, just so you know. The cassette player? Just carry it around. It's having a moment again.",
-        "dred_perspective": "That angle. Being looked up at and wearing it naturally. They don't know they're doing it.",
-        "actions": [
+        "dred_perspective": "That angle. Being looked up at and wearing it naturally. They don't know they're doing it."
+      },
+      "actions": {
+        "ko": [
+          { "type": "video", "label": "KIN 인트로 영상 보기", "url": "/video/kin-intro" },
+          { "type": "service", "label": "KIN 만나러 가기", "url": "/onboarding/kin" }
+        ],
+        "en": [
           { "type": "video", "label": "Watch KIN's Intro", "url": "/video/kin-intro" },
           { "type": "service", "label": "Meet KIN", "url": "/onboarding/kin" }
         ]
@@ -155,24 +169,29 @@
       "id": "kin_g1_energy_poster",
       "filename": "kin_g1_energy_poster.webp",
       "style": "G — Risograph Print",
+      "order_num": 7,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "됐어, 해",
         "technique": "Risograph 단색 인쇄. 옐로우+블랙 2도. 망점 텍스처, 인쇄 느낌의 그레인. 상단 KIN 타이포그래피. 포스터 포맷.",
         "description": "블랙 배경, 옐로우 단색 Risograph 포스터. 두 팔을 하늘로 뻗어 올린 KIN. 눈을 감고 환하게 웃는다. 역동적인 포즈, 망점이 주변을 채운다. 오른쪽 상단에 KIN 레터링. 에너지 그 자체.",
         "kin_perspective": "몇 번을 봐도 기분이 올라오지 않아? 나도 이 사진 볼 때마다 그래. 뭔가 하고 싶어지잖아. 그거면 됐어.",
-        "dred_perspective": "저게 연기가 아니라는 게 KIN의 유일한 무기다.",
-        "actions": [
-          { "type": "service", "label": "KIN과 오늘 시작하기", "url": "/start/kin" },
-          { "type": "share", "label": "이미지 공유하기", "url": "/share/kin_g1_energy_poster" }
-        ]
+        "dred_perspective": "저게 연기가 아니라는 게 KIN의 유일한 무기다."
       },
       "en": {
         "title": "Just Do It Already",
         "technique": "Risograph single-color print. Yellow + black 2-color. Halftone texture, print grain. KIN typography upper right. Poster format.",
         "description": "Black background, yellow monochrome Risograph poster. KIN with both arms raised to the sky. Eyes closed, grinning wide. Dynamic pose, halftone dots fill the space around. KIN lettering upper right. Pure energy.",
         "kin_perspective": "Does this not get you going every time? It does for me too. Makes you want to do something. That's enough.",
-        "dred_perspective": "The fact that it's not performance — that's KIN's only weapon.",
-        "actions": [
+        "dred_perspective": "The fact that it's not performance — that's KIN's only weapon."
+      },
+      "actions": {
+        "ko": [
+          { "type": "service", "label": "KIN과 오늘 시작하기", "url": "/start/kin" },
+          { "type": "share", "label": "이미지 공유하기", "url": "/share/kin_g1_energy_poster" }
+        ],
+        "en": [
           { "type": "service", "label": "Start Today with KIN", "url": "/start/kin" },
           { "type": "share", "label": "Share", "url": "/share/kin_g1_energy_poster" }
         ]
@@ -182,92 +201,104 @@
       "id": "kin_g2_subway_platform",
       "filename": "kin_g2_subway_platform.webp",
       "style": "G — Risograph Print",
+      "order_num": 8,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "다음 차 타면 되지",
         "technique": "Risograph 2도 인쇄. 옐로우+블랙 팔레트. 지하철 모션블러가 망점으로 표현됨. 깔끔한 수직 구도.",
         "description": "지하철 플랫폼. 노란 스웨트셔츠를 입은 KIN이 양손을 주머니에 꽂고 서있다. 뒤로 열차가 빠른 속도로 지나간다. 흔들림 없이 제자리에, 약간의 미소. 지나가는 것들을 그냥 보내는 자세.",
         "kin_perspective": "아 이 차 놓쳤네. 뭐, 다음 거 타면 되지. 근데 솔직히 잠깐 멍 때리고 싶었어. 열차 지나가는 거 보면 이상하게 기분이 리셋되거든. 너도 한번 해봐.",
-        "dred_perspective": "놓친 걸 아쉬워하지 않는다. 다음이 있다는 걸 안다. 아니면 그냥 무심한 건지.",
-        "actions": []
+        "dred_perspective": "놓친 걸 아쉬워하지 않는다. 다음이 있다는 걸 안다. 아니면 그냥 무심한 건지."
       },
       "en": {
         "title": "There's Always the Next One",
         "technique": "Risograph 2-color print. Yellow + black palette. Subway motion blur rendered in halftone. Clean vertical composition.",
         "description": "Subway platform. KIN stands with both hands in pockets, yellow sweatshirt, a train rushing past behind them. Doesn't flinch. Slight smile. Letting things pass without chasing them.",
         "kin_perspective": "Missed that one. Oh well, next train. Honestly I kind of wanted to zone out for a second. Watching trains go by just — resets something. Try it sometime.",
-        "dred_perspective": "No regret about missing it. Knows there's a next one. Or just doesn't care either way.",
-        "actions": []
+        "dred_perspective": "No regret about missing it. Knows there's a next one. Or just doesn't care either way."
+      },
+      "actions": {
+        "ko": [],
+        "en": []
       }
     },
     {
       "id": "kin_c3_sketchbook_floor",
       "filename": "kin_c3_sketchbook_floor.webp",
       "style": "C — 차차(@cha_cha_9_9) Style",
+      "order_num": 9,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "시간 가는 줄 몰랐어",
         "technique": "차차 스타일. 탑뷰 bird's eye view, 단일 조명 원. KIN과 스케치북만 선명하고 주변은 탈색. 심야 분위기.",
         "description": "심야, 방 바닥. 스케치북에 낙서 중인 KIN. 구겨진 종이들, 흩어진 펜들, 에너지드링크 캔. 아무도 없고, 잘 그리려는 것도 아니다. 손이 가는 대로 선을 긋고, 그 과정에서 미소가 나온다. 다 그리고 나서야 알게 될 것들이 스케치북 안에 있다.",
         "kin_perspective": "뭘 그린 건지 모르겠어. 근데 다 그리고 나서 보니까 내가 원하는 게 여기 다 있는 것 같기도 하고. 이거 낙서 맞지?",
-        "dred_perspective": "저게 진짜다. 잘 보여주려 하지 않을 때 나오는 것.",
-        "actions": [
-          { "type": "link", "label": "3년 후의 나 계산해보기", "url": "https://mirrored-five.vercel.app/" }
-        ]
+        "dred_perspective": "저게 진짜다. 잘 보여주려 하지 않을 때 나오는 것."
       },
       "en": {
         "title": "Didn't Notice the Time",
         "technique": "Cha_cha style. Top-down bird's eye view, single overhead light source. KIN and sketchbook in sharp focus, surroundings desaturated. Late night atmosphere.",
         "description": "Late night, bare floor. KIN sits cross-legged, pen moving across a sketchbook. Crumpled paper balls scattered around, pens, an energy drink can. No audience, no attempt to draw well. Just the hand going wherever it goes — and that crooked smile with no one to see it. What's in the sketchbook only makes sense after it's done.",
         "kin_perspective": "I don't know what I drew. But looking at it now — it kind of feels like everything I want is in here somewhere. This is still just doodling, right?",
-        "dred_perspective": "That's the real thing. What comes out when you're not trying to show anyone.",
-        "actions": [
-          { "type": "link", "label": "See Your Next 3 Years", "url": "https://mirrored-five.vercel.app/" }
-        ]
+        "dred_perspective": "That's the real thing. What comes out when you're not trying to show anyone."
+      },
+      "actions": {
+        "ko": [{ "type": "link", "label": "3년 후의 나 계산해보기", "url": "https://mirrored-five.vercel.app/" }],
+        "en": [{ "type": "link", "label": "See Your Next 3 Years", "url": "https://mirrored-five.vercel.app/" }]
       }
     },
     {
       "id": "kin_k1_adachi_clean",
       "filename": "kin_k1_adachi_clean.webp",
       "style": "K — Adachi Mitsuru Style",
+      "order_num": 10,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "그냥 나야",
         "technique": "아다치 미쓰루 스타일. 절제된 선화, 플랫 옐로우+화이트 컬러, 흰 배경. 최소한의 음영. 포트레이트 포맷.",
         "description": "흰 배경. KIN이 정면을 바라보고 있다. 두 손은 주머니에. 입꼬리가 살짝 올라간 담백한 표정. 과장도 포즈도 없다. 이게 기본값이다.",
         "kin_perspective": "왜 이렇게 아무것도 없어? 배경이라도 있어야 하지 않나. 근데 뭐, 그냥 이게 나니까. 딱히 꾸밀 게 없어.",
-        "dred_perspective": "아무것도 없는 배경 앞에서도 존재감이 있다. 그게 KIN이다.",
-        "actions": [
-          { "type": "service", "label": "KIN 소개 더 보기", "url": "/character/kin" }
-        ]
+        "dred_perspective": "아무것도 없는 배경 앞에서도 존재감이 있다. 그게 KIN이다."
       },
       "en": {
         "title": "Just Me",
         "technique": "Adachi Mitsuru style. Restrained linework, flat yellow and white color, white background. Minimal shading. Portrait format.",
         "description": "White background. KIN faces forward, hands in pockets. Slight upturn at the corner of the mouth. No pose, no performance. This is the default.",
         "kin_perspective": "Why is there nothing in the background. Feels like there should be something. But I mean, this is just me so. Nothing to add really.",
-        "dred_perspective": "Presence even with nothing behind them. That's KIN.",
-        "actions": [
-          { "type": "service", "label": "Learn More About KIN", "url": "/character/kin" }
-        ]
+        "dred_perspective": "Presence even with nothing behind them. That's KIN."
+      },
+      "actions": {
+        "ko": [{ "type": "service", "label": "KIN 소개 더 보기", "url": "/character/kin" }],
+        "en": [{ "type": "service", "label": "Learn More About KIN", "url": "/character/kin" }]
       }
     },
     {
       "id": "kin_k2_adachi_okonomiyaki",
       "filename": "kin_k2_adachi_okonomiyaki.webp",
       "style": "K — Adachi Mitsuru Style",
+      "order_num": 11,
+      "is_active": true,
+      "tags": [],
       "ko": {
         "title": "이거 진짜 맛있다고",
         "technique": "아다치 미쓰루 스타일. 따뜻한 앰버 톤 채색, 소프트한 선화. 오코노미야끼 가게 인테리어 배경이 아날로그 감성으로 묘사됨.",
         "description": "오코노미야끼 가게 카운터. 젓가락으로 방금 집어든 한 점을 입으로 가져가는 KIN. 눈이 크게 떠지고 입이 벌어진다. 왼쪽 철판에는 오코노미야끼가 지글지글. 소스병, 마요네즈, 수증기. 온기가 가득한 장면.",
         "kin_perspective": "봐봐 봐봐, 이거 소스 비율이 진짜 중요해. 마요를 먼저 뿌리고 소스 나중에. 반대로 하면 맛이 달라진다고. 진짜야. 먹어봤어? 안 먹어봤으면 말을 마.",
-        "dred_perspective": "저 표정. 맛있다고 말하기 전에 이미 얼굴이 다 했다.",
-        "actions": []
+        "dred_perspective": "저 표정. 맛있다고 말하기 전에 이미 얼굴이 다 했다."
       },
       "en": {
         "title": "This Is Actually So Good",
         "technique": "Adachi Mitsuru style. Warm amber tone coloring, soft linework. Okonomiyaki restaurant interior rendered in analog warmth.",
         "description": "Okonomiyaki restaurant counter. KIN lifts a piece with chopsticks, mouth already open. Eyes wide. Okonomiyaki sizzling on the iron plate to the left. Sauce bottles, mayo, steam. The room is warm.",
         "kin_perspective": "Okay listen, the sauce ratio matters. Mayo first, then the sauce on top. Other way around and it's different. Trust me. Have you had it? If you haven't, don't come at me.",
-        "dred_perspective": "The face said it before the words did.",
-        "actions": []
+        "dred_perspective": "The face said it before the words did."
+      },
+      "actions": {
+        "ko": [],
+        "en": []
       }
     }
   ]

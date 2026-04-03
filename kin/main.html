@@ -965,11 +965,7 @@ function navTo(href) {
   setTimeout(() => { window.location.href = href; }, 450);
 }
 
-$kinZone.addEventListener('click', () => {
-  if (getPhase(elapsed).n !== 'WORLDS') return;
-  hideBubble();
-  navTo('./kin/');
-});
+// mouseup 기반 처리 — 롱프레스 로직과 통합 (아래 참고)
 
 $dredZone.addEventListener('click', () => {
   if (getPhase(elapsed).n !== 'WORLDS') return;
@@ -978,54 +974,64 @@ $dredZone.addEventListener('click', () => {
 
 /* ══════════════════════════════════════════════════
    KIN DASHBOARD — 롱프레스 (1.5초) 진입
-   PC: mousedown / Mobile: touchstart
+   PC: mousedown 1.5s / Mobile: touchstart 1.5s
+   전략: 타이머가 살아있으면 = 짧은 클릭 → kin/
+         타이머가 발동됐으면 (null) = 롱프레스 → 대시보드
 ══════════════════════════════════════════════════ */
 const KIN_DASHBOARD = 'https://kin-ui-six.vercel.app';
 const LONG_MS  = 1500;
-const MOVE_THR = 5; // px — 이 이상 움직여야 롱프레스 취소
-let _lpTimer = null;
+const MOVE_THR = 8;
+let _lpTimer  = null;
 let _lpMoved  = false;
-let _lpFired  = false;
 let _lpStartX = 0, _lpStartY = 0;
 
 function _lpStart(x, y) {
   _lpMoved  = false;
-  _lpFired  = false;
   _lpStartX = x;
   _lpStartY = y;
   _lpTimer  = setTimeout(() => {
-    if (!_lpMoved) { _lpFired = true; navTo(KIN_DASHBOARD); }
+    _lpTimer = null; // 발동됨을 표시
+    if (!_lpMoved) navTo(KIN_DASHBOARD);
   }, LONG_MS);
 }
-function _lpCancel() {
+
+function _lpRelease() {
+  if (_lpTimer !== null) {
+    // 타이머 아직 살아있음 = 짧은 클릭 → 기존 kin/ 이동
+    clearTimeout(_lpTimer);
+    _lpTimer = null;
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    hideBubble();
+    navTo('./kin/');
+  }
+  // _lpTimer === null = 롱프레스 발동됐거나 초기 상태 → 아무것도 안 함
+}
+
+function _lpAbort() {
   clearTimeout(_lpTimer);
   _lpTimer = null;
 }
 
-// PC
+// ── PC ───────────────────────────────────────────
 $kinZone.addEventListener('mousedown',  e => _lpStart(e.clientX, e.clientY));
-$kinZone.addEventListener('mouseup',    _lpCancel);
-$kinZone.addEventListener('mouseleave', _lpCancel);
+$kinZone.addEventListener('mouseup',    _lpRelease);
+$kinZone.addEventListener('mouseleave', _lpAbort);
 $kinZone.addEventListener('mousemove',  e => {
   if (Math.hypot(e.clientX - _lpStartX, e.clientY - _lpStartY) > MOVE_THR) {
-    _lpMoved = true; _lpCancel();
+    _lpMoved = true; _lpAbort();
   }
 });
-// 롱프레스 성공 후 click 이벤트 차단 (캡처 단계)
-$kinZone.addEventListener('click', e => {
-  if (_lpFired) { e.stopImmediatePropagation(); _lpFired = false; }
-}, true);
 
-// Mobile
+// ── Mobile ───────────────────────────────────────
 $kinZone.addEventListener('touchstart', e => {
   const t = e.touches[0];
   _lpStart(t.clientX, t.clientY);
 }, { passive: true });
-$kinZone.addEventListener('touchend',  _lpCancel);
+$kinZone.addEventListener('touchend',  _lpRelease);
 $kinZone.addEventListener('touchmove', e => {
   const t = e.touches[0];
   if (Math.hypot(t.clientX - _lpStartX, t.clientY - _lpStartY) > MOVE_THR) {
-    _lpMoved = true; _lpCancel();
+    _lpMoved = true; _lpAbort();
   }
 }, { passive: true });
 

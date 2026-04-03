@@ -913,46 +913,32 @@ $kinZone.addEventListener('mouseleave', hideBubble);
 // 모바일: tap 판별 후 네비게이션
 if (IS_TOUCH) {
   const DASH = 'https://kin-ui-six.vercel.app';
-  const MS   = 800;
-  const THR  = 12;
-  let t = null, sx = 0, sy = 0, moved = false;
-  const $ki = document.getElementById('kin-char');
+  const $ki  = document.getElementById('kin-char');
+  let t0 = 0, tx0 = 0, ty0 = 0;
 
   $kinZone.addEventListener('touchstart', e => {
-    const tc = e.touches[0];
-    sx = tc.clientX; sy = tc.clientY; moved = false;
+    t0  = performance.now();
+    tx0 = e.touches[0].clientX;
+    ty0 = e.touches[0].clientY;
     showBubble();
-    if (getPhase(elapsed).n !== 'WORLDS') return;
-    $ki.style.filter = 'brightness(1.5)';
-    t = setTimeout(() => {
-      t = null;
-      $ki.style.filter = '';
-      if (!moved) navTo(DASH);
-    }, MS);
-  }, {passive:true});
-
-  $kinZone.addEventListener('touchmove', e => {
-    const tc = e.changedTouches[0];
-    if (Math.hypot(tc.clientX-sx, tc.clientY-sy) > THR) {
-      moved = true;
-      $ki.style.filter = '';
-      if (t !== null) { clearTimeout(t); t = null; }
-    }
+    if ($ki) $ki.style.filter = 'brightness(1.6)';
   }, {passive:true});
 
   $kinZone.addEventListener('touchend', e => {
-    $ki.style.filter = '';
-    if (t !== null) {
-      clearTimeout(t); t = null;
-      const dx = e.changedTouches[0].clientX - sx;
-      const dy = e.changedTouches[0].clientY - sy;
-      if (Math.hypot(dx,dy) < THR && getPhase(elapsed).n === 'WORLDS') {
-        hideBubble(); navTo('./kin/');
-      } else {
-        setTimeout(hideBubble, 1400);
-      }
+    if ($ki) $ki.style.filter = '';
+    const held = performance.now() - t0;
+    const dx   = e.changedTouches[0].clientX - tx0;
+    const dy   = e.changedTouches[0].clientY - ty0;
+    t0 = 0;
+    if (Math.hypot(dx, dy) > 12) { setTimeout(hideBubble, 1400); return; }
+    if (held >= 800) {
+      navTo(DASH);
+    } else if (getPhase(elapsed).n === 'WORLDS') {
+      hideBubble();
+      navTo('./kin/');
+    } else {
+      setTimeout(hideBubble, 1400);
     }
-    // t === null: 롱프레스 발동됨 → 이미 navTo(DASH) 호출
   }, {passive:true});
 }
 
@@ -991,39 +977,29 @@ function navTo(href) {
   setTimeout(() => { window.location.href = href; }, 450);
 }
 
-// PC 롱프레스 (800ms) → 대시보드 / 짧은 클릭 → kin/
-(function() {
+// KIN 롱프레스(0.8초) → 대시보드 / 짧은 클릭 → kin/
+(function(){
   const DASH = 'https://kin-ui-six.vercel.app';
-  const MS   = 800;
-  const THR  = 12;
-  let t = null, sx = 0, sy = 0, moved = false;
+  const $ki  = document.getElementById('kin-char');
+  let t0 = 0;
 
-  $kinZone.addEventListener('mousedown', e => {
-    if (getPhase(elapsed).n !== 'WORLDS') return;
-    sx = e.clientX; sy = e.clientY; moved = false;
-    document.getElementById('kin-char').style.filter = 'brightness(1.5)';
-    t = setTimeout(() => {
-      t = null;
-      document.getElementById('kin-char').style.filter = '';
-      if (!moved) navTo(DASH);
-    }, MS);
+  $kinZone.addEventListener('mousedown', () => {
+    t0 = performance.now();
+    if ($ki) $ki.style.filter = 'brightness(1.6)';
   });
-  $kinZone.addEventListener('mouseup', () => {
-    document.getElementById('kin-char').style.filter = '';
-    if (t !== null) { clearTimeout(t); t = null;
+
+  // mouseup은 document에 달아서 mouseleave에 영향받지 않게
+  document.addEventListener('mouseup', () => {
+    if (!t0) return;
+    if ($ki) $ki.style.filter = '';
+    const held = performance.now() - t0;
+    t0 = 0;
+    if (held >= 800) {
+      navTo(DASH);
+    } else {
       if (getPhase(elapsed).n !== 'WORLDS') return;
-      hideBubble(); navTo('./kin/');
-    }
-  });
-  $kinZone.addEventListener('mouseleave', () => {
-    document.getElementById('kin-char').style.filter = '';
-    if (t !== null) { clearTimeout(t); t = null; }
-  });
-  $kinZone.addEventListener('mousemove', e => {
-    if (Math.hypot(e.clientX-sx, e.clientY-sy) > THR) {
-      moved = true;
-      document.getElementById('kin-char').style.filter = '';
-      if (t !== null) { clearTimeout(t); t = null; }
+      hideBubble();
+      navTo('./kin/');
     }
   });
 })();

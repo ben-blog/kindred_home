@@ -69,8 +69,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   pointer-events:none;z-index:3;transition:box-shadow .2s;
 }
 .thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 
+/* ── PARALLAX INNER ── */
+.parallax-inner{
+  position:absolute;inset:0;
+  will-change:transform;
+}
+.parallax-inner img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .thumb-label{
   position:absolute;bottom:0;left:0;right:0;
   padding:20px 10px 8px;
@@ -257,16 +262,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #detail-counter{font-size:9px;letter-spacing:.22em;color:rgba(255,255,255,.35);display:flex;align-items:center}
 
 @media(max-width:680px){
-  /* FIX: 모바일 상세 패널 스크롤
-     기존: #detail이 top:48% + translateY(-50%)로 뷰포트 중앙 고정.
-     콘텐츠가 길면 아래가 잘려서 close 버튼이 안 보임.
-     수정: top:0에서 시작, 패널 전체를 overflow-y:auto로 스크롤 가능하게. */
   #detail{
     flex-direction:column;gap:12px;
     top:0;left:0;right:0;bottom:0;
     transform:none;
     width:100%;max-width:none;
-    padding:56px 16px 96px; /* top: 헤더 여백, bottom: nav 버튼 여백 */
+    padding:56px 16px 96px;
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     align-items:center;
@@ -378,7 +379,7 @@ function setLang(l) {
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
   if (items.length) renderGallery();
-  if (current >= 0) fillDetail(current); // async — tags update when ready
+  if (current >= 0) fillDetail(current);
 }
 $ltKo.addEventListener('click', () => setLang('ko'));
 $ltEn.addEventListener('click', () => setLang('en'));
@@ -414,17 +415,19 @@ function renderGallery() {
     const title  = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
     t.className = 'thumb' + (hasAct ? ' has-action' : '');
+    t.dataset.col = i % 5;
     t.innerHTML = `
-      <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
-      <div class="thumb-label">${title}</div>
-      ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}`;
+      <div class="parallax-inner">
+        <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
+        <div class="thumb-label">${title}</div>
+        ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}
+      </div>`;
     t.addEventListener('click', () => openViewer(i));
     if (!IS_TOUCH) {
       t.addEventListener('mouseenter', () => $cur.classList.add('big'));
       t.addEventListener('mouseleave', () => $cur.classList.remove('big'));
     }
     $gallery.appendChild(t);
-    // 초기 로드 시에만 애니메이션
     if (!galleryInited) {
       setTimeout(() => t.classList.add('in'), 60 + i * 45);
     } else {
@@ -454,7 +457,6 @@ async function fillDetail(i) {
   $img.src = `${IMG_BASE}${item.filename}`;
   $img.alt = item[`title_${t}`] || '';
 
-  // 액션 버튼
   const $actSection = document.getElementById('detail-action-section');
   const $acts = document.getElementById('detail-actions');
   $acts.innerHTML = '';
@@ -473,12 +475,10 @@ async function fillDetail(i) {
     $actSection.style.display = 'none';
   }
 
-  // 좋아요
   const itemId = item.item_id || item.id;
   updateLikeUI(itemId, 0);
   fetchLikeCount(itemId).then(count => updateLikeUI(itemId, count));
 
-  // 태그
   const $tags = document.getElementById('detail-tags');
   $tags.innerHTML = '';
   fetchTags(item.id).then(tags => {
@@ -493,17 +493,12 @@ async function fillDetail(i) {
 
 async function openViewer(i) {
   current = i;
-
-  // SFX + 뷰어 먼저 열고
   $sfx.textContent = SFXS[i % SFXS.length];
   $sfx.classList.remove('slam');
   void $sfx.offsetWidth;
   $sfx.classList.add('slam');
-
   $viewer.style.display = 'block';
   requestAnimationFrame(() => requestAnimationFrame(() => $viewer.classList.add('open')));
-
-  // 콘텐츠 채우기 (animation과 병렬)
   await fillDetail(i);
 }
 
@@ -565,7 +560,6 @@ function updateLikeUI(itemId, count) {
   else        { $btn.classList.remove('liked'); $heart.textContent = '♡'; }
 }
 
-// Like button click
 document.getElementById('like-btn').addEventListener('click', async () => {
   if (current < 0) return;
   const item   = items[current];
@@ -573,14 +567,11 @@ document.getElementById('like-btn').addEventListener('click', async () => {
   const liked  = getLiked()[itemId];
   const $count = document.getElementById('like-count');
   const curCount = parseInt($count.textContent) || 0;
-
   if (liked) {
-    // 취소
     setLiked(itemId, false);
     updateLikeUI(itemId, curCount - 1);
     await callLikeRpc('decrement_like', itemId);
   } else {
-    // 좋아요
     setLiked(itemId, true);
     updateLikeUI(itemId, curCount + 1);
     await callLikeRpc('increment_like', itemId);
@@ -600,7 +591,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// 뷰어 열려있을 때 스와이프로 이미지 전환
 let tx0 = 0;
 document.addEventListener('touchstart', e => { tx0 = e.touches[0].clientX; }, {passive:true});
 document.addEventListener('touchend', e => {
@@ -622,6 +612,41 @@ $back.addEventListener('click', () => {
   $backOverlay.style.opacity = '1';
   setTimeout(() => { window.location.href = '../main.html'; }, 400);
 });
+
+/* ── PARALLAX ── */
+if (!IS_TOUCH) {
+  // 열마다 깊이값 — 중앙(2열)=0, 양끝(0,4열)=1.0
+  const COL_DEPTHS = [1.0, 0.55, 0, 0.55, 1.0];
+  const MAX_X = 10; // 최대 이동 픽셀 (X)
+  const MAX_Y = 5;  // 최대 이동 픽셀 (Y)
+  const LERP  = 0.06; // 낮을수록 더 부드럽게 따라옴
+
+  let mx = 0, my = 0; // 목표값 (-1 ~ 1)
+  let cx = 0, cy = 0; // 현재 lerp 값
+
+  document.addEventListener('mousemove', e => {
+    mx = (e.clientX / window.innerWidth  - 0.5) * 2;
+    my = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  (function parallaxTick() {
+    // viewer 열려있을 때는 parallax 정지
+    if (!$viewer.classList.contains('open')) {
+      cx += (mx - cx) * LERP;
+      cy += (my - cy) * LERP;
+
+      document.querySelectorAll('.thumb[data-col] .parallax-inner').forEach(inner => {
+        const col = parseInt(inner.parentElement.dataset.col);
+        const depth = COL_DEPTHS[col] ?? 0;
+        const tx = cx * depth * MAX_X;
+        const ty = cy * depth * MAX_Y;
+        inner.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`;
+      });
+    }
+
+    requestAnimationFrame(parallaxTick);
+  })();
+}
 
 /* ── INIT ── */
 const $loading = document.getElementById('loading');

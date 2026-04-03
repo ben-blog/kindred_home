@@ -913,32 +913,32 @@ $kinZone.addEventListener('mouseleave', hideBubble);
 // 모바일: tap 판별 후 네비게이션
 if (IS_TOUCH) {
   const DASH = 'https://kin-ui-six.vercel.app';
-  const $ki  = document.getElementById('kin-char');
-  let t0 = 0, tx0 = 0, ty0 = 0;
+  let n = 0, timer = null;
+  let tx0 = 0, ty0 = 0;
 
   $kinZone.addEventListener('touchstart', e => {
-    t0  = performance.now();
     tx0 = e.touches[0].clientX;
     ty0 = e.touches[0].clientY;
     showBubble();
-    if ($ki) $ki.style.filter = 'brightness(1.6)';
   }, {passive:true});
 
   $kinZone.addEventListener('touchend', e => {
-    if ($ki) $ki.style.filter = '';
-    const held = performance.now() - t0;
-    const dx   = e.changedTouches[0].clientX - tx0;
-    const dy   = e.changedTouches[0].clientY - ty0;
-    t0 = 0;
+    const dx = e.changedTouches[0].clientX - tx0;
+    const dy = e.changedTouches[0].clientY - ty0;
     if (Math.hypot(dx, dy) > 12) { setTimeout(hideBubble, 1400); return; }
-    if (held >= 800) {
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    n++;
+    clearTimeout(timer);
+    if (n >= 3) {
+      n = 0;
       navTo(DASH);
-    } else if (getPhase(elapsed).n === 'WORLDS') {
+      return;
+    }
+    timer = setTimeout(() => {
+      n = 0;
       hideBubble();
       navTo('./kin/');
-    } else {
-      setTimeout(hideBubble, 1400);
-    }
+    }, 400);
   }, {passive:true});
 }
 
@@ -977,30 +977,25 @@ function navTo(href) {
   setTimeout(() => { window.location.href = href; }, 450);
 }
 
-// KIN 롱프레스(0.8초) → 대시보드 / 짧은 클릭 → kin/
+// KIN 트리플클릭 → 대시보드 / 싱글클릭 → kin/
 (function(){
   const DASH = 'https://kin-ui-six.vercel.app';
-  const $ki  = document.getElementById('kin-char');
-  let t0 = 0;
+  let n = 0, timer = null;
 
-  $kinZone.addEventListener('mousedown', () => {
-    t0 = performance.now();
-    if ($ki) $ki.style.filter = 'brightness(1.6)';
-  });
-
-  // mouseup은 document에 달아서 mouseleave에 영향받지 않게
-  document.addEventListener('mouseup', () => {
-    if (!t0) return;
-    if ($ki) $ki.style.filter = '';
-    const held = performance.now() - t0;
-    t0 = 0;
-    if (held >= 800) {
+  $kinZone.addEventListener('click', () => {
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    n++;
+    clearTimeout(timer);
+    if (n >= 3) {
+      n = 0;
       navTo(DASH);
-    } else {
-      if (getPhase(elapsed).n !== 'WORLDS') return;
+      return;
+    }
+    timer = setTimeout(() => {
+      n = 0;
       hideBubble();
       navTo('./kin/');
-    }
+    }, 400);
   });
 })();
 

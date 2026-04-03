@@ -979,23 +979,29 @@ $dredZone.addEventListener('click', () => {
          타이머가 발동됐으면 (null) = 롱프레스 → 대시보드
 ══════════════════════════════════════════════════ */
 const KIN_DASHBOARD = 'https://kin-ui-six.vercel.app';
-const LONG_MS  = 1500;
-const MOVE_THR = 8;
+const LONG_MS  = 800;   // 0.8초
+const MOVE_THR = 12;    // 12px 이상 움직이면 취소
 let _lpTimer  = null;
 let _lpMoved  = false;
 let _lpStartX = 0, _lpStartY = 0;
+const $kinImg = document.getElementById('kin-char');
 
 function _lpStart(x, y) {
   _lpMoved  = false;
   _lpStartX = x;
   _lpStartY = y;
+  // 홀드 중 시각 피드백: KIN 이미지 살짝 밝아짐
+  if ($kinImg) $kinImg.style.filter = 'brightness(1.4)';
   _lpTimer  = setTimeout(() => {
     _lpTimer = null; // 발동됨을 표시
+    if ($kinImg) $kinImg.style.filter = '';
     if (!_lpMoved) navTo(KIN_DASHBOARD);
   }, LONG_MS);
 }
 
 function _lpRelease() {
+  // 피드백 해제
+  if ($kinImg) $kinImg.style.filter = '';
   if (_lpTimer !== null) {
     // 타이머 아직 살아있음 = 짧은 클릭 → 기존 kin/ 이동
     clearTimeout(_lpTimer);
@@ -1004,10 +1010,11 @@ function _lpRelease() {
     hideBubble();
     navTo('./kin/');
   }
-  // _lpTimer === null = 롱프레스 발동됐거나 초기 상태 → 아무것도 안 함
+  // _lpTimer === null = 롱프레스 발동됨 → navTo 이미 호출됨
 }
 
 function _lpAbort() {
+  if ($kinImg) $kinImg.style.filter = '';
   clearTimeout(_lpTimer);
   _lpTimer = null;
 }

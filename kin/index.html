@@ -31,7 +31,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #header{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 24px;
   display:flex;justify-content:space-between;align-items:center;
   background:linear-gradient(rgba(8,8,6,.9),transparent)}
-.h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--kin)}
+.h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--kin);cursor:pointer;transition:opacity 0.2s}.h-name:hover{opacity:0.6}
 .h-back{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.45);text-transform:uppercase;cursor:pointer;transition:color .2s}
 .h-back:hover{color:var(--kin)}
 
@@ -291,7 +291,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <div id="cur"></div>
 
 <div id="header">
-  <div class="h-name">KIN</div>
+  <div class="h-name" onclick="window.location.href='https://kin-ui-six.vercel.app'">KIN</div>
   <div id="lang-toggle">
     <span class="lt" id="lt-ko">KO</span>
     <span class="lt-sep">·</span>

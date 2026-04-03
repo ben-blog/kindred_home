@@ -912,21 +912,47 @@ $kinZone.addEventListener('mouseleave', hideBubble);
 
 // 모바일: tap 판별 후 네비게이션
 if (IS_TOUCH) {
-  let kinTx0 = 0, kinTy0 = 0;
+  const DASH = 'https://kin-ui-six.vercel.app';
+  const MS   = 800;
+  const THR  = 12;
+  let t = null, sx = 0, sy = 0, moved = false;
+  const $ki = document.getElementById('kin-char');
+
   $kinZone.addEventListener('touchstart', e => {
-    kinTx0 = e.touches[0].clientX;
-    kinTy0 = e.touches[0].clientY;
+    const tc = e.touches[0];
+    sx = tc.clientX; sy = tc.clientY; moved = false;
     showBubble();
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    $ki.style.filter = 'brightness(1.5)';
+    t = setTimeout(() => {
+      t = null;
+      $ki.style.filter = '';
+      if (!moved) navTo(DASH);
+    }, MS);
   }, {passive:true});
-  $kinZone.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - kinTx0;
-    const dy = e.changedTouches[0].clientY - kinTy0;
-    if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
-      hideBubble();
-      navTo('./kin/');
-    } else {
-      setTimeout(hideBubble, 1400);
+
+  $kinZone.addEventListener('touchmove', e => {
+    const tc = e.changedTouches[0];
+    if (Math.hypot(tc.clientX-sx, tc.clientY-sy) > THR) {
+      moved = true;
+      $ki.style.filter = '';
+      if (t !== null) { clearTimeout(t); t = null; }
     }
+  }, {passive:true});
+
+  $kinZone.addEventListener('touchend', e => {
+    $ki.style.filter = '';
+    if (t !== null) {
+      clearTimeout(t); t = null;
+      const dx = e.changedTouches[0].clientX - sx;
+      const dy = e.changedTouches[0].clientY - sy;
+      if (Math.hypot(dx,dy) < THR && getPhase(elapsed).n === 'WORLDS') {
+        hideBubble(); navTo('./kin/');
+      } else {
+        setTimeout(hideBubble, 1400);
+      }
+    }
+    // t === null: 롱프레스 발동됨 → 이미 navTo(DASH) 호출
   }, {passive:true});
 }
 
@@ -965,83 +991,47 @@ function navTo(href) {
   setTimeout(() => { window.location.href = href; }, 450);
 }
 
-// mouseup 기반 처리 — 롱프레스 로직과 통합 (아래 참고)
+// PC 롱프레스 (800ms) → 대시보드 / 짧은 클릭 → kin/
+(function() {
+  const DASH = 'https://kin-ui-six.vercel.app';
+  const MS   = 800;
+  const THR  = 12;
+  let t = null, sx = 0, sy = 0, moved = false;
+
+  $kinZone.addEventListener('mousedown', e => {
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    sx = e.clientX; sy = e.clientY; moved = false;
+    document.getElementById('kin-char').style.filter = 'brightness(1.5)';
+    t = setTimeout(() => {
+      t = null;
+      document.getElementById('kin-char').style.filter = '';
+      if (!moved) navTo(DASH);
+    }, MS);
+  });
+  $kinZone.addEventListener('mouseup', () => {
+    document.getElementById('kin-char').style.filter = '';
+    if (t !== null) { clearTimeout(t); t = null;
+      if (getPhase(elapsed).n !== 'WORLDS') return;
+      hideBubble(); navTo('./kin/');
+    }
+  });
+  $kinZone.addEventListener('mouseleave', () => {
+    document.getElementById('kin-char').style.filter = '';
+    if (t !== null) { clearTimeout(t); t = null; }
+  });
+  $kinZone.addEventListener('mousemove', e => {
+    if (Math.hypot(e.clientX-sx, e.clientY-sy) > THR) {
+      moved = true;
+      document.getElementById('kin-char').style.filter = '';
+      if (t !== null) { clearTimeout(t); t = null; }
+    }
+  });
+})();
 
 $dredZone.addEventListener('click', () => {
   if (getPhase(elapsed).n !== 'WORLDS') return;
   navTo('./dred/');
 });
-
-/* ══════════════════════════════════════════════════
-   KIN DASHBOARD — 롱프레스 (1.5초) 진입
-   PC: mousedown 1.5s / Mobile: touchstart 1.5s
-   전략: 타이머가 살아있으면 = 짧은 클릭 → kin/
-         타이머가 발동됐으면 (null) = 롱프레스 → 대시보드
-══════════════════════════════════════════════════ */
-const KIN_DASHBOARD = 'https://kin-ui-six.vercel.app';
-const LONG_MS  = 800;   // 0.8초
-const MOVE_THR = 12;    // 12px 이상 움직이면 취소
-let _lpTimer  = null;
-let _lpMoved  = false;
-let _lpStartX = 0, _lpStartY = 0;
-const $kinImg = document.getElementById('kin-char');
-
-function _lpStart(x, y) {
-  _lpMoved  = false;
-  _lpStartX = x;
-  _lpStartY = y;
-  // 홀드 중 시각 피드백: KIN 이미지 살짝 밝아짐
-  if ($kinImg) $kinImg.style.filter = 'brightness(1.4)';
-  _lpTimer  = setTimeout(() => {
-    _lpTimer = null; // 발동됨을 표시
-    if ($kinImg) $kinImg.style.filter = '';
-    if (!_lpMoved) navTo(KIN_DASHBOARD);
-  }, LONG_MS);
-}
-
-function _lpRelease() {
-  // 피드백 해제
-  if ($kinImg) $kinImg.style.filter = '';
-  if (_lpTimer !== null) {
-    // 타이머 아직 살아있음 = 짧은 클릭 → 기존 kin/ 이동
-    clearTimeout(_lpTimer);
-    _lpTimer = null;
-    if (getPhase(elapsed).n !== 'WORLDS') return;
-    hideBubble();
-    navTo('./kin/');
-  }
-  // _lpTimer === null = 롱프레스 발동됨 → navTo 이미 호출됨
-}
-
-function _lpAbort() {
-  if ($kinImg) $kinImg.style.filter = '';
-  clearTimeout(_lpTimer);
-  _lpTimer = null;
-}
-
-// ── PC ───────────────────────────────────────────
-$kinZone.addEventListener('mousedown',  e => _lpStart(e.clientX, e.clientY));
-$kinZone.addEventListener('mouseup',    _lpRelease);
-$kinZone.addEventListener('mouseleave', _lpAbort);
-$kinZone.addEventListener('mousemove',  e => {
-  if (Math.hypot(e.clientX - _lpStartX, e.clientY - _lpStartY) > MOVE_THR) {
-    _lpMoved = true; _lpAbort();
-  }
-});
-
-// ── Mobile ───────────────────────────────────────
-$kinZone.addEventListener('touchstart', e => {
-  const t = e.touches[0];
-  _lpStart(t.clientX, t.clientY);
-}, { passive: true });
-$kinZone.addEventListener('touchend',  _lpRelease);
-$kinZone.addEventListener('touchmove', e => {
-  const t = e.touches[0];
-  if (Math.hypot(t.clientX - _lpStartX, t.clientY - _lpStartY) > MOVE_THR) {
-    _lpMoved = true; _lpAbort();
-  }
-}, { passive: true });
-
 </script>
 </body>
 </html>

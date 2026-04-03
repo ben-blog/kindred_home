@@ -981,14 +981,20 @@ $dredZone.addEventListener('click', () => {
    PC: mousedown / Mobile: touchstart
 ══════════════════════════════════════════════════ */
 const KIN_DASHBOARD = 'https://kin-ui-six.vercel.app';
-const LONG_MS = 1500;
+const LONG_MS  = 1500;
+const MOVE_THR = 5; // px — 이 이상 움직여야 롱프레스 취소
 let _lpTimer = null;
 let _lpMoved  = false;
+let _lpFired  = false;
+let _lpStartX = 0, _lpStartY = 0;
 
-function _lpStart() {
-  _lpMoved = false;
-  _lpTimer = setTimeout(() => {
-    if (!_lpMoved) navTo(KIN_DASHBOARD);
+function _lpStart(x, y) {
+  _lpMoved  = false;
+  _lpFired  = false;
+  _lpStartX = x;
+  _lpStartY = y;
+  _lpTimer  = setTimeout(() => {
+    if (!_lpMoved) { _lpFired = true; navTo(KIN_DASHBOARD); }
   }, LONG_MS);
 }
 function _lpCancel() {
@@ -997,15 +1003,31 @@ function _lpCancel() {
 }
 
 // PC
-$kinZone.addEventListener('mousedown',  _lpStart);
+$kinZone.addEventListener('mousedown',  e => _lpStart(e.clientX, e.clientY));
 $kinZone.addEventListener('mouseup',    _lpCancel);
 $kinZone.addEventListener('mouseleave', _lpCancel);
-$kinZone.addEventListener('mousemove',  () => { _lpMoved = true; _lpCancel(); });
+$kinZone.addEventListener('mousemove',  e => {
+  if (Math.hypot(e.clientX - _lpStartX, e.clientY - _lpStartY) > MOVE_THR) {
+    _lpMoved = true; _lpCancel();
+  }
+});
+// 롱프레스 성공 후 click 이벤트 차단 (캡처 단계)
+$kinZone.addEventListener('click', e => {
+  if (_lpFired) { e.stopImmediatePropagation(); _lpFired = false; }
+}, true);
 
 // Mobile
-$kinZone.addEventListener('touchstart', e => { _lpStart(); }, { passive: true });
-$kinZone.addEventListener('touchend',   _lpCancel);
-$kinZone.addEventListener('touchmove',  () => { _lpMoved = true; _lpCancel(); }, { passive: true });
+$kinZone.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  _lpStart(t.clientX, t.clientY);
+}, { passive: true });
+$kinZone.addEventListener('touchend',  _lpCancel);
+$kinZone.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (Math.hypot(t.clientX - _lpStartX, t.clientY - _lpStartY) > MOVE_THR) {
+    _lpMoved = true; _lpCancel();
+  }
+}, { passive: true });
 
 </script>
 </body>

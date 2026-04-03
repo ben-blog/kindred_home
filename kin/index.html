@@ -352,6 +352,16 @@ const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
 const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/kin/`;
 const SFXS = ['HA!','HEY','WOW','!!!','HMM','YO','haha','...','?!','zzz','YES'];
 
+/* ── KIN REPORTER ── */
+const KIN_API = 'https://kin-agent-production.up.railway.app/api/kin/event';
+function reportToKin(event_type, payload = {}) {
+  fetch(KIN_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service: 'gallery', event_type, payload, timestamp: new Date().toISOString() }),
+  }).catch(() => {}); // 갤러리 동작에 영향 없음
+}
+
 /* ── STATE ── */
 const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 let lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
@@ -493,6 +503,8 @@ async function fillDetail(i) {
 
 async function openViewer(i) {
   current = i;
+  const _item = items[i];
+  reportToKin('image_click', { filename: _item?.filename, title: _item?.title_ko, index: i });
   $sfx.textContent = SFXS[i % SFXS.length];
   $sfx.classList.remove('slam');
   void $sfx.offsetWidth;
@@ -575,6 +587,7 @@ document.getElementById('like-btn').addEventListener('click', async () => {
     setLiked(itemId, true);
     updateLikeUI(itemId, curCount + 1);
     await callLikeRpc('increment_like', itemId);
+    reportToKin('image_liked', { item_id: itemId, filename: items[current]?.filename });
   }
 });
 
@@ -656,6 +669,7 @@ fetchItems()
     renderGallery();
     $loading.style.opacity = '0';
     setTimeout(() => { $loading.style.display = 'none'; }, 400);
+    reportToKin('gallery_visit', { item_count: data.length, lang });
   })
   .catch(() => { $loading.querySelector('span').textContent = 'error'; });
 </script>

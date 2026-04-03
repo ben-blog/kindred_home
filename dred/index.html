@@ -353,10 +353,10 @@ const FRAME_W   = IS_TOUCH ? 240 : 300;
 const FRAME_GAP = 24;
 const STEP      = FRAME_W + FRAME_GAP;
 const VEL_WINDOW = 100;
-const BOOST      = 1.10;   // 1.20 → 1.10: 모바일 과도한 flick 방지
-const FRICTION   = 0.90;   // 0.95 → 0.90: 모멘텀 더 빠른 수렴
-const SNAP_EASE  = 0.26;   // lerp factor per frame
-const MIN_VEL    = 2.5;    // 이 이하에서 모멘텀→스냅 전환
+const BOOST      = 1.15;   // 1.10 → 1.15: 무거운 관성에 맞게 flick 강화
+const FRICTION   = 0.96;   // 0.90 → 0.96: 무거운 관성 — 손 떼도 천천히 미끄러짐
+const SNAP_EASE  = 0.20;   // 0.26 → 0.20: 스냅 부드럽게
+const MIN_VEL    = 1.2;    // 2.5 → 1.2: 더 오래 코스트하다 스냅
 
 let offset       = 0;
 let physVel      = 0;
@@ -648,7 +648,7 @@ if (!IS_TOUCH) {
     wheelEndTimer = setTimeout(() => {
       isWheeling = false;
       snapToNearest();
-    }, 80);
+    }, 120);
   }, {passive:false});
 }
 

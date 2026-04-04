@@ -137,8 +137,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .vm-item:hover{opacity:1!important}
   .vm-item.vm-dimmed{opacity:.15!important}
 
-  /* 호버 카드 — pointer-events:all 항상 (hover bridge) */
-  .h-card{position:fixed;top:50%;z-index:44;transform:translateY(-50%);pointer-events:all;opacity:0;}
+  /* 호버 카드 — .on일 때만 pointer-events:all (invisible 상태에서 클릭 차단) */
+  .h-card{position:fixed;top:50%;z-index:44;transform:translateY(-50%);pointer-events:none;opacity:0;}
+  .h-card.on{pointer-events:all;}
   .h-card-kin{
     left:calc(5vw + 30px);
     transform:translateY(-50%) translateX(-16px);

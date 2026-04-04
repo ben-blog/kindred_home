@@ -484,13 +484,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* 작품 카드 */
 .result-top-work{
   position:relative;overflow:hidden;
-  min-height:160px;
+  min-height:260px;
   border:1px solid rgba(255,229,0,.25);
   border-radius:2px;
 }
 .result-work-bg{
   position:absolute;inset:0;
-  background-size:cover;background-position:center top;
+  background-size:cover;background-position:center 15%;
   transform:scale(1.0);
 }
 /* 텍스트 가독성용 하단 그라디언트 */
@@ -513,14 +513,23 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .result-work-sub{font-size:15px;color:rgba(255,255,255,.85);letter-spacing:.06em;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 
-/* KIN 이미지 결과 (작품 없을 때) */
+/* 작품 없을 때 — bg 랜덤 이미지 카드 */
 .result-kin-wrap{
-  display:flex;align-items:center;gap:20px;
-  padding:24px;border:1px solid rgba(255,229,0,.18);
-  background:rgba(255,229,0,.04);border-radius:2px;
+  position:relative;overflow:hidden;
+  min-height:260px;
+  border:1px solid rgba(255,229,0,.2);
+  border-radius:2px;
 }
-.result-kin-img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,229,0,.3)}
-.result-kin-text{flex:1;font-size:15px;color:rgba(255,255,255,.5);letter-spacing:.08em}
+.result-kin-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center center;
+  filter:brightness(.5);
+  transform:scale(1.05);
+}
+.result-kin-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 60%);
+}
 
 /* KIN 관찰 — 말풍선 스타일 */
 .result-observation{
@@ -827,10 +836,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     </div>
   </div>
 
-  <!-- KIN 이미지 카드 (작품 없을 때) -->
+  <!-- bg 이미지 카드 (작품 없을 때) -->
   <div class="result-kin-wrap" id="result-kin-card" style="display:none">
-    <img class="result-kin-img" id="result-kin-img" src="" alt="KIN">
-    <div class="result-kin-text" id="result-kin-text"></div>
+    <div class="result-kin-bg" id="result-kin-bg"></div>
+    <div class="result-kin-overlay"></div>
   </div>
 
   <div class="result-observation">
@@ -1666,9 +1675,9 @@ async function showResult() {
   } else {
     state.topWork = null;
     document.getElementById('result-work-card').style.display='none';
-    document.getElementById('result-kin-card').style.display='flex';
-    document.getElementById('result-kin-img').src = KIN_IMGS[obsMood];
-    document.getElementById('result-kin-text').textContent = `${state.score} / 10`;
+    document.getElementById('result-kin-card').style.display='block';
+    const bgIdx = Math.floor(Math.random() * 10) + 1;
+    document.getElementById('result-kin-bg').style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
   }
 
   document.getElementById('result-obs-avatar').src = KIN_IMGS[obsMood];

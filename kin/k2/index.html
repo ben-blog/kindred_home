@@ -311,6 +311,26 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   50%{transform:translateX(6px)}
 }
 
+/* ══ 퀴즈 배경 이미지 ══ */
+#quiz-bg{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;overflow:hidden;
+}
+#quiz-bg img{
+  width:100%;height:100%;
+  object-fit:cover;object-position:center center;
+  filter:blur(14px) brightness(.18);
+  transform:scale(1.08);
+  display:block;
+}
+/* 퀴즈 컨텐츠 — 배경 위로 */
+#page-quiz .quiz-progress,
+#page-quiz .quiz-top,
+#page-quiz .quiz-question,
+#page-quiz .choices,
+#page-quiz .kin-reaction,
+#page-quiz .btn-next{position:relative;z-index:2}
+
 /* ═══════════════════════════════
    QUIZ
 ═══════════════════════════════ */
@@ -735,6 +755,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <!-- ══════ QUIZ ══════ -->
 <div class="page" id="page-quiz">
+  <div id="quiz-bg"><img id="quiz-bg-img" src="" alt=""></div>
   <div class="quiz-progress" id="quiz-progress"></div>
   <div class="quiz-top">
     <div class="quiz-top-left">
@@ -1043,6 +1064,27 @@ function getObs(pattern) {
 }
 
 // ═══════════════════════════════════════════
+// 퀴즈 배경 이미지 (랜덤, 연속 중복 방지)
+// ═══════════════════════════════════════════
+const BG_IMAGES = [
+  './assets/bg/bg1.png','./assets/bg/bg2.png','./assets/bg/bg3.png',
+  './assets/bg/bg4.png','./assets/bg/bg5.png','./assets/bg/bg6.png',
+  './assets/bg/bg7.png','./assets/bg/bg8.png','./assets/bg/bg9.png',
+  './assets/bg/bg10.png',
+];
+let _lastBgIdx = -1;
+function getRandomBg() {
+  let idx;
+  do { idx = Math.floor(Math.random() * BG_IMAGES.length); }
+  while (idx === _lastBgIdx);
+  _lastBgIdx = idx;
+  return BG_IMAGES[idx];
+}
+function setQuizBg() {
+  document.getElementById('quiz-bg-img').src = getRandomBg();
+}
+
+// ═══════════════════════════════════════════
 // SLOTS
 // ═══════════════════════════════════════════
 const SLOTS = [
@@ -1283,6 +1325,7 @@ function renderQuestion() {
 
   const diff = q.difficulty;
   setDiffOverlay(diff);
+  setQuizBg();
 
   // format badge
   const badge = document.getElementById('q-format-badge');

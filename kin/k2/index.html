@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
 <title>KIN의 만화퀴즈</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=block" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 /* iOS 탭 하이라이트 제거 */
@@ -82,7 +84,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--kin);letter-spacing:-.01em}
 .h-back{font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.6);text-transform:uppercase;cursor:pointer;transition:color .2s;text-decoration:none;padding:12px 4px;min-height:44px;display:flex;align-items:center;}
-.h-back:hover{color:var(--kin)}
 #lang-toggle{display:flex;align-items:center;font-size:11px;letter-spacing:.15em}
 .lt{padding:10px 12px;cursor:pointer;color:rgba(255,255,255,.5);transition:color .2s;user-select:none;border-radius:3px;min-height:44px;display:flex;align-items:center;}
 .lt.active{color:var(--kin)}
@@ -268,7 +269,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
   transform:translateX(-100%);transition:transform .5s ease;
 }
-.btn-start:hover::before{transform:translateX(100%)}
 .btn-start:hover{opacity:.88}
 .btn-start:active{transform:scale(.99)}
 .btn-start-text{font-weight:700}
@@ -308,7 +308,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #page-quiz{gap:0}
 
 /* 진행 바 */
-.quiz-progress{display:flex;gap:4px;margin-bottom:24px}
+.quiz-progress{display:flex;gap:4px;margin-top:20px;margin-bottom:24px}
 .prog-dot{
   flex:1;height:4px;border-radius:2px;
   background:rgba(255,255,255,.12);
@@ -375,6 +375,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* hover — 마우스 있는 기기에서만 */
 @media(hover:hover){
   .btn-start:hover::before{transform:translateX(100%)}
+  .h-back:hover{color:var(--kin)}
   .choice-btn:hover:not(:disabled){
     background:rgba(255,229,0,.1);
     border-color:rgba(255,229,0,.45);
@@ -708,6 +709,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 /* ── reduced motion ── */
 @media(prefers-reduced-motion:reduce){
+  #grain,
   .choice-btn,.quiz-question,#streak-glow,.streak-particle,
   .speedlines,.manga-gate,.gtag,.btn-start-arrow,
   .landing-marquee-track,.landing-marquee-text,#quiz-bg img{
@@ -910,16 +912,40 @@ const KIN_IMGS = {
   sad:      './assets/kin_sad.webp',
 };
 
+// ── DOM 캐시 (정적 요소 — 매 문제마다 getElementById 반복 제거) ──
+const $ = id => document.getElementById(id);
+const DOM = {
+  diffOverlay:  $('diff-overlay'),
+  streakGlow:   $('streak-glow'),
+  quizBgImg:    $('quiz-bg-img'),
+  quizProgress: $('quiz-progress'),
+  qBadge:       $('q-format-badge'),
+  qDiffDots:    $('q-diff-dots'),
+  qCounter:     $('q-counter'),
+  qQuestion:    $('q-question'),
+  qChoices:     $('q-choices'),
+  kinReaction:  $('kin-reaction'),
+  kinBubble:    $('kin-rxn-bubble'),
+  kinAvatar:    $('kin-rxn-avatar'),
+  btnNext:      $('btn-next'),
+};
+
 // ═══════════════════════════════════════════
 // 언어
 // ═══════════════════════════════════════════
 const browserLang = navigator.language?.startsWith('ko') ? 'ko' : 'en';
 let lang = localStorage.getItem('k2_lang') || browserLang;
 
+// #14: 언어 선택 헬퍼
+const t = (ko, en) => lang === 'ko' ? ko : en;
+
+// #5: .lt NodeList 캐시 (querySelectorAll 4회→1회)
+const LT_BTNS = document.querySelectorAll('.lt');
+
 function setLang(l) {
   lang = l;
   localStorage.setItem('k2_lang', l);
-  document.querySelectorAll('.lt').forEach(el =>
+  LT_BTNS.forEach(el =>
     el.classList.toggle('active', el.dataset.lang === l)
   );
   document.documentElement.lang = l;
@@ -929,15 +955,15 @@ function setLang(l) {
   if(state.phase === 'result') applyResultLang();
 }
 
-document.querySelectorAll('.lt').forEach(el => {
+LT_BTNS.forEach(el => {
   el.addEventListener('click', () => {
     if (el.classList.contains('disabled')) return;
     setLang(el.dataset.lang);
   });
 });
 
-function lockLang()   { document.querySelectorAll('.lt').forEach(e => e.classList.add('disabled')); }
-function unlockLang() { document.querySelectorAll('.lt').forEach(e => e.classList.remove('disabled')); }
+function lockLang()   { LT_BTNS.forEach(e => e.classList.add('disabled')); }
+function unlockLang() { LT_BTNS.forEach(e => e.classList.remove('disabled')); }
 
 // ═══════════════════════════════════════════
 // 텍스트 (ko/en)
@@ -1130,15 +1156,15 @@ const KIN_REACTIONS_EN = {
   streak_7:["...I don't want to admit it. But I have to.","You're a regular. You might as well just live here.","Oh, for real? Even I didn't see this coming."],
 };
 
-function getRxn(isCorrect, difficulty) {
-  const key = `${isCorrect?'correct':'wrong'}_${difficulty}`;
+const pickRxn = key => {
   const pool = lang==='ko' ? KIN_REACTIONS[key] : KIN_REACTIONS_EN[key];
   return pool[Math.floor(Math.random()*pool.length)];
+};
+function getRxn(isCorrect, difficulty) {
+  return pickRxn(`${isCorrect?'correct':'wrong'}_${difficulty}`);
 }
 function getStreakRxn(n) {
-  const key = n>=7?'streak_7':n>=5?'streak_5':'streak_3';
-  const pool = lang==='ko' ? KIN_REACTIONS[key] : KIN_REACTIONS_EN[key];
-  return pool[Math.floor(Math.random()*pool.length)];
+  return pickRxn(n>=7?'streak_7':n>=5?'streak_5':'streak_3');
 }
 
 // ═══════════════════════════════════════════
@@ -1232,7 +1258,7 @@ function getRandomBg() {
   return BG_IMAGES[idx];
 }
 function setQuizBg() {
-  document.getElementById('quiz-bg-img').src = getRandomBg();
+  DOM.quizBgImg.src = getRandomBg();
 }
 
 // ═══════════════════════════════════════════
@@ -1251,13 +1277,20 @@ const SLOTS = [
   {format:'author',    difficulty:'hard'},
 ];
 
+// #3: crypto.randomUUID 폴리필 (iOS 15.3 이하 대응)
+const genUUID = () => {
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+};
+
 // ═══════════════════════════════════════════
 // 상태
 // ═══════════════════════════════════════════
 const state = {
   phase:'landing', questions:[], currentIndex:0,
   answers:[], score:0, streak:0,
-  sessionKey:crypto.randomUUID(), answered:false,
+  sessionKey:genUUID(), answered:false,
   resultPattern:null, resultObs:null,
   topWork:null, resultMood:null,
 };
@@ -1280,34 +1313,35 @@ async function supaFetch(path, opts={}) {
   return null;
 }
 
+// #8: count=exact 쿼리용 헬퍼 (loadTodayCount, loadTotalCount, getSlotCount 공통)
+async function supaCount(path) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    headers:{
+      apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`,
+      Prefer:'count=exact', Range:'0-0',
+    },
+  });
+  if(!res.ok) throw new Error(`Supabase ${res.status}`);
+  const cr = res.headers.get('content-range');
+  return parseInt(cr?.split('/')[1]||'0', 10);
+}
+
 // ═══════════════════════════════════════════
 // 오늘 플레이어 수 × 10
 // ═══════════════════════════════════════════
 async function loadTodayCount() {
   try {
     const today = new Date().toISOString().slice(0,10);
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/quiz_sessions?completed_at=gte.${today}T00:00:00&select=id`,
-      { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
-    );
-    const cr = res.headers.get('content-range');
-    const count = parseInt(cr?.split('/')[1]||'0', 10);
+    const count = await supaCount(`quiz_sessions?completed_at=gte.${today}T00:00:00&select=id`);
     const display = (count*10).toLocaleString();
     const el = document.getElementById('today-count');
-    if(el && count>0) el.textContent = lang==='ko'
-      ? `오늘 ${display}명이 도전했어.`
-      : `${display} people played today.`;
+    if(el && count>0) el.textContent = t(`오늘 ${display}명이 도전했어.`, `${display} people played today.`);
   } catch{}
 }
 
 async function loadTotalCount() {
   try {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/quiz_items?is_active=eq.true&select=item_id`,
-      { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
-    );
-    const cr = res.headers.get('content-range');
-    const count = cr?.split('/')[1];
+    const count = await supaCount(`quiz_items?is_active=eq.true&select=item_id`);
     const el = document.getElementById('txt-total-q');
     if(el && count) el.textContent = count;
   } catch{}
@@ -1317,12 +1351,7 @@ async function loadTotalCount() {
 // 문제 로드 (슬롯별 count 배치 → offset 랜덤 병렬 fetch)
 // ═══════════════════════════════════════════
 async function getSlotCount(format, difficulty) {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/quiz_items?format=eq.${format}&difficulty=eq.${difficulty}&is_active=eq.true&select=item_id`,
-    { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
-  );
-  const cr = res.headers.get('content-range');
-  return parseInt(cr?.split('/')[1]||'0', 10);
+  return supaCount(`quiz_items?format=eq.${format}&difficulty=eq.${difficulty}&is_active=eq.true&select=item_id`);
 }
 
 async function loadQuestions() {
@@ -1360,7 +1389,9 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   state.phase = id.replace('page-','');
-  document.getElementById('grain').style.opacity = id==='page-landing' ? '0' : '';
+  const grain = document.getElementById('grain');
+  grain.style.opacity = id==='page-landing' ? '0' : '';
+  grain.style.animationPlayState = id==='page-landing' ? 'paused' : 'running'; // #11
   document.getElementById('quiz-bg').style.display = id==='page-quiz' ? 'block' : 'none';
 }
 
@@ -1368,43 +1399,46 @@ function showPage(id) {
 // 난이도 오버레이
 // ═══════════════════════════════════════════
 function setDiffOverlay(difficulty) {
-  const el = document.getElementById('diff-overlay');
   const map = {easy:'rgba(0,0,0,0)', mid:'rgba(20,30,70,0.15)', hard:'rgba(70,15,15,0.18)'};
-  el.style.background = map[difficulty]||'rgba(0,0,0,0)';
+  DOM.diffOverlay.style.background = map[difficulty]||'rgba(0,0,0,0)';
 }
 
 // ═══════════════════════════════════════════
 // 진행 바
 // ═══════════════════════════════════════════
 function renderProgress() {
-  const wrap = document.getElementById('quiz-progress');
-  wrap.innerHTML='';
-  SLOTS.forEach((slot,i)=>{
-    const d = document.createElement('div');
+  const wrap = DOM.quizProgress;
+  if(wrap.children.length === 0) {
+    SLOTS.forEach(()=>{
+      const d = document.createElement('div');
+      d.className = 'prog-dot';
+      wrap.appendChild(d);
+    });
+  }
+  const kids = wrap.children;
+  for(let i=0; i<kids.length; i++) {
+    const slot = SLOTS[i];
     let cls = 'prog-dot';
     if(i < state.currentIndex) {
       const ans = state.answers[i];
       cls += ans?.is_correct ? ` done-${slot.difficulty}` : ' done-wrong';
-    } else if(i===state.currentIndex) cls+=' current';
-    d.className=cls;
-    wrap.appendChild(d);
-  });
+    } else if(i === state.currentIndex) cls += ' current';
+    kids[i].className = cls;
+  }
 }
 
 // ═══════════════════════════════════════════
 // 연속 정답 이펙트
 // ═══════════════════════════════════════════
 function updateStreakEffect(streak) {
-  const glow = document.getElementById('streak-glow');
   clearStreakEffect();
-  if(streak>=7)      { glow.classList.add('s7'); spawnParticles(7); flashScreen(); }
-  else if(streak>=5) { glow.classList.add('s5'); spawnParticles(4); }
-  else if(streak>=3) { glow.classList.add('s3'); }
+  if(streak>=7)      { DOM.streakGlow.classList.add('s7'); spawnParticles(7); flashScreen(); }
+  else if(streak>=5) { DOM.streakGlow.classList.add('s5'); spawnParticles(4); }
+  else if(streak>=3) { DOM.streakGlow.classList.add('s3'); }
 }
 
 function clearStreakEffect() {
-  const glow = document.getElementById('streak-glow');
-  glow.classList.remove('s3','s5','s7');
+  DOM.streakGlow.classList.remove('s3','s5','s7');
 }
 
 function spawnParticles(n) {
@@ -1481,61 +1515,51 @@ function renderQuestion() {
   setQuizBg();
 
   // format badge
-  const badge = document.getElementById('q-format-badge');
-  badge.className = `format-badge ${q.format}`;
-  badge.textContent = (lang==='ko'?FORMAT_LABELS.ko:FORMAT_LABELS.en)[q.format]||q.format;
+  DOM.qBadge.className = `format-badge ${q.format}`;
+  DOM.qBadge.textContent = (lang==='ko'?FORMAT_LABELS.ko:FORMAT_LABELS.en)[q.format]||q.format;
 
-  // diff dots
-  const dots = document.getElementById('q-diff-dots');
-  dots.innerHTML='';
-  const levels={easy:1,mid:2,hard:3};
-  for(let i=0;i<3;i++){
-    const d=document.createElement('div');
-    d.className='diff-dot'+(i<levels[diff]?` on-${diff}`:'');
-    dots.appendChild(d);
+  // diff dots — 초기 1회 생성 후 className만 업데이트
+  const levels = {easy:1, mid:2, hard:3};
+  if(DOM.qDiffDots.children.length === 0) {
+    for(let i=0;i<3;i++) DOM.qDiffDots.appendChild(document.createElement('div'));
   }
+  const dotKids = DOM.qDiffDots.children;
+  for(let i=0;i<3;i++) dotKids[i].className = 'diff-dot'+(i<levels[diff]?` on-${diff}`:'');
 
   // counter
-  const counterEl = document.getElementById('q-counter');
-  counterEl.innerHTML = `<span style="color:rgba(255,255,255,.85)">${state.currentIndex+1}</span><span style="font-size:.55em;letter-spacing:.02em;color:rgba(255,255,255,.35);margin-left:2px"> / ${state.questions.length}</span>`;
+  DOM.qCounter.innerHTML = `<span style="color:rgba(255,255,255,.85)">${state.currentIndex+1}</span><span style="font-size:.55em;letter-spacing:.02em;color:rgba(255,255,255,.35);margin-left:2px"> / ${state.questions.length}</span>`;
 
   // question — 난이도별 등장 방식
-  const qEl = document.getElementById('q-question');
-  qEl.className='quiz-question';
+  DOM.qQuestion.className='quiz-question';
   const enterClass = diff==='easy'?'enter-fade':diff==='mid'?'enter-up':'enter-side';
-  qEl.textContent = lang==='ko' ? q.question : (q.question_en||q.question);
-  void qEl.offsetWidth;
-  qEl.classList.add(enterClass);
+  DOM.qQuestion.textContent = lang==='ko' ? q.question : (q.question_en||q.question);
+  void DOM.qQuestion.offsetWidth;
+  DOM.qQuestion.classList.add(enterClass);
 
   // choices
-  const wrap = document.getElementById('q-choices');
-  wrap.innerHTML='';
+  DOM.qChoices.innerHTML='';
   const choices = lang==='ko' ? q.displayChoicesKo : (q.displayChoicesEn||q.displayChoicesKo);
   choices.forEach((choice,idx)=>{
     const btn=document.createElement('button');
     btn.className='choice-btn';
-    // hard 구간: 순차 등장
     if(diff==='hard'){
       btn.classList.add('stagger');
       btn.style.animationDelay=(idx*0.08)+'s';
     }
     btn.textContent=choice;
     btn.addEventListener('click',()=>selectAnswer(choice));
-    wrap.appendChild(btn);
+    DOM.qChoices.appendChild(btn);
   });
 
   // KIN 반응 초기화
-  const rxn=document.getElementById('kin-reaction');
-  const bubble=document.getElementById('kin-rxn-bubble');
-  if(bubble) bubble.textContent='';
-  const avatar=document.getElementById('kin-rxn-avatar');
-  if(avatar) avatar.src='';
-  rxn.classList.remove('show');
+  DOM.kinBubble.textContent='';
+  DOM.kinAvatar.src='';
+  DOM.kinReaction.classList.remove('show');
 
   // 다음 버튼
-  const btnNext=document.getElementById('btn-next');
-  btnNext.classList.remove('show');
-  btnNext.textContent = lang==='ko'?'다음 →':'Next →';
+  DOM.btnNext.classList.remove('show');
+  DOM.btnNext.textContent = t('다음 →','Next →');
+}
 }
 
 // ═══════════════════════════════════════════
@@ -1578,22 +1602,19 @@ function selectAnswer(selected) {
   }
 
   const isStreakReaction = isCorrect && state.streak>=3;
-  const rxnEl = document.getElementById('kin-rxn-bubble') || document.getElementById('kin-reaction');
-  const avatarEl = document.getElementById('kin-rxn-avatar');
-  if(avatarEl) avatarEl.src = getKinRxnImg(isCorrect, q.difficulty, isStreakReaction);
-  typeText(rxnEl, rxnText, 25);
+  DOM.kinAvatar.src = getKinRxnImg(isCorrect, q.difficulty, isStreakReaction);
+  typeText(DOM.kinBubble, rxnText, 25);
 
   // 다음 버튼
-  const btnNext = document.getElementById('btn-next');
   const isLast = state.currentIndex===state.questions.length-1;
-  btnNext.textContent = isLast ? (lang==='ko'?'결과 보기 →':'See Result →') : (lang==='ko'?'다음 →':'Next →');
-  setTimeout(()=>btnNext.classList.add('show'), 350);
+  DOM.btnNext.textContent = isLast ? t('결과 보기 →','See Result →') : t('다음 →','Next →');
+  setTimeout(()=>DOM.btnNext.classList.add('show'), 350);
 }
 
 // ═══════════════════════════════════════════
 // 다음 문제
 // ═══════════════════════════════════════════
-document.getElementById('btn-next').addEventListener('click', goNext);
+DOM.btnNext.addEventListener('click', goNext);
 function goNext() {
   state.currentIndex++;
   if(state.currentIndex < state.questions.length) {
@@ -1608,12 +1629,16 @@ function goNext() {
 // ═══════════════════════════════════════════
 // 스와이프로 다음 (모바일)
 // ═══════════════════════════════════════════
-let touchStartY=0;
-document.addEventListener('touchstart', e=>{ touchStartY=e.touches[0].clientY; },{passive:true});
+let touchStartY=0, touchStartX=0; // #12: X좌표 추가
+document.addEventListener('touchstart', e=>{
+  touchStartY=e.touches[0].clientY;
+  touchStartX=e.touches[0].clientX; // #12
+},{passive:true});
 document.addEventListener('touchend', e=>{
   if(state.phase!=='quiz' || !state.answered) return;
   const dy = e.changedTouches[0].clientY - touchStartY;
-  if(dy < -60) goNext();
+  const dx = e.changedTouches[0].clientX - touchStartX; // #12
+  if(dy < -60 && Math.abs(dx) < 40) goNext(); // #12: 수직 스와이프만 허용
 },{passive:true});
 
 // ═══════════════════════════════════════════
@@ -1658,9 +1683,7 @@ async function showResult() {
     document.getElementById('result-kin-card').style.display='none';
     document.getElementById('result-work-name').textContent = workName;
     document.getElementById('result-work-sub').textContent =
-      lang==='ko'
-        ? `${wData.total}문제 중 ${wData.correct}개 정답`
-        : `${wData.correct} / ${wData.total} correct`;
+      t(`${wData.total}문제 중 ${wData.correct}개 정답`, `${wData.correct} / ${wData.total} correct`);
     if(wData.mal_id) {
       try {
         const res = await fetch(`${JIKAN}/anime/${wData.mal_id}`);
@@ -1711,17 +1734,16 @@ async function showResult() {
 // ═══════════════════════════════════════════
 async function saveSession(pattern) {
   try {
+    const diffMix = state.answers.reduce((acc,a)=>{
+      acc[a.difficulty]=(acc[a.difficulty]||0)+1; return acc;
+    },{easy:0,mid:0,hard:0});
     await supaFetch('quiz_sessions',{
       method:'POST',
       body:JSON.stringify({
         session_key:state.sessionKey, score:state.score, total:10,
         result_type:pattern, lang,
         answers:state.answers,
-        difficulty_mix:{
-          easy:state.answers.filter(a=>a.difficulty==='easy').length,
-          mid: state.answers.filter(a=>a.difficulty==='mid').length,
-          hard:state.answers.filter(a=>a.difficulty==='hard').length,
-        },
+        difficulty_mix: diffMix,
         format_mix:Object.fromEntries(
           ['work','character','outlier','author','relation'].map(f=>[
             f, state.answers.filter(a=>a.format===f).length
@@ -1764,7 +1786,7 @@ async function fetchAniListCover(malId) {
 
 function loadImgCORS(img, src) {
   return new Promise((resolve, reject) => {
-    const t = setTimeout(reject, 6000);
+    const t = setTimeout(reject, 4000); // #13: 6s→4s
     img.crossOrigin = 'anonymous';
     img.onload  = () => { clearTimeout(t); resolve(); };
     img.onerror = () => { clearTimeout(t); reject(); };
@@ -1776,8 +1798,10 @@ function loadImgCORS(img, src) {
 // 공유 — 이미지 카드 생성 + 모달
 // ═══════════════════════════════════════════
 let shareBlob = null;
+let shareBlobUrl = null; // createObjectURL 재사용 (메모리 누수 방지)
 
 async function generateShareImage() {
+  if (!window.html2canvas) throw new Error('html2canvas not loaded'); // #1: guard
   const obs  = state.resultObs || getObs(state.resultPattern || 'random');
   const mood = state.resultMood || 'thinking';
 
@@ -1831,17 +1855,19 @@ document.getElementById('btn-share').addEventListener('click', async () => {
 
   try {
     shareBlob = await generateShareImage();
-    const url = URL.createObjectURL(shareBlob);
-    imgEl.src = url;
+    if(shareBlobUrl) URL.revokeObjectURL(shareBlobUrl); // 이전 URL 해제
+    shareBlobUrl = URL.createObjectURL(shareBlob);
+    imgEl.src = shareBlobUrl;
     imgEl.style.display = 'block';
     btns.style.display = 'flex';
   } catch {
     modal.classList.remove('open');
     // fallback: 텍스트 복사
     const obs = state.resultObs || getObs(state.resultPattern || 'random');
-    const text = lang==='ko'
-      ? `KIN의 만화퀴즈 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
-      : `KIN's Manga Quiz ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`;
+    const text = t(
+      `KIN의 만화퀴즈 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`,
+      `KIN's Manga Quiz ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
+    );
     try { await navigator.clipboard.writeText(text); } catch {}
   } finally {
     loading.style.display = 'none';
@@ -1850,9 +1876,9 @@ document.getElementById('btn-share').addEventListener('click', async () => {
 
 // 저장하기
 document.getElementById('btn-share-save').addEventListener('click', () => {
-  if(!shareBlob) return;
+  if(!shareBlobUrl) return;
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(shareBlob);
+  a.href = shareBlobUrl;
   a.download = `kin-quiz-${state.score}.png`;
   a.click();
 });
@@ -1885,7 +1911,7 @@ document.getElementById('share-modal-close').addEventListener('click', () => {
 document.getElementById('btn-retry').addEventListener('click',()=>{
   Object.assign(state,{
     questions:[],currentIndex:0,answers:[],
-    score:0,streak:0,sessionKey:crypto.randomUUID(),answered:false,
+    score:0,streak:0,sessionKey:genUUID(),answered:false,
     resultPattern:null,resultObs:null,topWork:null,resultMood:null,
   });
   startQuiz(); // startQuiz 내부에서 lockLang 호출
@@ -1901,20 +1927,21 @@ async function startQuiz() {
   quizLoading = true;
   lockLang();
   showPage('page-quiz');
-  document.getElementById('q-question').textContent = lang==='ko'?'불러오는 중...':'Loading...';
+  document.getElementById('q-question').textContent = t('불러오는 중...','Loading...');
   document.getElementById('q-choices').innerHTML='';
 
   try {
     state.questions = await loadQuestions();
     if(state.questions.length < 5) throw new Error('not enough');
   } catch {
-    showError(lang==='ko'?'문제를 불러오지 못했어.':'Could not load questions.');
+    showError(t('문제를 불러오지 못했어.','Could not load questions.'));
     unlockLang(); showPage('page-landing'); quizLoading = false; return;
   }
 
-  quizLoading = false; // 로드 완료 후 해제
+  quizLoading = false;
   state.currentIndex=0; state.answers=[]; state.score=0; state.streak=0; state.answered=false;
   clearStreakEffect(); setDiffOverlay('easy');
+  DOM.quizProgress.innerHTML='';
   renderProgress(); renderQuestion();
 }
 

@@ -350,6 +350,41 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   color:#fff;
   margin-bottom:28px;min-height:72px;
 }
+
+/* recall (명대사) — 말풍선 스타일 */
+.quiz-question.direction-recall{
+  position:relative;
+  padding:20px 22px 20px 48px;
+  background:rgba(255,229,0,.06);
+  border:1px solid rgba(255,229,0,.28);
+  border-radius:6px 6px 6px 2px;
+  min-height:auto;
+  margin-bottom:36px;
+}
+.quiz-question.direction-recall::before{
+  content:'\201C';
+  position:absolute;left:14px;top:10px;
+  font-size:44px;line-height:1;
+  color:rgba(255,229,0,.4);
+  font-family:Georgia,serif;
+}
+/* 말풍선 꼬리 */
+.quiz-question.direction-recall::after{
+  content:'';
+  position:absolute;bottom:-12px;left:20px;
+  border-left:10px solid transparent;
+  border-right:6px solid transparent;
+  border-top:12px solid rgba(255,229,0,.28);
+}
+
+/* explain (능력/사건) — 정보 카드 스타일 */
+.quiz-question.direction-explain{
+  padding:18px 20px;
+  background:rgba(96,165,250,.06);
+  border-left:3px solid rgba(96,165,250,.55);
+  border-radius:0 2px 2px 0;
+  min-height:auto;
+}
 /* 등장 애니메이션 */
 .quiz-question.enter-fade {animation:q-fade .35s ease forwards}
 .quiz-question.enter-up   {animation:q-up   .35s cubic-bezier(.16,1,.3,1) forwards}
@@ -369,7 +404,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   font-family:'DM Mono',monospace;
   font-size:clamp(13px,3.5vw,15px);line-height:1.55;
   cursor:pointer;user-select:none;
-  transition:background .15s,border-color .15s,color .15s,transform .15s;
+  transition:background .15s,border-color .15s,color .15s,transform .15s,opacity .3s;
   border-radius:2px;
 }
 /* hover — 마우스 있는 기기에서만 */
@@ -377,40 +412,59 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   .btn-start:hover::before{transform:translateX(100%)}
   .h-back:hover{color:var(--kin)}
   .choice-btn:hover:not(:disabled){
-    background:rgba(255,229,0,.1);
-    border-color:rgba(255,229,0,.45);
+    background:rgba(255,229,0,.13);
+    border-color:rgba(255,229,0,.6);
     color:#fff;
+    transform:translateX(5px);
   }
   .btn-next:hover{background:rgba(255,229,0,.1);border-color:#FFE500;color:#FFE500}
   .btn-secondary:hover{border-color:rgba(255,229,0,.5);color:#FFE500}
   .btn-primary:hover{opacity:.85}
 }
-/* 정답/오답 */
+/* 정답 */
 .choice-btn.correct{
-  background:rgba(74,222,128,.14);
-  border-color:rgba(74,222,128,.65);
+  background:rgba(74,222,128,.18);
+  border:2px solid #4ADE80;
   color:#4ADE80;
-  animation:bounce-up .3s cubic-bezier(.16,1,.3,1);
+  animation:bounce-up .35s cubic-bezier(.16,1,.3,1);
 }
+/* 오답 */
 .choice-btn.wrong{
-  background:rgba(248,113,113,.1);
-  border-color:rgba(248,113,113,.45);
+  background:rgba(248,113,113,.18);
+  border:2px solid #F87171;
   color:#F87171;
-  animation:shake .35s ease;
+  animation:shake .4s ease;
 }
-.choice-btn:disabled{cursor:default}
+/* 비활성 (정답도 오답도 아닌) — 흐리게 */
+.choice-btn:disabled:not(.correct):not(.wrong){
+  opacity:.2;
+  cursor:default;
+}
+/* 오답 선택 시 정답 버튼 주목 효과 */
+.choice-btn.correct.attention{
+  animation:correct-pulse .55s ease .1s;
+}
 
 @keyframes bounce-up{
   0%  {transform:translateY(0)}
-  40% {transform:translateY(-5px)}
+  35% {transform:translateY(-7px)}
   100%{transform:translateY(0)}
 }
 @keyframes shake{
   0%,100%{transform:translateX(0)}
-  20%    {transform:translateX(-6px)}
-  40%    {transform:translateX(6px)}
-  60%    {transform:translateX(-4px)}
-  80%    {transform:translateX(4px)}
+  15%    {transform:translateX(-7px)}
+  35%    {transform:translateX(7px)}
+  55%    {transform:translateX(-5px)}
+  75%    {transform:translateX(5px)}
+  90%    {transform:translateX(-2px)}
+}
+@keyframes correct-pulse{
+  0%  {transform:translateX(0);box-shadow:0 0 0 0 rgba(74,222,128,.5)}
+  20% {transform:translateX(-5px);box-shadow:0 0 0 6px rgba(74,222,128,.0)}
+  40% {transform:translateX(5px)}
+  60% {transform:translateX(-3px)}
+  80% {transform:translateX(3px)}
+  100%{transform:translateX(0)}
 }
 /* hard 선택지 순차 등장 */
 .choice-btn.stagger{
@@ -1393,7 +1447,7 @@ function showPage(id) {
   const grain = document.getElementById('grain');
   grain.style.opacity = id==='page-landing' ? '0' : '';
   grain.style.animationPlayState = id==='page-landing' ? 'paused' : 'running'; // #11
-  document.getElementById('quiz-bg').style.display = id==='page-quiz' ? 'block' : 'none';
+  document.getElementById('quiz-bg').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════
@@ -1532,6 +1586,8 @@ function renderQuestion() {
 
   // question — 난이도별 등장 방식
   DOM.qQuestion.className='quiz-question';
+  if (q.direction === 'recall')  DOM.qQuestion.classList.add('direction-recall');
+  else if (q.direction === 'explain') DOM.qQuestion.classList.add('direction-explain');
   const enterClass = diff==='easy'?'enter-fade':diff==='mid'?'enter-up':'enter-side';
   DOM.qQuestion.textContent = lang==='ko' ? q.question : (q.question_en||q.question);
   void DOM.qQuestion.offsetWidth;
@@ -1584,6 +1640,14 @@ function selectAnswer(selected) {
     if(btn.textContent===correct) btn.classList.add('correct');
     else if(btn.textContent===selected&&!isCorrect) btn.classList.add('wrong');
   });
+
+  // 오답 선택 시 정답 버튼 주목 떨림
+  if(!isCorrect) {
+    setTimeout(()=>{
+      DOM.qChoices.querySelectorAll('.choice-btn.correct')
+        .forEach(b=>b.classList.add('attention'));
+    }, 180);
+  }
 
   // 답변 기록
   state.answers.push({

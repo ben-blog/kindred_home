@@ -652,7 +652,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // CONFIG
 // ═══════════════════════════════════════════
 const SUPA_URL = 'https://lmfyspozcmyefgrkgxch.supabase.co';
-const SUPA_KEY = 'SUPABASE_ANON_KEY_HERE';
+const SUPA_KEY = '실제키';
 const API_URL  = 'https://kin-agent-production.up.railway.app';
 const JIKAN    = 'https://api.jikan.moe/v4';
 
@@ -1487,12 +1487,11 @@ function applyLandingLang() {
   if(!lp) return;
   const qs = sel => lp.querySelector(sel);
   if(lang==='en') {
-    qs('.landing-eyebrow').textContent = "KIN's Manga Room — Manga · Anime Quiz";
-    qs('.landing-title').textContent = "KIN's Manga Room";
-    qs('#landing-genre-label').textContent = 'Manga · Anime Quiz';
-    qs('.landing-meme-sub').textContent = 'お前はもう解いている';
-    qs('.btn-start-text').textContent = 'Take the quiz';
-    qs('.preview-label').textContent = "here's a taste";
+    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = "KIN's Manga Room — Manga · Anime Quiz";
+    if(qs('.landing-title'))       qs('.landing-title').textContent       = "KIN's Manga Room";
+    if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = 'Manga · Anime Quiz';
+    if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = 'Take the quiz';
+    if(qs('.preview-label'))       qs('.preview-label').textContent       = "here's a taste";
     lp.querySelectorAll('.gtag').forEach((el,i)=>{
       const labels=['setting','character','odd one','author','relation'];
       el.textContent=labels[i]||el.textContent;
@@ -1500,12 +1499,11 @@ function applyLandingLang() {
     const mg = document.getElementById('manga-gate');
     if(mg) mg.src = './assets/manga_gate1.png';
   } else {
-    qs('.landing-eyebrow').textContent = 'KIN의 만화방 — 일본 만화 · 애니 퀴즈';
-    qs('.landing-title').textContent = 'KIN의 만화방';
-    qs('#landing-genre-label').textContent = '일본 만화 · 애니 퀴즈';
-    qs('.landing-meme-sub').textContent = 'お前はもう解いている';
-    qs('.btn-start-text').textContent = '도전하기';
-    qs('.preview-label').textContent = '이런 문제가 나와';
+    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = 'KIN의 만화방 — 일본 만화 · 애니 퀴즈';
+    if(qs('.landing-title'))       qs('.landing-title').textContent       = 'KIN의 만화방';
+    if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = '일본 만화 · 애니 퀴즈';
+    if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = '도전하기';
+    if(qs('.preview-label'))       qs('.preview-label').textContent       = '이런 문제가 나와';
     lp.querySelectorAll('.gtag').forEach((el,i)=>{
       const labels=['설정','캐릭터','아닌것','작가','관계'];
       el.textContent=labels[i]||el.textContent;

@@ -127,7 +127,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   width:100%;height:100%;
   object-fit:cover;
   object-position:center;
-  opacity:.08;
+  opacity:.18;
   animation:sl-rotate 60s linear infinite;
 }
 @keyframes sl-rotate{
@@ -438,7 +438,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .kin-reaction.show{opacity:1}
 .kin-rxn-avatar{
-  width:42px;height:42px;border-radius:50%;
+  width:60px;height:60px;border-radius:50%;
   object-fit:cover;flex-shrink:0;
   border:1.5px solid rgba(255,229,0,.35);
   background:rgba(255,229,0,.06);
@@ -451,12 +451,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   border:1px solid rgba(255,229,0,.3);
   border-radius:0 8px 8px 8px;
   font-size:14px;color:#FFE500;line-height:1.8;
-  min-height:48px;word-break:keep-all;
+  min-height:60px;word-break:keep-all;
+  display:flex;align-items:center;
 }
 .kin-rxn-bubble::before{
   content:'';
   position:absolute;
-  left:-7px;top:12px;
+  left:-7px;top:18px;
   width:0;height:0;
   border-top:6px solid transparent;
   border-bottom:6px solid transparent;
@@ -479,20 +480,22 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* ═══════════════════════════════
    RESULT
 ═══════════════════════════════ */
-#page-result{gap:32px}
+#page-result{gap:28px}
 
 .result-score-wrap{display:flex;align-items:baseline;gap:10px}
 .result-score{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(56px,15vw,100px);
+  font-size:clamp(72px,18vw,120px);
   color:var(--kin);letter-spacing:-.04em;line-height:1;
 }
-.result-score-denom{font-size:16px;color:rgba(255,255,255,.45);letter-spacing:.1em}
+.result-score-denom{font-size:18px;color:rgba(255,255,255,.4);letter-spacing:.1em}
 
+/* 작품 카드 */
 .result-top-work{
   position:relative;overflow:hidden;
-  min-height:140px;
-  border:1px solid rgba(255,229,0,.2);
+  min-height:160px;
+  border:1px solid rgba(255,229,0,.25);
+  border-radius:2px;
 }
 .result-work-bg{
   position:absolute;inset:0;
@@ -502,54 +505,123 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .result-work-content{
   position:relative;z-index:1;
-  padding:24px;display:flex;flex-direction:column;gap:8px;
+  padding:28px;display:flex;flex-direction:column;gap:10px;
 }
 .result-work-label{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.65);text-transform:uppercase}
 .result-work-name{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(20px,5.5vw,32px);color:var(--kin);letter-spacing:-.02em;
+  font-size:clamp(24px,6vw,36px);color:var(--kin);letter-spacing:-.02em;
 }
-.result-work-sub{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.08em}
+.result-work-sub{font-size:15px;color:rgba(255,255,255,.65);letter-spacing:.06em}
 
-/* KIN 이미지 결과 */
+/* KIN 이미지 결과 (작품 없을 때) */
 .result-kin-wrap{
-  display:flex;align-items:center;gap:18px;
-  padding:20px;border:1px solid rgba(255,229,0,.15);
-  background:rgba(255,229,0,.03);
+  display:flex;align-items:center;gap:20px;
+  padding:24px;border:1px solid rgba(255,229,0,.18);
+  background:rgba(255,229,0,.04);border-radius:2px;
 }
-.result-kin-img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,229,0,.25)}
-.result-kin-text{flex:1;font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.08em}
+.result-kin-img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,229,0,.3)}
+.result-kin-text{flex:1;font-size:15px;color:rgba(255,255,255,.5);letter-spacing:.08em}
 
+/* KIN 관찰 — 말풍선 스타일 */
 .result-observation{
-  padding:22px;border:1px solid rgba(255,229,0,.22);
-  background:rgba(255,229,0,.04);
+  display:flex;gap:16px;align-items:flex-start;
+  padding:24px;
+  border:1px solid rgba(255,229,0,.28);
+  background:rgba(255,229,0,.05);
+  border-radius:2px;
 }
+.result-obs-avatar{
+  width:68px;height:68px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;
+  border:2px solid rgba(255,229,0,.4);
+  background:rgba(255,229,0,.06);
+}
+.result-obs-content{flex:1}
 .result-observation-label{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.65);text-transform:uppercase;margin-bottom:12px}
-#result-observation-text{font-size:15px;line-height:1.9;color:rgba(255,255,255,.9)}
+#result-observation-text{font-size:17px;line-height:1.85;color:rgba(255,255,255,.92);word-break:keep-all}
 
-.result-wrong-label{font-size:11px;letter-spacing:.22em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:10px}
-.result-wrong-list{display:flex;flex-direction:column;gap:8px}
-.wrong-item{
-  padding:12px 16px;background:rgba(248,113,113,.05);
-  border:1px solid rgba(248,113,113,.18);
-  font-size:13px;line-height:1.65;color:rgba(255,255,255,.65);
+/* 틀린 문제 */
+#result-wrong-section{
+  padding:24px;
+  background:rgba(248,113,113,.04);
+  border:1px solid rgba(248,113,113,.22);
+  border-radius:2px;
 }
-.wrong-item-answer{color:#4ADE80;font-size:12px;margin-top:4px}
+.result-wrong-label{font-size:11px;letter-spacing:.22em;color:rgba(248,113,113,.7);text-transform:uppercase;margin-bottom:14px}
+.result-wrong-list{display:flex;flex-direction:column;gap:10px}
+.wrong-item{
+  padding:14px 18px;background:rgba(248,113,113,.05);
+  border:1px solid rgba(248,113,113,.15);
+  font-size:14px;line-height:1.7;color:rgba(255,255,255,.72);border-radius:2px;
+}
+.wrong-item-answer{color:#4ADE80;font-size:13px;margin-top:6px}
 
 .result-btns{display:flex;flex-wrap:wrap;gap:10px}
 .btn-secondary{
-  padding:12px 22px;background:transparent;
+  padding:14px 24px;background:transparent;
   border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);
-  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  cursor:pointer;transition:all .2s;border-radius:2px;text-decoration:none;display:inline-block;
-  min-height:44px;
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;border-radius:2px;text-decoration:none;display:inline-flex;align-items:center;
+  min-height:48px;
 }
 .btn-primary{
-  padding:12px 22px;background:var(--kin);color:#000;border:none;
-  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  padding:14px 24px;background:var(--kin);color:#000;border:none;
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
   cursor:pointer;transition:opacity .2s;border-radius:2px;
-  min-height:44px;
+  min-height:48px;
 }
+
+/* ── 공유 모달 ── */
+#share-modal{
+  position:fixed;inset:0;z-index:400;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.88);
+  padding:24px;
+}
+#share-modal.open{display:flex}
+#share-modal-img{
+  max-width:min(360px,90vw);
+  width:100%;border-radius:4px;
+  box-shadow:0 0 40px rgba(255,229,0,.12);
+  margin-bottom:20px;
+}
+#share-modal-btns{
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:360px;
+}
+.sm-btn{
+  flex:1;min-width:120px;padding:14px 16px;
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;border-radius:2px;transition:opacity .2s;min-height:48px;
+}
+.sm-btn-primary{background:var(--kin);color:#000;border:none}
+.sm-btn-secondary{background:transparent;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7)}
+#share-modal-close{
+  margin-top:16px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;
+  color:rgba(255,255,255,.35);cursor:pointer;text-transform:uppercase;padding:8px;
+}
+#share-modal-loading{
+  color:rgba(255,229,0,.6);font-size:12px;letter-spacing:.2em;
+  animation:blink 1.2s ease infinite;
+}
+
+/* ── 공유 카드 (캔버스용 숨김 div) ── */
+#share-card{
+  position:fixed;left:-9999px;top:-9999px;
+  width:375px;
+  background:#080806;
+  padding:48px 36px 40px;
+  font-family:'DM Mono',monospace;
+}
+.sc-eyebrow{font-size:10px;letter-spacing:.35em;color:rgba(255,229,0,.55);text-transform:uppercase;margin-bottom:28px}
+.sc-score{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:96px;color:#FFE500;letter-spacing:-.04em;line-height:1;margin-bottom:4px;
+}
+.sc-denom{font-size:15px;color:rgba(255,255,255,.35);letter-spacing:.1em;margin-bottom:28px}
+.sc-divider{width:40px;height:2px;background:rgba(255,229,0,.4);margin-bottom:24px}
+.sc-obs{font-size:15px;line-height:1.85;color:rgba(255,255,255,.85);margin-bottom:36px;word-break:keep-all}
+.sc-url{font-size:11px;letter-spacing:.22em;color:rgba(255,229,0,.45)}
 
 /* ── LOADING ── */
 #loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .4s}
@@ -575,7 +647,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   .choice-btn{min-height:60px;font-size:14px;padding:16px 16px}
   .landing-title{line-height:1}
   .kin-reaction{margin-top:16px}
-  .kin-rxn-avatar{width:36px;height:36px}
+  .kin-rxn-avatar{width:52px;height:52px}
   .kin-rxn-bubble{font-size:13px;padding:10px 14px}
 }
 
@@ -589,6 +661,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* flash screen */
 @keyframes flash-fade{0%{opacity:1}100%{opacity:0}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <div id="grain" style="opacity:0"></div>
@@ -710,8 +783,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 
   <div class="result-observation">
-    <div class="result-observation-label">KIN</div>
-    <div id="result-observation-text"></div>
+    <img class="result-obs-avatar" id="result-obs-avatar" src="" alt="KIN">
+    <div class="result-obs-content">
+      <div class="result-observation-label" id="result-eyebrow-obs">KIN</div>
+      <div id="result-observation-text"></div>
+    </div>
   </div>
 
   <div id="result-wrong-section" style="display:none">
@@ -724,6 +800,27 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <button class="btn-secondary" id="btn-retry">다시 하기</button>
     <a      class="btn-secondary" href="../index.html" id="btn-gallery">← 갤러리</a>
   </div>
+</div>
+
+<!-- ══════ 공유 모달 ══════ -->
+<div id="share-modal">
+  <span id="share-modal-loading">generating...</span>
+  <img id="share-modal-img" src="" alt="" style="display:none">
+  <div id="share-modal-btns" style="display:none">
+    <button class="sm-btn sm-btn-primary" id="btn-share-save">저장하기</button>
+    <button class="sm-btn sm-btn-secondary" id="btn-share-native">공유하기</button>
+  </div>
+  <div id="share-modal-close">닫기</div>
+</div>
+
+<!-- ══════ 공유 카드 (캔버스 렌더용) ══════ -->
+<div id="share-card">
+  <div class="sc-eyebrow">KIN의 만화퀴즈</div>
+  <div class="sc-score" id="sc-score">0</div>
+  <div class="sc-denom">/ 10</div>
+  <div class="sc-divider"></div>
+  <div class="sc-obs" id="sc-obs"></div>
+  <div class="sc-url">kinxdred.com/kin/k2</div>
 </div>
 
 <script>
@@ -1357,7 +1454,6 @@ async function showResult() {
 
   if(topEntry) {
     const [workName, wData] = topEntry;
-    // 작품 카드 표시
     document.getElementById('result-work-card').style.display='block';
     document.getElementById('result-kin-card').style.display='none';
     document.getElementById('result-work-name').textContent = workName;
@@ -1365,28 +1461,27 @@ async function showResult() {
       lang==='ko'
         ? `${wData.total}문제 중 ${wData.correct}개 정답`
         : `${wData.correct} / ${wData.total} correct`;
-
-    // Jikan 커버 이미지 로드
     if(wData.mal_id) {
       try {
         const res = await fetch(`${JIKAN}/anime/${wData.mal_id}`);
         const data = await res.json();
         const imgUrl = data.data?.images?.jpg?.large_image_url;
-        if(imgUrl) {
-          document.getElementById('result-work-bg').style.backgroundImage=`url(${imgUrl})`;
-        }
+        if(imgUrl) document.getElementById('result-work-bg').style.backgroundImage=`url(${imgUrl})`;
       } catch{}
     }
   } else {
-    // KIN 이미지 표정 분기
     document.getElementById('result-work-card').style.display='none';
     document.getElementById('result-kin-card').style.display='flex';
     const scoreN = state.score;
     const mood = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
-    const imgSrc = KIN_IMGS[mood];
-    document.getElementById('result-kin-img').src = imgSrc;
+    document.getElementById('result-kin-img').src = KIN_IMGS[mood];
     document.getElementById('result-kin-text').textContent = `${scoreN} / 10`;
   }
+
+  // KIN 관찰 섹션 얼굴 이미지
+  const scoreN = state.score;
+  const obsMood = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
+  document.getElementById('result-obs-avatar').src = KIN_IMGS[obsMood];
 
   // 틀린 문제
   const wrong = state.answers.filter(a=>!a.is_correct);
@@ -1453,33 +1548,86 @@ async function saveSession(pattern) {
 }
 
 // ═══════════════════════════════════════════
-// 공유
+// 공유 — 이미지 카드 생성 + 모달
 // ═══════════════════════════════════════════
-document.getElementById('btn-share').addEventListener('click', async()=>{
-  // 캐시된 obs 사용 (화면 표시와 동일하게)
+let shareBlob = null;
+
+async function generateShareImage() {
   const obs = state.resultObs || getObs(state.resultPattern || 'random');
-  const text = lang==='ko'
-    ? `KIN의 만화퀴즈 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
-    : `KIN's Manga Quiz ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`;
+  document.getElementById('sc-score').textContent = state.score;
+  document.getElementById('sc-obs').textContent = `"${obs}"`;
+
+  const card = document.getElementById('share-card');
+  const canvas = await html2canvas(card, {
+    backgroundColor: '#080806',
+    scale: 2,
+    useCORS: true,
+    logging: false,
+  });
+  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+document.getElementById('btn-share').addEventListener('click', async () => {
+  const modal = document.getElementById('share-modal');
+  const loading = document.getElementById('share-modal-loading');
+  const imgEl = document.getElementById('share-modal-img');
+  const btns = document.getElementById('share-modal-btns');
+
+  modal.classList.add('open');
+  loading.style.display = 'block';
+  imgEl.style.display = 'none';
+  btns.style.display = 'none';
 
   try {
-    if(navigator.share) {
-      await navigator.share({ title:'KIN의 만화퀴즈', text, url:'https://kinxdred.com/kin/k2' });
-      return;
-    }
-  } catch{}
-
-  try { await navigator.clipboard.writeText(text); }
-  catch {
-    const ta=document.createElement('textarea');
-    ta.value=text; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
+    shareBlob = await generateShareImage();
+    const url = URL.createObjectURL(shareBlob);
+    imgEl.src = url;
+    imgEl.style.display = 'block';
+    btns.style.display = 'flex';
+  } catch {
+    modal.classList.remove('open');
+    // fallback: 텍스트 복사
+    const obs = state.resultObs || getObs(state.resultPattern || 'random');
+    const text = lang==='ko'
+      ? `KIN의 만화퀴즈 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
+      : `KIN's Manga Quiz ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`;
+    try { await navigator.clipboard.writeText(text); } catch {}
+  } finally {
+    loading.style.display = 'none';
   }
+});
 
-  const btn=document.getElementById('btn-share');
-  const orig=btn.textContent;
-  btn.textContent = lang==='ko'?'복사됨 ✓':'Copied ✓';
-  setTimeout(()=>{ btn.textContent=orig; },2000);
+// 저장하기
+document.getElementById('btn-share-save').addEventListener('click', () => {
+  if(!shareBlob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(shareBlob);
+  a.download = `kin-quiz-${state.score}.png`;
+  a.click();
+});
+
+// 공유하기 (네이티브)
+document.getElementById('btn-share-native').addEventListener('click', async () => {
+  if(!shareBlob) return;
+  const obs = state.resultObs || '';
+  const file = new File([shareBlob], 'kin-quiz.png', { type: 'image/png' });
+  try {
+    if(navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'KIN의 만화퀴즈',
+        text: lang==='ko' ? `${state.score}/10 — kinxdred.com/kin/k2` : `${state.score}/10 — kinxdred.com/kin/k2`,
+      });
+    } else {
+      // 이미지 공유 불가 시 URL만
+      await navigator.share({ title:'KIN의 만화퀴즈', url:'https://kinxdred.com/kin/k2' });
+    }
+  } catch {}
+});
+
+// 모달 닫기
+document.getElementById('share-modal-close').addEventListener('click', () => {
+  document.getElementById('share-modal').classList.remove('open');
 });
 
 // ═══════════════════════════════════════════

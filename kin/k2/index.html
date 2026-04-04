@@ -88,7 +88,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   min-height:100dvh;
   padding:80px 24px 72px;
   padding-bottom:max(72px,calc(env(safe-area-inset-bottom)+72px));
-  position:relative;z-index:3;
+  position:relative;z-index:4; /* manga-bg(2) 위 */
   max-width:600px;margin:0 auto;
 }
 .page.active{display:flex;flex-direction:column}
@@ -101,19 +101,21 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   text-align:left;gap:0;
   padding-top:64px;
   overflow:hidden;
-  position:relative;
-  background:#fff; /* multiply blend 위해 흰 배경 */
+  background:#fff;
+  /* 버튼이 이미지 위에 오도록 */
 }
 
-/* 만화 배경 레이어 */
+/* 만화 배경 레이어 — viewport 전체, 랜딩에서만 표시 */
 .manga-bg{
-  position:absolute;
+  position:fixed;
   inset:0;
-  z-index:0;
+  z-index:2; /* diff-overlay(1) 위, page(3) 아래 */
   pointer-events:none;
   overflow:hidden;
+  display:none; /* JS로 랜딩에서만 표시 */
 }
-/* 속도선 이미지 */
+.manga-bg.visible{ display:block; }
+/* 속도선 */
 .speedlines{
   position:absolute;
   inset:0;
@@ -127,13 +129,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   from{transform:rotate(0deg) scale(1.1)}
   to  {transform:rotate(360deg) scale(1.1)}
 }
-/* KIN 이미지 — 오른쪽 하단, 크게 */
+/* KIN 이미지 — 오른쪽, 화면 절반 채움 */
 .manga-gate{
   position:absolute;
-  right:-2%;
+  right:0;
   bottom:0;
-  width:min(85vw, 480px);
+  width:min(55vw, 560px);
   height:auto;
+  max-height:90vh;
   object-fit:contain;
   object-position:right bottom;
   opacity:.97;
@@ -550,17 +553,17 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 </header>
 
+<!-- 만화 배경 — 랜딩 전용, page 밖에서 viewport 전체 -->
+<div class="manga-bg" id="manga-bg" aria-hidden="true">
+  <img class="speedlines" src="./assets/speedlines.webp" alt="">
+  <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
+</div>
+
 <div id="loading"><span id="loading-text">loading</span></div>
 <div id="error-msg"></div>
 
 <!-- ══════ LANDING ══════ -->
 <div class="page active" id="page-landing">
-
-  <!-- 만화 배경 레이어 -->
-  <div class="manga-bg" aria-hidden="true">
-    <img class="speedlines" src="./assets/speedlines.webp" alt="">
-    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
-  </div>
 
   <!-- 상단 라벨 -->
   <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
@@ -951,7 +954,7 @@ async function loadTodayCount() {
 async function loadTotalCount() {
   try {
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/quiz_items?is_active=eq.true&select=id`,
+      `${SUPA_URL}/rest/v1/quiz_items?is_active=eq.true&select=item_id`,
       { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
     );
     const cr = res.headers.get('content-range');
@@ -1008,8 +1011,11 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   state.phase = id.replace('page-','');
-  // 랜딩은 흰 배경이라 grain 숨김
-  document.getElementById('grain').style.opacity = id==='page-landing' ? '0' : '';
+  // 랜딩에서만 grain 숨기고 manga-bg 표시
+  const isLanding = id === 'page-landing';
+  document.getElementById('grain').style.opacity = isLanding ? '0' : '';
+  const mb = document.getElementById('manga-bg');
+  if(mb) mb.classList.toggle('visible', isLanding);
 }
 
 // ═══════════════════════════════════════════
@@ -1559,6 +1565,8 @@ function applyLandingLang() {
 (async()=>{
   setLang(lang);
   applyLandingLang();
+  // 초기 랜딩 상태 설정
+  document.getElementById('manga-bg')?.classList.add('visible');
   const $loading=document.getElementById('loading');
   await Promise.all([loadTotalCount(), loadTodayCount(), loadPreview()]);
   $loading.style.opacity='0';

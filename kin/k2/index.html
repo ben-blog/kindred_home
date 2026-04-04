@@ -607,20 +607,71 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* ── 공유 카드 (캔버스용 숨김 div) ── */
 #share-card{
   position:fixed;left:-9999px;top:-9999px;
-  width:375px;
-  background:#080806;
-  padding:48px 36px 40px;
+  width:375px;background:#080806;
   font-family:'DM Mono',monospace;
+  overflow:hidden;
 }
-.sc-eyebrow{font-size:10px;letter-spacing:.35em;color:rgba(255,229,0,.55);text-transform:uppercase;margin-bottom:28px}
-.sc-score{
+.sc-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 20px;
+  border-bottom:1px solid rgba(255,229,0,.12);
+}
+.sc-header-title{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.65);text-transform:uppercase}
+.sc-header-work{font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.45);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-work-img-wrap{
+  position:relative;width:100%;height:190px;overflow:hidden;
+}
+.sc-work-img-wrap img{
+  width:100%;height:100%;object-fit:cover;object-position:center top;display:block;
+}
+.sc-work-img-fade{
+  position:absolute;bottom:0;left:0;right:0;height:90px;
+  background:linear-gradient(to bottom,transparent,#080806);
+}
+.sc-kin-section{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:18px 20px 10px;
+}
+.sc-kin-face{
+  width:68px;height:68px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;
+  border:2px solid rgba(255,229,0,.4);
+}
+.sc-bubble{
+  position:relative;flex:1;
+  padding:11px 15px;
+  background:rgba(255,229,0,.07);
+  border:1px solid rgba(255,229,0,.3);
+  border-radius:0 8px 8px 8px;
+  font-size:13px;color:#FFE500;line-height:1.75;
+  word-break:keep-all;
+}
+.sc-bubble::before{
+  content:'';position:absolute;left:-7px;top:14px;
+  width:0;height:0;
+  border-top:6px solid transparent;
+  border-bottom:6px solid transparent;
+  border-right:7px solid rgba(255,229,0,.3);
+}
+.sc-score-section{
+  display:flex;align-items:baseline;gap:8px;
+  padding:6px 20px 0;
+}
+.sc-score-num{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:96px;color:#FFE500;letter-spacing:-.04em;line-height:1;margin-bottom:4px;
+  font-size:80px;color:#FFE500;letter-spacing:-.04em;line-height:1;
+  font-synthesis:none;
 }
-.sc-denom{font-size:15px;color:rgba(255,255,255,.35);letter-spacing:.1em;margin-bottom:28px}
-.sc-divider{width:40px;height:2px;background:rgba(255,229,0,.4);margin-bottom:24px}
-.sc-obs{font-size:15px;line-height:1.85;color:rgba(255,255,255,.85);margin-bottom:36px;word-break:keep-all}
-.sc-url{font-size:11px;letter-spacing:.22em;color:rgba(255,229,0,.45)}
+.sc-score-denom{font-size:16px;color:rgba(255,255,255,.38);letter-spacing:.1em}
+.sc-bar-wrap{
+  margin:10px 20px 0;
+  height:4px;background:rgba(255,255,255,.1);border-radius:2px;
+}
+.sc-bar{height:100%;background:#FFE500;border-radius:2px}
+.sc-footer{
+  padding:12px 20px 18px;
+  font-size:10px;letter-spacing:.22em;color:rgba(255,229,0,.4);
+}
 
 /* ── LOADING ── */
 #loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .4s}
@@ -815,12 +866,26 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <!-- ══════ 공유 카드 (캔버스 렌더용) ══════ -->
 <div id="share-card">
-  <div class="sc-eyebrow">KIN의 만화퀴즈</div>
-  <div class="sc-score" id="sc-score">0</div>
-  <div class="sc-denom">/ 10</div>
-  <div class="sc-divider"></div>
-  <div class="sc-obs" id="sc-obs"></div>
-  <div class="sc-url">kinxdred.com/kin/k2</div>
+  <div class="sc-header">
+    <span class="sc-header-title">KIN의 만화퀴즈</span>
+    <span class="sc-header-work" id="sc-header-work"></span>
+  </div>
+  <div class="sc-work-img-wrap" id="sc-work-img-wrap" style="display:none">
+    <img id="sc-work-img" src="" crossorigin="anonymous" alt="">
+    <div class="sc-work-img-fade"></div>
+  </div>
+  <div class="sc-kin-section">
+    <img class="sc-kin-face" id="sc-kin-face" src="" alt="KIN">
+    <div class="sc-bubble" id="sc-bubble"></div>
+  </div>
+  <div class="sc-score-section">
+    <div class="sc-score-num" id="sc-score-num">0</div>
+    <div class="sc-score-denom">/ 10</div>
+  </div>
+  <div class="sc-bar-wrap">
+    <div class="sc-bar" id="sc-bar"></div>
+  </div>
+  <div class="sc-footer">kinxdred.com/kin/k2</div>
 </div>
 
 <script>
@@ -1673,21 +1738,77 @@ async function saveSession(pattern) {
 }
 
 // ═══════════════════════════════════════════
+// AniList 커버 이미지
+// ═══════════════════════════════════════════
+async function fetchAniListCover(malId) {
+  const query = `query($id:Int,$t:MediaType){Media(idMal:$id,type:$t){coverImage{large}}}`;
+  for (const type of ['ANIME','MANGA']) {
+    try {
+      const res = await fetch('https://graphql.anilist.co', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({query, variables:{id:malId, t:type}}),
+      });
+      const url = (await res.json())?.data?.Media?.coverImage?.large;
+      if(url) return url;
+    } catch{}
+  }
+  return null;
+}
+
+function loadImgCORS(img, src) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(reject, 6000);
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => { clearTimeout(t); resolve(); };
+    img.onerror = () => { clearTimeout(t); reject(); };
+    img.src = src;
+  });
+}
+
+// ═══════════════════════════════════════════
 // 공유 — 이미지 카드 생성 + 모달
 // ═══════════════════════════════════════════
 let shareBlob = null;
 
 async function generateShareImage() {
-  const obs = state.resultObs || getObs(state.resultPattern || 'random');
-  document.getElementById('sc-score').textContent = state.score;
-  document.getElementById('sc-obs').textContent = `"${obs}"`;
+  const obs    = state.resultObs || getObs(state.resultPattern || 'random');
+  const scoreN = state.score;
+  const mood   = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
 
-  const card = document.getElementById('share-card');
-  const canvas = await html2canvas(card, {
-    backgroundColor: '#080806',
-    scale: 2,
-    useCORS: true,
-    logging: false,
+  // KIN 얼굴 + 말풍선 + 점수
+  document.getElementById('sc-kin-face').src  = KIN_IMGS[mood];
+  document.getElementById('sc-bubble').textContent = `"${obs}"`;
+  document.getElementById('sc-score-num').textContent = scoreN;
+  document.getElementById('sc-bar').style.width = `${scoreN * 10}%`;
+
+  // 작품 이미지 처리
+  const imgWrap  = document.getElementById('sc-work-img-wrap');
+  const headerWork = document.getElementById('sc-header-work');
+  const malId    = state.topWork?.mal_id;
+  const workName = state.topWork?.name || '';
+
+  headerWork.textContent = workName;
+  imgWrap.style.display  = 'none';
+
+  if(malId) {
+    try {
+      const coverUrl = await fetchAniListCover(malId);
+      if(coverUrl) {
+        await loadImgCORS(document.getElementById('sc-work-img'), coverUrl);
+        imgWrap.style.display = 'block';
+      }
+    } catch{}
+  }
+
+  // KIN 얼굴 이미지 로드 대기
+  await loadImgCORS(document.getElementById('sc-kin-face'), KIN_IMGS[mood]).catch(()=>{});
+
+  const canvas = await html2canvas(document.getElementById('share-card'), {
+    backgroundColor:'#080806',
+    scale:2,
+    useCORS:true,
+    logging:false,
   });
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 }

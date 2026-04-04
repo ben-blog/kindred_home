@@ -290,6 +290,27 @@ const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 /* ── LANGUAGE ── */
 const lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
 
+/* ── BACK NAVIGATION HANDLER ──
+   navTo()가 nav-overlay를 opacity:1로 놓고 이동 → bfcache 복원 시 검은 화면.
+   pageshow로 감지해서 overlay 리셋 + 애니메이션 스킵.           */
+window.addEventListener('pageshow', e => {
+  document.getElementById('nav-overlay').style.cssText =
+    'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:9000;transition:opacity 0.45s ease';
+
+  if (e.persisted) return; // bfcache: elapsed/상태 이미 WORLDS → overlay만 리셋하면 됨
+
+  // 일반 back_forward 재로드 시 → 애니메이션 스킵
+  const navType = performance.getEntriesByType?.('navigation')?.[0]?.type;
+  if (navType === 'back_forward') {
+    elapsed   = 14.5;
+    skipMode  = true;
+    if (parts.length) parts.forEach(p => { p.active = true; p.activatedAt = 0; });
+    // skip 버튼 즉시 제거 — back nav에서 보일 이유 없음
+    const $sk = document.getElementById('skip-btn');
+    $sk.style.opacity = '0'; $sk.style.display = 'none';
+  }
+});
+
 /* ── CURSOR (desktop only) ── */
 const $cur = document.getElementById('cur');
 let mx = innerWidth/2, my = innerHeight/2;
@@ -1198,9 +1219,9 @@ function buildPC() {
     div.className = 'h-card h-card-kin';
     div.id = `hc-kin-${i}`;
     div.innerHTML = `<div class="card-kin-inner">
-      <div class="card-kin-tag">${item.item_id.split('_')[1]||'kin'}</div>
+      <div class="card-kin-tag">KIN</div>
       <div class="card-kin-name">${a.label}</div>
-      <div class="card-kin-cta">열어보기 →</div>
+      <div class="card-kin-cta">${lang==='ko'?'열어보기':'explore'} →</div>
     </div>`;
     $cr.appendChild(div);
   });
@@ -1214,7 +1235,7 @@ function buildPC() {
     div.id = `hc-dred-${i}`;
     div.innerHTML = `<div class="card-dred-inner">
       <div class="card-dred-name">${a.label}</div>
-      <div class="card-dred-tag">${item.item_id.split('_')[1]||'dred'}</div>
+      <div class="card-dred-tag">DRED</div>
     </div>`;
     $cr.appendChild(div);
   });
@@ -1281,10 +1302,14 @@ function attachPCHoverHandlers() {
 }
 
 /* ── Mobile: 시트 컨텐츠 빌드 ── */
-const KIN_SHEET_LINES = [
+const KIN_SHEET_LINES = lang === 'ko' ? [
   '시간 가는 줄 몰랐던 적 있어?',
   '3년 뒤의 너, 궁금하지 않아?',
   '뭔가 보여줄게. 잠깐만.',
+] : [
+  'ever lost track of time?',
+  'curious about who you\'ll be in 3 years?',
+  'let me show you something.',
 ];
 let kinLineIdx = 0, sheetTypeTimer = null;
 
@@ -1300,7 +1325,7 @@ function buildMobile() {
     const div = document.createElement('div');
     div.className = 'ks-item';
     div.innerHTML = `<div class="ks-item-left">
-      <span class="ks-item-tag">${item.item_id.split('_')[1]||'kin'}</span>
+      <span class="ks-item-tag">KIN</span>
       <span class="ks-item-name">${a.label}</span>
     </div><span class="ks-item-arrow">→</span>`;
     div.addEventListener('touchend', e => {
@@ -1342,6 +1367,7 @@ function closeSheet() {
   if (!activeSheet) return;
   document.getElementById(activeSheet + '-sheet').classList.remove('open');
   $sheetDim.classList.remove('on');
+  if (activeSheet === 'dred') dredHovered = false; // 파티클 drift 리셋
   activeSheet = null;
 }
 

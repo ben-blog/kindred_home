@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
+<title>KIN의 만화방</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  width:100%;min-height:100dvh;
+  background:#080806;
+  font-family:'DM Mono',monospace;color:#fff;
+  overflow-x:hidden;
+}
+:root{
+  --kin:#FFE500;
+  --bg:#080806;
+  --correct:#4ADE80;
+  --wrong:#F87171;
+}
+
+/* ── GRAIN ── */
+#grain{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.022;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size:200px;animation:gr .3s steps(1) infinite}
+@keyframes gr{0%{background-position:0 0}50%{background-position:-40px 30px}}
+
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 55% 55% at 20% 80%,rgba(140,100,0,.10),transparent),
+    radial-gradient(ellipse 45% 45% at 80% 20%,rgba(255,200,0,.05),transparent)}
+
+/* ── 난이도 배경 오버레이 ── */
+#diff-overlay{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:rgba(0,0,0,0);
+  transition:background 0.8s ease;
+}
+
+/* ── 연속 정답 GLOW ── */
+#streak-glow{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  box-shadow:inset 0 0 0 0 rgba(255,229,0,0);
+  transition:box-shadow 0.5s ease;
+}
+#streak-glow.s3{box-shadow:inset 0 0 60px 8px rgba(255,229,0,.12)}
+#streak-glow.s5{box-shadow:inset 0 0 100px 16px rgba(255,229,0,.22)}
+#streak-glow.s7{box-shadow:inset 0 0 140px 24px rgba(255,229,0,.35)}
+
+/* ── 파티클 ── */
+.streak-particle{
+  position:fixed;top:-20px;z-index:92;pointer-events:none;
+  width:2px;height:clamp(20px,5vh,45px);
+  background:var(--kin);opacity:0;
+  animation:particle-fall .7s ease-in forwards;
+}
+@keyframes particle-fall{
+  0%  {opacity:1;transform:translateY(0) rotate(var(--r))}
+  100%{opacity:0;transform:translateY(100px) rotate(var(--r))}
+}
+
+/* 랜딩 화면에서 grain 숨김은 JS showPage()에서 처리 */
+
+/* ── HEADER ── */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px 24px;padding-top:max(18px,env(safe-area-inset-top));
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(8,8,6,.95);backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,229,0,.08);
+}
+.h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--kin);letter-spacing:-.01em}
+.h-back{font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.6);text-transform:uppercase;cursor:pointer;transition:color .2s;text-decoration:none}
+.h-back:hover{color:var(--kin)}
+#lang-toggle{display:flex;align-items:center;font-size:11px;letter-spacing:.15em}
+.lt{padding:6px 10px;cursor:pointer;color:rgba(255,255,255,.5);transition:color .2s;user-select:none;border-radius:3px}
+.lt.active{color:var(--kin)}
+.lt-sep{color:rgba(255,255,255,.25)}
+.lt.disabled{opacity:.25;pointer-events:none}
+
+/* ── PAGES ── */
+.page{
+  display:none;
+  min-height:100dvh;
+  padding:80px 24px 72px;
+  padding-bottom:max(72px,calc(env(safe-area-inset-bottom)+72px));
+  position:relative;z-index:3;
+  max-width:600px;margin:0 auto;
+}
+.page.active{display:flex;flex-direction:column}
+
+/* ═══════════════════════════════
+   LANDING
+═══════════════════════════════ */
+#page-landing{
+  justify-content:flex-start;align-items:stretch;
+  text-align:left;gap:0;
+  padding-top:64px;
+  overflow:hidden;
+  position:relative;
+  background:#fff; /* multiply blend 위해 흰 배경 */
+}
+
+/* 만화 배경 레이어 */
+.manga-bg{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+/* 속도선 — 전체 배경 */
+.speedlines{
+  position:absolute;
+  inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center;
+  opacity:.12;
+  mix-blend-mode:multiply;
+  animation:sl-rotate 60s linear infinite;
+}
+@keyframes sl-rotate{
+  from{transform:rotate(0deg) scale(1.1)}
+  to  {transform:rotate(360deg) scale(1.1)}
+}
+/* KIN 이미지 — 오른쪽 하단 */
+.manga-gate{
+  position:absolute;
+  right:-5%;
+  bottom:0;
+  width:min(75vw, 380px);
+  height:auto;
+  object-fit:contain;
+  object-position:right bottom;
+  /* 흰 배경 제거 + 다크 테마 합성 */
+  mix-blend-mode:multiply;
+  filter:brightness(.92) contrast(1.05);
+  /* 아래서 fade */
+  mask-image:linear-gradient(to top,transparent 0%,black 8%,black 100%);
+  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 8%,black 100%);
+}
+
+/* 만화 배경 레이어 */
+.manga-bg{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+/* 속도선 이미지 */
+.speedlines{
+  position:absolute;
+  inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center;
+  opacity:.12;
+  mix-blend-mode:multiply;
+  animation:sl-rotate 60s linear infinite;
+}
+@keyframes sl-rotate{
+  from{transform:rotate(0deg) scale(1.1)}
+  to  {transform:rotate(360deg) scale(1.1)}
+}
+/* KIN 이미지 — 오른쪽 하단 */
+.manga-gate{
+  position:absolute;
+  right:-5%;
+  bottom:0;
+  width:min(75vw, 380px);
+  height:min(90%, 500px); /* height 명시 — object-fit 작동 */
+  object-fit:contain;
+  object-position:right bottom;
+  mix-blend-mode:multiply;
+  filter:brightness(.92) contrast(1.05);
+  mask-image:linear-gradient(to top,transparent 0%,black 8%,black 100%);
+  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 8%,black 100%);
+}
+
+/* eyebrow — 랜딩과 결과 화면 색상 분리 */
+#page-landing .landing-eyebrow{
+  color:rgba(0,0,0,.45);
+}
+#page-result .landing-eyebrow{
+  color:rgba(255,229,0,.65);
+}
+.landing-eyebrow{
+  position:relative;z-index:1;
+  font-size:11px;letter-spacing:.28em;
+  text-transform:uppercase;
+  margin-bottom:24px;
+}
+.landing-hero{
+  position:relative;z-index:1;
+  margin-bottom:28px;
+}
+.landing-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(36px,10vw,72px);
+  color:#080806;
+  letter-spacing:-.03em;
+  line-height:1.05;
+  margin-bottom:8px;
+}
+.landing-genre-label{
+  font-size:clamp(13px,3vw,17px);
+  color:rgba(0,0,0,.55);
+  letter-spacing:.04em;
+  margin-bottom:10px;
+}
+/* 일본어 서브라인 */
+.landing-meme-sub{
+  font-family:'DM Mono',monospace;
+  font-size:clamp(12px,2.5vw,16px);
+  letter-spacing:.12em;
+  color:rgba(0,0,0,.45);
+  animation:meme-blink 3s ease-in-out infinite;
+}
+@keyframes meme-blink{
+  0%,80%,100%{opacity:.45}
+  90%{opacity:.9}
+}
+
+/* 장르 태그 */
+.genre-tags{
+  position:relative;z-index:1;
+  display:flex;flex-wrap:wrap;gap:8px;
+  margin-bottom:22px;
+}
+.gtag{
+  font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  padding:6px 12px;border-radius:2px;
+  animation:gtag-float 3s ease-in-out infinite;
+}
+.gtag:nth-child(2){animation-delay:.3s}
+.gtag:nth-child(3){animation-delay:.6s}
+.gtag:nth-child(4){animation-delay:.9s}
+.gtag:nth-child(5){animation-delay:1.2s}
+@keyframes gtag-float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-3px)}
+}
+.gtag-work      {background:rgba(255,229,0,.18);  color:#FFE500; border:1px solid rgba(255,229,0,.3)}
+.gtag-character {background:rgba(96,165,250,.18); color:#93C5FD; border:1px solid rgba(96,165,250,.3)}
+.gtag-outlier   {background:rgba(196,181,253,.18);color:#C4B5FD; border:1px solid rgba(196,181,253,.3)}
+.gtag-author    {background:rgba(253,186,116,.18);color:#FDBA74; border:1px solid rgba(253,186,116,.3)}
+.gtag-relation  {background:rgba(52,211,153,.18); color:#6EE7B7; border:1px solid rgba(52,211,153,.3)}
+
+/* 미리보기 문제 카드 */
+.preview-card{
+  position:relative;z-index:1;
+  padding:18px 20px;
+  border:1px solid rgba(0,0,0,.15);
+  background:rgba(0,0,0,.04);
+  margin-bottom:24px;
+  cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.preview-card:hover{border-color:rgba(0,0,0,.3);background:rgba(0,0,0,.07)}
+.preview-label{
+  font-size:9px;letter-spacing:.28em;color:rgba(0,0,0,.4);
+  text-transform:uppercase;margin-bottom:10px;
+}
+.preview-q{
+  font-size:13px;line-height:1.75;color:rgba(0,0,0,.75);
+  margin-bottom:12px;
+}
+.preview-choices{display:flex;flex-direction:column;gap:5px}
+.preview-choice{
+  font-size:11px;color:rgba(0,0,0,.35);
+  padding:5px 10px;border:1px solid rgba(0,0,0,.1);
+  border-radius:2px;
+}
+.preview-choice.is-answer{
+  color:#080806;border-color:rgba(0,0,0,.4);
+  background:rgba(255,229,0,.3);font-weight:700;
+}
+
+/* 하단 */
+.landing-foot{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;gap:14px;
+  margin-top:auto;padding-top:4px;
+}
+.today-count{font-size:13px;color:rgba(0,0,0,.65);letter-spacing:.08em}
+.landing-meta{display:flex;gap:18px;flex-wrap:wrap}
+.meta-item{font-size:11px;letter-spacing:.12em;color:rgba(0,0,0,.32);text-transform:uppercase}
+.meta-item span{color:#080806;font-weight:700}
+
+/* 시작 버튼 */
+.btn-start{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;padding:18px 24px;
+  background:var(--kin);color:#000;
+  font-family:'DM Mono',monospace;
+  font-size:14px;letter-spacing:.2em;text-transform:uppercase;
+  cursor:pointer;border:none;
+  transition:opacity .15s,transform .15s;
+  position:relative;overflow:hidden;
+}
+.btn-start::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+  transform:translateX(-100%);transition:transform .5s ease;
+}
+.btn-start:hover::before{transform:translateX(100%)}
+.btn-start:hover{opacity:.92}
+.btn-start:active{transform:scale(.99)}
+.btn-start-text{font-weight:400}
+.btn-start-arrow{
+  font-size:20px;
+  animation:arrow-pulse 1.5s ease-in-out infinite;
+}
+@keyframes arrow-pulse{
+  0%,100%{transform:translateX(0)}
+  50%{transform:translateX(6px)}
+}
+
+/* ═══════════════════════════════
+   QUIZ
+═══════════════════════════════ */
+#page-quiz{gap:0}
+
+/* 진행 바 */
+.quiz-progress{display:flex;gap:4px;margin-bottom:32px}
+.prog-dot{
+  flex:1;height:4px;border-radius:2px;
+  background:rgba(255,255,255,.12);
+  transition:background .4s,transform .3s;
+}
+.prog-dot.done-easy   {background:var(--kin)}
+.prog-dot.done-mid    {background:#60A5FA}
+.prog-dot.done-hard   {background:#F87171}
+.prog-dot.done-wrong  {background:rgba(248,113,113,.45)}
+.prog-dot.current     {background:rgba(255,229,0,.55);transform:scaleY(1.6)}
+
+/* 상단 메타 */
+.quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.quiz-top-left{display:flex;gap:10px;align-items:center}
+
+.format-badge{font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:5px 11px}
+.format-badge.work      {background:rgba(255,229,0,.2);      color:#FFE500}
+.format-badge.character {background:rgba(96,165,250,.2);     color:#93C5FD}
+.format-badge.outlier   {background:rgba(196,181,253,.2);    color:#C4B5FD}
+.format-badge.author    {background:rgba(253,186,116,.2);    color:#FDBA74}
+.format-badge.relation  {background:rgba(52,211,153,.2);     color:#6EE7B7}
+
+.diff-dots{display:flex;gap:5px;align-items:center}
+.diff-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);transition:background .3s}
+.diff-dot.on-easy{background:#FFE500}
+.diff-dot.on-mid {background:#60A5FA}
+.diff-dot.on-hard{background:#F87171}
+
+.quiz-counter{font-size:12px;letter-spacing:.15em;color:rgba(255,255,255,.45)}
+
+/* 질문 */
+.quiz-question{
+  font-size:clamp(15px,4vw,18px);line-height:1.9;
+  color:#fff;
+  margin-bottom:32px;min-height:72px;
+}
+/* 등장 애니메이션 */
+.quiz-question.enter-fade {animation:q-fade .35s ease forwards}
+.quiz-question.enter-up   {animation:q-up   .35s cubic-bezier(.16,1,.3,1) forwards}
+.quiz-question.enter-side {animation:q-side .35s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes q-fade{from{opacity:0}to{opacity:1}}
+@keyframes q-up  {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes q-side{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+
+/* 선택지 */
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice-btn{
+  width:100%;min-height:58px;padding:16px 18px;
+  text-align:left;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);
+  color:rgba(255,255,255,.88);
+  font-family:'DM Mono',monospace;
+  font-size:clamp(13px,3.5vw,15px);line-height:1.55;
+  cursor:pointer;
+  transition:background .15s,border-color .15s,color .15s,transform .15s;
+  border-radius:2px;
+  opacity:1;
+}
+.choice-btn:hover:not(:disabled){
+  background:rgba(255,229,0,.1);
+  border-color:rgba(255,229,0,.45);
+  color:#fff;
+}
+/* 정답/오답 */
+.choice-btn.correct{
+  background:rgba(74,222,128,.14);
+  border-color:rgba(74,222,128,.65);
+  color:#4ADE80;
+  animation:bounce-up .3s cubic-bezier(.16,1,.3,1);
+}
+.choice-btn.wrong{
+  background:rgba(248,113,113,.1);
+  border-color:rgba(248,113,113,.45);
+  color:#F87171;
+  animation:shake .35s ease;
+}
+.choice-btn:disabled{cursor:default}
+
+@keyframes bounce-up{
+  0%  {transform:translateY(0)}
+  40% {transform:translateY(-5px)}
+  100%{transform:translateY(0)}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%    {transform:translateX(-6px)}
+  40%    {transform:translateX(6px)}
+  60%    {transform:translateX(-4px)}
+  80%    {transform:translateX(4px)}
+}
+/* hard 선택지 순차 등장 */
+.choice-btn.stagger{
+  opacity:0;animation:stagger-in .25s ease forwards;
+}
+@keyframes stagger-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+
+/* KIN 반응 */
+.kin-reaction{
+  margin-top:24px;padding:16px 18px;
+  border-left:3px solid rgba(255,229,0,.55);
+  font-size:14px;color:#FFE500;line-height:1.8;
+  min-height:52px;
+  opacity:0;
+  transition:opacity .3s;
+}
+.kin-reaction.show{opacity:1}
+
+/* 다음 버튼 */
+.btn-next{
+  margin-top:24px;align-self:flex-end;
+  padding:12px 28px;
+  background:transparent;
+  border:1px solid rgba(255,229,0,.5);
+  color:#FFE500;
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;
+  opacity:0;pointer-events:none;
+  border-radius:2px;
+}
+.btn-next.show{opacity:1;pointer-events:all}
+.btn-next:hover{background:rgba(255,229,0,.1);border-color:#FFE500;color:#FFE500}
+
+/* ═══════════════════════════════
+   RESULT
+═══════════════════════════════ */
+#page-result{gap:32px}
+
+.result-score-wrap{display:flex;align-items:baseline;gap:10px}
+.result-score{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(56px,15vw,100px);
+  color:var(--kin);letter-spacing:-.04em;line-height:1;
+}
+.result-score-denom{font-size:16px;color:rgba(255,255,255,.45);letter-spacing:.1em}
+
+.result-top-work{
+  position:relative;overflow:hidden;
+  min-height:140px;
+  border:1px solid rgba(255,229,0,.2);
+}
+.result-work-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center top;
+  filter:blur(12px) brightness(.35);
+  transform:scale(1.1);
+}
+.result-work-content{
+  position:relative;z-index:1;
+  padding:24px;display:flex;flex-direction:column;gap:8px;
+}
+.result-work-label{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.65);text-transform:uppercase}
+.result-work-name{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(20px,5.5vw,32px);color:var(--kin);letter-spacing:-.02em;
+}
+.result-work-sub{font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.08em}
+
+/* KIN 이미지 결과 */
+.result-kin-wrap{
+  display:flex;align-items:center;gap:18px;
+  padding:20px;border:1px solid rgba(255,229,0,.15);
+  background:rgba(255,229,0,.03);
+}
+.result-kin-img{width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,229,0,.25)}
+.result-kin-text{flex:1;font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.08em}
+
+.result-observation{
+  padding:22px;border:1px solid rgba(255,229,0,.22);
+  background:rgba(255,229,0,.04);
+}
+.result-observation-label{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.65);text-transform:uppercase;margin-bottom:12px}
+#result-observation-text{font-size:15px;line-height:1.9;color:rgba(255,255,255,.9)}
+
+.result-wrong-label{font-size:11px;letter-spacing:.22em;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:10px}
+.result-wrong-list{display:flex;flex-direction:column;gap:8px}
+.wrong-item{
+  padding:12px 16px;background:rgba(248,113,113,.05);
+  border:1px solid rgba(248,113,113,.18);
+  font-size:13px;line-height:1.65;color:rgba(255,255,255,.65);
+}
+.wrong-item-answer{color:#4ADE80;font-size:12px;margin-top:4px}
+
+.result-btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn-secondary{
+  padding:12px 22px;background:transparent;
+  border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;border-radius:2px;text-decoration:none;display:inline-block;
+}
+.btn-secondary:hover{border-color:rgba(255,229,0,.5);color:#FFE500}
+.btn-primary{
+  padding:12px 22px;background:var(--kin);color:#000;border:none;
+  font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;transition:opacity .2s;border-radius:2px;
+}
+.btn-primary:hover{opacity:.85}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .4s}
+#loading span{font-size:11px;letter-spacing:.4em;color:rgba(255,229,0,.4);text-transform:uppercase;animation:blink 1.4s ease infinite}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ── ERROR ── */
+#error-msg{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  padding:12px 22px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);
+  font-size:12px;color:#F87171;letter-spacing:.1em;
+  display:none;z-index:200;white-space:nowrap;
+}
+
+/* ── 모바일 최적화 ── */
+@media(max-width:480px){
+  .page{padding:72px 18px 48px}
+  .quiz-question{font-size:15px;margin-bottom:24px}
+  .choice-btn{min-height:60px;font-size:14px;padding:15px 15px}
+  .landing-title{line-height:1}
+  .kin-reaction{font-size:13px}
+}
+
+/* ── reduced motion ── */
+@media(prefers-reduced-motion:reduce){
+  .choice-btn,.quiz-question,#streak-glow,.streak-particle,
+  .speedlines,.manga-gate,.gtag,.btn-start-arrow{
+    animation:none!important;transition:none!important
+  }
+}
+</style>
+</head>
+<body>
+<div id="grain" style="opacity:0"></div>
+<div id="diff-overlay"></div>
+<div id="streak-glow"></div>
+
+<!-- HEADER -->
+<header id="header">
+  <a class="h-back" href="../index.html">← KIN</a>
+  <div class="h-name">만화방</div>
+  <div id="lang-toggle">
+    <span class="lt active" data-lang="ko">KO</span>
+    <span class="lt-sep"> / </span>
+    <span class="lt" data-lang="en">EN</span>
+  </div>
+</header>
+
+<div id="loading"><span id="loading-text">loading</span></div>
+<div id="error-msg"></div>
+
+<!-- ══════ LANDING ══════ -->
+<div class="page active" id="page-landing">
+
+  <!-- 만화 배경 레이어 -->
+  <div class="manga-bg" aria-hidden="true">
+    <img class="speedlines" src="./assets/speedlines.webp" alt="">
+    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.webp" alt="">
+  </div>
+
+  <!-- 상단 라벨 -->
+  <div class="landing-eyebrow">KIN의 만화방 — 일본 만화 · 애니 퀴즈</div>
+
+  <!-- 메인 타이틀 -->
+  <div class="landing-hero">
+    <div class="landing-title">KIN의 만화방</div>
+    <div class="landing-genre-label" id="landing-genre-label">일본 만화 · 애니 퀴즈</div>
+    <div class="landing-meme-sub">お前はもう解いている</div>
+  </div>
+
+  <!-- 장르 태그 -->
+  <div class="genre-tags">
+    <span class="gtag gtag-work">설정</span>
+    <span class="gtag gtag-character">캐릭터</span>
+    <span class="gtag gtag-outlier">아닌것</span>
+    <span class="gtag gtag-author">작가</span>
+    <span class="gtag gtag-relation">관계</span>
+  </div>
+
+  <!-- 미리보기 문제 카드 -->
+  <div class="preview-card" id="preview-card">
+    <div class="preview-label">이런 문제가 나와</div>
+    <div class="preview-q" id="preview-q">불러오는 중...</div>
+    <div class="preview-choices" id="preview-choices"></div>
+  </div>
+
+  <!-- 하단 -->
+  <div class="landing-foot">
+    <div id="today-count" class="today-count"></div>
+    <div class="landing-meta">
+      <div class="meta-item">총 <span id="txt-total-q">—</span>문제 풀</div>
+      <div class="meta-item">10문제</div>
+      <div class="meta-item">KIN 판정</div>
+    </div>
+    <button class="btn-start" id="btn-start">
+      <span class="btn-start-text">도전하기</span>
+      <span class="btn-start-arrow">→</span>
+    </button>
+  </div>
+
+<!-- ══════ QUIZ ══════ -->
+<div class="page" id="page-quiz">
+  <div class="quiz-progress" id="quiz-progress"></div>
+  <div class="quiz-top">
+    <div class="quiz-top-left">
+      <span class="format-badge" id="q-format-badge">설정</span>
+      <div class="diff-dots" id="q-diff-dots">
+        <div class="diff-dot"></div>
+        <div class="diff-dot"></div>
+        <div class="diff-dot"></div>
+      </div>
+    </div>
+    <span class="quiz-counter" id="q-counter">1 / 10</span>
+  </div>
+  <div class="quiz-question" id="q-question"></div>
+  <div class="choices" id="q-choices"></div>
+  <div class="kin-reaction" id="kin-reaction"></div>
+  <button class="btn-next" id="btn-next">다음 →</button>
+</div>
+
+<!-- ══════ RESULT ══════ -->
+<div class="page" id="page-result">
+  <div>
+    <div class="landing-eyebrow" id="result-eyebrow" style="margin-bottom:10px">KIN의 판정</div>
+    <div class="result-score-wrap">
+      <div class="result-score" id="result-score">0</div>
+      <div class="result-score-denom">/ 10</div>
+    </div>
+  </div>
+
+  <!-- 작품 이미지 카드 (작품 있을 때) -->
+  <div class="result-top-work" id="result-work-card" style="display:none">
+    <div class="result-work-bg" id="result-work-bg"></div>
+    <div class="result-work-content">
+      <div class="result-work-label">가장 잘 아는 작품</div>
+      <div class="result-work-name" id="result-work-name"></div>
+      <div class="result-work-sub" id="result-work-sub"></div>
+    </div>
+  </div>
+
+  <!-- KIN 이미지 카드 (작품 없을 때) -->
+  <div class="result-kin-wrap" id="result-kin-card" style="display:none">
+    <img class="result-kin-img" id="result-kin-img" src="" alt="KIN">
+    <div class="result-kin-text" id="result-kin-text"></div>
+  </div>
+
+  <div class="result-observation">
+    <div class="result-observation-label">KIN</div>
+    <div id="result-observation-text"></div>
+  </div>
+
+  <div id="result-wrong-section" style="display:none">
+    <div class="result-wrong-label" id="result-wrong-label">틀린 문제</div>
+    <div class="result-wrong-list" id="result-wrong-list"></div>
+  </div>
+
+  <div class="result-btns">
+    <button class="btn-primary"   id="btn-share">공유하기</button>
+    <button class="btn-secondary" id="btn-retry">다시 하기</button>
+    <a      class="btn-secondary" href="../index.html" id="btn-gallery">← 갤러리</a>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════
+const SUPA_URL = 'https://lmfyspozcmyefgrkgxch.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
+const API_URL  = 'https://kin-agent-production.up.railway.app';
+const JIKAN    = 'https://api.jikan.moe/v4';
+
+// KIN 이미지 경로 (public/)
+const KIN_IMGS = {
+  excited:  '/public/kin_excited.webp',
+  happy:    '/public/kin_happy.webp',
+  thinking: '/public/kin_thinking1.webp',
+  serious:  '/public/kin_serious.webp',
+  sad:      '/public/kin_sad.webp',
+};
+
+// ═══════════════════════════════════════════
+// 언어
+// ═══════════════════════════════════════════
+const browserLang = navigator.language?.startsWith('ko') ? 'ko' : 'en';
+let lang = localStorage.getItem('k2_lang') || browserLang;
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('k2_lang', l);
+  document.querySelectorAll('.lt').forEach(el =>
+    el.classList.toggle('active', el.dataset.lang === l)
+  );
+  document.documentElement.lang = l;
+  // 랜딩 페이지에 있을 때만 텍스트 갱신
+  if(state.phase === 'landing') applyLandingLang();
+  // 결과 페이지에 있을 때 정적 텍스트 갱신
+  if(state.phase === 'result') applyResultLang();
+}
+
+document.querySelectorAll('.lt').forEach(el => {
+  el.addEventListener('click', () => {
+    if (el.classList.contains('disabled')) return;
+    setLang(el.dataset.lang);
+  });
+});
+
+function lockLang()   { document.querySelectorAll('.lt').forEach(e => e.classList.add('disabled')); }
+function unlockLang() { document.querySelectorAll('.lt').forEach(e => e.classList.remove('disabled')); }
+
+// ═══════════════════════════════════════════
+// 텍스트 (ko/en)
+// ═══════════════════════════════════════════
+const FORMAT_LABELS = {
+  ko: { work:'설정', character:'캐릭터', outlier:'아닌것', author:'작가', relation:'관계' },
+  en: { work:'setting', character:'character', outlier:'not this', author:'author', relation:'relation' },
+};
+
+// ═══════════════════════════════════════════
+// KIN 반응 풀 (72개)
+// ═══════════════════════════════════════════
+const KIN_REACTIONS = {
+  correct_easy:[
+    "그건 알아야지.","뭐, 기본이지.","맞아.","당연한 거 아냐?",
+    "어, 그건 알고 있었구나.","기본은 되네.","그거야 뭐.",
+    "모를 줄 알았는데.","뭐, 이 정도는.","그럼 그렇지.",
+    "기본 중의 기본.","알고 있었어? 다행이다."
+  ],
+  correct_mid:[
+    "어, 맞네.","의외다.","알고 있었어?","오. 알고 있었구나.",
+    "맞아. 잘 알고 있네.","생각보다 아는구나.","어, 이걸 알아?",
+    "좀 읽었네.","어, 봤구나.","그걸 알고 있었어.",
+    "나름 알고 있네.","진짜로?"
+  ],
+  correct_hard:[
+    "진짜로?","어, 그것도 알아?","놀랍네.","이걸 아는 사람이 있네.",
+    "이건 좀 대단한데.","어, 진짜 알고 있었어?","이 정도면 인정.",
+    "그것까지 알고 있어?","...맞네.","이건 좀 무섭다.",
+    "제대로 읽었구나.","만화방 단골 자격 있다."
+  ],
+  wrong_easy:[
+    "이걸 몰라.","진짜로.","...나가도 돼.","이걸 몰랐어?",
+    "좀 그렇다.","기본도 안 되네.","이건 좀.","어떻게 이걸 몰라.",
+    "그것도 모르고 여기 들어온 거야?","좀 읽고 와.",
+    "이거 진짜야?","기본이잖아, 이건."
+  ],
+  wrong_mid:[
+    "그건 뭐.","몰라도 크게 상관없긴 해.","아직 거기까진 안 읽었구나.",
+    "그건 좀 어렵긴 해.","패스.","넘어가자.",
+    "그래, 그건 그냥 넘어가도 돼.","뭐, 이건 그럴 수 있어.",
+    "그 작품 안 봤구나.","괜찮아, 이건.",
+    "그건 좀 마이너하긴 해.","아직 거기까진."
+  ],
+  wrong_hard:[
+    "그건 뭐 몰라도 돼.","사실 나도 찾아봤어.","어려운 거야.",
+    "이건 몰라도 됨.","그건 좀 마이너해.","괜찮아.",
+    "이건 나도 헷갈려.","여기까지 알면 진짜 이상한 거야.",
+    "그건 아무도 몰라.","그건 너무 깊이 들어가는 거야.",
+    "뭐, 그건 패스.","어려운 거 틀린 거니까 괜찮아."
+  ],
+  // 연속 정답 전용
+  streak_3:["어, 계속 맞히네.","이거 진짜야?","오. 계속 오네."],
+  streak_5:["이거 진짜 아는 거야?","멈추지 않네.","좀 무서운데."],
+  streak_7:["...인정하기 싫은데.","이 정도면 단골이야.","어, 진짜로?"],
+};
+
+const KIN_REACTIONS_EN = {
+  correct_easy:["That's a given.","Come on, basics.","Right.","Obviously.",
+    "Oh, you knew that.","At least the basics.","Well yeah.",
+    "Thought you'd miss it.","That one's easy.","Of course.",
+    "The most basic one.","Good. Glad you knew."],
+  correct_mid:["Oh, you got it.","Surprising.","You knew?","Oh. You actually knew.",
+    "Right. Good.","More than I expected.","You know this one?",
+    "You've read it.","Oh, you've seen it.","You knew that.",
+    "Not bad.","Really?"],
+  correct_hard:["For real?","Oh, you know that too?","Impressive.","Someone actually knows this.",
+    "Okay, that's something.","You actually knew?","I'll admit it.",
+    "You know that too?","...Right.","That's a bit scary.",
+    "You've actually read it.","You belong here."],
+  wrong_easy:["You don't know this.","Seriously.","You can leave.","You didn't know?",
+    "That's rough.","Can't even get the basics.","That's something.",
+    "How do you not know this.","You walked in here not knowing that?",
+    "Go read something.","Is this real?","That's like, the basics."],
+  wrong_mid:["Whatever.","Not a big deal.","Haven't gotten there yet.",
+    "That one's a bit tough.","Pass.","Moving on.",
+    "Yeah that one's fine to miss.","That happens.",
+    "Haven't seen that one.","It's okay.","That's a bit niche.","Not there yet."],
+  wrong_hard:["That one doesn't matter.","I looked it up too, honestly.","It's hard.",
+    "Fine to not know this.","That's pretty niche.","It's okay.",
+    "Even I get confused on this.","Knowing this would be weird.",
+    "Nobody knows that.","That's going too deep.","Pass on that one.",
+    "It's hard, so it's fine."],
+  streak_3:["Oh, you keep getting them.","Is this real?","Oh. Keep going."],
+  streak_5:["Do you actually know this?","You're not stopping.","Getting a bit scary."],
+  streak_7:["...I don't want to admit it.","You're a regular.","Oh, for real?"],
+};
+
+function getRxn(isCorrect, difficulty) {
+  const key = `${isCorrect?'correct':'wrong'}_${difficulty}`;
+  const pool = lang==='ko' ? KIN_REACTIONS[key] : KIN_REACTIONS_EN[key];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function getStreakRxn(n) {
+  const key = n>=7?'streak_7':n>=5?'streak_5':'streak_3';
+  const pool = lang==='ko' ? KIN_REACTIONS[key] : KIN_REACTIONS_EN[key];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ═══════════════════════════════════════════
+// 결과 관찰 패턴
+// ═══════════════════════════════════════════
+const OBS = {
+  ko:{
+    perfect:["인정. 근데 솔직히 좀 무서워. 이걸 다 어떻게 알아.","다 맞혔어. 말은 안 하겠는데, 얼마나 읽은 거야.","만화방 단골 맞네. 다음엔 진짜 어렵게 낼게."],
+    zero:["이건 좀 대단하다. 하나도 안 맞히려면 오히려 알아야 해.","전부 틀렸어. 이건 진짜 처음인 거야. 어디서부터 시작할지 알려줄까.","0점이야. 근데 여기까지 온 것만으로도 뭔가 있는 거야. 아마도."],
+    hard_easy_gap:["마이너는 꿰고 있는데 기본을 틀렸어. 근데 이런 사람 주변에 꼭 한 명씩은 있더라.","어려운 건 맞히고 쉬운 걸 틀렸어. 설명하기 어려운 타입이야.","기본은 모르는데 마이너는 알아. 어떻게 읽은 거야, 솔직히."],
+    major_only:["유명한 건 다 알고 있구나. 근데 딱 거기까지네. 그것도 나쁘진 않아.","메이저는 완벽한데 그 밖으로는 안 나갔구나. 안전하게 읽는 타입이야.","검증된 것만 읽는 거지. 솔직히 그게 제일 현명한 방법이긴 해."],
+    outlier_strong:["읽지도 않았는데 맞혔어. 솔직히 이게 더 재능 있는 거 맞아.","소거법으로 다 맞혔구나. 읽은 것보다 안 읽은 게 더 많은 타입.","어떻게 알았어, 이거. 느낌으로 맞힌 거지. 그 느낌이 꽤 정확하더라."],
+    one_work:["한 작품에 이 정도면 팬이라고 부르기도 애매해. 그냥 그 작품이 너야.","한 작품에 올인했구나. 나머지는 관심 없는 거고, 그것도 방식이야.","이건 그냥 덕후네. 좋게 말하는 거야."],
+    author_strong:["작품보다 만든 사람에 관심 있구나. 덕질 방향이 좀 독특해.","작가를 따라가는 타입이야. 신작 소식에 제일 먼저 반응하는 사람.","작품 좋아하는 게 아니라 작가 좋아하는 거네. 미묘하게 달라."],
+    relation_strong:["스토리는 기억 안 나는데 누가 누구 스승인지는 알고 있어.","설정보다 관계에 집착하는 타입이야. 커플링에 진심인 거 맞지.","스토리는 흐릿한데 인간관계는 선명하게 기억하네."],
+    easy_only:["기본기는 확실하네. 근데 딱 교과서까지야. 교과서 밖으로 나갈 생각은 없어?","쉬운 건 다 맞혔어. 이제 한 단계만 더 들어가 봐. 생각보다 재밌을 거야.","입문은 완벽하게 했구나. 다음 단계가 사실 더 재밌어."],
+    all_high:["두루두루 읽었네. 취향이 없는 건지 다 있는 건지. 아마 다 있는 쪽일 거야.","골고루 다 알고 있어. 편식 없이 읽는 타입이야.","장르 안 가리고 읽었구나. 같이 만화방 가면 제일 오래 있는 타입."],
+    all_low:["처음 온 거지. 괜찮아, 어디서든 시작은 있으니까. 근데 진짜로 한 편만 읽고 다시 와봐.","많이 안 읽었구나. 아직 취향도 없는 거야. 그거 찾는 게 사실 제일 재밌어.","지금이 제일 부러운 시점이야. 처음 읽을 작품이 아직 이렇게 많으니까."],
+    random:["뭘 읽은 건지 패턴이 없어. 손에 잡히는 대로 읽은 거구나. 그것도 나름 방식이야.","일관성은 없는데 범위는 넓어. 계획 없이 읽는 타입이야.","어떤 기준으로 읽은 건지 모르겠어. 기준이 없는 게 기준인 거지."],
+  },
+  en:{
+    perfect:["Okay. But honestly a little scary. How do you know all this.","You got everything. How much have you read.","You belong here. Next time I'm making it harder."],
+    zero:["That's impressive in a way. To miss everything you'd almost have to try.","Everything wrong. Want me to tell you where to start?","Zero. But the fact you're here means something. Probably."],
+    hard_easy_gap:["You know the obscure stuff but missed the basics. There's always one person like this.","Got the hard ones, missed the easy ones. Hard to explain that.","Don't know the basics but know the niche stuff. How'd you even read it."],
+    major_only:["You know the big names. And that's it. That's not nothing though.","Perfect on the majors, nothing beyond that. You read safe.","Sticking to the classics. Honestly the most sensible approach."],
+    outlier_strong:["You guessed it without even reading it. That's honestly a skill.","All by elimination. More unread than read, probably.","How'd you know. Felt it, right. That instinct's not bad."],
+    one_work:["At this point calling you a fan is an understatement.","All in on one work. The rest doesn't matter to you.","You're just a hardcore fan. I mean that in the best way."],
+    author_strong:["More interested in the creator than the work. That's a specific way to read.","You follow the author. First to react to new releases.","You don't love the work, you love the person who made it."],
+    relation_strong:["Don't remember the story but you know who trained who.","More obsessed with connections than plot. Shipping things, aren't you.","Story's fuzzy but you remember every relationship clearly."],
+    easy_only:["Solid fundamentals. But that's where it stops. Ready to go deeper?","Got all the easy ones. Just one level further. More interesting than you'd think.","Perfect intro. The next level is actually where it gets good."],
+    all_high:["You've read widely. Either no taste or all taste. Probably all taste.","Even across everything. You read without bias. Anything someone recommends, you'll watch.","No genre preference. You'd be the last one to leave a manga cafe."],
+    all_low:["First time here. That's fine. Read one thing and come back.","You haven't read much yet. Finding your taste is the best part.","This is the best moment to be you. So many first reads still ahead."],
+    random:["No pattern here. You read whatever you grabbed. That's a style.","No consistency but wide range. Unplanned reader.","No idea what the criteria was. No criteria is the criteria."],
+  }
+};
+
+function detectPattern(answers) {
+  const score = answers.filter(a=>a.is_correct).length;
+  if(score===10) return 'perfect';
+  if(score===0)  return 'zero';
+  const byDiff = d => answers.filter(a=>a.difficulty===d);
+  const rate   = d => { const g=byDiff(d); return g.length?g.filter(a=>a.is_correct).length/g.length:0; };
+  const easyR=rate('easy'), midR=rate('mid'), hardR=rate('hard'), totalR=score/10;
+  const byFmt = f => answers.filter(a=>a.format===f);
+  const frate  = f => { const g=byFmt(f); return g.length?g.filter(a=>a.is_correct).length/g.length:0; };
+  const sc = {
+    hard_easy_gap:   hardR-easyR,
+    major_only:      (easyR-hardR)*.6+(midR-hardR)*.4,
+    outlier_strong:  frate('outlier')-totalR,
+    author_strong:   frate('author')-totalR,
+    relation_strong: frate('relation')-totalR,
+    easy_only:       (easyR-midR)*.5+(easyR-hardR)*.5,
+    all_high:        totalR>=.78?totalR:0,
+    all_low:         totalR<=.32?(0.32-totalR):0,
+  };
+  // one_work
+  const wc={};
+  answers.forEach(a=>{
+    const w=a.source_work||'?';
+    if(!wc[w]) wc[w]={total:0,correct:0};
+    wc[w].total++;
+    if(a.is_correct) wc[w].correct++;
+  });
+  const mw=Object.values(wc).reduce((b,w)=>w.total>=3&&w.correct/w.total>(b.correct/Math.max(b.total,1))?w:b,{total:0,correct:0});
+  const otherR=(score>0)?(score-mw.correct)/Math.max(10-mw.total,1):0;
+  sc.one_work = mw.total>=3&&mw.correct/mw.total>=.9&&otherR<.4?0.8:0;
+  const best = Object.entries(sc).filter(([,v])=>v>=0.2).sort(([,a],[,b])=>b-a)[0];
+  return best?best[0]:'random';
+}
+
+function getObs(pattern) {
+  const pool = OBS[lang][pattern]||OBS[lang].random;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ═══════════════════════════════════════════
+// SLOTS
+// ═══════════════════════════════════════════
+const SLOTS = [
+  {format:'work',      difficulty:'easy'},
+  {format:'character', difficulty:'easy'},
+  {format:'outlier',   difficulty:'easy'},
+  {format:'relation',  difficulty:'mid' },
+  {format:'character', difficulty:'mid' },
+  {format:'author',    difficulty:'mid' },
+  {format:'outlier',   difficulty:'mid' },
+  {format:'work',      difficulty:'hard'},
+  {format:'relation',  difficulty:'hard'},
+  {format:'author',    difficulty:'hard'},
+];
+
+// ═══════════════════════════════════════════
+// 상태
+// ═══════════════════════════════════════════
+const state = {
+  phase:'landing', questions:[], currentIndex:0,
+  answers:[], score:0, streak:0,
+  sessionKey:crypto.randomUUID(), answered:false,
+  resultPattern:null, resultObs:null, // 캐시: 화면 표시와 공유 텍스트 일치
+};
+
+// ═══════════════════════════════════════════
+// Supabase
+// ═══════════════════════════════════════════
+async function supaFetch(path, opts={}) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers:{
+      apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`,
+      'Content-Type':'application/json', Prefer:'return=minimal',
+      ...(opts.headers||{}),
+    },
+  });
+  if(!res.ok) throw new Error(`Supabase ${res.status}`);
+  const ct = res.headers.get('content-type')||'';
+  if(ct.includes('json') && res.status!==204) return res.json();
+  return null;
+}
+
+// ═══════════════════════════════════════════
+// 오늘 플레이어 수 × 10
+// ═══════════════════════════════════════════
+async function loadTodayCount() {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/quiz_sessions?completed_at=gte.${today}T00:00:00&select=id`,
+      { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
+    );
+    const cr = res.headers.get('content-range');
+    const count = parseInt(cr?.split('/')[1]||'0', 10);
+    const display = (count*10).toLocaleString();
+    const el = document.getElementById('today-count');
+    if(el && count>0) el.textContent = lang==='ko'
+      ? `오늘 ${display}명이 도전했어.`
+      : `${display} people played today.`;
+  } catch{}
+}
+
+async function loadTotalCount() {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/quiz_items?is_active=eq.true&select=id`,
+      { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
+    );
+    const cr = res.headers.get('content-range');
+    const count = cr?.split('/')[1];
+    const el = document.getElementById('txt-total-q');
+    if(el && count) el.textContent = count;
+  } catch{}
+}
+
+// ═══════════════════════════════════════════
+// 문제 로드
+// ═══════════════════════════════════════════
+async function loadQuestions() {
+  const results = await Promise.all(
+    SLOTS.map(slot =>
+      supaFetch(
+        `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&order=random()`,
+        {headers:{Prefer:'return=representation'}}
+      ).catch(()=>null)
+    )
+  );
+  return results.flat().filter(Boolean).map(item=>{
+    const correctKo = item.choices[0];
+    const correctEn = item.choices_en?.[0] || item.answer_en;
+    const shuffledKo = [...item.choices].sort(()=>Math.random()-.5);
+    const shuffledEn = item.choices_en ? [...item.choices_en].sort(()=>Math.random()-.5) : null;
+    return {...item, displayChoicesKo:shuffledKo, displayChoicesEn:shuffledEn, correctAnswerKo:correctKo, correctAnswerEn:correctEn};
+  });
+}
+
+// ═══════════════════════════════════════════
+// 화면 전환
+// ═══════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  state.phase = id.replace('page-','');
+  // 랜딩은 흰 배경이라 grain 숨김
+  document.getElementById('grain').style.opacity = id==='page-landing' ? '0' : '';
+}
+
+// ═══════════════════════════════════════════
+// 난이도 오버레이
+// ═══════════════════════════════════════════
+function setDiffOverlay(difficulty) {
+  const el = document.getElementById('diff-overlay');
+  const map = {easy:'rgba(0,0,0,0)', mid:'rgba(20,30,70,0.15)', hard:'rgba(70,15,15,0.18)'};
+  el.style.background = map[difficulty]||'rgba(0,0,0,0)';
+}
+
+// ═══════════════════════════════════════════
+// 진행 바
+// ═══════════════════════════════════════════
+function renderProgress() {
+  const wrap = document.getElementById('quiz-progress');
+  wrap.innerHTML='';
+  SLOTS.forEach((slot,i)=>{
+    const d = document.createElement('div');
+    let cls = 'prog-dot';
+    if(i < state.currentIndex) {
+      const ans = state.answers[i];
+      cls += ans?.is_correct ? ` done-${slot.difficulty}` : ' done-wrong';
+    } else if(i===state.currentIndex) cls+=' current';
+    d.className=cls;
+    wrap.appendChild(d);
+  });
+}
+
+// ═══════════════════════════════════════════
+// 연속 정답 이펙트
+// ═══════════════════════════════════════════
+function updateStreakEffect(streak) {
+  const glow = document.getElementById('streak-glow');
+  clearStreakEffect();
+  if(streak>=7)      { glow.classList.add('s7'); spawnParticles(7); flashScreen(); }
+  else if(streak>=5) { glow.classList.add('s5'); spawnParticles(4); }
+  else if(streak>=3) { glow.classList.add('s3'); }
+}
+
+function clearStreakEffect() {
+  const glow = document.getElementById('streak-glow');
+  glow.classList.remove('s3','s5','s7');
+}
+
+function spawnParticles(n) {
+  for(let i=0;i<n;i++){
+    const p = document.createElement('div');
+    p.className='streak-particle';
+    p.style.left = (10+Math.random()*80)+'%';
+    p.style.setProperty('--r', (Math.random()*30-15)+'deg');
+    p.style.animationDelay = (Math.random()*0.2)+'s';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 1000);
+  }
+}
+
+function flashScreen() {
+  const fl = document.createElement('div');
+  Object.assign(fl.style,{
+    position:'fixed',inset:'0',zIndex:'95',
+    background:'rgba(255,229,0,.08)',pointerEvents:'none',
+    animation:'flash-fade .4s ease forwards',
+  });
+  if(!document.querySelector('#flash-style')) {
+    const s=document.createElement('style');
+    s.id='flash-style';
+    s.textContent='@keyframes flash-fade{0%{opacity:1}100%{opacity:0}}';
+    document.head.appendChild(s);
+  }
+  document.body.appendChild(fl);
+  setTimeout(()=>fl.remove(),500);
+}
+
+// ═══════════════════════════════════════════
+// 햅틱
+// ═══════════════════════════════════════════
+function haptic(type) {
+  if(!navigator.vibrate) return;
+  type==='correct' ? navigator.vibrate(40) : navigator.vibrate([35,25,35]);
+}
+
+// ═══════════════════════════════════════════
+// 타이핑 이펙트
+// ═══════════════════════════════════════════
+function typeText(el, text, speed=28) {
+  el.textContent='';
+  el.classList.add('show');
+  let i=0;
+  const tick=()=>{ if(i<text.length){el.textContent+=text[i++];setTimeout(tick,speed);} };
+  tick();
+}
+
+// ═══════════════════════════════════════════
+// 문제 렌더
+// ═══════════════════════════════════════════
+function renderQuestion() {
+  const q = state.questions[state.currentIndex];
+  if(!q) return;
+  state.answered = false;
+
+  const diff = q.difficulty;
+  setDiffOverlay(diff);
+
+  // format badge
+  const badge = document.getElementById('q-format-badge');
+  badge.className = `format-badge ${q.format}`;
+  badge.textContent = (lang==='ko'?FORMAT_LABELS.ko:FORMAT_LABELS.en)[q.format]||q.format;
+
+  // diff dots
+  const dots = document.getElementById('q-diff-dots');
+  dots.innerHTML='';
+  const levels={easy:1,mid:2,hard:3};
+  for(let i=0;i<3;i++){
+    const d=document.createElement('div');
+    d.className='diff-dot'+(i<levels[diff]?` on-${diff}`:'');
+    dots.appendChild(d);
+  }
+
+  // counter
+  document.getElementById('q-counter').textContent=`${state.currentIndex+1} / ${state.questions.length}`;
+
+  // question — 난이도별 등장 방식
+  const qEl = document.getElementById('q-question');
+  qEl.className='quiz-question';
+  const enterClass = diff==='easy'?'enter-fade':diff==='mid'?'enter-up':'enter-side';
+  qEl.textContent = lang==='ko' ? q.question : (q.question_en||q.question);
+  void qEl.offsetWidth;
+  qEl.classList.add(enterClass);
+
+  // choices
+  const wrap = document.getElementById('q-choices');
+  wrap.innerHTML='';
+  const choices = lang==='ko' ? q.displayChoicesKo : (q.displayChoicesEn||q.displayChoicesKo);
+  choices.forEach((choice,idx)=>{
+    const btn=document.createElement('button');
+    btn.className='choice-btn';
+    // hard 구간: 순차 등장
+    if(diff==='hard'){
+      btn.classList.add('stagger');
+      btn.style.animationDelay=(idx*0.08)+'s';
+    }
+    btn.textContent=choice;
+    btn.addEventListener('click',()=>selectAnswer(choice));
+    wrap.appendChild(btn);
+  });
+
+  // KIN 반응 초기화
+  const rxn=document.getElementById('kin-reaction');
+  rxn.textContent=''; rxn.classList.remove('show');
+
+  // 다음 버튼
+  const btnNext=document.getElementById('btn-next');
+  btnNext.classList.remove('show');
+  btnNext.textContent = lang==='ko'?'다음 →':'Next →';
+}
+
+// ═══════════════════════════════════════════
+// 답변 선택
+// ═══════════════════════════════════════════
+function selectAnswer(selected) {
+  if(state.answered) return;
+  state.answered=true;
+
+  const q = state.questions[state.currentIndex];
+  const correct = lang==='ko' ? q.correctAnswerKo : (q.correctAnswerEn||q.correctAnswerKo);
+  const isCorrect = selected===correct;
+
+  if(isCorrect) { state.score++; state.streak++; }
+  else          { state.streak=0; clearStreakEffect(); }
+
+  haptic(isCorrect?'correct':'wrong');
+
+  // 선택지 색상
+  document.querySelectorAll('.choice-btn').forEach(btn=>{
+    btn.disabled=true;
+    if(btn.textContent===correct) btn.classList.add('correct');
+    else if(btn.textContent===selected&&!isCorrect) btn.classList.add('wrong');
+  });
+
+  // 답변 기록
+  state.answers.push({
+    item_id: q.item_id, format: q.format, difficulty: q.difficulty,
+    source_work: q.source_work, is_correct: isCorrect,
+    selected, correct_answer: correct,
+  });
+
+  // 연속 정답 이펙트
+  let rxnText;
+  if(isCorrect && state.streak>=3) {
+    updateStreakEffect(state.streak);
+    rxnText = getStreakRxn(state.streak);
+  } else {
+    rxnText = getRxn(isCorrect, q.difficulty);
+  }
+
+  const rxnEl = document.getElementById('kin-reaction');
+  typeText(rxnEl, rxnText, 25);
+
+  // 다음 버튼
+  const btnNext = document.getElementById('btn-next');
+  const isLast = state.currentIndex===state.questions.length-1;
+  btnNext.textContent = isLast ? (lang==='ko'?'결과 보기 →':'See Result →') : (lang==='ko'?'다음 →':'Next →');
+  setTimeout(()=>btnNext.classList.add('show'), 350);
+}
+
+// ═══════════════════════════════════════════
+// 다음 문제
+// ═══════════════════════════════════════════
+document.getElementById('btn-next').addEventListener('click', goNext);
+function goNext() {
+  state.currentIndex++;
+  if(state.currentIndex < state.questions.length) {
+    renderProgress(); renderQuestion();
+  } else {
+    clearStreakEffect();
+    setDiffOverlay('easy');
+    showResult();
+  }
+}
+
+// ═══════════════════════════════════════════
+// 스와이프로 다음 (모바일)
+// ═══════════════════════════════════════════
+let touchStartY=0;
+document.addEventListener('touchstart', e=>{ touchStartY=e.touches[0].clientY; },{passive:true});
+document.addEventListener('touchend', e=>{
+  if(state.phase!=='quiz' || !state.answered) return;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if(dy < -60) goNext();
+},{passive:true});
+
+// ═══════════════════════════════════════════
+// 결과 화면
+// ═══════════════════════════════════════════
+async function showResult() {
+  showPage('page-result');
+  unlockLang();
+
+  document.getElementById('result-score').textContent = state.score;
+
+  // 패턴 + 관찰 멘트 — state에 캐시 (공유 시 재사용)
+  state.resultPattern = detectPattern(state.answers);
+  state.resultObs     = getObs(state.resultPattern);
+  document.getElementById('result-observation-text').textContent = state.resultObs;
+
+  // 가장 잘 아는 작품 계산 (2문제+ 중 정답률 높은 순)
+  const workScore={};
+  state.answers.forEach(a=>{
+    const w=a.source_work||'?';
+    if(!workScore[w]) workScore[w]={total:0,correct:0,mal_id:null};
+    workScore[w].total++;
+    if(a.is_correct) workScore[w].correct++;
+    const q=state.questions.find(q=>q.item_id===a.item_id);
+    if(q?.mal_id) workScore[w].mal_id=q.mal_id;
+  });
+
+  const topEntry = Object.entries(workScore)
+    .filter(([,v])=>v.total>=2)
+    .sort(([,a],[,b])=>{
+      const rd=(b.correct/b.total)-(a.correct/a.total);
+      return rd!==0?rd:b.total-a.total;
+    })[0];
+
+  if(topEntry) {
+    const [workName, wData] = topEntry;
+    // 작품 카드 표시
+    document.getElementById('result-work-card').style.display='block';
+    document.getElementById('result-kin-card').style.display='none';
+    document.getElementById('result-work-name').textContent = workName;
+    document.getElementById('result-work-sub').textContent =
+      lang==='ko'
+        ? `${wData.total}문제 중 ${wData.correct}개 정답`
+        : `${wData.correct} / ${wData.total} correct`;
+
+    // Jikan 커버 이미지 로드
+    if(wData.mal_id) {
+      try {
+        const res = await fetch(`${JIKAN}/anime/${wData.mal_id}`);
+        const data = await res.json();
+        const imgUrl = data.data?.images?.jpg?.large_image_url;
+        if(imgUrl) {
+          document.getElementById('result-work-bg').style.backgroundImage=`url(${imgUrl})`;
+        }
+      } catch{}
+    }
+  } else {
+    // KIN 이미지 표정 분기
+    document.getElementById('result-work-card').style.display='none';
+    document.getElementById('result-kin-card').style.display='flex';
+    const scoreN = state.score;
+    const mood = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
+    const imgSrc = KIN_IMGS[mood];
+    document.getElementById('result-kin-img').src = imgSrc;
+    document.getElementById('result-kin-text').textContent =
+      lang==='ko' ? `${scoreN}/10` : `${scoreN}/10`;
+  }
+
+  // 틀린 문제
+  const wrong = state.answers.filter(a=>!a.is_correct);
+  const ws = document.getElementById('result-wrong-section');
+  const wl = document.getElementById('result-wrong-list');
+  wl.innerHTML='';
+  if(wrong.length>0){
+    ws.style.display='block';
+    wrong.forEach(a=>{
+      const item=state.questions.find(q=>q.item_id===a.item_id);
+      if(!item) return;
+      const qText = lang==='ko'?item.question:(item.question_en||item.question);
+      const div=document.createElement('div');
+      div.className='wrong-item';
+      div.innerHTML=`<div>${qText.slice(0,55)}${qText.length>55?'…':''}</div>
+        <div class="wrong-item-answer">→ ${a.correct_answer}</div>`;
+      wl.appendChild(div);
+    });
+  } else ws.style.display='none';
+
+  saveSession(state.resultPattern);
+}
+
+// ═══════════════════════════════════════════
+// 세션 저장
+// ═══════════════════════════════════════════
+async function saveSession(pattern) {
+  try {
+    await supaFetch('quiz_sessions',{
+      method:'POST',
+      body:JSON.stringify({
+        session_key:state.sessionKey, score:state.score, total:10,
+        result_type:pattern, lang,
+        answers:state.answers,
+        difficulty_mix:{
+          easy:state.answers.filter(a=>a.difficulty==='easy').length,
+          mid: state.answers.filter(a=>a.difficulty==='mid').length,
+          hard:state.answers.filter(a=>a.difficulty==='hard').length,
+        },
+        format_mix:Object.fromEntries(
+          ['work','character','outlier','author','relation'].map(f=>[
+            f, state.answers.filter(a=>a.format===f).length
+          ])
+        ),
+      }),
+    }).catch(()=>{});
+
+    // KIN 에이전트 이벤트
+    await fetch(`${API_URL}/api/kin/event`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        service:'k2_manga',
+        event_type:'quiz_completed',
+        payload:{ count:1, lang, result_pattern:pattern },
+      }),
+    }).catch(()=>{});
+  } catch{}
+}
+
+// ═══════════════════════════════════════════
+// 공유
+// ═══════════════════════════════════════════
+document.getElementById('btn-share').addEventListener('click', async()=>{
+  // 캐시된 obs 사용 (화면 표시와 동일하게)
+  const obs = state.resultObs || getObs(state.resultPattern || 'random');
+  const text = lang==='ko'
+    ? `KIN의 만화방 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
+    : `KIN's Manga Room ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`;
+
+  try {
+    if(navigator.share) {
+      await navigator.share({ title:'KIN의 만화방', text, url:'https://kinxdred.com/kin/k2' });
+      return;
+    }
+  } catch{}
+
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  }
+
+  const btn=document.getElementById('btn-share');
+  const orig=btn.textContent;
+  btn.textContent = lang==='ko'?'복사됨 ✓':'Copied ✓';
+  setTimeout(()=>{ btn.textContent=orig; },2000);
+});
+
+// ═══════════════════════════════════════════
+// 다시 하기
+// ═══════════════════════════════════════════
+document.getElementById('btn-retry').addEventListener('click',()=>{
+  Object.assign(state,{
+    questions:[],currentIndex:0,answers:[],
+    score:0,streak:0,sessionKey:crypto.randomUUID(),answered:false,
+    resultPattern:null,resultObs:null,
+  });
+  startQuiz(); // startQuiz 내부에서 lockLang 호출
+});
+
+// ═══════════════════════════════════════════
+// 퀴즈 시작
+// ═══════════════════════════════════════════
+let quizLoading = false;
+
+async function startQuiz() {
+  if(quizLoading) return; // 중복 실행 방지
+  quizLoading = true;
+  lockLang();
+  showPage('page-quiz');
+  document.getElementById('q-question').textContent = lang==='ko'?'불러오는 중...':'Loading...';
+  document.getElementById('q-choices').innerHTML='';
+
+  try {
+    state.questions = await loadQuestions();
+    if(state.questions.length < 5) throw new Error('not enough');
+  } catch {
+    showError(lang==='ko'?'문제를 불러오지 못했어.':'Could not load questions.');
+    unlockLang(); showPage('page-landing'); quizLoading = false; return;
+  }
+
+  quizLoading = false; // 로드 완료 후 해제
+  state.currentIndex=0; state.answers=[]; state.score=0; state.streak=0; state.answered=false;
+  clearStreakEffect(); setDiffOverlay('easy');
+  renderProgress(); renderQuestion();
+}
+
+function showError(msg) {
+  const el=document.getElementById('error-msg');
+  el.textContent=msg; el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; },3000);
+}
+
+document.getElementById('btn-start').addEventListener('click', startQuiz);
+
+// ═══════════════════════════════════════════
+// 결과 화면 정적 텍스트 언어 적용
+// ═══════════════════════════════════════════
+function applyResultLang() {
+  const isEn = lang === 'en';
+  const el = id => document.getElementById(id);
+  if(el('result-eyebrow'))    el('result-eyebrow').textContent    = isEn ? "KIN's Verdict"   : 'KIN의 판정';
+  if(el('result-wrong-label'))el('result-wrong-label').textContent= isEn ? 'Missed'           : '틀린 문제';
+  if(el('btn-share'))         el('btn-share').textContent         = isEn ? 'Share'            : '공유하기';
+  if(el('btn-retry'))         el('btn-retry').textContent         = isEn ? 'Try Again'        : '다시 하기';
+  if(el('btn-gallery'))       el('btn-gallery').textContent       = isEn ? '← Gallery'        : '← 갤러리';
+  const workLabel = document.querySelector('.result-work-label');
+  if(workLabel) workLabel.textContent = isEn ? 'You know this one' : '가장 잘 아는 작품';
+  // work-sub 재계산
+  const sub = el('result-work-sub');
+  if(sub && state.answers.length > 0) {
+    const wc={};
+    state.answers.forEach(a=>{
+      const w=a.source_work||'?';
+      if(!wc[w]) wc[w]={total:0,correct:0};
+      wc[w].total++;
+      if(a.is_correct) wc[w].correct++;
+    });
+    const top=Object.entries(wc).filter(([,v])=>v.total>=2)
+      .sort(([,a],[,b])=>(b.correct/b.total)-(a.correct/a.total))[0];
+    if(top) {
+      const [,d]=top;
+      sub.textContent = isEn ? `${d.correct} / ${d.total} correct` : `${d.total}문제 중 ${d.correct}개 정답`;
+    }
+  }
+}
+// ═══════════════════════════════════════════
+async function loadPreview() {
+  try {
+    const res = await supaFetch(
+      'quiz_items?is_active=eq.true&difficulty=eq.easy&limit=1&order=random()',
+      {headers:{Prefer:'return=representation'}}
+    );
+    const item = Array.isArray(res) ? res[0] : res;
+    if(!item) return;
+
+    const q = lang==='ko' ? item.question : (item.question_en||item.question);
+    const choices = lang==='ko'
+      ? item.choices
+      : (item.choices_en||item.choices);
+    const answer = lang==='ko' ? item.answer : (item.answer_en||item.answer);
+
+    document.getElementById('preview-q').textContent =
+      q.length > 60 ? q.slice(0,60)+'…' : q;
+
+    const wrap = document.getElementById('preview-choices');
+    wrap.innerHTML = '';
+    // 정답 포함해서 2개만 표시 (스포일러 방지)
+    const shown = [answer, choices.find(c=>c!==answer)].filter(Boolean);
+    shown.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'preview-choice' + (c===answer?' is-answer':'');
+      div.textContent = c===answer ? `✓ ${c}` : c;
+      wrap.appendChild(div);
+    });
+    const dots = document.createElement('div');
+    dots.className = 'preview-choice';
+    dots.textContent = '···';
+    wrap.appendChild(dots);
+
+    // 카드 클릭 → 퀴즈 시작
+    document.getElementById('preview-card').addEventListener('click', startQuiz, {once:true});
+  } catch {
+    document.getElementById('preview-card').style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════
+// 랜딩 텍스트 언어 적용
+// ═══════════════════════════════════════════
+function applyLandingLang() {
+  const lp = document.getElementById('page-landing');
+  if(!lp) return;
+  const qs = sel => lp.querySelector(sel);
+  if(lang==='en') {
+    qs('.landing-eyebrow').textContent = "KIN's Manga Room — Manga · Anime Quiz";
+    qs('.landing-title').textContent = "KIN's Manga Room";
+    qs('#landing-genre-label').textContent = 'Manga · Anime Quiz';
+    qs('.landing-meme-sub').textContent = 'お前はもう解いている';
+    qs('.btn-start-text').textContent = 'Take the quiz';
+    qs('.preview-label').textContent = "here's a taste";
+    lp.querySelectorAll('.gtag').forEach((el,i)=>{
+      const labels=['setting','character','odd one','author','relation'];
+      el.textContent=labels[i]||el.textContent;
+    });
+    const mg = document.getElementById('manga-gate');
+    if(mg) mg.src = './assets/manga_gate1.webp';
+  } else {
+    qs('.landing-eyebrow').textContent = 'KIN의 만화방 — 일본 만화 · 애니 퀴즈';
+    qs('.landing-title').textContent = 'KIN의 만화방';
+    qs('#landing-genre-label').textContent = '일본 만화 · 애니 퀴즈';
+    qs('.landing-meme-sub').textContent = 'お前はもう解いている';
+    qs('.btn-start-text').textContent = '도전하기';
+    qs('.preview-label').textContent = '이런 문제가 나와';
+    lp.querySelectorAll('.gtag').forEach((el,i)=>{
+      const labels=['설정','캐릭터','아닌것','작가','관계'];
+      el.textContent=labels[i]||el.textContent;
+    });
+    const mg = document.getElementById('manga-gate');
+    if(mg) mg.src = './assets/manga_gate2.webp';
+  }
+}
+(async()=>{
+  setLang(lang);
+  applyLandingLang();
+  const $loading=document.getElementById('loading');
+  await Promise.all([loadTotalCount(), loadTodayCount(), loadPreview()]);
+  $loading.style.opacity='0';
+  setTimeout(()=>{ $loading.style.display='none'; },400);
+})();
+</script>
+</body>
+</html>

@@ -112,46 +112,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   pointer-events:none;
   overflow:hidden;
 }
-/* 속도선 — 전체 배경 */
-.speedlines{
-  position:absolute;
-  inset:0;
-  width:100%;height:100%;
-  object-fit:cover;
-  object-position:center;
-  opacity:.12;
-  mix-blend-mode:multiply;
-  animation:sl-rotate 60s linear infinite;
-}
-@keyframes sl-rotate{
-  from{transform:rotate(0deg) scale(1.1)}
-  to  {transform:rotate(360deg) scale(1.1)}
-}
-/* KIN 이미지 — 오른쪽 하단 */
-.manga-gate{
-  position:absolute;
-  right:-5%;
-  bottom:0;
-  width:min(75vw, 380px);
-  height:auto;
-  object-fit:contain;
-  object-position:right bottom;
-  /* 흰 배경 제거 + 다크 테마 합성 */
-  mix-blend-mode:multiply;
-  filter:brightness(.92) contrast(1.05);
-  /* 아래서 fade */
-  mask-image:linear-gradient(to top,transparent 0%,black 8%,black 100%);
-  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 8%,black 100%);
-}
-
-/* 만화 배경 레이어 */
-.manga-bg{
-  position:absolute;
-  inset:0;
-  z-index:0;
-  pointer-events:none;
-  overflow:hidden;
-}
 /* 속도선 이미지 */
 .speedlines{
   position:absolute;
@@ -166,7 +126,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   from{transform:rotate(0deg) scale(1.1)}
   to  {transform:rotate(360deg) scale(1.1)}
 }
-/* KIN 이미지 — 오른쪽, 자연스러운 비율 */
+/* KIN 이미지 — 오른쪽 하단 */
 .manga-gate{
   position:absolute;
   right:0;
@@ -175,7 +135,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   height:auto;
   object-fit:contain;
   object-position:right bottom;
-  /* multiply 제거 — PNG 흰 배경 그대로 */
   opacity:.95;
   mask-image:linear-gradient(to top,transparent 0%,black 12%,black 100%);
   -webkit-mask-image:linear-gradient(to top,transparent 0%,black 12%,black 100%);
@@ -212,12 +171,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   letter-spacing:.04em;
   margin-bottom:10px;
 }
-/* 일본어 서브라인 */
-.landing-meme-sub{
-  font-family:'DM Mono',monospace;
-  font-size:clamp(12px,2.5vw,16px);
-  letter-spacing:.12em;
-  color:rgba(0,0,0,.45);
+/* 일본어 이미지 */
+.landing-jp-img{
+  display:block;
+  width:min(80%, 380px);
+  height:auto;
+  opacity:.75;
+  margin-top:4px;
   animation:meme-blink 3s ease-in-out infinite;
 }
 @keyframes meme-blink{
@@ -581,7 +541,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <!-- 만화 배경 레이어 -->
   <div class="manga-bg" aria-hidden="true">
     <img class="speedlines" src="./assets/speedlines.webp" alt="">
-    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.webp" alt="">
+    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
   </div>
 
   <!-- 상단 라벨 -->
@@ -591,7 +551,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <div class="landing-hero">
     <div class="landing-title">KIN의 만화방</div>
     <div class="landing-genre-label" id="landing-genre-label">일본 만화 · 애니 퀴즈</div>
-    <div class="landing-meme-sub">お前はもう解いている</div>
+    <img class="landing-jp-img" src="./assets/manga_quiz.webp" alt="お前はもう解いている">
   </div>
 
   <!-- 장르 태그 -->
@@ -697,12 +657,13 @@ const API_URL  = 'https://kin-agent-production.up.railway.app';
 const JIKAN    = 'https://api.jikan.moe/v4';
 
 // KIN 이미지 경로 (public/)
+const KIN_BASE = 'https://kin-ui-six.vercel.app';
 const KIN_IMGS = {
-  excited:  '/public/kin_excited.webp',
-  happy:    '/public/kin_happy.webp',
-  thinking: '/public/kin_thinking1.webp',
-  serious:  '/public/kin_serious.webp',
-  sad:      '/public/kin_sad.webp',
+  excited:  `${KIN_BASE}/kin_excited.webp`,
+  happy:    `${KIN_BASE}/kin_happy.webp`,
+  thinking: `${KIN_BASE}/kin_thinking1.webp`,
+  serious:  `${KIN_BASE}/kin_serious.webp`,
+  sad:      `${KIN_BASE}/kin_sad.webp`,
 };
 
 // ═══════════════════════════════════════════
@@ -1537,7 +1498,7 @@ function applyLandingLang() {
       el.textContent=labels[i]||el.textContent;
     });
     const mg = document.getElementById('manga-gate');
-    if(mg) mg.src = './assets/manga_gate1.webp';
+    if(mg) mg.src = './assets/manga_gate1.png';
   } else {
     qs('.landing-eyebrow').textContent = 'KIN의 만화방 — 일본 만화 · 애니 퀴즈';
     qs('.landing-title').textContent = 'KIN의 만화방';
@@ -1550,7 +1511,7 @@ function applyLandingLang() {
       el.textContent=labels[i]||el.textContent;
     });
     const mg = document.getElementById('manga-gate');
-    if(mg) mg.src = './assets/manga_gate2.webp';
+    if(mg) mg.src = './assets/manga_gate2.png';
   }
 }
 (async()=>{

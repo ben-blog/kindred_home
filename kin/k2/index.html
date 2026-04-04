@@ -490,19 +490,27 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .result-work-bg{
   position:absolute;inset:0;
   background-size:cover;background-position:center top;
-  filter:blur(12px) brightness(.35);
-  transform:scale(1.1);
+  transform:scale(1.0);
+}
+/* 텍스트 가독성용 하단 그라디언트 */
+.result-work-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,0.15) 40%,
+    rgba(0,0,0,0.65) 100%);
 }
 .result-work-content{
   position:relative;z-index:1;
   padding:28px;display:flex;flex-direction:column;gap:10px;
 }
-.result-work-label{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.65);text-transform:uppercase}
+.result-work-label{font-size:10px;letter-spacing:.3em;color:rgba(255,229,0,.9);text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .result-work-name{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(24px,6vw,36px);color:var(--kin);letter-spacing:-.02em;
+  font-size:clamp(24px,6vw,36px);color:#fff;letter-spacing:-.02em;
+  text-shadow:0 2px 8px rgba(0,0,0,.9);
 }
-.result-work-sub{font-size:15px;color:rgba(255,255,255,.65);letter-spacing:.06em}
+.result-work-sub{font-size:15px;color:rgba(255,255,255,.85);letter-spacing:.06em;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 
 /* KIN 이미지 결과 (작품 없을 때) */
 .result-kin-wrap{
@@ -722,9 +730,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 </div>
 
+<div id="quiz-bg" style="display:none"><img id="quiz-bg-img" src="" alt=""></div>
+
 <!-- ══════ QUIZ ══════ -->
 <div class="page" id="page-quiz">
-  <div id="quiz-bg"><img id="quiz-bg-img" src="" alt=""></div>
   <div class="quiz-progress" id="quiz-progress"></div>
   <div class="quiz-top">
     <div class="quiz-top-left">
@@ -822,14 +831,12 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const API_URL  = 'https://kin-agent-production.up.railway.app';
 const JIKAN    = 'https://api.jikan.moe/v4';
 
-// KIN 이미지 경로 (public/)
-const KIN_BASE = 'https://kin-ui-six.vercel.app';
 const KIN_IMGS = {
-  excited:  `${KIN_BASE}/kin_excited.webp`,
-  happy:    `${KIN_BASE}/kin_happy.webp`,
-  thinking: `${KIN_BASE}/kin_thinking1.webp`,
-  serious:  `${KIN_BASE}/kin_serious.webp`,
-  sad:      `${KIN_BASE}/kin_sad.webp`,
+  excited:  './assets/kin_excited.webp',
+  happy:    './assets/kin_happy.webp',
+  thinking: './assets/kin_thinking1.webp',
+  serious:  './assets/kin_serious.webp',
+  sad:      './assets/kin_sad.webp',
 };
 
 // ═══════════════════════════════════════════
@@ -1179,6 +1186,7 @@ function showPage(id) {
   document.getElementById(id).classList.add('active');
   state.phase = id.replace('page-','');
   document.getElementById('grain').style.opacity = id==='page-landing' ? '0' : '';
+  document.getElementById('quiz-bg').style.display = id==='page-quiz' ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════

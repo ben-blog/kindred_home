@@ -16,6 +16,13 @@ body{
   background:#080806;
   font-family:'DM Mono',monospace;color:#fff;
   overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+/* Syne 합성 방지 — 짜부라짐 해결 */
+.landing-title,.result-score,.result-work-name,.h-name,.quiz-counter{
+  font-synthesis:none;
+  text-rendering:geometricPrecision;
 }
 :root{
   --kin:#FFE500;
@@ -285,7 +292,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #page-quiz{gap:0}
 
 /* 진행 바 */
-.quiz-progress{display:flex;gap:4px;margin-bottom:32px}
+.quiz-progress{display:flex;gap:4px;margin-bottom:24px}
 .prog-dot{
   flex:1;height:4px;border-radius:2px;
   background:rgba(255,255,255,.12);
@@ -298,10 +305,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .prog-dot.current     {background:rgba(255,229,0,.55);transform:scaleY(1.6)}
 
 /* 상단 메타 */
-.quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
 .quiz-top-left{display:flex;gap:10px;align-items:center}
 
-.format-badge{font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:5px 11px}
+.format-badge{font-size:11px;letter-spacing:.15em;text-transform:uppercase;padding:7px 14px;border-radius:2px}
 .format-badge.work      {background:rgba(255,229,0,.2);      color:#FFE500}
 .format-badge.character {background:rgba(96,165,250,.2);     color:#93C5FD}
 .format-badge.outlier   {background:rgba(196,181,253,.2);    color:#C4B5FD}
@@ -314,13 +321,18 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .diff-dot.on-mid {background:#60A5FA}
 .diff-dot.on-hard{background:#F87171}
 
-.quiz-counter{font-size:12px;letter-spacing:.15em;color:rgba(255,255,255,.45)}
+.quiz-counter{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(26px,7vw,34px);
+  letter-spacing:-.03em;line-height:1;
+  color:rgba(255,255,255,.55);
+}
 
 /* 질문 */
 .quiz-question{
   font-size:clamp(15px,4vw,18px);line-height:1.9;
   color:#fff;
-  margin-bottom:32px;min-height:72px;
+  margin-bottom:28px;min-height:72px;
 }
 /* 등장 애니메이션 */
 .quiz-question.enter-fade {animation:q-fade .35s ease forwards}
@@ -331,9 +343,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 @keyframes q-side{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
 
 /* 선택지 */
-.choices{display:flex;flex-direction:column;gap:10px}
+.choices{display:flex;flex-direction:column;gap:12px}
 .choice-btn{
-  width:100%;min-height:58px;padding:16px 18px;
+  width:100%;min-height:58px;padding:18px 20px;
   text-align:left;
   background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.14);
@@ -392,16 +404,39 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 @keyframes stagger-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
 
-/* KIN 반응 */
+/* KIN 반응 — 말풍선 스타일 */
 .kin-reaction{
-  margin-top:24px;padding:16px 18px;
-  border-left:3px solid rgba(255,229,0,.55);
-  font-size:14px;color:#FFE500;line-height:1.8;
-  min-height:52px;
+  margin-top:20px;
+  display:flex;gap:12px;align-items:flex-start;
   opacity:0;
   transition:opacity .3s;
 }
 .kin-reaction.show{opacity:1}
+.kin-rxn-avatar{
+  width:42px;height:42px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;
+  border:1.5px solid rgba(255,229,0,.35);
+  background:rgba(255,229,0,.06);
+}
+.kin-rxn-bubble{
+  position:relative;
+  flex:1;
+  padding:12px 16px;
+  background:rgba(255,229,0,.06);
+  border:1px solid rgba(255,229,0,.3);
+  border-radius:0 8px 8px 8px;
+  font-size:14px;color:#FFE500;line-height:1.8;
+  min-height:48px;word-break:keep-all;
+}
+.kin-rxn-bubble::before{
+  content:'';
+  position:absolute;
+  left:-7px;top:12px;
+  width:0;height:0;
+  border-top:6px solid transparent;
+  border-bottom:6px solid transparent;
+  border-right:7px solid rgba(255,229,0,.3);
+}
 
 .btn-next{
   margin-top:24px;align-self:flex-end;
@@ -511,10 +546,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     padding:72px 18px 48px;
     padding-bottom:max(48px,calc(env(safe-area-inset-bottom)+48px));
   }
-  .quiz-question{font-size:15px;margin-bottom:24px}
-  .choice-btn{min-height:60px;font-size:14px;padding:15px 15px}
+  .quiz-question{font-size:15px;margin-bottom:22px}
+  .choice-btn{min-height:60px;font-size:14px;padding:16px 16px}
   .landing-title{line-height:1}
-  .kin-reaction{font-size:13px}
+  .kin-reaction{margin-top:16px}
+  .kin-rxn-avatar{width:36px;height:36px}
+  .kin-rxn-bubble{font-size:13px;padding:10px 14px}
 }
 
 /* ── reduced motion ── */
@@ -612,7 +649,10 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
   <div class="quiz-question" id="q-question"></div>
   <div class="choices" id="q-choices"></div>
-  <div class="kin-reaction" id="kin-reaction"></div>
+  <div class="kin-reaction" id="kin-reaction">
+    <img class="kin-rxn-avatar" id="kin-rxn-avatar" src="" alt="KIN">
+    <div class="kin-rxn-bubble" id="kin-rxn-bubble"></div>
+  </div>
   <button class="btn-next" id="btn-next">다음 →</button>
 </div>
 
@@ -1080,11 +1120,30 @@ function haptic(type) {
 }
 
 // ═══════════════════════════════════════════
+// KIN 반응 아바타 이미지 선택
+// ═══════════════════════════════════════════
+function getKinRxnImg(isCorrect, difficulty, isStreak) {
+  if(isStreak) return KIN_IMGS.excited;
+  if(isCorrect) {
+    return difficulty==='hard' ? KIN_IMGS.excited
+         : difficulty==='mid'  ? KIN_IMGS.happy
+         :                       KIN_IMGS.thinking;
+  } else {
+    return difficulty==='easy' ? KIN_IMGS.sad
+         : difficulty==='mid'  ? KIN_IMGS.serious
+         :                       KIN_IMGS.thinking;
+  }
+}
+
+// ═══════════════════════════════════════════
 // 타이핑 이펙트
 // ═══════════════════════════════════════════
 function typeText(el, text, speed=28) {
   el.textContent='';
-  el.classList.add('show');
+  // 말풍선 구조: 부모 .kin-reaction에 show 클래스
+  const parent = el.closest('.kin-reaction');
+  if(parent) parent.classList.add('show');
+  else el.classList.add('show');
   let i=0;
   const tick=()=>{ if(i<text.length){el.textContent+=text[i++];setTimeout(tick,speed);} };
   tick();
@@ -1117,7 +1176,8 @@ function renderQuestion() {
   }
 
   // counter
-  document.getElementById('q-counter').textContent=`${state.currentIndex+1} / ${state.questions.length}`;
+  const counterEl = document.getElementById('q-counter');
+  counterEl.innerHTML = `<span style="color:rgba(255,255,255,.85)">${state.currentIndex+1}</span><span style="font-size:.55em;letter-spacing:.02em;color:rgba(255,255,255,.35);margin-left:2px"> / ${state.questions.length}</span>`;
 
   // question — 난이도별 등장 방식
   const qEl = document.getElementById('q-question');
@@ -1146,7 +1206,11 @@ function renderQuestion() {
 
   // KIN 반응 초기화
   const rxn=document.getElementById('kin-reaction');
-  rxn.textContent=''; rxn.classList.remove('show');
+  const bubble=document.getElementById('kin-rxn-bubble');
+  if(bubble) bubble.textContent='';
+  const avatar=document.getElementById('kin-rxn-avatar');
+  if(avatar) avatar.src='';
+  rxn.classList.remove('show');
 
   // 다음 버튼
   const btnNext=document.getElementById('btn-next');
@@ -1193,7 +1257,10 @@ function selectAnswer(selected) {
     rxnText = getRxn(isCorrect, q.difficulty);
   }
 
-  const rxnEl = document.getElementById('kin-reaction');
+  const isStreakReaction = isCorrect && state.streak>=3;
+  const rxnEl = document.getElementById('kin-rxn-bubble') || document.getElementById('kin-reaction');
+  const avatarEl = document.getElementById('kin-rxn-avatar');
+  if(avatarEl) avatarEl.src = getKinRxnImg(isCorrect, q.difficulty, isStreakReaction);
   typeText(rxnEl, rxnText, 25);
 
   // 다음 버튼

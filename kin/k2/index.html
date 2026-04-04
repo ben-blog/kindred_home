@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
 <title>KIN의 만화방</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=block" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 /* iOS 탭 하이라이트 제거 */
@@ -22,7 +22,8 @@ body{
 /* Syne 합성 방지 — 짜부라짐 해결 */
 .landing-title,.result-score,.result-work-name,.h-name,.quiz-counter{
   font-synthesis:none;
-  text-rendering:geometricPrecision;
+  font-optical-sizing:none;
+  -webkit-font-smoothing:antialiased;
 }
 :root{
   --kin:#FFE500;
@@ -177,18 +178,33 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   letter-spacing:.04em;
   margin-bottom:10px;
 }
-/* 일본어 이미지 */
-.landing-jp-img{
-  display:block;
-  width:min(85%, 420px);
-  height:auto;
-  opacity:.8;
-  margin-top:4px;
-  animation:meme-blink 3s ease-in-out infinite;
+/* 마퀴 애니메이션 */
+.landing-marquee{
+  position:relative;z-index:1;
+  overflow:hidden;
+  margin-top:6px;margin-bottom:2px;
+  border-radius:2px;
 }
-@keyframes meme-blink{
-  0%,80%,100%{opacity:.45}
-  90%{opacity:.9}
+.landing-marquee-track{
+  display:flex;white-space:nowrap;
+  animation:mq-scroll 14s linear infinite;
+}
+.landing-marquee-text{
+  font-size:13px;letter-spacing:.18em;
+  padding:9px 32px;
+  flex-shrink:0;
+  animation:mq-rainbow 8s linear infinite;
+}
+@keyframes mq-scroll{
+  from{transform:translateX(0)}
+  to  {transform:translateX(-50%)}
+}
+@keyframes mq-rainbow{
+  0%  {background:hsl(0,75%,38%);  color:hsl(180,100%,68%)}
+  25% {background:hsl(90,65%,28%); color:hsl(270,100%,78%)}
+  50% {background:hsl(180,65%,28%);color:hsl(0,100%,68%)}
+  75% {background:hsl(270,65%,30%);color:hsl(90,100%,68%)}
+  100%{background:hsl(360,75%,38%);color:hsl(180,100%,68%)}
 }
 
 /* 장르 태그 */
@@ -244,6 +260,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .preview-choice.is-answer{
   color:#FFE500;border-color:rgba(255,229,0,.3);
   background:rgba(255,229,0,.08);font-weight:700;
+}
+
+/* 타이틀 이미지 */
+.landing-title-img{
+  position:relative;z-index:1;
+  display:block;
+  width:min(90%,420px);
+  height:auto;
+  margin-bottom:20px;
 }
 
 /* 하단 */
@@ -599,7 +624,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <div class="landing-hero">
     <div class="landing-title">KIN과 함께하는<br>만화퀴즈</div>
     <div class="landing-genre-label" id="landing-genre-label">일본 만화 · 애니 퀴즈</div>
-    <img class="landing-jp-img" src="./assets/manga_quiz.webp" alt="お前はもう解いている">
+    <div class="landing-marquee">
+      <div class="landing-marquee-track">
+        <span class="landing-marquee-text">お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; </span>
+        <span class="landing-marquee-text" aria-hidden="true">お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; </span>
+      </div>
+    </div>
   </div>
 
   <!-- 장르 태그 -->
@@ -611,12 +641,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <span class="gtag gtag-relation">관계</span>
   </div>
 
-  <!-- 미리보기 문제 카드 -->
-  <div class="preview-card" id="preview-card">
-    <div class="preview-label">이런 문제가 나와</div>
-    <div class="preview-q" id="preview-q">불러오는 중...</div>
-    <div class="preview-choices" id="preview-choices"></div>
-  </div>
+  <!-- 타이틀 이미지 -->
+  <img class="landing-title-img" src="./assets/title_image.png" alt="">
 
   <!-- 하단 -->
   <div class="landing-foot">
@@ -630,6 +656,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       <span class="btn-start-text">도전하기</span>
       <span class="btn-start-arrow">→</span>
     </button>
+    <div style="height:max(48px,env(safe-area-inset-bottom))"></div>
   </div>
 </div>
 
@@ -1619,9 +1646,8 @@ function applyLandingLang() {
 (async()=>{
   setLang(lang);
   applyLandingLang();
-  // 초기 랜딩 상태 설정
   const $loading=document.getElementById('loading');
-  await Promise.all([loadTotalCount(), loadTodayCount(), loadPreview()]);
+  await Promise.all([loadTotalCount(), loadTodayCount()]);
   $loading.style.opacity='0';
   setTimeout(()=>{ $loading.style.display='none'; },400);
 })();

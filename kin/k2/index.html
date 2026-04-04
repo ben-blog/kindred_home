@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
-<title>KIN의 만화방</title>
+<title>KIN의 만화퀴즈</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=block" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -232,36 +232,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .gtag-author    {background:rgba(253,186,116,.18);color:#FDBA74; border:1px solid rgba(253,186,116,.3)}
 .gtag-relation  {background:rgba(52,211,153,.18); color:#6EE7B7; border:1px solid rgba(52,211,153,.3)}
 
-/* 미리보기 문제 카드 */
-.preview-card{
-  position:relative;z-index:1;
-  padding:18px 20px;
-  border:1px solid rgba(255,229,0,.18);
-  background:rgba(255,229,0,.04);
-  margin-bottom:24px;
-  cursor:pointer;
-  transition:border-color .2s,background .2s;
-}
-.preview-card:hover{border-color:rgba(255,229,0,.4);background:rgba(255,229,0,.08)}
-.preview-label{
-  font-size:9px;letter-spacing:.28em;color:rgba(255,229,0,.5);
-  text-transform:uppercase;margin-bottom:10px;
-}
-.preview-q{
-  font-size:13px;line-height:1.75;color:rgba(255,255,255,.8);
-  margin-bottom:12px;
-}
-.preview-choices{display:flex;flex-direction:column;gap:5px}
-.preview-choice{
-  font-size:11px;color:rgba(255,255,255,.38);
-  padding:5px 10px;border:1px solid rgba(255,255,255,.08);
-  border-radius:2px;
-}
-.preview-choice.is-answer{
-  color:#FFE500;border-color:rgba(255,229,0,.3);
-  background:rgba(255,229,0,.08);font-weight:700;
-}
-
 /* 타이틀 이미지 */
 .landing-title-img{
   position:relative;z-index:1;
@@ -322,6 +292,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   filter:blur(14px) brightness(.18);
   transform:scale(1.08);
   display:block;
+  will-change:transform;
 }
 /* 퀴즈 컨텐츠 — 배경 위로 */
 #page-quiz .quiz-progress,
@@ -404,7 +375,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* hover — 마우스 있는 기기에서만 */
 @media(hover:hover){
   .h-back:hover{color:var(--kin)}
-  .preview-card:hover{border-color:rgba(255,229,0,.4);background:rgba(255,229,0,.08)}
   .btn-start:hover::before{transform:translateX(100%)}
   .btn-start:hover{opacity:.88}
   .choice-btn:hover:not(:disabled){
@@ -674,14 +644,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* ── reduced motion ── */
 @media(prefers-reduced-motion:reduce){
   .choice-btn,.quiz-question,#streak-glow,.streak-particle,
-  .speedlines,.manga-gate,.gtag,.btn-start-arrow{
+  .speedlines,.manga-gate,.gtag,.btn-start-arrow,
+  .landing-marquee-track,.landing-marquee-text,#quiz-bg img{
     animation:none!important;transition:none!important
   }
 }
 /* flash screen */
 @keyframes flash-fade{0%{opacity:1}100%{opacity:0}}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preload" as="image" href="./assets/bg/bg1.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 </head>
 <body>
 <div id="grain" style="opacity:0"></div>
@@ -710,9 +682,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <img class="speedlines" src="./assets/speedlines.webp" alt="">
     <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
   </div>
-  <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
-
-  <!-- 상단 라벨 -->
   <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
   <div class="landing-hero">
     <div class="landing-title">KIN과 함께하는<br>만화퀴즈</div>
@@ -1107,7 +1076,8 @@ const state = {
   phase:'landing', questions:[], currentIndex:0,
   answers:[], score:0, streak:0,
   sessionKey:crypto.randomUUID(), answered:false,
-  resultPattern:null, resultObs:null, // 캐시: 화면 표시와 공유 텍스트 일치
+  resultPattern:null, resultObs:null,
+  topWork:null,
 };
 
 // ═══════════════════════════════════════════
@@ -1477,6 +1447,8 @@ async function showResult() {
   state.resultObs     = getObs(state.resultPattern);
   document.getElementById('result-observation-text').textContent = state.resultObs;
 
+  const obsMood = state.score>=9?'excited':state.score>=7?'happy':state.score>=5?'thinking':state.score>=3?'serious':'sad';
+
   // 가장 잘 아는 작품 계산 (2문제+ 중 정답률 높은 순)
   const workScore={};
   state.answers.forEach(a=>{
@@ -1497,6 +1469,7 @@ async function showResult() {
 
   if(topEntry) {
     const [workName, wData] = topEntry;
+    state.topWork = { name: workName, ...wData };
     document.getElementById('result-work-card').style.display='block';
     document.getElementById('result-kin-card').style.display='none';
     document.getElementById('result-work-name').textContent = workName;
@@ -1513,17 +1486,13 @@ async function showResult() {
       } catch{}
     }
   } else {
+    state.topWork = null;
     document.getElementById('result-work-card').style.display='none';
     document.getElementById('result-kin-card').style.display='flex';
-    const scoreN = state.score;
-    const mood = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
-    document.getElementById('result-kin-img').src = KIN_IMGS[mood];
-    document.getElementById('result-kin-text').textContent = `${scoreN} / 10`;
+    document.getElementById('result-kin-img').src = KIN_IMGS[obsMood];
+    document.getElementById('result-kin-text').textContent = `${state.score} / 10`;
   }
 
-  // KIN 관찰 섹션 얼굴 이미지
-  const scoreN = state.score;
-  const obsMood = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
   document.getElementById('result-obs-avatar').src = KIN_IMGS[obsMood];
 
   // 틀린 문제
@@ -1575,19 +1544,19 @@ async function saveSession(pattern) {
           ])
         ),
       }),
-    }).catch(()=>{});
-
-    // KIN 에이전트 이벤트
-    await fetch(`${API_URL}/api/kin/event`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        service:'k2_manga',
-        event_type:'quiz_completed',
-        payload:{ count:1, lang, result_pattern:pattern },
-      }),
-    }).catch(()=>{});
+    });
   } catch{}
+
+  // KIN 에이전트 이벤트 (fire-and-forget)
+  fetch(`${API_URL}/api/kin/event`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      service:'k2_manga',
+      event_type:'quiz_completed',
+      payload:{ count:1, lang, result_pattern:pattern },
+    }),
+  }).catch(()=>{});
 }
 
 // ═══════════════════════════════════════════
@@ -1652,17 +1621,15 @@ document.getElementById('btn-share-save').addEventListener('click', () => {
 // 공유하기 (네이티브)
 document.getElementById('btn-share-native').addEventListener('click', async () => {
   if(!shareBlob) return;
-  const obs = state.resultObs || '';
   const file = new File([shareBlob], 'kin-quiz.png', { type: 'image/png' });
   try {
     if(navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: 'KIN의 만화퀴즈',
-        text: lang==='ko' ? `${state.score}/10 — kinxdred.com/kin/k2` : `${state.score}/10 — kinxdred.com/kin/k2`,
+        text: `${state.score}/10 — kinxdred.com/kin/k2`,
       });
     } else {
-      // 이미지 공유 불가 시 URL만
       await navigator.share({ title:'KIN의 만화퀴즈', url:'https://kinxdred.com/kin/k2' });
     }
   } catch {}
@@ -1680,7 +1647,7 @@ document.getElementById('btn-retry').addEventListener('click',()=>{
   Object.assign(state,{
     questions:[],currentIndex:0,answers:[],
     score:0,streak:0,sessionKey:crypto.randomUUID(),answered:false,
-    resultPattern:null,resultObs:null,
+    resultPattern:null,resultObs:null,topWork:null,
   });
   startQuiz(); // startQuiz 내부에서 lockLang 호출
 });
@@ -1735,72 +1702,11 @@ function applyResultLang() {
   if(workLabel) workLabel.textContent = isEn ? 'You know this one' : '가장 잘 아는 작품';
   // work-sub 재계산
   const sub = el('result-work-sub');
-  if(sub && state.answers.length > 0) {
-    const wc={};
-    state.answers.forEach(a=>{
-      const w=a.source_work||'?';
-      if(!wc[w]) wc[w]={total:0,correct:0};
-      wc[w].total++;
-      if(a.is_correct) wc[w].correct++;
-    });
-    const top=Object.entries(wc).filter(([,v])=>v.total>=2)
-      .sort(([,a],[,b])=>(b.correct/b.total)-(a.correct/a.total))[0];
-    if(top) {
-      const [,d]=top;
-      sub.textContent = isEn ? `${d.correct} / ${d.total} correct` : `${d.total}문제 중 ${d.correct}개 정답`;
-    }
+  if(sub && state.topWork) {
+    const d = state.topWork;
+    sub.textContent = isEn ? `${d.correct} / ${d.total} correct` : `${d.total}문제 중 ${d.correct}개 정답`;
   }
 }
-// ═══════════════════════════════════════════
-async function loadPreview() {
-  try {
-    // count 파악 후 랜덤 offset
-    const countRes = await fetch(
-      `${SUPA_URL}/rest/v1/quiz_items?is_active=eq.true&difficulty=eq.easy&select=item_id`,
-      { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
-    );
-    const cr = countRes.headers.get('content-range');
-    const total = parseInt(cr?.split('/')[1]||'0', 10);
-    if(total === 0) return;
-    const offset = Math.floor(Math.random() * total);
-    const res = await supaFetch(
-      `quiz_items?is_active=eq.true&difficulty=eq.easy&limit=1&offset=${offset}&order=item_id.asc`,
-      {headers:{Prefer:'return=representation'}}
-    );
-    const item = Array.isArray(res) ? res[0] : res;
-    if(!item) return;
-
-    const q = lang==='ko' ? item.question : (item.question_en||item.question);
-    const choices = lang==='ko'
-      ? item.choices
-      : (item.choices_en||item.choices);
-    const answer = lang==='ko' ? item.answer : (item.answer_en||item.answer);
-
-    document.getElementById('preview-q').textContent =
-      q.length > 60 ? q.slice(0,60)+'…' : q;
-
-    const wrap = document.getElementById('preview-choices');
-    wrap.innerHTML = '';
-    // 정답 포함해서 2개만 표시 (스포일러 방지)
-    const shown = [answer, choices.find(c=>c!==answer)].filter(Boolean);
-    shown.forEach(c => {
-      const div = document.createElement('div');
-      div.className = 'preview-choice' + (c===answer?' is-answer':'');
-      div.textContent = c===answer ? `✓ ${c}` : c;
-      wrap.appendChild(div);
-    });
-    const dots = document.createElement('div');
-    dots.className = 'preview-choice';
-    dots.textContent = '···';
-    wrap.appendChild(dots);
-
-    // 카드 클릭 → 퀴즈 시작
-    document.getElementById('preview-card').addEventListener('click', startQuiz, {once:true});
-  } catch {
-    document.getElementById('preview-card').style.display = 'none';
-  }
-}
-
 // ═══════════════════════════════════════════
 // 랜딩 텍스트 언어 적용
 // ═══════════════════════════════════════════
@@ -1813,7 +1719,6 @@ function applyLandingLang() {
     if(qs('.landing-title'))       qs('.landing-title').innerHTML         = "Manga Quiz<br>with KIN";
     if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = 'Manga · Anime Quiz';
     if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = 'Take the quiz';
-    if(qs('.preview-label'))       qs('.preview-label').textContent       = "here's a taste";
     lp.querySelectorAll('.gtag').forEach((el,i)=>{
       const labels=['setting','character','odd one','author','relation'];
       el.textContent=labels[i]||el.textContent;
@@ -1825,7 +1730,6 @@ function applyLandingLang() {
     if(qs('.landing-title'))       qs('.landing-title').innerHTML         = 'KIN과 함께하는<br>만화퀴즈';
     if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = '일본 만화 · 애니 퀴즈';
     if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = '도전하기';
-    if(qs('.preview-label'))       qs('.preview-label').textContent       = '이런 문제가 나와';
     lp.querySelectorAll('.gtag').forEach((el,i)=>{
       const labels=['설정','캐릭터','아닌것','작가','관계'];
       el.textContent=labels[i]||el.textContent;

@@ -678,10 +678,9 @@ body{
 .sc-header-work{font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.45);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sc-work-img-wrap{
   position:relative;width:100%;height:190px;overflow:hidden;
+  background-size:cover;background-position:center top;
 }
-.sc-work-img-wrap img{
-  width:100%;height:100%;object-fit:cover;object-position:center top;display:block;
-}
+.sc-work-img-wrap img{display:none}
 .sc-work-img-fade{
   position:absolute;bottom:0;left:0;right:0;height:90px;
   background:linear-gradient(to bottom,transparent,var(--bg));
@@ -1650,7 +1649,7 @@ function selectAnswer(selected) {
   // 답변 기록
   state.answers.push({
     item_id: q.item_id, format: q.format, difficulty: q.difficulty,
-    source_work: q.source_work, is_correct: isCorrect,
+    source_work: q.source_work, source_work_en: q.source_work_en, is_correct: isCorrect,
     selected, correct_answer: correct,
   });
 
@@ -1743,7 +1742,10 @@ async function showResult() {
     state.topWork = { name: workName, ...wData };
     document.getElementById('result-work-card').style.display='block';
     document.getElementById('result-kin-card').style.display='none';
-    document.getElementById('result-work-name').textContent = workName;
+    const displayName = lang==='en'
+      ? (state.answers.find(a=>a.source_work===workName)?.source_work_en || workName)
+      : workName;
+    document.getElementById('result-work-name').textContent = displayName;
     document.getElementById('result-work-sub').textContent =
       t(`${wData.total}문제 중 ${wData.correct}개 정답`, `${wData.correct} / ${wData.total} correct`);
     if(wData.mal_id) {
@@ -1886,7 +1888,7 @@ async function generateShareImage() {
     try {
       const coverUrl = await fetchAniListCover(malId);
       if(coverUrl) {
-        await loadImgCORS(document.getElementById('sc-work-img'), coverUrl);
+        imgWrap.style.backgroundImage = `url(${coverUrl})`;
         imgWrap.style.display = 'block';
       }
     } catch{}

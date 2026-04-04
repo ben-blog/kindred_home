@@ -88,7 +88,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   min-height:100dvh;
   padding:80px 24px 72px;
   padding-bottom:max(72px,calc(env(safe-area-inset-bottom)+72px));
-  position:relative;z-index:4; /* manga-bg(2) 위 */
+  position:relative;z-index:1;
   max-width:600px;margin:0 auto;
 }
 .page.active{display:flex;flex-direction:column}
@@ -106,14 +106,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 /* 만화 배경 레이어 — viewport 전체, 랜딩에서만 표시 */
 .manga-bg{
-  position:fixed;
+  position:absolute;
   inset:0;
-  z-index:2; /* diff-overlay(1) 위, page(3) 아래 */
+  z-index:0;
   pointer-events:none;
   overflow:hidden;
-  display:none; /* JS로 랜딩에서만 표시 */
 }
-.manga-bg.visible{ display:block; }
 /* 속도선 */
 .speedlines{
   position:absolute;
@@ -128,7 +126,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   from{transform:rotate(0deg) scale(1.1)}
   to  {transform:rotate(360deg) scale(1.1)}
 }
-/* KIN 이미지 — 오른쪽, 화면 절반 채움 */
+/* KIN 이미지 */
 .manga-gate{
   position:absolute;
   right:0;
@@ -546,22 +544,21 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 </header>
 
-<!-- 만화 배경 — 랜딩 전용, page 밖에서 viewport 전체 -->
-<div class="manga-bg" id="manga-bg" aria-hidden="true">
-  <img class="speedlines" src="./assets/speedlines.webp" alt="">
-  <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
-</div>
-
 <div id="loading"><span id="loading-text">loading</span></div>
 <div id="error-msg"></div>
 
 <!-- ══════ LANDING ══════ -->
 <div class="page active" id="page-landing">
 
-  <!-- 상단 라벨 -->
+  <!-- 만화 배경 — 랜딩 페이지 안에만 -->
+  <div class="manga-bg" id="manga-bg" aria-hidden="true">
+    <img class="speedlines" src="./assets/speedlines.webp" alt="">
+    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
+  </div>
   <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
 
-  <!-- 메인 타이틀 -->
+  <!-- 상단 라벨 -->
+  <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
   <div class="landing-hero">
     <div class="landing-title">KIN과 함께하는<br>만화퀴즈</div>
     <div class="landing-genre-label" id="landing-genre-label">일본 만화 · 애니 퀴즈</div>
@@ -1004,10 +1001,7 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   state.phase = id.replace('page-','');
-  const isLanding = id === 'page-landing';
-  document.getElementById('grain').style.opacity = isLanding ? '0' : '';
-  const mb = document.getElementById('manga-bg');
-  if(mb) mb.style.display = isLanding ? 'block' : 'none';
+  document.getElementById('grain').style.opacity = id==='page-landing' ? '0' : '';
 }
 
 // ═══════════════════════════════════════════
@@ -1558,7 +1552,6 @@ function applyLandingLang() {
   setLang(lang);
   applyLandingLang();
   // 초기 랜딩 상태 설정
-  document.getElementById('manga-bg').style.display = 'block';
   const $loading=document.getElementById('loading');
   await Promise.all([loadTotalCount(), loadTodayCount(), loadPreview()]);
   $loading.style.opacity='0';

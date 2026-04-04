@@ -10,10 +10,9 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 /* iOS 탭 하이라이트 제거 */
 *{-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth}
 body{
   width:100%;min-height:100dvh;
-  background:#080806;
+  background:var(--bg);
   font-family:'DM Mono',monospace;color:#fff;
   overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
@@ -375,9 +374,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 /* hover — 마우스 있는 기기에서만 */
 @media(hover:hover){
-  .h-back:hover{color:var(--kin)}
   .btn-start:hover::before{transform:translateX(100%)}
-  .btn-start:hover{opacity:.88}
   .choice-btn:hover:not(:disabled){
     background:rgba(255,229,0,.1);
     border-color:rgba(255,229,0,.45);
@@ -491,7 +488,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .result-work-bg{
   position:absolute;inset:0;
   background-size:cover;background-position:center 15%;
-  transform:scale(1.0);
 }
 /* 텍스트 가독성용 하단 그라디언트 */
 .result-work-bg::after{
@@ -616,7 +612,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* ── 공유 카드 (캔버스용 숨김 div) ── */
 #share-card{
   position:fixed;left:-9999px;top:-9999px;
-  width:375px;background:#080806;
+  width:375px;background:var(--bg);
   font-family:'DM Mono',monospace;
   overflow:hidden;
 }
@@ -635,7 +631,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .sc-work-img-fade{
   position:absolute;bottom:0;left:0;right:0;height:90px;
-  background:linear-gradient(to bottom,transparent,#080806);
+  background:linear-gradient(to bottom,transparent,var(--bg));
 }
 .sc-kin-section{
   display:flex;gap:14px;align-items:flex-start;
@@ -740,7 +736,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 </header>
 
-<div id="loading"><span id="loading-text">loading</span></div>
+<div id="loading"><span>loading</span></div>
 <div id="error-msg"></div>
 
 <!-- ══════ LANDING ══════ -->
@@ -845,7 +841,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <div class="result-observation">
     <img class="result-obs-avatar" id="result-obs-avatar" src="" alt="KIN">
     <div class="result-obs-content">
-      <div class="result-observation-label" id="result-eyebrow-obs">KIN</div>
+      <div class="result-observation-label">KIN</div>
       <div id="result-observation-text"></div>
     </div>
   </div>
@@ -1263,7 +1259,7 @@ const state = {
   answers:[], score:0, streak:0,
   sessionKey:crypto.randomUUID(), answered:false,
   resultPattern:null, resultObs:null,
-  topWork:null,
+  topWork:null, resultMood:null,
 };
 
 // ═══════════════════════════════════════════
@@ -1635,6 +1631,7 @@ async function showResult() {
   document.getElementById('result-observation-text').textContent = state.resultObs;
 
   const obsMood = state.score>=9?'excited':state.score>=7?'happy':state.score>=5?'thinking':state.score>=3?'serious':'sad';
+  state.resultMood = obsMood;
 
   // 가장 잘 아는 작품 계산 (2문제+ 중 정답률 높은 순)
   const workScore={};
@@ -1781,15 +1778,14 @@ function loadImgCORS(img, src) {
 let shareBlob = null;
 
 async function generateShareImage() {
-  const obs    = state.resultObs || getObs(state.resultPattern || 'random');
-  const scoreN = state.score;
-  const mood   = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
+  const obs  = state.resultObs || getObs(state.resultPattern || 'random');
+  const mood = state.resultMood || 'thinking';
 
   // KIN 얼굴 + 말풍선 + 점수
   document.getElementById('sc-kin-face').src  = KIN_IMGS[mood];
   document.getElementById('sc-bubble').textContent = `"${obs}"`;
-  document.getElementById('sc-score-num').textContent = scoreN;
-  document.getElementById('sc-bar').style.width = `${scoreN * 10}%`;
+  document.getElementById('sc-score-num').textContent = state.score;
+  document.getElementById('sc-bar').style.width = `${state.score * 10}%`;
 
   // 작품 이미지 처리
   const imgWrap  = document.getElementById('sc-work-img-wrap');
@@ -1890,7 +1886,7 @@ document.getElementById('btn-retry').addEventListener('click',()=>{
   Object.assign(state,{
     questions:[],currentIndex:0,answers:[],
     score:0,streak:0,sessionKey:crypto.randomUUID(),answered:false,
-    resultPattern:null,resultObs:null,topWork:null,
+    resultPattern:null,resultObs:null,topWork:null,resultMood:null,
   });
   startQuiz(); // startQuiz 내부에서 lockLang 호출
 });

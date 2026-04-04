@@ -101,6 +101,138 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   vertical-align:middle;margin-left:2px;animation:cb .85s step-end infinite;
 }
 @keyframes cb{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ════════════════════════════════════════
+   SERVICE MENUS — PC (pointer:fine)
+════════════════════════════════════════ */
+@media(pointer:fine){
+  /* sl-kin/sl-dred 대신 v-menu가 역할 대체 */
+  #sl-kin,#sl-dred{display:none}
+
+  .v-menu{
+    position:fixed;top:50%;z-index:45;
+    display:flex;flex-direction:column;align-items:center;gap:0;
+    opacity:0;pointer-events:none;
+    transition:opacity 1.2s ease;
+  }
+  #kin-vmenu{left:5vw;transform:translateY(-50%)}
+  #dred-vmenu{right:5vw;transform:translateY(-50%)}
+  .v-menu.worlds{opacity:1;pointer-events:all}
+
+  .vm-char{
+    font-family:'Syne',sans-serif;font-weight:800;
+    font-size:10px;letter-spacing:.08em;
+    writing-mode:vertical-lr;padding-bottom:10px;
+  }
+  .vm-char-kin{color:rgba(255,232,0,.55);transform:rotate(180deg)}
+  .vm-char-dred{color:rgba(91,79,207,.55)}
+  .vm-line{width:1px;height:12px;background:rgba(255,255,255,.08);margin:2px 0}
+  .vm-item{
+    writing-mode:vertical-lr;
+    font-size:7.5px;letter-spacing:.28em;text-transform:uppercase;
+    padding:8px 4px;cursor:pointer;transition:opacity .2s;
+  }
+  .vm-item-kin{color:rgba(255,232,0,.45);transform:rotate(180deg)}
+  .vm-item-dred{color:rgba(91,79,207,.45)}
+  .vm-item:hover{opacity:1!important}
+  .vm-item.vm-dimmed{opacity:.15!important}
+
+  /* 호버 카드 — pointer-events:all 항상 (hover bridge) */
+  .h-card{position:fixed;top:50%;z-index:44;transform:translateY(-50%);pointer-events:all;opacity:0;}
+  .h-card-kin{
+    left:calc(5vw + 30px);
+    transform:translateY(-50%) translateX(-16px);
+    transition:opacity .55s ease,transform .65s cubic-bezier(.16,1,.3,1);
+  }
+  .h-card-kin.on{opacity:1;transform:translateY(-50%) translateX(0)}
+  .h-card-dred{
+    right:calc(5vw + 30px);
+    transform:translateY(-50%) translateX(12px);
+    transition:opacity .12s ease,transform .14s cubic-bezier(.16,1,.3,1);
+  }
+  .h-card-dred.on{opacity:1;transform:translateY(-50%) translateX(0)}
+
+  .card-kin-inner{
+    background:rgba(10,9,3,.94);border:1px solid rgba(255,229,0,.20);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    padding:16px 20px;min-width:188px;
+  }
+  .card-kin-tag{font-size:7px;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,232,0,.38);margin-bottom:6px}
+  .card-kin-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em;color:#FFE800;margin-bottom:8px}
+  .card-kin-cta{font-size:8px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,232,0,.45)}
+
+  .card-dred-inner{
+    background:rgba(4,3,16,.94);border:1px solid rgba(91,79,207,.20);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    padding:20px 24px;text-align:right;
+  }
+  .card-dred-name{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.02em;color:#5B4FCF}
+  .card-dred-tag{font-size:7px;letter-spacing:.32em;text-transform:uppercase;color:rgba(91,79,207,.32);margin-top:4px}
+}
+
+/* ════════════════════════════════════════
+   BOTTOM SHEETS — 공통 (mobile에서 주로 사용)
+════════════════════════════════════════ */
+#sheet-dim{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(0,0,0,0);pointer-events:none;
+  transition:background .38s ease;
+}
+#sheet-dim.on{background:rgba(0,0,0,.78);pointer-events:all}
+
+#lp-ring{
+  position:fixed;z-index:62;pointer-events:none;
+  opacity:0;transition:opacity .15s;width:80px;height:80px;
+}
+
+.sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:61;
+  transform:translateY(100%);pointer-events:none;
+  transition:transform .42s cubic-bezier(.16,1,.3,1);
+}
+.sheet.open{transform:translateY(0);pointer-events:all}
+.sheet-handle{display:flex;justify-content:center;padding:14px 0 10px}
+.handle-bar{width:36px;height:3px;border-radius:2px;background:rgba(255,255,255,.15)}
+
+#kin-sheet-inner{
+  background:rgba(10,9,3,.97);border-radius:16px 16px 0 0;
+  border-top:1px solid rgba(255,229,0,.18);padding-bottom:48px;
+}
+#kin-sheet-line{
+  padding:4px 26px 18px;font-size:13px;letter-spacing:.03em;
+  line-height:1.7;color:rgba(255,229,0,.82);min-height:44px;
+}
+#kin-sheet-cursor{
+  display:inline-block;width:5px;height:12px;
+  background:rgba(255,229,0,.65);vertical-align:middle;margin-left:2px;
+  animation:cb .85s step-end infinite;
+}
+.kin-sheet-divider{height:1px;background:rgba(255,229,0,.08);margin:0 26px 4px}
+.ks-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 26px;cursor:pointer;transition:background .15s;
+}
+.ks-item:active{background:rgba(255,229,0,.04)}
+.ks-item-left{display:flex;flex-direction:column;gap:3px}
+.ks-item-tag{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,229,0,.35)}
+.ks-item-name{font-size:14px;letter-spacing:.01em;color:rgba(255,255,255,.85)}
+.ks-item-arrow{color:rgba(255,229,0,.35);font-size:13px;flex-shrink:0}
+.ks-item:active .ks-item-arrow{color:rgba(255,229,0,.8)}
+
+#dred-sheet-inner{
+  background:rgba(4,3,16,.97);border-radius:16px 16px 0 0;
+  border-top:1px solid rgba(91,79,207,.22);padding-bottom:48px;
+}
+.ds-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 26px;cursor:pointer;transition:background .15s;
+  border-bottom:1px solid rgba(91,79,207,.07);
+}
+.ds-item:last-child{border-bottom:none}
+.ds-item:active{background:rgba(91,79,207,.06)}
+.ds-item-name{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.02em;color:#5B4FCF}
+.ds-item-arrow{color:rgba(91,79,207,.28);font-size:13px}
+.ds-item:active .ds-item-arrow{color:rgba(91,79,207,.8)}
 </style>
 </head>
 <body>
@@ -113,6 +245,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 <img id="dred-char" src="./dred_default2.webp" alt="DRED" draggable="false">
 <div id="kin-zone"></div>
 <div id="dred-zone"></div>
+
+<!-- ── SERVICE MENUS (PC) ── -->
+<div class="v-menu" id="kin-vmenu"></div>
+<div class="v-menu" id="dred-vmenu"></div>
+<div id="h-cards-root"></div>
+
+<!-- ── LONGPRESS RING (mobile) ── -->
+<canvas id="lp-ring" width="80" height="80"></canvas>
+
+<!-- ── SHEET DIM ── -->
+<div id="sheet-dim"></div>
+
+<!-- ── KIN SHEET ── -->
+<div class="sheet" id="kin-sheet">
+  <div id="kin-sheet-inner">
+    <div class="sheet-handle"><div class="handle-bar"></div></div>
+    <div id="kin-sheet-line"><span id="kin-stxt"></span><span id="kin-sheet-cursor"></span></div>
+    <div class="kin-sheet-divider"></div>
+    <div id="kin-sheet-items"></div>
+  </div>
+</div>
+
+<!-- ── DRED SHEET ── -->
+<div class="sheet" id="dred-sheet">
+  <div id="dred-sheet-inner">
+    <div class="sheet-handle"><div class="handle-bar"></div></div>
+    <div id="dred-sheet-items"></div>
+  </div>
+</div>
 <div id="kin-bubble"><div class="bwrap" id="bwrap"><span id="btxt"></span><span id="bcur"></span></div></div>
 <span class="sl" id="sl-kin">KIN</span>
 <span class="sl" id="sl-dred">DRED</span>
@@ -126,7 +287,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 /* ── MOBILE DETECTION ── */
 const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 
-/* 24H skip 제거 — 애니메이션 매번 재생 */
+/* ── LANGUAGE ── */
+const lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
 
 /* ── CURSOR (desktop only) ── */
 const $cur = document.getElementById('cur');
@@ -377,6 +539,7 @@ function doTitleReveal() {
 
 function doWorldsReveal() {
   if (worldsFired) return; worldsFired = true;
+  fetchMainActions(); // DB fetch → buildPC/buildMobile
 }
 
 /* ── WORLD GRADIENT ── */
@@ -910,15 +1073,26 @@ setInterval(syncZones, 120);
 $kinZone.addEventListener('mouseenter', showBubble);
 $kinZone.addEventListener('mouseleave', hideBubble);
 
-// 모바일: tap 판별 후 네비게이션
+// 모바일: 롱프레스(700ms) → 시트, 탭 → 갤러리
 if (IS_TOUCH) {
-  let kinTx0 = 0, kinTy0 = 0;
+  let kinTx0 = 0, kinTy0 = 0, kinMoved = false;
   $kinZone.addEventListener('touchstart', e => {
     kinTx0 = e.touches[0].clientX;
     kinTy0 = e.touches[0].clientY;
+    kinMoved = false;
+    if (activeSheet) return;
     showBubble();
+    startLp(kinTx0, kinTy0);
+  }, {passive:true});
+  $kinZone.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - kinTx0;
+    const dy = e.touches[0].clientY - kinTy0;
+    if (Math.hypot(dx,dy) > 8) { kinMoved = true; cancelLp(); }
   }, {passive:true});
   $kinZone.addEventListener('touchend', e => {
+    const wasLp = lpDone;
+    cancelLp(); lpDone = false;
+    if (activeSheet || wasLp || kinMoved) return;
     const dx = e.changedTouches[0].clientX - kinTx0;
     const dy = e.changedTouches[0].clientY - kinTy0;
     if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
@@ -937,13 +1111,22 @@ $dredZone.addEventListener('mouseenter', () => { dredHovered = true;  });
 $dredZone.addEventListener('mouseleave', () => { dredHovered = false; });
 
 if (IS_TOUCH) {
-  let dredTx0 = 0, dredTy0 = 0;
+  let dredTx0 = 0, dredTy0 = 0, dredSwipeHandled = false;
   $dredZone.addEventListener('touchstart', e => {
     dredTx0 = e.touches[0].clientX;
     dredTy0 = e.touches[0].clientY;
+    dredSwipeHandled = false;
     dredHovered = true;
   }, {passive:true});
+  $dredZone.addEventListener('touchmove', e => {
+    const dy = e.touches[0].clientY - dredTy0;
+    if (dy < -45 && !dredSwipeHandled && !activeSheet) {
+      dredSwipeHandled = true;
+      openSheet('dred');
+    }
+  }, {passive:true});
   $dredZone.addEventListener('touchend', e => {
+    if (dredSwipeHandled || activeSheet) return;
     const dx = e.changedTouches[0].clientX - dredTx0;
     const dy = e.changedTouches[0].clientY - dredTy0;
     if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
@@ -952,6 +1135,286 @@ if (IS_TOUCH) {
       setTimeout(() => { dredHovered = false; }, 800);
     }
   }, {passive:true});
+}
+
+/* ══════════════════════════════════════════════════
+   SERVICE ACTIONS — fetch + PC/Mobile UI
+══════════════════════════════════════════════════ */
+const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
+const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
+
+let mainActions = { kin: [], dred: [] };
+
+async function fetchMainActions() {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/gallery_items?show_on_main=eq.true&is_active=eq.true&order=order_num.asc&select=item_id,character,title_ko,title_en,actions`,
+      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    mainActions.kin  = data.filter(d => d.character === 'kin');
+    mainActions.dred = data.filter(d => d.character === 'dred');
+    buildPC();
+    buildMobile();
+  } catch(e) { console.warn('[main] fetchMainActions:', e); }
+}
+
+/* ── PC: 세로 메뉴 + 호버 카드 ── */
+function buildPC() {
+  if (IS_TOUCH) return;
+  const $km = document.getElementById('kin-vmenu');
+  const $dm = document.getElementById('dred-vmenu');
+  const $cr = document.getElementById('h-cards-root');
+  $km.innerHTML = $dm.innerHTML = $cr.innerHTML = '';
+
+  // KIN 메뉴 — 문자열 누적 후 한 번에 세팅
+  let kmHTML = `<span class="vm-char vm-char-kin">KIN</span>`;
+  mainActions.kin.forEach((item, i) => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    kmHTML += `<div class="vm-line"></div>
+      <div class="vm-item vm-item-kin" data-card="hc-kin-${i}" data-url="${a.url}"
+        style="opacity:${i===0?.65:.48}">${a.label}</div>`;
+  });
+  $km.innerHTML = kmHTML;
+
+  // DRED 메뉴
+  let dmHTML = `<span class="vm-char vm-char-dred">DRED</span>`;
+  mainActions.dred.forEach((item, i) => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    dmHTML += `<div class="vm-line"></div>
+      <div class="vm-item vm-item-dred" data-card="hc-dred-${i}" data-url="${a.url}"
+        style="opacity:${i===0?.65:.48}">${a.label}</div>`;
+  });
+  $dm.innerHTML = dmHTML;
+
+  // KIN 카드
+  mainActions.kin.forEach((item, i) => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    const div = document.createElement('div');
+    div.className = 'h-card h-card-kin';
+    div.id = `hc-kin-${i}`;
+    div.innerHTML = `<div class="card-kin-inner">
+      <div class="card-kin-tag">${item.item_id.split('_')[1]||'kin'}</div>
+      <div class="card-kin-name">${a.label}</div>
+      <div class="card-kin-cta">열어보기 →</div>
+    </div>`;
+    $cr.appendChild(div);
+  });
+
+  // DRED 카드
+  mainActions.dred.forEach((item, i) => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    const div = document.createElement('div');
+    div.className = 'h-card h-card-dred';
+    div.id = `hc-dred-${i}`;
+    div.innerHTML = `<div class="card-dred-inner">
+      <div class="card-dred-name">${a.label}</div>
+      <div class="card-dred-tag">${item.item_id.split('_')[1]||'dred'}</div>
+    </div>`;
+    $cr.appendChild(div);
+  });
+
+  attachPCHoverHandlers();
+
+  // WORLDS 페이즈면 즉시 표시
+  setTimeout(() => {
+    if (getPhase(elapsed).n === 'WORLDS') {
+      $km.classList.add('worlds');
+      $dm.classList.add('worlds');
+    }
+  }, 100);
+}
+
+/* ── PC 호버 핸들러 ── */
+function attachPCHoverHandlers() {
+  let activeCard = null, leaveTimer = null;
+
+  function showCard(cardId) {
+    clearTimeout(leaveTimer);
+    if (activeCard && activeCard !== cardId) {
+      const prev = document.getElementById(activeCard);
+      if (prev) prev.classList.remove('on');
+    }
+    activeCard = cardId;
+    const el = document.getElementById(cardId);
+    if (el) el.classList.add('on');
+    const side = cardId.includes('kin') ? 'kin' : 'dred';
+    document.querySelectorAll(`.vm-item-${side}`).forEach(item => {
+      item.classList.toggle('vm-dimmed', item.dataset.card !== cardId);
+    });
+  }
+
+  function hideCard() {
+    leaveTimer = setTimeout(() => {
+      if (activeCard) {
+        const el = document.getElementById(activeCard);
+        if (el) el.classList.remove('on');
+        activeCard = null;
+      }
+      document.querySelectorAll('.vm-item').forEach(el => el.classList.remove('vm-dimmed'));
+    }, 320);
+  }
+
+  document.querySelectorAll('.vm-item').forEach(el => {
+    el.addEventListener('mouseenter', () => showCard(el.dataset.card));
+    el.addEventListener('mouseleave', hideCard);
+    el.addEventListener('click', () => {
+      if (getPhase(elapsed).n !== 'WORLDS') return;
+      navTo(el.dataset.url);
+    });
+  });
+
+  document.querySelectorAll('.h-card').forEach(card => {
+    card.addEventListener('mouseenter', () => clearTimeout(leaveTimer));
+    card.addEventListener('mouseleave', hideCard);
+    card.addEventListener('click', () => {
+      if (getPhase(elapsed).n !== 'WORLDS') return;
+      const mi = document.querySelector(`.vm-item[data-card="${card.id}"]`);
+      if (mi) navTo(mi.dataset.url);
+    });
+  });
+}
+
+/* ── Mobile: 시트 컨텐츠 빌드 ── */
+const KIN_SHEET_LINES = [
+  '시간 가는 줄 몰랐던 적 있어?',
+  '3년 뒤의 너, 궁금하지 않아?',
+  '뭔가 보여줄게. 잠깐만.',
+];
+let kinLineIdx = 0, sheetTypeTimer = null;
+
+function buildMobile() {
+  if (!IS_TOUCH) return;
+  const $ki = document.getElementById('kin-sheet-items');
+  const $di = document.getElementById('dred-sheet-items');
+  $ki.innerHTML = $di.innerHTML = '';
+
+  mainActions.kin.forEach(item => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    const div = document.createElement('div');
+    div.className = 'ks-item';
+    div.innerHTML = `<div class="ks-item-left">
+      <span class="ks-item-tag">${item.item_id.split('_')[1]||'kin'}</span>
+      <span class="ks-item-name">${a.label}</span>
+    </div><span class="ks-item-arrow">→</span>`;
+    div.addEventListener('touchend', e => {
+      e.stopPropagation(); closeSheet();
+      setTimeout(() => navTo(a.url), 320);
+    }, {passive:true});
+    $ki.appendChild(div);
+  });
+
+  mainActions.dred.forEach(item => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    const div = document.createElement('div');
+    div.className = 'ds-item';
+    div.innerHTML = `<span class="ds-item-name">${a.label}</span>
+      <span class="ds-item-arrow">→</span>`;
+    div.addEventListener('touchend', e => {
+      e.stopPropagation(); closeSheet();
+      setTimeout(() => navTo(a.url), 320);
+    }, {passive:true});
+    $di.appendChild(div);
+  });
+}
+
+/* ── 시트 열기/닫기 ── */
+const $sheetDim = document.getElementById('sheet-dim');
+let activeSheet = null;
+
+function openSheet(who) {
+  if (activeSheet) return;
+  if (getPhase(elapsed).n !== 'WORLDS') return;
+  activeSheet = who;
+  $sheetDim.classList.add('on');
+  document.getElementById(who + '-sheet').classList.add('open');
+  if (who === 'kin') setTimeout(typeSheetLine, 180);
+}
+
+function closeSheet() {
+  if (!activeSheet) return;
+  document.getElementById(activeSheet + '-sheet').classList.remove('open');
+  $sheetDim.classList.remove('on');
+  activeSheet = null;
+}
+
+function typeSheetLine() {
+  const $el = document.getElementById('kin-stxt');
+  if (!$el) return;
+  clearTimeout(sheetTypeTimer);
+  $el.textContent = '';
+  const text = KIN_SHEET_LINES[kinLineIdx++ % KIN_SHEET_LINES.length];
+  const spd = Math.max(30, Math.floor(800 / text.length));
+  let i = 0;
+  (function tick() { $el.textContent = text.slice(0, i++); if (i <= text.length) sheetTypeTimer = setTimeout(tick, spd); })();
+}
+
+$sheetDim.addEventListener('touchend', e => { e.stopPropagation(); closeSheet(); }, {passive:true});
+
+if (IS_TOUCH) {
+  ['kin-sheet','dred-sheet'].forEach(id => {
+    const el = document.getElementById(id);
+    let sy0 = 0, sHandled = false;
+    el.addEventListener('touchstart', e => { sy0 = e.touches[0].clientY; sHandled = false; e.stopPropagation(); }, {passive:true});
+    el.addEventListener('touchmove', e => {
+      e.stopPropagation();
+      const dy = e.touches[0].clientY - sy0;
+      if (dy > 0) e.preventDefault();
+      if (dy > 60 && !sHandled) { sHandled = true; closeSheet(); }
+    }, {passive:false});
+    el.addEventListener('touchend', e => e.stopPropagation(), {passive:true});
+  });
+}
+
+/* ── 롱프레스 링 (KIN mobile) ── */
+const $lpRing = document.getElementById('lp-ring');
+const lpCtx = $lpRing ? $lpRing.getContext('2d') : null;
+const LP_DUR = 700;
+let lpTimer = null, lpStart = null, lpRaf = null, lpDone = false, lpJustFired = false;
+
+function drawLpRing(p) {
+  if (!lpCtx) return;
+  lpCtx.clearRect(0, 0, 80, 80);
+  lpCtx.beginPath(); lpCtx.arc(40, 40, 30, 0, Math.PI * 2);
+  lpCtx.strokeStyle = 'rgba(255,229,0,.12)'; lpCtx.lineWidth = 2; lpCtx.stroke();
+  lpCtx.beginPath(); lpCtx.arc(40, 40, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p);
+  lpCtx.strokeStyle = `rgba(255,229,0,${.45 + p * .45})`; lpCtx.lineWidth = 2.5; lpCtx.stroke();
+}
+
+function lpLoop() {
+  if (!lpStart) return;
+  const p = Math.min((Date.now() - lpStart) / LP_DUR, 1);
+  drawLpRing(p);
+  if (p < 1) lpRaf = requestAnimationFrame(lpLoop);
+}
+
+function startLp(x, y) {
+  lpStart = Date.now(); lpDone = false;
+  if ($lpRing) { $lpRing.style.left=(x-40)+'px'; $lpRing.style.top=(y-40)+'px'; $lpRing.style.opacity='1'; }
+  lpRaf = requestAnimationFrame(lpLoop);
+  lpTimer = setTimeout(() => {
+    lpDone = true;
+    lpJustFired = true;
+    setTimeout(() => { lpJustFired = false; }, 600); // click 이벤트 차단 (iOS ~300ms 딜레이)
+    cancelAnimationFrame(lpRaf);
+    if ($lpRing) $lpRing.style.opacity = '0';
+    lpStart = null;
+    hideBubble();
+    openSheet('kin');
+  }, LP_DUR);
+}
+
+function cancelLp() {
+  clearTimeout(lpTimer); cancelAnimationFrame(lpRaf);
+  if ($lpRing) $lpRing.style.opacity = '0';
+  lpStart = null;
 }
 
 /* ══════════════════════════════════════════════════
@@ -966,6 +1429,7 @@ function navTo(href) {
 }
 
 $kinZone.addEventListener('click', () => {
+  if (lpJustFired) return; // 롱프레스 직후 발화하는 click 차단
   if (getPhase(elapsed).n !== 'WORLDS') return;
   hideBubble();
   navTo('./kin/');

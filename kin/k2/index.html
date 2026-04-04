@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
 <title>KIN의 만화방</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+/* iOS 탭 하이라이트 제거 */
+*{-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 body{
   width:100%;min-height:100dvh;
@@ -18,8 +20,6 @@ body{
 :root{
   --kin:#FFE500;
   --bg:#080806;
-  --correct:#4ADE80;
-  --wrong:#F87171;
 }
 
 /* ── GRAIN ── */
@@ -69,14 +69,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   position:fixed;top:0;left:0;right:0;z-index:100;
   padding:18px 24px;padding-top:max(18px,env(safe-area-inset-top));
   display:flex;justify-content:space-between;align-items:center;
-  background:rgba(8,8,6,.95);backdrop-filter:blur(8px);
+  background:rgba(8,8,6,.95);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   border-bottom:1px solid rgba(255,229,0,.08);
 }
 .h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--kin);letter-spacing:-.01em}
-.h-back{font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.6);text-transform:uppercase;cursor:pointer;transition:color .2s;text-decoration:none}
+.h-back{font-size:11px;letter-spacing:.2em;color:rgba(255,255,255,.6);text-transform:uppercase;cursor:pointer;transition:color .2s;text-decoration:none;padding:12px 4px;min-height:44px;display:flex;align-items:center;}
 .h-back:hover{color:var(--kin)}
 #lang-toggle{display:flex;align-items:center;font-size:11px;letter-spacing:.15em}
-.lt{padding:6px 10px;cursor:pointer;color:rgba(255,255,255,.5);transition:color .2s;user-select:none;border-radius:3px}
+.lt{padding:10px 12px;cursor:pointer;color:rgba(255,255,255,.5);transition:color .2s;user-select:none;border-radius:3px;min-height:44px;display:flex;align-items:center;}
 .lt.active{color:var(--kin)}
 .lt-sep{color:rgba(255,255,255,.25)}
 .lt.disabled{opacity:.25;pointer-events:none}
@@ -126,23 +127,26 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   from{transform:rotate(0deg) scale(1.1)}
   to  {transform:rotate(360deg) scale(1.1)}
 }
-/* KIN 이미지 — 오른쪽 하단 */
+/* KIN 이미지 — 오른쪽 하단, 크게 */
 .manga-gate{
   position:absolute;
-  right:0;
-  bottom:40px;
-  width:min(65vw, 340px);
+  right:-2%;
+  bottom:0;
+  width:min(85vw, 480px);
   height:auto;
   object-fit:contain;
   object-position:right bottom;
-  opacity:.95;
-  mask-image:linear-gradient(to top,transparent 0%,black 12%,black 100%);
-  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 12%,black 100%);
+  opacity:.97;
+  mask-image:linear-gradient(to top,transparent 0%,black 6%,black 100%);
+  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 6%,black 100%);
 }
 
 /* eyebrow — 랜딩과 결과 화면 색상 분리 */
 #page-landing .landing-eyebrow{
-  color:rgba(0,0,0,.45);
+  color:rgba(0,0,0,.5);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.2em;
 }
 #page-result .landing-eyebrow{
   color:rgba(255,229,0,.65);
@@ -151,32 +155,33 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   position:relative;z-index:1;
   font-size:11px;letter-spacing:.28em;
   text-transform:uppercase;
-  margin-bottom:24px;
+  margin-bottom:20px;
 }
 .landing-hero{
   position:relative;z-index:1;
-  margin-bottom:28px;
+  margin-bottom:24px;
 }
 .landing-title{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(36px,10vw,72px);
+  font-size:clamp(38px,10vw,68px);
   color:#080806;
   letter-spacing:-.03em;
-  line-height:1.05;
-  margin-bottom:8px;
+  line-height:1.0;
+  margin-bottom:10px;
 }
 .landing-genre-label{
-  font-size:clamp(13px,3vw,17px);
-  color:rgba(0,0,0,.55);
+  font-size:clamp(15px,3.5vw,20px);
+  font-weight:700;
+  color:rgba(0,0,0,.6);
   letter-spacing:.04em;
   margin-bottom:10px;
 }
 /* 일본어 이미지 */
 .landing-jp-img{
   display:block;
-  width:min(80%, 380px);
+  width:min(85%, 420px);
   height:auto;
-  opacity:.75;
+  opacity:.8;
   margin-top:4px;
   animation:meme-blink 3s ease-in-out infinite;
 }
@@ -246,33 +251,33 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   display:flex;flex-direction:column;gap:14px;
   margin-top:auto;padding-top:4px;
 }
-.today-count{font-size:13px;color:rgba(0,0,0,.65);letter-spacing:.08em}
+.today-count{font-size:14px;font-weight:700;color:rgba(0,0,0,.7);letter-spacing:.06em}
 .landing-meta{display:flex;gap:18px;flex-wrap:wrap}
-.meta-item{font-size:11px;letter-spacing:.12em;color:rgba(0,0,0,.32);text-transform:uppercase}
-.meta-item span{color:#080806;font-weight:700}
+.meta-item{font-size:13px;font-weight:700;letter-spacing:.1em;color:rgba(0,0,0,.4);text-transform:uppercase}
+.meta-item span{color:#080806;font-weight:800}
 
-/* 시작 버튼 */
+/* 시작 버튼 — 검정 */
 .btn-start{
   display:flex;align-items:center;justify-content:space-between;
-  width:100%;padding:18px 24px;
-  background:var(--kin);color:#000;
+  width:100%;padding:20px 24px;
+  background:#080806;color:#FFE500;
   font-family:'DM Mono',monospace;
-  font-size:14px;letter-spacing:.2em;text-transform:uppercase;
+  font-size:15px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
   cursor:pointer;border:none;
   transition:opacity .15s,transform .15s;
   position:relative;overflow:hidden;
 }
 .btn-start::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
   transform:translateX(-100%);transition:transform .5s ease;
 }
 .btn-start:hover::before{transform:translateX(100%)}
-.btn-start:hover{opacity:.92}
+.btn-start:hover{opacity:.88}
 .btn-start:active{transform:scale(.99)}
-.btn-start-text{font-weight:400}
+.btn-start-text{font-weight:700}
 .btn-start-arrow{
-  font-size:20px;
+  font-size:22px;
   animation:arrow-pulse 1.5s ease-in-out infinite;
 }
 @keyframes arrow-pulse{
@@ -341,15 +346,24 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   color:rgba(255,255,255,.88);
   font-family:'DM Mono',monospace;
   font-size:clamp(13px,3.5vw,15px);line-height:1.55;
-  cursor:pointer;
+  cursor:pointer;user-select:none;
   transition:background .15s,border-color .15s,color .15s,transform .15s;
   border-radius:2px;
-  opacity:1;
 }
-.choice-btn:hover:not(:disabled){
-  background:rgba(255,229,0,.1);
-  border-color:rgba(255,229,0,.45);
-  color:#fff;
+/* hover — 마우스 있는 기기에서만 */
+@media(hover:hover){
+  .h-back:hover{color:var(--kin)}
+  .preview-card:hover{border-color:rgba(0,0,0,.3);background:rgba(0,0,0,.07)}
+  .btn-start:hover::before{transform:translateX(100%)}
+  .btn-start:hover{opacity:.88}
+  .choice-btn:hover:not(:disabled){
+    background:rgba(255,229,0,.1);
+    border-color:rgba(255,229,0,.45);
+    color:#fff;
+  }
+  .btn-next:hover{background:rgba(255,229,0,.1);border-color:#FFE500;color:#FFE500}
+  .btn-secondary:hover{border-color:rgba(255,229,0,.5);color:#FFE500}
+  .btn-primary:hover{opacity:.85}
 }
 /* 정답/오답 */
 .choice-btn.correct{
@@ -395,10 +409,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .kin-reaction.show{opacity:1}
 
-/* 다음 버튼 */
 .btn-next{
   margin-top:24px;align-self:flex-end;
-  padding:12px 28px;
+  padding:14px 28px;min-height:44px; /* 터치 타겟 확보 */
   background:transparent;
   border:1px solid rgba(255,229,0,.5);
   color:#FFE500;
@@ -408,7 +421,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   border-radius:2px;
 }
 .btn-next.show{opacity:1;pointer-events:all}
-.btn-next:hover{background:rgba(255,229,0,.1);border-color:#FFE500;color:#FFE500}
 
 /* ═══════════════════════════════
    RESULT
@@ -476,14 +488,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);
   font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   cursor:pointer;transition:all .2s;border-radius:2px;text-decoration:none;display:inline-block;
+  min-height:44px;
 }
-.btn-secondary:hover{border-color:rgba(255,229,0,.5);color:#FFE500}
 .btn-primary{
   padding:12px 22px;background:var(--kin);color:#000;border:none;
   font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   cursor:pointer;transition:opacity .2s;border-radius:2px;
+  min-height:44px;
 }
-.btn-primary:hover{opacity:.85}
 
 /* ── LOADING ── */
 #loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .4s}
@@ -495,12 +507,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   padding:12px 22px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);
   font-size:12px;color:#F87171;letter-spacing:.1em;
-  display:none;z-index:200;white-space:nowrap;
+  display:none;z-index:200;
+  max-width:90vw;text-align:center;word-break:keep-all;
 }
 
 /* ── 모바일 최적화 ── */
 @media(max-width:480px){
-  .page{padding:72px 18px 48px}
+  .page{
+    padding:72px 18px 48px;
+    padding-bottom:max(48px,calc(env(safe-area-inset-bottom)+48px));
+  }
   .quiz-question{font-size:15px;margin-bottom:24px}
   .choice-btn{min-height:60px;font-size:14px;padding:15px 15px}
   .landing-title{line-height:1}
@@ -514,6 +530,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     animation:none!important;transition:none!important
   }
 }
+/* flash screen */
+@keyframes flash-fade{0%{opacity:1}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -524,7 +542,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <!-- HEADER -->
 <header id="header">
   <a class="h-back" href="../index.html">← KIN</a>
-  <div class="h-name">만화방</div>
+  <div class="h-name">만화퀴즈</div>
   <div id="lang-toggle">
     <span class="lt active" data-lang="ko">KO</span>
     <span class="lt-sep"> / </span>
@@ -545,11 +563,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   </div>
 
   <!-- 상단 라벨 -->
-  <div class="landing-eyebrow">KIN의 만화방 — 일본 만화 · 애니 퀴즈</div>
+  <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
 
   <!-- 메인 타이틀 -->
   <div class="landing-hero">
-    <div class="landing-title">KIN의 만화방</div>
+    <div class="landing-title">KIN과 함께하는<br>만화퀴즈</div>
     <div class="landing-genre-label" id="landing-genre-label">일본 만화 · 애니 퀴즈</div>
     <img class="landing-jp-img" src="./assets/manga_quiz.webp" alt="お前はもう解いている">
   </div>
@@ -652,7 +670,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // CONFIG
 // ═══════════════════════════════════════════
 const SUPA_URL = 'https://lmfyspozcmyefgrkgxch.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
+const SUPA_KEY = 'SUPABASE_ANON_KEY_HERE';
 const API_URL  = 'https://kin-agent-production.up.railway.app';
 const JIKAN    = 'https://api.jikan.moe/v4';
 
@@ -944,18 +962,37 @@ async function loadTotalCount() {
 }
 
 // ═══════════════════════════════════════════
-// 문제 로드
+// 문제 로드 (슬롯별 count 배치 → offset 랜덤 병렬 fetch)
 // ═══════════════════════════════════════════
-async function loadQuestions() {
-  const results = await Promise.all(
-    SLOTS.map(slot =>
-      supaFetch(
-        `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&order=random()`,
-        {headers:{Prefer:'return=representation'}}
-      ).catch(()=>null)
-    )
+async function getSlotCount(format, difficulty) {
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/quiz_items?format=eq.${format}&difficulty=eq.${difficulty}&is_active=eq.true&select=item_id`,
+    { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
   );
-  return results.flat().filter(Boolean).map(item=>{
+  const cr = res.headers.get('content-range');
+  return parseInt(cr?.split('/')[1]||'0', 10);
+}
+
+async function loadQuestions() {
+  // 1. 모든 슬롯 count 병렬 획득
+  const counts = await Promise.all(
+    SLOTS.map(slot => getSlotCount(slot.format, slot.difficulty).catch(()=>0))
+  );
+
+  // 2. offset 기반 랜덤 fetch 병렬 실행
+  const results = await Promise.all(
+    SLOTS.map((slot, i) => {
+      const total = counts[i];
+      if(total === 0) return Promise.resolve(null);
+      const offset = Math.floor(Math.random() * total);
+      return supaFetch(
+        `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&offset=${offset}&order=item_id.asc`,
+        {headers:{Prefer:'return=representation'}}
+      ).then(res => Array.isArray(res) ? res[0] : res).catch(()=>null);
+    })
+  );
+
+  return results.filter(Boolean).map(item=>{
     const correctKo = item.choices[0];
     const correctEn = item.choices_en?.[0] || item.answer_en;
     const shuffledKo = [...item.choices].sort(()=>Math.random()-.5);
@@ -1037,12 +1074,6 @@ function flashScreen() {
     background:'rgba(255,229,0,.08)',pointerEvents:'none',
     animation:'flash-fade .4s ease forwards',
   });
-  if(!document.querySelector('#flash-style')) {
-    const s=document.createElement('style');
-    s.id='flash-style';
-    s.textContent='@keyframes flash-fade{0%{opacity:1}100%{opacity:0}}';
-    document.head.appendChild(s);
-  }
   document.body.appendChild(fl);
   setTimeout(()=>fl.remove(),500);
 }
@@ -1267,8 +1298,7 @@ async function showResult() {
     const mood = scoreN>=9?'excited':scoreN>=7?'happy':scoreN>=5?'thinking':scoreN>=3?'serious':'sad';
     const imgSrc = KIN_IMGS[mood];
     document.getElementById('result-kin-img').src = imgSrc;
-    document.getElementById('result-kin-text').textContent =
-      lang==='ko' ? `${scoreN}/10` : `${scoreN}/10`;
+    document.getElementById('result-kin-text').textContent = `${scoreN} / 10`;
   }
 
   // 틀린 문제
@@ -1284,8 +1314,13 @@ async function showResult() {
       const qText = lang==='ko'?item.question:(item.question_en||item.question);
       const div=document.createElement('div');
       div.className='wrong-item';
-      div.innerHTML=`<div>${qText.slice(0,55)}${qText.length>55?'…':''}</div>
-        <div class="wrong-item-answer">→ ${a.correct_answer}</div>`;
+      const qDiv=document.createElement('div');
+      qDiv.textContent=qText.slice(0,55)+(qText.length>55?'…':'');
+      const aDiv=document.createElement('div');
+      aDiv.className='wrong-item-answer';
+      aDiv.textContent=`→ ${a.correct_answer}`;
+      div.appendChild(qDiv);
+      div.appendChild(aDiv);
       wl.appendChild(div);
     });
   } else ws.style.display='none';
@@ -1337,12 +1372,12 @@ document.getElementById('btn-share').addEventListener('click', async()=>{
   // 캐시된 obs 사용 (화면 표시와 동일하게)
   const obs = state.resultObs || getObs(state.resultPattern || 'random');
   const text = lang==='ko'
-    ? `KIN의 만화방 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
-    : `KIN's Manga Room ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`;
+    ? `KIN의 만화퀴즈 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
+    : `KIN's Manga Quiz ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`;
 
   try {
     if(navigator.share) {
-      await navigator.share({ title:'KIN의 만화방', text, url:'https://kinxdred.com/kin/k2' });
+      await navigator.share({ title:'KIN의 만화퀴즈', text, url:'https://kinxdred.com/kin/k2' });
       return;
     }
   } catch{}
@@ -1441,8 +1476,17 @@ function applyResultLang() {
 // ═══════════════════════════════════════════
 async function loadPreview() {
   try {
+    // count 파악 후 랜덤 offset
+    const countRes = await fetch(
+      `${SUPA_URL}/rest/v1/quiz_items?is_active=eq.true&difficulty=eq.easy&select=item_id`,
+      { headers:{apikey:SUPA_KEY, Authorization:`Bearer ${SUPA_KEY}`, Prefer:'count=exact', Range:'0-0'} }
+    );
+    const cr = countRes.headers.get('content-range');
+    const total = parseInt(cr?.split('/')[1]||'0', 10);
+    if(total === 0) return;
+    const offset = Math.floor(Math.random() * total);
     const res = await supaFetch(
-      'quiz_items?is_active=eq.true&difficulty=eq.easy&limit=1&order=random()',
+      `quiz_items?is_active=eq.true&difficulty=eq.easy&limit=1&offset=${offset}&order=item_id.asc`,
       {headers:{Prefer:'return=representation'}}
     );
     const item = Array.isArray(res) ? res[0] : res;
@@ -1487,8 +1531,8 @@ function applyLandingLang() {
   if(!lp) return;
   const qs = sel => lp.querySelector(sel);
   if(lang==='en') {
-    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = "KIN's Manga Room — Manga · Anime Quiz";
-    if(qs('.landing-title'))       qs('.landing-title').textContent       = "KIN's Manga Room";
+    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = "KIN's Manga Quiz — Japanese Manga · Anime";
+    if(qs('.landing-title'))       qs('.landing-title').innerHTML         = "Manga Quiz<br>with KIN";
     if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = 'Manga · Anime Quiz';
     if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = 'Take the quiz';
     if(qs('.preview-label'))       qs('.preview-label').textContent       = "here's a taste";
@@ -1499,8 +1543,8 @@ function applyLandingLang() {
     const mg = document.getElementById('manga-gate');
     if(mg) mg.src = './assets/manga_gate1.png';
   } else {
-    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = 'KIN의 만화방 — 일본 만화 · 애니 퀴즈';
-    if(qs('.landing-title'))       qs('.landing-title').textContent       = 'KIN의 만화방';
+    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = 'KIN의 만화퀴즈 — 일본 만화 · 애니';
+    if(qs('.landing-title'))       qs('.landing-title').innerHTML         = 'KIN과 함께하는<br>만화퀴즈';
     if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = '일본 만화 · 애니 퀴즈';
     if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = '도전하기';
     if(qs('.preview-label'))       qs('.preview-label').textContent       = '이런 문제가 나와';

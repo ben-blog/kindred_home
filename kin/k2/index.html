@@ -101,8 +101,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   text-align:left;gap:0;
   padding-top:64px;
   overflow:hidden;
-  background:#fff;
-  /* 버튼이 이미지 위에 오도록 */
+  background:transparent;
 }
 
 /* 만화 배경 레이어 — viewport 전체, 랜딩에서만 표시 */
@@ -134,23 +133,17 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   position:absolute;
   right:0;
   bottom:0;
-  width:min(55vw, 560px);
+  width:min(72vw,700px);
   height:auto;
-  max-height:90vh;
+  max-height:98vh;
   object-fit:contain;
   object-position:right bottom;
-  opacity:.97;
-  mask-image:linear-gradient(to top,transparent 0%,black 6%,black 100%);
-  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 6%,black 100%);
+  mask-image:linear-gradient(to top,transparent 0%,black 4%,black 100%);
+  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 4%,black 100%);
 }
 
 /* eyebrow — 랜딩과 결과 화면 색상 분리 */
-#page-landing .landing-eyebrow{
-  color:rgba(0,0,0,.5);
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:.2em;
-}
+#page-landing .landing-eyebrow{color:rgba(255,229,0,.6);font-size:12px;font-weight:700;letter-spacing:.25em;}
 #page-result .landing-eyebrow{
   color:rgba(255,229,0,.65);
 }
@@ -167,15 +160,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .landing-title{
   font-family:'Syne',sans-serif;font-weight:800;
   font-size:clamp(38px,10vw,68px);
-  color:#080806;
+  color:#fff;
   letter-spacing:-.03em;
   line-height:1.0;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 .landing-genre-label{
   font-size:clamp(15px,3.5vw,20px);
   font-weight:700;
-  color:rgba(0,0,0,.6);
+  color:rgba(255,255,255,.55);
   letter-spacing:.04em;
   margin-bottom:10px;
 }
@@ -222,30 +215,30 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .preview-card{
   position:relative;z-index:1;
   padding:18px 20px;
-  border:1px solid rgba(0,0,0,.15);
-  background:rgba(0,0,0,.04);
+  border:1px solid rgba(255,229,0,.18);
+  background:rgba(255,229,0,.04);
   margin-bottom:24px;
   cursor:pointer;
   transition:border-color .2s,background .2s;
 }
-.preview-card:hover{border-color:rgba(0,0,0,.3);background:rgba(0,0,0,.07)}
+.preview-card:hover{border-color:rgba(255,229,0,.4);background:rgba(255,229,0,.08)}
 .preview-label{
-  font-size:9px;letter-spacing:.28em;color:rgba(0,0,0,.4);
+  font-size:9px;letter-spacing:.28em;color:rgba(255,229,0,.5);
   text-transform:uppercase;margin-bottom:10px;
 }
 .preview-q{
-  font-size:13px;line-height:1.75;color:rgba(0,0,0,.75);
+  font-size:13px;line-height:1.75;color:rgba(255,255,255,.8);
   margin-bottom:12px;
 }
 .preview-choices{display:flex;flex-direction:column;gap:5px}
 .preview-choice{
-  font-size:11px;color:rgba(0,0,0,.35);
-  padding:5px 10px;border:1px solid rgba(0,0,0,.1);
+  font-size:11px;color:rgba(255,255,255,.38);
+  padding:5px 10px;border:1px solid rgba(255,255,255,.08);
   border-radius:2px;
 }
 .preview-choice.is-answer{
-  color:#080806;border-color:rgba(0,0,0,.4);
-  background:rgba(255,229,0,.3);font-weight:700;
+  color:#FFE500;border-color:rgba(255,229,0,.3);
+  background:rgba(255,229,0,.08);font-weight:700;
 }
 
 /* 하단 */
@@ -254,16 +247,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   display:flex;flex-direction:column;gap:14px;
   margin-top:auto;padding-top:4px;
 }
-.today-count{font-size:14px;font-weight:700;color:rgba(0,0,0,.7);letter-spacing:.06em}
+.today-count{font-size:14px;font-weight:700;color:rgba(255,229,0,.8);letter-spacing:.06em}
 .landing-meta{display:flex;gap:18px;flex-wrap:wrap}
-.meta-item{font-size:13px;font-weight:700;letter-spacing:.1em;color:rgba(0,0,0,.4);text-transform:uppercase}
-.meta-item span{color:#080806;font-weight:800}
+.meta-item{font-size:12px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.35);text-transform:uppercase}
+.meta-item span{color:rgba(255,255,255,.7);font-weight:800}
 
 /* 시작 버튼 — 검정 */
 .btn-start{
   display:flex;align-items:center;justify-content:space-between;
   width:100%;padding:20px 24px;
-  background:#080806;color:#FFE500;
+  background:var(--kin);color:#000;
   font-family:'DM Mono',monospace;
   font-size:15px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
   cursor:pointer;border:none;
@@ -356,7 +349,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* hover — 마우스 있는 기기에서만 */
 @media(hover:hover){
   .h-back:hover{color:var(--kin)}
-  .preview-card:hover{border-color:rgba(0,0,0,.3);background:rgba(0,0,0,.07)}
+  .preview-card:hover{border-color:rgba(255,229,0,.4);background:rgba(255,229,0,.08)}
   .btn-start:hover::before{transform:translateX(100%)}
   .btn-start:hover{opacity:.88}
   .choice-btn:hover:not(:disabled){
@@ -673,7 +666,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // CONFIG
 // ═══════════════════════════════════════════
 const SUPA_URL = 'https://lmfyspozcmyefgrkgxch.supabase.co';
-const SUPA_KEY = 'SUPABASE_ANON_KEY_HERE';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
 const API_URL  = 'https://kin-agent-production.up.railway.app';
 const JIKAN    = 'https://api.jikan.moe/v4';
 

@@ -1004,11 +1004,10 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   state.phase = id.replace('page-','');
-  // 랜딩에서만 grain 숨기고 manga-bg 표시
   const isLanding = id === 'page-landing';
   document.getElementById('grain').style.opacity = isLanding ? '0' : '';
   const mb = document.getElementById('manga-bg');
-  if(mb) mb.classList.toggle('visible', isLanding);
+  if(mb) mb.style.display = isLanding ? 'block' : 'none';
 }
 
 // ═══════════════════════════════════════════
@@ -1559,7 +1558,7 @@ function applyLandingLang() {
   setLang(lang);
   applyLandingLang();
   // 초기 랜딩 상태 설정
-  document.getElementById('manga-bg')?.classList.add('visible');
+  document.getElementById('manga-bg').style.display = 'block';
   const $loading=document.getElementById('loading');
   await Promise.all([loadTotalCount(), loadTodayCount(), loadPreview()]);
   $loading.style.opacity='0';

@@ -37,10 +37,7 @@ body{
   background-size:200px;animation:gr .3s steps(1) infinite}
 @keyframes gr{0%{background-position:0 0}50%{background-position:-40px 30px}}
 
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 55% 55% at 20% 80%,rgba(140,100,0,.10),transparent),
-    radial-gradient(ellipse 45% 45% at 80% 20%,rgba(255,200,0,.05),transparent)}
+
 
 /* ── 난이도 배경 오버레이 ── */
 #diff-overlay{
@@ -436,7 +433,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   animation:shake .4s ease;
 }
 /* 비활성 (정답도 오답도 아닌) — 흐리게 */
-.choice-btn:disabled:not(.correct):not(.wrong){
+.choice-btn.faded{
   opacity:.2;
   cursor:default;
 }
@@ -1639,6 +1636,7 @@ function selectAnswer(selected) {
     btn.disabled=true;
     if(btn.textContent===correct) btn.classList.add('correct');
     else if(btn.textContent===selected&&!isCorrect) btn.classList.add('wrong');
+    else btn.classList.add('faded');
   });
 
   // 오답 선택 시 정답 버튼 주목 떨림

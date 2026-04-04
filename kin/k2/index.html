@@ -582,7 +582,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   <!-- 만화 배경 레이어 -->
   <div class="manga-bg" aria-hidden="true">
     <img class="speedlines" src="./assets/speedlines.webp" alt="">
-    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.webp" alt="">
+    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
   </div>
 
   <!-- 상단 라벨 -->
@@ -1538,7 +1538,7 @@ function applyLandingLang() {
       el.textContent=labels[i]||el.textContent;
     });
     const mg = document.getElementById('manga-gate');
-    if(mg) mg.src = './assets/manga_gate1.webp';
+    if(mg) mg.src = './assets/manga_gate1.png';
   } else {
     qs('.landing-eyebrow').textContent = 'KIN의 만화방 — 일본 만화 · 애니 퀴즈';
     qs('.landing-title').textContent = 'KIN의 만화방';
@@ -1551,7 +1551,7 @@ function applyLandingLang() {
       el.textContent=labels[i]||el.textContent;
     });
     const mg = document.getElementById('manga-gate');
-    if(mg) mg.src = './assets/manga_gate2.webp';
+    if(mg) mg.src = './assets/manga_gate2.png';
   }
 }
 (async()=>{

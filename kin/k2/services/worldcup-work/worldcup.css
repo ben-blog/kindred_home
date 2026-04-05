@@ -30,24 +30,60 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 100dvh;
+  padding-top: 53px;
+}
+
+/* PC: 좌우 2컬럼 */
+@media(min-width: 768px) {
+  #wc-category {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+/* 왼쪽: KIN + 마퀴 */
+.wc-cat-left {
+  display: flex;
+  flex-direction: column;
+  padding: 60px 40px 40px;
+  gap: 40px;
+}
+@media(min-width: 768px) {
+  .wc-cat-left {
+    flex: 1;
+    min-width: 0;
+    border-right: 1px solid rgba(255,255,255,.06);
+    padding: 80px 48px 48px;
+  }
+}
+
+/* 오른쪽: 카테고리 */
+.wc-cat-right {
+  display: flex;
   align-items: center;
-  padding: 88px 24px 48px;
-  gap: 32px;
+  justify-content: center;
+  padding: 40px 24px 60px;
+}
+@media(min-width: 768px) {
+  .wc-cat-right {
+    width: 420px;
+    flex-shrink: 0;
+    padding: 0 48px;
+  }
 }
 
 .wc-intro {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-  max-width: 480px;
+  gap: 10px;
 }
 .wc-intro-avatar {
-  width: 72px; height: 72px;
+  width: 64px; height: 64px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255,229,0,.35);
+  margin-bottom: 2px;
 }
 .wc-intro-kin-label {
   font-size: var(--t-label);
@@ -55,27 +91,52 @@
   color: rgba(255,229,0,.55);
 }
 .wc-intro-line {
-  font-size: clamp(15px, 2.2vw, 18px);
+  font-size: clamp(15px, 1.8vw, 18px);
   color: rgba(255,255,255,.85);
   line-height: 1.75;
   word-break: keep-all;
 }
 .wc-intro-sub {
   font-size: var(--t-sm);
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.3);
   line-height: 1.7;
   word-break: keep-all;
 }
 
+/* 마퀴 */
+.wc-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.wc-marquee-track {
+  display: flex;
+  gap: 10px;
+  animation: marquee-scroll 28s linear infinite;
+  width: max-content;
+}
+.wc-marquee-track img {
+  height: 130px;
+  width: auto;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* 카테고리 카드 */
 .wc-cat-cards {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  max-width: 440px;
+  max-width: 360px;
 }
 .wc-cat-card {
-  padding: 20px 24px;
+  padding: 22px 24px;
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 14px;
   background: rgba(255,255,255,.03);
@@ -90,7 +151,7 @@
 .wc-cat-title {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: clamp(16px, 2.5vw, 20px);
+  font-size: clamp(16px, 2vw, 20px);
   color: var(--kin);
   letter-spacing: var(--ls-tight);
   margin-bottom: 6px;
@@ -136,35 +197,6 @@
   font-size: var(--t-label);
   color: rgba(255,255,255,.35);
   letter-spacing: var(--ls-mono);
-}
-
-/* KIN 배너 */
-.wc-kin-banner {
-  display: none;
-  position: fixed;
-  top: 53px; left: 0; right: 0;
-  z-index: 99;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 24px;
-  background: rgba(8,8,6,.97);
-  border-bottom: 1px solid rgba(255,229,0,.18);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.wc-kin-banner.show { display: flex; }
-.wc-kin-banner img {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid rgba(255,229,0,.3);
-  flex-shrink: 0;
-}
-.wc-kin-banner span {
-  font-size: var(--t-sm);
-  color: #FFE500;
-  line-height: 1.5;
-  word-break: keep-all;
 }
 
 /* 대진 컨테이너 */

@@ -32,22 +32,35 @@
 
   <!-- ── 카테고리 선택 ── -->
   <section id="wc-category" style="display:none">
-    <div class="wc-intro">
-      <img class="wc-intro-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN" id="wc-intro-avatar">
-      <div class="wc-intro-kin-label">KIN</div>
-      <p class="wc-intro-line" id="wc-intro-line">이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.</p>
-      <p class="wc-intro-sub" id="wc-intro-sub">카테고리를 선택하면 16강 토너먼트가 시작돼.<br>1:1 대결에서 네 취향에 더 가까운 쪽을 골라.</p>
-    </div>
-    <div class="wc-cat-cards">
-      <div class="wc-cat-card" data-category="battle">
-        <div class="wc-cat-title" id="cat-battle-title">소년 배틀·성장</div>
-        <div class="wc-cat-sub" id="cat-battle-sub">성장, 전투, 우정이 강한 작품들</div>
+
+    <!-- 좌: KIN + 마퀴 -->
+    <div class="wc-cat-left">
+      <div class="wc-intro">
+        <img class="wc-intro-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN" id="wc-intro-avatar">
+        <div class="wc-intro-kin-label">KIN</div>
+        <p class="wc-intro-line" id="wc-intro-line">이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.</p>
+        <p class="wc-intro-sub" id="wc-intro-sub">카테고리를 선택하면 16강 토너먼트가 시작돼.<br>1:1 대결에서 네 취향에 더 가까운 쪽을 골라.</p>
       </div>
-      <div class="wc-cat-card" data-category="thriller">
-        <div class="wc-cat-title" id="cat-thriller-title">심리·드라마</div>
-        <div class="wc-cat-sub" id="cat-thriller-sub">압박감과 해석 욕구가 남는 작품들</div>
+      <!-- 마퀴 -->
+      <div class="wc-marquee" id="wc-marquee" style="display:none">
+        <div class="wc-marquee-track" id="wc-marquee-track"></div>
       </div>
     </div>
+
+    <!-- 우: 카테고리 카드 -->
+    <div class="wc-cat-right">
+      <div class="wc-cat-cards">
+        <div class="wc-cat-card" data-category="battle">
+          <div class="wc-cat-title" id="cat-battle-title">소년 배틀·성장</div>
+          <div class="wc-cat-sub" id="cat-battle-sub">성장, 전투, 우정이 강한 작품들</div>
+        </div>
+        <div class="wc-cat-card" data-category="thriller">
+          <div class="wc-cat-title" id="cat-thriller-title">심리·드라마</div>
+          <div class="wc-cat-sub" id="cat-thriller-sub">압박감과 해석 욕구가 남는 작품들</div>
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <!-- ── 대진 화면 ── -->
@@ -57,12 +70,6 @@
     <div class="wc-round-header">
       <span class="wc-round-label" id="wc-round-label">16강</span>
       <span class="wc-progress-text" id="wc-progress-text">1 / 15</span>
-    </div>
-
-    <!-- KIN 배너 -->
-    <div class="wc-kin-banner" id="wc-kin-banner">
-      <img id="wc-banner-avatar" src="/kin/k2/assets/kin_serious.webp" alt="KIN">
-      <span id="wc-banner-text"></span>
     </div>
 
     <!-- 대진 영역 -->

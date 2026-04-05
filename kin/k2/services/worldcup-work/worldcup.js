@@ -5,6 +5,7 @@ import {
   getLang, t,
   KIN_IMGS, API_URL,
   SUPA_URL, SUPA_KEY,
+  COVER_MAL_IDS,
   fetchAniListCover, genUUID,
 } from '../../lib/core.js';
 import { initLangToggle, showError } from '../../lib/ui.js';
@@ -148,6 +149,44 @@ const state = {
 };
 
 // ══════════════════════════════════════════
+// 카테고리 화면 마퀴
+// ══════════════════════════════════════════
+
+async function buildMarquee() {
+  const track   = $('wc-marquee-track');
+  const marquee = $('wc-marquee');
+  if (!track || !marquee) return;
+
+  const loaded = [];
+  let started = false;
+
+  function addImg(url, title) {
+    const img = document.createElement('img');
+    img.src = url; img.alt = title; img.loading = 'eager';
+    track.appendChild(img);
+    loaded.push(url);
+    if (!started && loaded.length >= 3) {
+      started = true;
+      marquee.style.display = '';
+    }
+  }
+
+  // 병렬 fetch — 완료 순서대로 추가
+  await Promise.allSettled(
+    COVER_MAL_IDS.map(({ id, title }) =>
+      fetchAniListCover(id)
+        .then(url => { if (url) addImg(url, title); })
+        .catch(() => {})
+    )
+  );
+
+  // 무한 스크롤 — 전체 복제
+  Array.from(track.querySelectorAll('img')).forEach(img => {
+    track.appendChild(img.cloneNode(true));
+  });
+}
+
+// ══════════════════════════════════════════
 // 화면 전환
 // ══════════════════════════════════════════
 
@@ -229,18 +268,6 @@ async function loadCoverAnimated(work, bgEl, imgWrap) {
 }
 
 // ══════════════════════════════════════════
-// KIN 배너
-// ══════════════════════════════════════════
-
-function showKinBanner(text, mood = 'serious') {
-  const banner = $('wc-kin-banner');
-  $('wc-banner-avatar').src = KIN_IMGS[mood] || KIN_IMGS.serious;
-  $('wc-banner-text').textContent = text;
-  banner.classList.add('show');
-  setTimeout(() => banner.classList.remove('show'), 4000);
-}
-
-// ══════════════════════════════════════════
 // 매치 렌더
 // ══════════════════════════════════════════
 
@@ -276,12 +303,9 @@ async function renderMatch() {
   wa.style.pointerEvents = '';
   wb.style.pointerEvents = '';
 
-  // 결승 직전 KIN 배너
-  if (state.round === 2) {
-    showKinBanner(isEn ? "Here's where your real taste shows." : "여기서 진짜 취향이 갈려.", 'serious');
-  }
-
-  // 입장 애니메이션
+  // 이미지 비동기 로드
+  loadCoverAnimated(workA, bgA, imgA);
+  loadCoverAnimated(workB, bgB, imgB);
   await sleep(40);
   wa.classList.add('entered');
   await sleep(100);
@@ -621,13 +645,6 @@ document.querySelectorAll('.wc-cat-card').forEach(card => {
         top4: [], history: [], selecting: false,
       });
 
-      const isEn = getLang() === 'en';
-      showKinBanner(
-        isEn ? "Not a ranking. Not a poll. Just your taste."
-             : "이건 최고의 만화를 고르는 게 아니야. 네 취향을 고르는 거야.",
-        'thinking'
-      );
-
       await renderMatch();
     } catch {
       showError(t('작품을 불러오지 못했어.', 'Could not load works.'));
@@ -720,4 +737,5 @@ initLangToggle(applyLang);
   $('wc-loading').style.display = 'none';
   showSection('wc-category');
   applyLang(getLang());
+  buildMarquee();
 })();

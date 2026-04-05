@@ -111,29 +111,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 
   .v-menu{
     position:fixed;top:50%;z-index:45;
-    display:flex;flex-direction:column;align-items:center;gap:0;
+    display:flex;flex-direction:column;align-items:flex-start;gap:0;
     opacity:0;pointer-events:none;
     transition:opacity 1.2s ease;
   }
-  #kin-vmenu{left:5vw;transform:translateY(-50%)}
-  #dred-vmenu{right:5vw;transform:translateY(-50%)}
+  #kin-vmenu{left:3vw;transform:translateY(-50%)}
+  #dred-vmenu{right:3vw;transform:translateY(-50%);align-items:flex-end}
   .v-menu.worlds{opacity:1;pointer-events:all}
 
   .vm-char{
     font-family:'Syne',sans-serif;font-weight:800;
-    font-size:18px;letter-spacing:.06em;
-    writing-mode:vertical-lr;padding-bottom:14px;
+    font-size:15px;letter-spacing:.12em;
+    padding-bottom:10px;
   }
-  .vm-char-kin{color:rgba(255,232,0,.82);transform:rotate(180deg)}
-  .vm-char-dred{color:rgba(91,79,207,.82)}
-  .vm-line{width:1px;height:14px;background:rgba(255,255,255,.14);margin:3px 0}
+  .vm-char-kin{color:rgba(255,232,0,.85)}
+  .vm-char-dred{color:rgba(91,79,207,.85);cursor:pointer;transition:opacity .2s}
+  .vm-char-dred:hover{opacity:.7}
+  .vm-line{width:100%;height:1px;background:rgba(255,255,255,.12);margin:3px 0}
   .vm-item{
-    writing-mode:vertical-lr;
-    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
-    padding:10px 6px;cursor:pointer;transition:opacity .2s;
+    font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    padding:7px 0;cursor:pointer;transition:opacity .2s;
+    white-space:nowrap;
   }
-  .vm-item-kin{color:rgba(255,232,0,.72);transform:rotate(180deg)}
-  .vm-item-dred{color:rgba(91,79,207,.72)}
+  .vm-item-kin{color:rgba(255,232,0,.72)}
   .vm-item:hover{opacity:1!important}
   .vm-item.vm-dimmed{opacity:.15!important}
 
@@ -141,13 +141,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .h-card{position:fixed;top:50%;z-index:44;transform:translateY(-50%);pointer-events:none;opacity:0;}
   .h-card.on{pointer-events:all;}
   .h-card-kin{
-    left:calc(5vw + 48px);
+    left:calc(3vw + 120px);
     transform:translateY(-50%) translateX(-16px);
     transition:opacity .55s ease,transform .65s cubic-bezier(.16,1,.3,1);
   }
   .h-card-kin.on{opacity:1;transform:translateY(-50%) translateX(0)}
   .h-card-dred{
-    right:calc(5vw + 48px);
+    right:calc(3vw + 70px);
     transform:translateY(-50%) translateX(12px);
     transition:opacity .12s ease,transform .14s cubic-bezier(.16,1,.3,1);
   }
@@ -1176,16 +1176,12 @@ function buildPC() {
   });
   $km.innerHTML = kmHTML;
 
-  // DRED 메뉴
-  let dmHTML = `<span class="vm-char vm-char-dred">DRED</span>`;
-  mainActions.dred.forEach((item, i) => {
-    const a = item.actions?.[lang]?.[0];
-    if (!a) return;
-    dmHTML += `<div class="vm-line"></div>
-      <div class="vm-item vm-item-dred" data-card="hc-dred-${i}" data-url="${a.url}"
-        style="opacity:${i===0?.65:.48}">${a.label}</div>`;
-  });
-  $dm.innerHTML = dmHTML;
+  // DRED 메뉴 — 레이블만, 아이템 없음. 레이블 자체가 호버 트리거.
+  const firstDred = mainActions.dred[0];
+  const firstDredAction = firstDred?.actions?.[lang]?.[0];
+  $dm.innerHTML = `<span class="vm-char vm-char-dred"
+    data-card="hc-dred-0"
+    data-url="${firstDredAction?.url || ''}">DRED</span>`;
 
   // KIN 카드
   mainActions.kin.forEach((item, i) => {
@@ -1257,6 +1253,7 @@ function attachPCHoverHandlers() {
     }, 320);
   }
 
+  // KIN: vm-item hover
   document.querySelectorAll('.vm-item').forEach(el => {
     el.addEventListener('mouseenter', () => showCard(el.dataset.card));
     el.addEventListener('mouseleave', hideCard);
@@ -1266,12 +1263,24 @@ function attachPCHoverHandlers() {
     });
   });
 
+  // DRED: vm-char-dred 레이블 hover
+  const $dredLabel = document.querySelector('.vm-char-dred');
+  if ($dredLabel) {
+    $dredLabel.addEventListener('mouseenter', () => showCard($dredLabel.dataset.card));
+    $dredLabel.addEventListener('mouseleave', hideCard);
+    $dredLabel.addEventListener('click', () => {
+      if (getPhase(elapsed).n !== 'WORLDS') return;
+      if (!$dredLabel.dataset.url) return; // 빈 URL 방어
+      navTo($dredLabel.dataset.url);
+    });
+  }
+
   document.querySelectorAll('.h-card').forEach(card => {
     card.addEventListener('mouseenter', () => clearTimeout(leaveTimer));
     card.addEventListener('mouseleave', hideCard);
     card.addEventListener('click', () => {
       if (getPhase(elapsed).n !== 'WORLDS') return;
-      const mi = document.querySelector(`.vm-item[data-card="${card.id}"]`);
+      const mi = document.querySelector(`[data-card="${card.id}"]`);
       if (mi) navTo(mi.dataset.url);
     });
   });

@@ -41,42 +41,35 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .lt.active{color:var(--kin);}
 .lt-sep{color:rgba(255,255,255,.25)}
 
-/* ── GALLERY ── */
+/* ── GALLERY GRID ── */
 #gallery{
   position:fixed;inset:0;top:56px;z-index:2;
-  display:flex;flex-direction:column;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  grid-auto-rows:auto;
   gap:3px;padding:3px;
   overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
 }
-@media(pointer:coarse){
-  #gallery{scroll-snap-type:y mandatory;}
-  .gallery-row{scroll-snap-stop:always;}
+@media(max-width:680px){
+  #gallery{grid-template-columns:repeat(2,1fr);}
 }
-
-.gallery-row{
-  display:flex;gap:3px;
-  flex-shrink:0;
-}
-@media(pointer:coarse){
-  .gallery-row{scroll-snap-align:start;}
-}
-
 .thumb{
-  flex:1 1 0%;
-  min-width:0;
   position:relative;overflow:hidden;cursor:pointer;
   aspect-ratio:3/4;
   opacity:0;transform:scale(.94);
   background:#111;
-  transition:filter .2s,transform .2s;
+  transition:opacity .35s ease, transform .45s cubic-bezier(.16,1,.3,1), filter .3s ease;
 }
-.thumb.in{opacity:1;transform:scale(1);transition:opacity .35s ease,transform .35s cubic-bezier(.16,1,.3,1),filter .2s}
-.thumb:hover{filter:brightness(1.25);transform:scale(1.02)!important}
+.thumb.in{opacity:1;transform:scale(1)}
+.thumb:hover{
+  transform:scale(1.06)!important;
+  filter:brightness(1.18);
+  z-index:10;
+}
 .thumb::after{
   content:'';position:absolute;inset:0;
   box-shadow:inset 0 0 0 1px rgba(255,229,0,.12);
-  pointer-events:none;z-index:3;transition:box-shadow .2s;
+  pointer-events:none;z-index:3;transition:box-shadow .3s;
 }
 .thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
 
@@ -129,44 +122,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   text-transform:uppercase;margin-bottom:10px;
 }
 
-/* ── ROW HOVER OVERLAY ── */
-#gallery-dim{
-  position:fixed;inset:0;top:56px;z-index:48;
-  background:rgba(8,8,6,.82);
-  opacity:0;pointer-events:none;
-  transition:opacity .28s ease;
-}
-#gallery-dim.on{opacity:1;pointer-events:all}
-
-#row-overlay{
-  position:fixed;left:0;right:0;z-index:49;
-  display:flex;gap:3px;padding:0 3px;
-  opacity:0;pointer-events:none;
-  transition:opacity .28s ease, top .18s ease;
-  background:#080806;
-}
-#row-overlay.on{opacity:1;pointer-events:all}
-
-.ro-thumb{
-  flex:1;overflow:hidden;cursor:pointer;position:relative;
-  transition:filter .2s;
-}
-.ro-thumb:hover{filter:brightness(1.22)}
-.ro-thumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.ro-thumb::after{
-  content:'';position:absolute;inset:0;
-  box-shadow:inset 0 0 0 1px rgba(255,229,0,.12);
-  pointer-events:none;transition:box-shadow .2s;
-}
-.ro-thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
-.ro-thumb-label{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:20px 10px 8px;
-  background:linear-gradient(transparent,rgba(0,0,0,.72));
-  font-size:7px;letter-spacing:.18em;
-  color:rgba(255,229,0,.5);text-transform:lowercase;
-  pointer-events:none;z-index:2;
-}
 #loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);}
 #loading span{font-size:9px;letter-spacing:.4em;color:rgba(255,229,0,.3);text-transform:uppercase;animation:blink 1.4s ease infinite;}
 @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
@@ -333,9 +288,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 </style>
 </head>
 <body>
-<div id="gallery-dim"></div>
-<div id="row-overlay"></div>
-
 <div id="loading"><span>loading</span></div>
 <div id="grain"></div>
 <div id="cur"></div>
@@ -438,10 +390,7 @@ function setLang(l) {
   lang = l;
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
-  if (items.length) {
-    hideRowOverlay(true); // 언어 전환 시 오버레이 즉시 닫기
-    renderGallery();
-  }
+  if (items.length) renderGallery();
   if (current >= 0) fillDetail(current);
 }
 $ltKo.addEventListener('click', () => setLang('ko'));
@@ -470,65 +419,6 @@ async function fetchTags(itemId) {
 
 /* ── GALLERY ── */
 const $gallery = document.getElementById('gallery');
-const $dim = document.getElementById('gallery-dim');
-const $rowOverlay = document.getElementById('row-overlay');
-
-/* ── ROW HOVER (PC only) ── */
-let rowHoverTimer = null;
-let activeRow = -1;
-
-function showRowOverlay(rowIdx) {
-  if (activeRow === rowIdx) return;
-  activeRow = rowIdx;
-  clearTimeout(rowHoverTimer);
-
-  const cols = getCols();
-  const rowItems = items.slice(rowIdx * cols, rowIdx * cols + cols);
-  if (!rowItems.length) return;
-
-  // gallery-row 엘리먼트로 위치 계산
-  const rowEl = $gallery.querySelector(`.gallery-row[data-row-idx="${rowIdx}"]`);
-  if (!rowEl) return;
-  const firstRect = rowEl.getBoundingClientRect();
-
-  const maxH = window.innerHeight - 56;
-  const naturalH = (window.innerWidth / cols) * (4 / 3);
-  const overlayH = Math.min(naturalH, maxH);
-
-  let top = firstRect.top;
-  if (top + overlayH > window.innerHeight) top = window.innerHeight - overlayH;
-  if (top < 56) top = 56;
-
-  $rowOverlay.innerHTML = '';
-  rowItems.forEach((item, j) => {
-    const globalIdx = rowIdx * cols + j;
-    const title = item[`title_${lang}`] || item.title_ko || '';
-    const div = document.createElement('div');
-    div.className = 'ro-thumb';
-    div.innerHTML = `<img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
-      <div class="ro-thumb-label">${title}</div>`;
-    div.addEventListener('click', () => {
-      hideRowOverlay(true);
-      openViewer(globalIdx);
-    });
-    div.addEventListener('mouseenter', () => clearTimeout(rowHoverTimer));
-    $rowOverlay.appendChild(div);
-  });
-
-  $rowOverlay.style.top = top + 'px';
-  $rowOverlay.style.height = overlayH + 'px';
-  $rowOverlay.classList.add('on');
-  $dim.classList.add('on');
-}
-
-function hideRowOverlay(immediate = false) {
-  const delay = immediate ? 0 : 220;
-  rowHoverTimer = setTimeout(() => {
-    $rowOverlay.classList.remove('on');
-    $dim.classList.remove('on');
-    activeRow = -1;
-  }, delay);
-}
 
 function getCols() {
   return window.innerWidth <= 680 ? 2 : 5;
@@ -536,24 +426,13 @@ function getCols() {
 
 function renderGallery() {
   $gallery.innerHTML = '';
-  const cols = getCols();
-
+  const cols = getCols(); // 렌더 시 1회만 계산
   items.forEach((item, i) => {
-    // 새 row 시작
-    if (i % cols === 0) {
-      const row = document.createElement('div');
-      row.className = 'gallery-row';
-      row.dataset.rowIdx = Math.floor(i / cols);
-      $gallery.appendChild(row);
-    }
-    const currentRow = $gallery.lastElementChild;
-
     const t = document.createElement('div');
     const title  = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
     t.className = 'thumb' + (hasAct ? ' has-action' : '');
     t.dataset.col = i % cols;
-    t.dataset.row = Math.floor(i / cols);
     t.innerHTML = `
       <div class="parallax-inner">
         <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
@@ -562,17 +441,10 @@ function renderGallery() {
       </div>`;
     t.addEventListener('click', () => openViewer(i));
     if (!IS_TOUCH) {
-      t.addEventListener('mouseenter', () => {
-        $cur.classList.add('big');
-        showRowOverlay(Math.floor(i / cols));
-      });
-      t.addEventListener('mouseleave', () => {
-        $cur.classList.remove('big');
-        hideRowOverlay();
-      });
+      t.addEventListener('mouseenter', () => $cur.classList.add('big'));
+      t.addEventListener('mouseleave', () => $cur.classList.remove('big'));
     }
-    currentRow.appendChild(t);
-
+    $gallery.appendChild(t);
     if (!galleryInited) {
       setTimeout(() => t.classList.add('in'), 60 + i * 45);
     } else {
@@ -638,7 +510,6 @@ async function fillDetail(i) {
 }
 
 async function openViewer(i) {
-  hideRowOverlay(true);
   current = i;
   const _item = items[i];
   reportToKin('image_click', { filename: _item?.filename, title: _item?.title_ko, index: i });
@@ -730,10 +601,6 @@ document.getElementById('like-btn').addEventListener('click', async () => {
 
 document.getElementById('detail-close').addEventListener('click', closeViewer);
 $backdrop.addEventListener('click', closeViewer);
-
-// 오버레이 영역 벗어나면 닫기
-$rowOverlay.addEventListener('mouseleave', () => hideRowOverlay());
-$dim.addEventListener('click', () => hideRowOverlay(true));
 document.getElementById('dn-prev').addEventListener('click', () => nav(-1));
 document.getElementById('dn-next').addEventListener('click', () => nav(1));
 
@@ -803,7 +670,7 @@ if (!IS_TOUCH) {
   })();
 
   // renderGallery 후 캐시 갱신을 위해 MutationObserver 사용
-  new MutationObserver(cacheParallaxEls).observe($gallery, { childList: true, subtree: true });
+  new MutationObserver(cacheParallaxEls).observe($gallery, { childList: true, subtree: false });
 }
 
 /* ── RESIZE ── */
@@ -811,10 +678,7 @@ let resizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    if (items.length) {
-      hideRowOverlay(true);
-      renderGallery();
-    }
+    if (items.length) renderGallery();
   }, 200);
 });
 

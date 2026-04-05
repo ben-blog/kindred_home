@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="6" fill="#0a0812"/>
+  <circle cx="16" cy="16" r="11" fill="none" stroke="#5B4FCF" stroke-width="1.2"/>
+  <!-- 시침 (2시 방향 고정 — freeze) -->
+  <line x1="16" y1="16" x2="21.5" y2="9.5"
+        stroke="#5B4FCF" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- 분침 (36분 방향) -->
+  <line x1="16" y1="16" x2="16" y2="7"
+        stroke="#5B4FCF" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- 중심점 -->
+  <circle cx="16" cy="16" r="1.2" fill="#5B4FCF"/>
+</svg>

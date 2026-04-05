@@ -793,44 +793,33 @@ $('wc-btn-share-native').addEventListener('click', async () => {
   } catch {}
 });
 
-// ── 경로 패널 — PC: 호버, 모바일: 탭 ──
+// ── 경로 패널 — PC: 호버, 모바일: 없음 ──
 const pathToggle = $('wc-path-toggle');
 const pathPanel  = $('wc-path-panel');
-const isTouchDevice = () => window.matchMedia('(hover: none)').matches;
 let pathTimer = null;
 
 function openPath() {
+  if (state.history.length === 0) return;
   clearTimeout(pathTimer);
   pathPanel.classList.add('open');
   pathToggle.classList.add('open');
-  const isEn = getLang() === 'en';
-  pathToggle.textContent = isEn ? 'My picks ↑' : '내 선택 ↑';
+  pathToggle.textContent = getLang() === 'en' ? 'My picks ↑' : '내 선택 ↑';
 }
 function closePath(delay = 0) {
   pathTimer = setTimeout(() => {
     pathPanel.classList.remove('open');
     pathToggle.classList.remove('open');
-    const isEn = getLang() === 'en';
-    pathToggle.textContent = isEn ? 'My picks ↓' : '내 선택 ↓';
+    pathToggle.textContent = getLang() === 'en' ? 'My picks ↓' : '내 선택 ↓';
   }, delay);
 }
 
-// PC: 호버
-pathToggle.addEventListener('mouseenter', () => { if (!isTouchDevice()) openPath(); });
-pathToggle.addEventListener('mouseleave', () => { if (!isTouchDevice()) closePath(120); });
-pathPanel.addEventListener('mouseenter',  () => { if (!isTouchDevice()) openPath(); });
-pathPanel.addEventListener('mouseleave',  () => { if (!isTouchDevice()) closePath(120); });
-
-// 모바일: 탭 토글
-pathToggle.addEventListener('click', () => {
-  if (!isTouchDevice()) return;
-  const isOpen = pathPanel.classList.toggle('open');
-  pathToggle.classList.toggle('open', isOpen);
-  const isEn = getLang() === 'en';
-  pathToggle.textContent = isOpen
-    ? (isEn ? 'My picks ↑' : '내 선택 ↑')
-    : (isEn ? 'My picks ↓' : '내 선택 ↓');
-});
+// PC only (hover: hover = 마우스 포인터 있는 기기)
+if (window.matchMedia('(hover: hover)').matches) {
+  pathToggle.addEventListener('mouseenter', openPath);
+  pathToggle.addEventListener('mouseleave', () => closePath(150));
+  pathPanel.addEventListener('mouseenter', () => clearTimeout(pathTimer));
+  pathPanel.addEventListener('mouseleave', () => closePath(150));
+}
 
 // ── 다시 하기 ──
 $('wc-btn-retry').addEventListener('click', () => {

@@ -12,6 +12,10 @@ import {
 } from '../../lib/core.js';
 import { initLangToggle, lockLang, unlockLang, showError, hideLoading } from '../../lib/ui.js';
 
+// ── 텍스트 정규화 (공백 변형 전부 제거) ──
+// DB 데이터 생성 도구마다 \u00A0, \u200B, \n, \t 등 다를 수 있음
+const norm = s => s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim();
+
 // ── DOM 캐시 ──
 const $ = id => document.getElementById(id);
 const DOM = {
@@ -104,10 +108,10 @@ async function loadQuestions() {
   }
 
   return results.filter(Boolean).map(item => {
-    const correctKo = item.choices[0];
-    const correctEn = item.choices_en?.[0] || item.answer_en;
-    const shuffledKo = [...item.choices].sort(() => Math.random() - .5);
-    const shuffledEn = item.choices_en ? [...item.choices_en].sort(() => Math.random() - .5) : null;
+    const correctKo = norm(item.choices[0]);
+    const correctEn = item.choices_en?.[0] ? norm(item.choices_en[0]) : (item.answer_en ? norm(item.answer_en) : null);
+    const shuffledKo = [...item.choices].map(norm).sort(() => Math.random() - .5);
+    const shuffledEn = item.choices_en ? [...item.choices_en].map(norm).sort(() => Math.random() - .5) : null;
     return { ...item, displayChoicesKo: shuffledKo, displayChoicesEn: shuffledEn, correctAnswerKo: correctKo, correctAnswerEn: correctEn };
   });
 }
@@ -272,8 +276,8 @@ function renderQuestion() {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     if (diff === 'hard') { btn.classList.add('stagger'); btn.style.animationDelay = (idx * 0.08) + 's'; }
-    btn.textContent = choice.trim();
-    btn.addEventListener('click', () => selectAnswer(choice.trim()));
+    btn.textContent = choice;
+    btn.addEventListener('click', () => selectAnswer(choice));
     DOM.qChoices.appendChild(btn);
   });
 
@@ -289,8 +293,7 @@ function selectAnswer(selected) {
   if (state.answered) return;
   state.answered = true;
   const q = state.questions[state.currentIndex];
-  const lang = getLang();
-  const correct = lang === 'ko' ? q.correctAnswerKo.trim() : (q.correctAnswerEn || q.correctAnswerKo).trim();
+  const correct = getLang() === 'ko' ? q.correctAnswerKo : (q.correctAnswerEn || q.correctAnswerKo);
   const isCorrect = selected === correct;
 
   if (isCorrect) { state.score++; state.streak++; }

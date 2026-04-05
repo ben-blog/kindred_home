@@ -1533,7 +1533,7 @@ async function supaCount(path) {
 async function loadTodayCount() {
   try {
     const today = new Date().toISOString().slice(0,10);
-    const count = await supaCount(`quiz_sessions?created_at=gte.${today}T00:00:00&select=id`);
+    const count = await supaCount(`quiz_sessions?created_at=gte.${today}T00:00:00&select=session_key`);
     const display = (count*10).toLocaleString();
     const el = document.getElementById('today-count');
     if(el && count>0) el.textContent = t(`오늘 ${display}명이 도전했어.`, `${display} people played today.`);
@@ -1902,8 +1902,8 @@ function renderQuestion() {
       btn.classList.add('stagger');
       btn.style.animationDelay=(idx*0.08)+'s';
     }
-    btn.textContent=choice;
-    btn.addEventListener('click',()=>selectAnswer(choice));
+    btn.textContent=choice.trim();
+    btn.addEventListener('click',()=>selectAnswer(choice.trim()));
     DOM.qChoices.appendChild(btn);
   });
 
@@ -1925,8 +1925,8 @@ function selectAnswer(selected) {
   state.answered=true;
 
   const q = state.questions[state.currentIndex];
-  const correct = lang==='ko' ? q.correctAnswerKo : (q.correctAnswerEn||q.correctAnswerKo);
-  const isCorrect = selected===correct;
+  const correct = lang==='ko' ? q.correctAnswerKo.trim() : (q.correctAnswerEn||q.correctAnswerKo).trim();
+  const isCorrect = selected.trim()===correct;
 
   if(isCorrect) { state.score++; state.streak++; }
   else          { state.streak=0; clearStreakEffect(); }

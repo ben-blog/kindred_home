@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
-<title>KIN의 만화퀴즈</title>
+<title>난 어떤 덕후? — KIN의 만화·애니</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
@@ -699,12 +699,16 @@ body{
   .kin-rxn-avatar{width:48px;height:48px}
   .kin-rxn-bubble{font-size:var(--t-sm);padding:10px 14px}
 }
+/* 모바일: manga-gate 숨김 (404 이슈 + 레이아웃 불필요) */
+@media(max-width:767px){
+  .manga-gate{display:none}
+}
 
 /* ── reduced motion ── */
 @media(prefers-reduced-motion:reduce){
   #grain,.choice-btn,.quiz-question,#streak-glow,.streak-particle,
   .speedlines,.manga-gate,.btn-start-arrow,
-  #quiz-bg img{
+  .cover-marquee-track,#quiz-bg img{
     animation:none!important;transition:none!important
   }
 }
@@ -721,7 +725,7 @@ body{
 <!-- HEADER -->
 <header id="header">
   <a class="h-back" href="../index.html">← KIN</a>
-  <div class="h-name">만화퀴즈</div>
+  <div class="h-name" id="h-title">난 어떤 덕후?</div>
   <div id="lang-toggle">
     <span class="lt active" data-lang="ko">KO</span>
     <span class="lt-sep"> / </span>
@@ -738,7 +742,7 @@ body{
   <!-- 배경 -->
   <div class="manga-bg" aria-hidden="true">
     <img class="speedlines" src="./assets/speedlines.webp" alt="">
-    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
+    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate1.png" alt="" onerror="this.style.display='none'">
   </div>
 
   <div class="landing-v4">
@@ -963,6 +967,9 @@ function setLang(l) {
     el.classList.toggle('active', el.dataset.lang === l)
   );
   document.documentElement.lang = l;
+  // 헤더 타이틀 (항상)
+  const hTitle = document.getElementById('h-title');
+  if(hTitle) hTitle.textContent = l === 'en' ? "What kind of fan?" : '난 어떤 덕후?';
   // 랜딩 페이지에 있을 때만 텍스트 갱신
   if(state.phase === 'landing') applyLandingLang();
   // 결과 페이지에 있을 때 정적 텍스트 갱신
@@ -1346,7 +1353,7 @@ async function supaCount(path) {
 async function loadTodayCount() {
   try {
     const today = new Date().toISOString().slice(0,10);
-    const count = await supaCount(`quiz_sessions?completed_at=gte.${today}T00:00:00&select=id`);
+    const count = await supaCount(`quiz_sessions?created_at=gte.${today}T00:00:00&select=id`);
     const display = (count*10).toLocaleString();
     const el = document.getElementById('today-count');
     if(el && count>0) el.textContent = t(`오늘 ${display}명이 도전했어.`, `${display} people played today.`);
@@ -1373,21 +1380,7 @@ const COVER_MAL_IDS = [
   {id:223, title:'드래곤볼'},   {id:170, title:'슬램덩크'},
 ];
 
-async function fetchCoverUrl(malId) {
-  const query = `query($id:Int,$t:MediaType){Media(idMal:$id,type:$t){coverImage{large}}}`;
-  for(const type of ['ANIME','MANGA']) {
-    try {
-      const res = await fetch('https://graphql.anilist.co',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({query,variables:{id:malId,t:type}}),
-      });
-      const url = (await res.json())?.data?.Media?.coverImage?.large;
-      if(url) return url;
-    } catch{}
-  }
-  return null;
-}
+// fetchCoverUrl → fetchAniListCover 재사용 (중복 제거)
 
 async function buildCoverMarquee() {
   const track = document.getElementById('cover-marquee-track');
@@ -1399,7 +1392,7 @@ async function buildCoverMarquee() {
 
   const urls = [];
   for(const {id, title} of COVER_MAL_IDS) {
-    const url = await fetchCoverUrl(id);
+    const url = await fetchAniListCover(id);
     if(url) urls.push({url, title});
   }
 
@@ -2086,6 +2079,41 @@ function applyResultLang() {
     const d = state.topWork;
     sub.textContent = isEn ? `${d.correct} / ${d.total} correct` : `${d.total}문제 중 ${d.correct}개 정답`;
   }
+  // 작품명 언어 전환
+  const workName = el('result-work-name');
+  if(workName && state.topWork) {
+    workName.textContent = isEn
+      ? (state.answers.find(a=>a.source_work===state.topWork.name)?.source_work_en || state.topWork.name)
+      : state.topWork.name;
+  }
+  // obs text 언어 전환
+  const obsText = el('result-observation-text');
+  if(obsText && state.resultPattern) {
+    state.resultObs = getObs(state.resultPattern);
+    obsText.textContent = state.resultObs;
+  }
+  // 틀린 문제 목록 재렌더
+  const wl = el('result-wrong-list');
+  if(wl && state.answers.length) {
+    wl.innerHTML = '';
+    state.answers.filter(a=>!a.is_correct).forEach(a=>{
+      const item = state.questions.find(q=>q.item_id===a.item_id);
+      if(!item) return;
+      const qText = isEn ? (item.question_en||item.question) : item.question;
+      const div = document.createElement('div');
+      div.className = 'wrong-item';
+      const qDiv = document.createElement('div');
+      qDiv.textContent = qText.slice(0,55)+(qText.length>55?'…':'');
+      const aDiv = document.createElement('div');
+      aDiv.className = 'wrong-item-answer';
+      // 현재 lang에 맞는 정답 표시
+      const qItem = state.questions.find(q=>q.item_id===a.item_id);
+      const ans = isEn ? (qItem?.correctAnswerEn || a.correct_answer) : (qItem?.correctAnswerKo || a.correct_answer);
+      aDiv.textContent = `→ ${ans}`;
+      div.appendChild(qDiv); div.appendChild(aDiv);
+      wl.appendChild(div);
+    });
+  }
 }
 // ═══════════════════════════════════════════
 // 랜딩 텍스트 언어 적용
@@ -2099,6 +2127,9 @@ function applyLandingLang() {
   // 버튼 텍스트
   const startBtn = document.getElementById('btn-start');
   if(startBtn) startBtn.querySelector('.btn-start-text').textContent = isEn ? 'Start' : '시작';
+  // 헤더 타이틀 (랜딩에서도 명시적 업데이트)
+  const hTitleL = document.getElementById('h-title');
+  if(hTitleL) hTitleL.textContent = isEn ? "What kind of fan?" : '난 어떤 덕후?';
 
   // 모드 레이블
   const quizLabel = lp.querySelector('#mode-quiz-label');

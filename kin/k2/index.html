@@ -296,18 +296,72 @@ body{
 ═══════════════════════════════ */
 #page-quiz{gap:0}
 
-/* 진행 바 */
-.quiz-progress{display:flex;gap:4px;margin-top:20px;margin-bottom:22px}
-.prog-dot{
-  flex:1;height:3px;border-radius:2px;
-  background:rgba(255,255,255,.1);
-  transition:background .4s,transform .3s;
+/* 진행 바 — 만화 패널 스타일 */
+.quiz-progress{
+  display:flex;gap:5px;
+  margin-top:16px;margin-bottom:20px;
 }
-.prog-dot.done-easy   {background:var(--kin)}
-.prog-dot.done-mid    {background:#60A5FA}
-.prog-dot.done-hard   {background:#F87171}
-.prog-dot.done-wrong  {background:rgba(248,113,113,.4)}
-.prog-dot.current     {background:rgba(255,229,0,.5);transform:scaleY(1.8)}
+.prog-dot{
+  flex:1;height:28px;border-radius:4px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  transition:background .35s,border-color .35s,transform .25s;
+  position:relative;overflow:hidden;
+}
+/* 완료 — 정답 */
+.prog-dot.done-easy{
+  background:rgba(255,229,0,.22);
+  border-color:rgba(255,229,0,.5);
+}
+.prog-dot.done-mid{
+  background:rgba(96,165,250,.22);
+  border-color:rgba(96,165,250,.5);
+}
+.prog-dot.done-hard{
+  background:rgba(248,113,113,.22);
+  border-color:rgba(248,113,113,.5);
+}
+/* 완료 — 오답 */
+.prog-dot.done-wrong{
+  background:rgba(255,255,255,.04);
+  border-color:rgba(255,255,255,.12);
+}
+.prog-dot.done-wrong::after{
+  content:'';position:absolute;
+  inset:0;
+  background:repeating-linear-gradient(
+    -45deg,
+    transparent,transparent 3px,
+    rgba(248,113,113,.18) 3px,rgba(248,113,113,.18) 4px
+  );
+}
+/* 현재 — 맥박 애니 */
+.prog-dot.current{
+  border-color:rgba(255,229,0,.7);
+  background:rgba(255,229,0,.12);
+  animation:prog-pulse 1.4s ease-in-out infinite;
+}
+@keyframes prog-pulse{
+  0%,100%{border-color:rgba(255,229,0,.4);background:rgba(255,229,0,.08)}
+  50%{border-color:rgba(255,229,0,.85);background:rgba(255,229,0,.18)}
+}
+/* 미래 — 난이도 예고 */
+.prog-dot.upcoming-easy{border-color:rgba(255,229,0,.18)}
+.prog-dot.upcoming-mid {border-color:rgba(96,165,250,.18)}
+.prog-dot.upcoming-hard{border-color:rgba(248,113,113,.22)}
+/* 정답 flash 애니 */
+.prog-dot.flash-correct{animation:prog-flash .4s ease}
+@keyframes prog-flash{
+  0%{transform:scaleY(1)}
+  40%{transform:scaleY(1.15)}
+  100%{transform:scaleY(1)}
+}
+.prog-dot.flash-wrong{animation:prog-shake .35s ease}
+@keyframes prog-shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-3px)}
+  75%{transform:translateX(3px)}
+}
 
 /* 상단 메타 */
 .quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
@@ -730,6 +784,55 @@ body{
   }
 }
 @keyframes flash-fade{0%{opacity:1}100%{opacity:0}}
+/* ── 오답 정답 뱃지 ── */
+.choice-btn{position:relative}
+.answer-badge{
+  position:absolute;right:12px;top:50%;
+  transform:translateY(-50%);
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  background:#4ADE80;color:#000;font-weight:700;
+  padding:3px 9px;border-radius:3px;
+  animation:badge-in .25s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+}
+@keyframes badge-in{
+  from{opacity:0;transform:translateY(-50%) scale(.8)}
+  to{opacity:1;transform:translateY(-50%) scale(1)}
+}
+
+/* ── 스와이프 힌트 (모바일만) ── */
+.swipe-hint{
+  text-align:center;font-size:var(--t-label);
+  color:rgba(255,255,255,.28);letter-spacing:var(--ls-mono);
+  text-transform:uppercase;margin-top:10px;
+  opacity:0;pointer-events:none;
+}
+.swipe-hint.show{animation:hint-cycle 3.5s ease 0.6s forwards}
+@keyframes hint-cycle{
+  0%{opacity:0} 15%{opacity:1} 75%{opacity:1} 100%{opacity:0}
+}
+@media(min-width:768px){.swipe-hint{display:none}}
+
+/* ── 재플레이 힌트 ── */
+.result-replay-hint{
+  font-size:var(--t-label);color:rgba(255,229,0,.45);
+  letter-spacing:.08em;margin-top:6px;
+}
+
+/* ── 문제 난이도별 시각 변화 ── */
+.quiz-question.diff-mid:not(.direction-recall):not(.direction-explain){
+  border-left:2px solid rgba(96,165,250,.35);padding-left:14px;
+}
+.quiz-question.diff-hard:not(.direction-recall):not(.direction-explain){
+  border-left:2px solid rgba(248,113,113,.4);padding-left:14px;
+}
+
+/* ── 점수 카운트업 펄스 ── */
+@keyframes score-pop{
+  0%{transform:scale(1)} 50%{transform:scale(1.06)} 100%{transform:scale(1)}
+}
+.result-score.pop{animation:score-pop .3s cubic-bezier(.16,1,.3,1)}
+
 </style>
 <link rel="preload" as="image" href="./assets/bg/bg1.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
@@ -758,7 +861,6 @@ body{
 
   <!-- 배경 -->
   <div class="manga-bg" aria-hidden="true">
-    <img class="speedlines" src="./assets/speedlines.webp" alt="">
     <img class="manga-gate" id="manga-gate" src="./assets/manga_gate1.png" alt="" onerror="this.style.display='none'">
   </div>
 
@@ -847,6 +949,7 @@ body{
     <div class="kin-rxn-bubble" id="kin-rxn-bubble"></div>
   </div>
   <button class="btn-next" id="btn-next">다음 →</button>
+  <div class="swipe-hint" id="swipe-hint">↑ 스와이프</div>
 </div>
 
 <!-- ══════ RESULT ══════ -->
@@ -889,6 +992,7 @@ body{
     <div class="result-wrong-list" id="result-wrong-list"></div>
   </div>
 
+  <div class="result-replay-hint" id="result-replay-hint"></div>
   <div class="result-btns">
     <button class="btn-primary"   id="btn-share">공유하기</button>
     <button class="btn-secondary" id="btn-retry">다시 하기</button>
@@ -942,7 +1046,6 @@ body{
 const SUPA_URL = 'https://lmfyspozcmyefgrkgxch.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
 const API_URL  = 'https://kin-agent-production.up.railway.app';
-const JIKAN    = 'https://api.jikan.moe/v4';
 
 const KIN_IMGS = {
   excited:  './assets/kin_excited.webp',
@@ -1587,9 +1690,23 @@ function renderProgress() {
     if(i < state.currentIndex) {
       const ans = state.answers[i];
       cls += ans?.is_correct ? ` done-${slot.difficulty}` : ' done-wrong';
-    } else if(i === state.currentIndex) cls += ' current';
+    } else if(i === state.currentIndex) {
+      cls += ' current';
+    } else {
+      // 미래 문제 — 난이도 예고
+      cls += ` upcoming-${slot.difficulty}`;
+    }
     kids[i].className = cls;
   }
+}
+
+// 정답/오답 시 해당 칸 flash
+function flashProgressDot(index, isCorrect) {
+  const kids = DOM.quizProgress.children;
+  if(!kids[index]) return;
+  const cls = isCorrect ? 'flash-correct' : 'flash-wrong';
+  kids[index].classList.add(cls);
+  setTimeout(() => kids[index].classList.remove(cls), 400);
 }
 
 // ═══════════════════════════════════════════
@@ -1698,6 +1815,7 @@ function renderQuestion() {
   DOM.qQuestion.className='quiz-question';
   if (q.direction === 'recall')  DOM.qQuestion.classList.add('direction-recall');
   else if (q.direction === 'explain') DOM.qQuestion.classList.add('direction-explain');
+  DOM.qQuestion.classList.add(`diff-${diff}`);
   const enterClass = diff==='easy'?'enter-fade':diff==='mid'?'enter-up':'enter-side';
   DOM.qQuestion.textContent = lang==='ko' ? q.question : (q.question_en||q.question);
   void DOM.qQuestion.offsetWidth;
@@ -1743,6 +1861,7 @@ function selectAnswer(selected) {
   else          { state.streak=0; clearStreakEffect(); }
 
   haptic(isCorrect?'correct':'wrong');
+  flashProgressDot(state.currentIndex, isCorrect);
 
   // 선택지 색상
   document.querySelectorAll('.choice-btn').forEach(btn=>{
@@ -1752,12 +1871,26 @@ function selectAnswer(selected) {
     else btn.classList.add('faded');
   });
 
-  // 오답 선택 시 정답 버튼 주목 떨림
+  // 오답 선택 시 정답 강조 + 뱃지
   if(!isCorrect) {
     setTimeout(()=>{
-      DOM.qChoices.querySelectorAll('.choice-btn.correct')
-        .forEach(b=>b.classList.add('attention'));
-    }, 180);
+      DOM.qChoices.querySelectorAll('.choice-btn.correct').forEach(b=>{
+        b.classList.add('attention');
+        const badge = document.createElement('span');
+        badge.className = 'answer-badge';
+        badge.textContent = t('정답','answer');
+        b.appendChild(badge);
+      });
+    }, 200);
+  }
+
+  // 스와이프 힌트 (모바일)
+  const swipeHint = document.getElementById('swipe-hint');
+  if(swipeHint) {
+    swipeHint.textContent = t('↑ 스와이프 또는 다음 →', '↑ swipe or next →');
+    swipeHint.classList.remove('show');
+    void swipeHint.offsetWidth;
+    swipeHint.classList.add('show');
   }
 
   // 답변 기록
@@ -1816,6 +1949,29 @@ document.addEventListener('touchend', e=>{
   if(dy < -60 && Math.abs(dx) < 40) goNext(); // #12: 수직 스와이프만 허용
 },{passive:true});
 
+
+// ═══════════════════════════════════════════
+// 점수 카운트업 애니
+// ═══════════════════════════════════════════
+function animateScore(target) {
+  const el = document.getElementById('result-score');
+  if(!el) return;
+  const duration = 400 + target * 70;
+  const start = performance.now();
+  const tick = now => {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(ease * target);
+    if(p < 1) requestAnimationFrame(tick);
+    else {
+      el.textContent = target;
+      el.classList.add('pop');
+      setTimeout(() => el.classList.remove('pop'), 300);
+    }
+  };
+  requestAnimationFrame(tick);
+}
+
 // ═══════════════════════════════════════════
 // 결과 화면
 // ═══════════════════════════════════════════
@@ -1823,7 +1979,8 @@ async function showResult() {
   showPage('page-result');
   unlockLang();
 
-  document.getElementById('result-score').textContent = state.score;
+  document.getElementById('result-score').textContent = '0';
+  setTimeout(() => animateScore(state.score), 200);
 
   // 패턴 + 관찰 멘트 — state에 캐시 (공유 시 재사용)
   state.resultPattern = detectPattern(state.answers);
@@ -1865,20 +2022,39 @@ async function showResult() {
     document.getElementById('result-work-name').textContent = displayName;
     document.getElementById('result-work-sub').textContent =
       t(`${wData.total}문제 중 ${wData.correct}개 정답`, `${wData.correct} / ${wData.total} correct`);
+    // AniList로 커버 fetch (CORS 안전)
     if(wData.mal_id) {
-      try {
-        const res = await fetch(`${JIKAN}/anime/${wData.mal_id}`);
-        const data = await res.json();
-        const imgUrl = data.data?.images?.jpg?.large_image_url;
-        if(imgUrl) document.getElementById('result-work-bg').style.backgroundImage=`url(${imgUrl})`;
-      } catch{}
+      fetchAniListCover(wData.mal_id).then(url => {
+        if(url) document.getElementById('result-work-bg').style.backgroundImage=`url(${url})`;
+      }).catch(()=>{});
     }
   } else {
+    // topWork 없을 때 — 세션 작품 중 mal_id 있는 것 랜덤 선택
     state.topWork = null;
-    document.getElementById('result-work-card').style.display='none';
-    document.getElementById('result-kin-card').style.display='block';
-    const bgIdx = Math.floor(Math.random() * 10) + 1;
-    document.getElementById('result-kin-bg').style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+    const fallbackWork = Object.entries(workScore)
+      .filter(([,v]) => v.mal_id)
+      .sort(() => Math.random() - 0.5)[0];
+
+    if(fallbackWork) {
+      const [fbName, fbData] = fallbackWork;
+      document.getElementById('result-work-card').style.display='block';
+      document.getElementById('result-kin-card').style.display='none';
+      const fbDisplayName = lang==='en'
+        ? (state.answers.find(a=>a.source_work===fbName)?.source_work_en || fbName)
+        : fbName;
+      document.getElementById('result-work-name').textContent = fbDisplayName;
+      document.getElementById('result-work-sub').textContent = t('이번 세션 등장 작품', 'appeared this session');
+      document.getElementById('result-work-label').textContent = t('이번 세션 작품', 'this session');
+      fetchAniListCover(fbData.mal_id).then(url => {
+        if(url) document.getElementById('result-work-bg').style.backgroundImage=`url(${url})`;
+      }).catch(()=>{});
+    } else {
+      // mal_id도 없으면 bg 이미지 fallback
+      document.getElementById('result-work-card').style.display='none';
+      document.getElementById('result-kin-card').style.display='block';
+      const bgIdx = Math.floor(Math.random() * 10) + 1;
+      document.getElementById('result-kin-bg').style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+    }
   }
 
   document.getElementById('result-obs-avatar').src = KIN_IMGS[obsMood];
@@ -1907,6 +2083,29 @@ async function showResult() {
     });
   } else ws.style.display='none';
 
+
+  // 재플레이 힌트
+  const replayHintEl = document.getElementById('result-replay-hint');
+  if(replayHintEl) {
+    const hints = {
+      ko: {
+        perfect:'다음엔 더 어렵게 낼게.',
+        all_low:'한 편만 보고 다시 와봐.',
+        easy_only:'이제 hard 문제만 모아서 줄까?',
+        all_high:'레이블이 바뀔 수도 있어. 다시 해봐.',
+        random:'패턴 없이 나왔어. 다시 하면 다르게 나올 거야.',
+      },
+      en: {
+        perfect:'Next time I go harder.',
+        all_low:'Read one series and come back.',
+        easy_only:'Want only hard questions next time?',
+        all_high:'Your label might change. Try again.',
+        random:'No pattern yet. Another round might tell a different story.',
+      }
+    };
+    const hintMap = lang==='ko' ? hints.ko : hints.en;
+    replayHintEl.textContent = hintMap[state.resultPattern] || (lang==='ko' ? '레이블이 바뀔 수도 있어.' : 'Your label might change.');
+  }
   saveSession(state.resultPattern);
 }
 
@@ -2253,6 +2452,17 @@ function applyLandingLang() {
   // manga-gate 이미지
   const mg = document.getElementById('manga-gate');
   if(mg) mg.src = isEn ? './assets/manga_gate1.png' : './assets/manga_gate2.png';
+
+  // 재플레이 힌트 언어 전환
+  const replayEl = el('result-replay-hint');
+  if(replayEl && state.resultPattern) {
+    const hints = {
+      ko:{perfect:'다음엔 더 어렵게 낼게.',all_low:'한 편만 보고 다시 와봐.',easy_only:'이제 hard 문제만 모아서 줄까?',all_high:'레이블이 바뀔 수도 있어. 다시 해봐.',random:'패턴 없이 나왔어. 다시 하면 다르게 나올 거야.'},
+      en:{perfect:'Next time I go harder.',all_low:'Read one series and come back.',easy_only:'Want only hard questions next time?',all_high:'Your label might change. Try again.',random:'No pattern yet. Another round might tell a different story.'},
+    };
+    const hintMap = isEn ? hints.en : hints.ko;
+    replayEl.textContent = hintMap[state.resultPattern] || (isEn ? 'Your label might change.' : '레이블이 바뀔 수도 있어.');
+  }
 }
 
 function updateLandingState() {

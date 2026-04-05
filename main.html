@@ -121,19 +121,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 
   .vm-char{
     font-family:'Syne',sans-serif;font-weight:800;
-    font-size:10px;letter-spacing:.08em;
-    writing-mode:vertical-lr;padding-bottom:10px;
+    font-size:18px;letter-spacing:.06em;
+    writing-mode:vertical-lr;padding-bottom:14px;
   }
-  .vm-char-kin{color:rgba(255,232,0,.55);transform:rotate(180deg)}
-  .vm-char-dred{color:rgba(91,79,207,.55)}
-  .vm-line{width:1px;height:12px;background:rgba(255,255,255,.08);margin:2px 0}
+  .vm-char-kin{color:rgba(255,232,0,.82);transform:rotate(180deg)}
+  .vm-char-dred{color:rgba(91,79,207,.82)}
+  .vm-line{width:1px;height:14px;background:rgba(255,255,255,.14);margin:3px 0}
   .vm-item{
     writing-mode:vertical-lr;
-    font-size:7.5px;letter-spacing:.28em;text-transform:uppercase;
-    padding:8px 4px;cursor:pointer;transition:opacity .2s;
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    padding:10px 6px;cursor:pointer;transition:opacity .2s;
   }
-  .vm-item-kin{color:rgba(255,232,0,.45);transform:rotate(180deg)}
-  .vm-item-dred{color:rgba(91,79,207,.45)}
+  .vm-item-kin{color:rgba(255,232,0,.72);transform:rotate(180deg)}
+  .vm-item-dred{color:rgba(91,79,207,.72)}
   .vm-item:hover{opacity:1!important}
   .vm-item.vm-dimmed{opacity:.15!important}
 
@@ -141,13 +141,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .h-card{position:fixed;top:50%;z-index:44;transform:translateY(-50%);pointer-events:none;opacity:0;}
   .h-card.on{pointer-events:all;}
   .h-card-kin{
-    left:calc(5vw + 30px);
+    left:calc(5vw + 48px);
     transform:translateY(-50%) translateX(-16px);
     transition:opacity .55s ease,transform .65s cubic-bezier(.16,1,.3,1);
   }
   .h-card-kin.on{opacity:1;transform:translateY(-50%) translateX(0)}
   .h-card-dred{
-    right:calc(5vw + 30px);
+    right:calc(5vw + 48px);
     transform:translateY(-50%) translateX(12px);
     transition:opacity .12s ease,transform .14s cubic-bezier(.16,1,.3,1);
   }
@@ -180,11 +180,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   transition:background .38s ease;
 }
 #sheet-dim.on{background:rgba(0,0,0,.78);pointer-events:all}
-
-#lp-ring{
-  position:fixed;z-index:62;pointer-events:none;
-  opacity:0;transition:opacity .15s;width:80px;height:80px;
-}
 
 .sheet{
   position:fixed;bottom:0;left:0;right:0;z-index:61;
@@ -251,9 +246,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 <div class="v-menu" id="kin-vmenu"></div>
 <div class="v-menu" id="dred-vmenu"></div>
 <div id="h-cards-root"></div>
-
-<!-- ── LONGPRESS RING (mobile) ── -->
-<canvas id="lp-ring" width="80" height="80"></canvas>
 
 <!-- ── SHEET DIM ── -->
 <div id="sheet-dim"></div>
@@ -1095,68 +1087,51 @@ setInterval(syncZones, 120);
 $kinZone.addEventListener('mouseenter', showBubble);
 $kinZone.addEventListener('mouseleave', hideBubble);
 
-// 모바일: 롱프레스(700ms) → 시트, 탭 → 갤러리
+// 모바일: 스와이프업 → 시트, 탭 → 갤러리 (KIN/DRED 동일)
 if (IS_TOUCH) {
-  let kinTx0 = 0, kinTy0 = 0, kinMoved = false;
-  $kinZone.addEventListener('touchstart', e => {
-    kinTx0 = e.touches[0].clientX;
-    kinTy0 = e.touches[0].clientY;
-    kinMoved = false;
-    if (activeSheet) return;
-    showBubble();
-    startLp(kinTx0, kinTy0);
-  }, {passive:true});
-  $kinZone.addEventListener('touchmove', e => {
-    const dx = e.touches[0].clientX - kinTx0;
-    const dy = e.touches[0].clientY - kinTy0;
-    if (Math.hypot(dx,dy) > 8) { kinMoved = true; cancelLp(); }
-  }, {passive:true});
-  $kinZone.addEventListener('touchend', e => {
-    const wasLp = lpDone;
-    cancelLp(); lpDone = false;
-    if (activeSheet || wasLp || kinMoved) return;
-    const dx = e.changedTouches[0].clientX - kinTx0;
-    const dy = e.changedTouches[0].clientY - kinTy0;
-    if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
-      hideBubble();
-      navTo('./kin/');
-    } else {
-      setTimeout(hideBubble, 1400);
-    }
-  }, {passive:true});
+  const addSwipeHandler = (zone, sheetName, galleryPath) => {
+    let tx0 = 0, ty0 = 0, swipeHandled = false;
+    zone.addEventListener('touchstart', e => {
+      tx0 = e.touches[0].clientX;
+      ty0 = e.touches[0].clientY;
+      swipeHandled = false;
+      if (zone === $kinZone && !activeSheet && getPhase(elapsed).n === 'WORLDS') showBubble();
+      if (zone === $dredZone) dredHovered = true;
+    }, {passive:true});
+    zone.addEventListener('touchmove', e => {
+      if (swipeHandled || activeSheet) return;
+      if (getPhase(elapsed).n !== 'WORLDS') return;
+      const dy = e.touches[0].clientY - ty0;
+      if (dy < -40) {
+        swipeHandled = true;
+        hideBubble();
+        openSheet(sheetName);
+      }
+    }, {passive:true});
+    zone.addEventListener('touchend', e => {
+      if (swipeHandled || activeSheet) return;
+      const dx = e.changedTouches[0].clientX - tx0;
+      const dy = e.changedTouches[0].clientY - ty0;
+      if (Math.hypot(dx, dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
+        hideBubble();
+        navTo(galleryPath);
+      } else {
+        if (zone === $kinZone) setTimeout(hideBubble, 1400);
+        if (zone === $dredZone) setTimeout(() => { dredHovered = false; }, 800);
+      }
+    }, {passive:true});
+  };
+
+  addSwipeHandler($kinZone,  'kin',  './kin/');
+  addSwipeHandler($dredZone, 'dred', './dred/');
 }
 
 /* ══════════════════════════════════════════════════
-   DRED HOVER — silence with three micro-signals
+   DRED HOVER — PC: 파티클 drift 트리거
 ══════════════════════════════════════════════════ */
-$dredZone.addEventListener('mouseenter', () => { dredHovered = true;  });
-$dredZone.addEventListener('mouseleave', () => { dredHovered = false; });
-
-if (IS_TOUCH) {
-  let dredTx0 = 0, dredTy0 = 0, dredSwipeHandled = false;
-  $dredZone.addEventListener('touchstart', e => {
-    dredTx0 = e.touches[0].clientX;
-    dredTy0 = e.touches[0].clientY;
-    dredSwipeHandled = false;
-    dredHovered = true;
-  }, {passive:true});
-  $dredZone.addEventListener('touchmove', e => {
-    const dy = e.touches[0].clientY - dredTy0;
-    if (dy < -45 && !dredSwipeHandled && !activeSheet) {
-      dredSwipeHandled = true;
-      openSheet('dred');
-    }
-  }, {passive:true});
-  $dredZone.addEventListener('touchend', e => {
-    if (dredSwipeHandled || activeSheet) return;
-    const dx = e.changedTouches[0].clientX - dredTx0;
-    const dy = e.changedTouches[0].clientY - dredTy0;
-    if (Math.hypot(dx,dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
-      navTo('./dred/');
-    } else {
-      setTimeout(() => { dredHovered = false; }, 800);
-    }
-  }, {passive:true});
+if (!IS_TOUCH) {
+  $dredZone.addEventListener('mouseenter', () => { dredHovered = true;  });
+  $dredZone.addEventListener('mouseleave', () => { dredHovered = false; });
 }
 
 /* ══════════════════════════════════════════════════
@@ -1383,9 +1358,9 @@ function typeSheetLine() {
   (function tick() { $el.textContent = text.slice(0, i++); if (i <= text.length) sheetTypeTimer = setTimeout(tick, spd); })();
 }
 
-$sheetDim.addEventListener('touchend', e => { e.stopPropagation(); closeSheet(); }, {passive:true});
-
 if (IS_TOUCH) {
+  $sheetDim.addEventListener('touchend', e => { e.stopPropagation(); closeSheet(); }, {passive:true});
+
   ['kin-sheet','dred-sheet'].forEach(id => {
     const el = document.getElementById(id);
     let sy0 = 0, sHandled = false;
@@ -1400,50 +1375,6 @@ if (IS_TOUCH) {
   });
 }
 
-/* ── 롱프레스 링 (KIN mobile) ── */
-const $lpRing = document.getElementById('lp-ring');
-const lpCtx = $lpRing ? $lpRing.getContext('2d') : null;
-const LP_DUR = 700;
-let lpTimer = null, lpStart = null, lpRaf = null, lpDone = false, lpJustFired = false;
-
-function drawLpRing(p) {
-  if (!lpCtx) return;
-  lpCtx.clearRect(0, 0, 80, 80);
-  lpCtx.beginPath(); lpCtx.arc(40, 40, 30, 0, Math.PI * 2);
-  lpCtx.strokeStyle = 'rgba(255,229,0,.12)'; lpCtx.lineWidth = 2; lpCtx.stroke();
-  lpCtx.beginPath(); lpCtx.arc(40, 40, 30, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p);
-  lpCtx.strokeStyle = `rgba(255,229,0,${.45 + p * .45})`; lpCtx.lineWidth = 2.5; lpCtx.stroke();
-}
-
-function lpLoop() {
-  if (!lpStart) return;
-  const p = Math.min((Date.now() - lpStart) / LP_DUR, 1);
-  drawLpRing(p);
-  if (p < 1) lpRaf = requestAnimationFrame(lpLoop);
-}
-
-function startLp(x, y) {
-  lpStart = Date.now(); lpDone = false;
-  if ($lpRing) { $lpRing.style.left=(x-40)+'px'; $lpRing.style.top=(y-40)+'px'; $lpRing.style.opacity='1'; }
-  lpRaf = requestAnimationFrame(lpLoop);
-  lpTimer = setTimeout(() => {
-    lpDone = true;
-    lpJustFired = true;
-    setTimeout(() => { lpJustFired = false; }, 600); // click 이벤트 차단 (iOS ~300ms 딜레이)
-    cancelAnimationFrame(lpRaf);
-    if ($lpRing) $lpRing.style.opacity = '0';
-    lpStart = null;
-    hideBubble();
-    openSheet('kin');
-  }, LP_DUR);
-}
-
-function cancelLp() {
-  clearTimeout(lpTimer); cancelAnimationFrame(lpRaf);
-  if ($lpRing) $lpRing.style.opacity = '0';
-  lpStart = null;
-}
-
 /* ══════════════════════════════════════════════════
    NAVIGATION — KIN → kin.html / DRED → dred.html
 ══════════════════════════════════════════════════ */
@@ -1455,17 +1386,19 @@ function navTo(href) {
   setTimeout(() => { window.location.href = href; }, 450);
 }
 
-$kinZone.addEventListener('click', () => {
-  if (lpJustFired) return; // 롱프레스 직후 발화하는 click 차단
-  if (getPhase(elapsed).n !== 'WORLDS') return;
-  hideBubble();
-  navTo('./kin/');
-});
+/* ── PC 클릭: 갤러리 이동 ── */
+if (!IS_TOUCH) {
+  $kinZone.addEventListener('click', () => {
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    hideBubble();
+    navTo('./kin/');
+  });
 
-$dredZone.addEventListener('click', () => {
-  if (getPhase(elapsed).n !== 'WORLDS') return;
-  navTo('./dred/');
-});
+  $dredZone.addEventListener('click', () => {
+    if (getPhase(elapsed).n !== 'WORLDS') return;
+    navTo('./dred/');
+  });
+}
 </script>
 </body>
 </html>

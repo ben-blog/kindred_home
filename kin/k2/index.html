@@ -124,12 +124,7 @@ body{
 
 /* 배경 요소 */
 .manga-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-.speedlines{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;opacity:.1;
-  animation:sl-rotate 80s linear infinite;
-}
-@keyframes sl-rotate{from{transform:rotate(0deg) scale(1.1)}to{transform:rotate(360deg) scale(1.1)}}
+.speedlines{display:none;} /* 속도선 제거 */
 .manga-gate{
   position:absolute;right:0;bottom:0;
   width:min(55vw,480px);height:auto;max-height:90vh;
@@ -185,7 +180,7 @@ body{
     opacity:.25;
     right:0;
   }
-  .speedlines{opacity:.08;}
+
 }
 
 /* KIN 말풍선 */
@@ -254,6 +249,33 @@ body{
 /* 랜딩 메타 */
 .today-count{font-size:var(--t-label);color:rgba(255,229,0,.65);letter-spacing:.06em}
 .landing-meta-item{font-size:var(--t-label);color:rgba(255,255,255,.22);letter-spacing:var(--ls-mono);text-transform:uppercase}
+
+/* 커버 마퀴 */
+.cover-marquee{
+  position:relative;width:100%;overflow:hidden;
+  margin-top:auto;
+  mask-image:linear-gradient(to right,transparent 0%,black 12%,black 88%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,black 12%,black 88%,transparent 100%);
+}
+.cover-marquee-track{
+  display:flex;gap:8px;width:max-content;
+  animation:cover-scroll 28s linear infinite;
+}
+.cover-marquee-track:hover{animation-play-state:paused}
+@keyframes cover-scroll{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+.cover-img{
+  width:72px;height:100px;border-radius:6px;
+  object-fit:cover;flex-shrink:0;
+  opacity:.6;
+  transition:opacity .2s;
+  border:1px solid rgba(255,255,255,.08);
+}
+.cover-img:hover{opacity:.9}
+/* 모바일에서 커버 마퀴 숨김 */
+@media(max-width:767px){.cover-marquee{display:none}}
 
 /* ── 퀴즈 배경 이미지 ── */
 #quiz-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
@@ -726,6 +748,10 @@ body{
       <div class="kin-bubble-landing">
         <img class="kin-avatar-landing" id="landing-kin-avatar" src="./assets/kin_thinking1.webp" alt="KIN">
         <div class="kin-bubble-text" id="landing-kin-bubble">넌 어떤 덕후야.</div>
+      </div>
+      <!-- 커버 마퀴 (PC only) -->
+      <div class="cover-marquee" id="cover-marquee" style="display:none">
+        <div class="cover-marquee-track" id="cover-marquee-track"></div>
       </div>
     </div>
 
@@ -1333,6 +1359,64 @@ async function loadTotalCount() {
     const el = document.getElementById('txt-total-q');
     if(el && count) el.textContent = count;
   } catch{}
+}
+
+// ═══════════════════════════════════════════
+// 커버 마퀴 — AniList에서 작품 커버 fetch
+// ═══════════════════════════════════════════
+const COVER_MAL_IDS = [
+  {id:21, title:'원피스'},      {id:20, title:'나루토'},
+  {id:16498, title:'진격의 거인'}, {id:38000, title:'귀멸의 칼날'},
+  {id:11061, title:'헌터×헌터'}, {id:5114, title:'강철의 연금술사'},
+  {id:1535, title:'데스노트'},   {id:33, title:'베르세르크'},
+  {id:40748, title:'주술회전'}, {id:44511, title:'체인소맨'},
+  {id:223, title:'드래곤볼'},   {id:170, title:'슬램덩크'},
+];
+
+async function fetchCoverUrl(malId) {
+  const query = `query($id:Int,$t:MediaType){Media(idMal:$id,type:$t){coverImage{large}}}`;
+  for(const type of ['ANIME','MANGA']) {
+    try {
+      const res = await fetch('https://graphql.anilist.co',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({query,variables:{id:malId,t:type}}),
+      });
+      const url = (await res.json())?.data?.Media?.coverImage?.large;
+      if(url) return url;
+    } catch{}
+  }
+  return null;
+}
+
+async function buildCoverMarquee() {
+  const track = document.getElementById('cover-marquee-track');
+  const marquee = document.getElementById('cover-marquee');
+  if(!track || !marquee) return;
+
+  // PC에서만 표시
+  if(window.innerWidth < 768) return;
+
+  const urls = [];
+  for(const {id, title} of COVER_MAL_IDS) {
+    const url = await fetchCoverUrl(id);
+    if(url) urls.push({url, title});
+  }
+
+  if(urls.length === 0) return;
+
+  // 마퀴 효과를 위해 2배 복제
+  const items = [...urls, ...urls];
+  items.forEach(({url, title}) => {
+    const img = document.createElement('img');
+    img.className = 'cover-img';
+    img.src = url;
+    img.alt = title;
+    img.loading = 'lazy';
+    track.appendChild(img);
+  });
+
+  marquee.style.display = 'block';
 }
 
 // ═══════════════════════════════════════════
@@ -2049,6 +2133,10 @@ function applyLandingLang() {
   const metaItems = lp.querySelectorAll('.landing-meta-item');
   if(metaItems[1]) metaItems[1].textContent = isEn ? 'KIN judges' : 'KIN 판정';
 
+  // 헤더 타이틀
+  const hName = document.querySelector('.h-name');
+  if(hName) hName.textContent = isEn ? 'Manga Quiz' : '만화퀴즈';
+
   // manga-gate 이미지
   const mg = document.getElementById('manga-gate');
   if(mg) mg.src = isEn ? './assets/manga_gate1.png' : './assets/manga_gate2.png';
@@ -2084,6 +2172,7 @@ function updateLandingState() {
   applyLandingLang();
   const $loading=document.getElementById('loading');
   await Promise.all([loadTotalCount(), loadTodayCount()]);
+  buildCoverMarquee(); // fire-and-forget — 실패해도 무관
   $loading.style.opacity='0';
   setTimeout(()=>{ $loading.style.display='none'; },400);
 })();

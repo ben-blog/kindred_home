@@ -129,7 +129,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .vm-char-dred:hover{opacity:.7}
   .vm-line{width:100%;height:1px;background:rgba(255,255,255,.12);margin:3px 0}
   .vm-item{
-    font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    font-size:10px;letter-spacing:.06em;text-transform:uppercase;
     padding:7px 0;cursor:pointer;transition:opacity .2s;
     white-space:nowrap;
   }
@@ -141,7 +141,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .h-card{position:fixed;top:50%;z-index:44;transform:translateY(-50%);pointer-events:none;opacity:0;}
   .h-card.on{pointer-events:all;}
   .h-card-kin{
-    left:calc(3vw + 120px);
+    left:calc(3vw + 140px);
     transform:translateY(-50%) translateX(-16px);
     transition:opacity .55s ease,transform .65s cubic-bezier(.16,1,.3,1);
   }
@@ -156,19 +156,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .card-kin-inner{
     background:rgba(10,9,3,.94);border:1px solid rgba(255,229,0,.20);
     backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    padding:16px 20px;min-width:188px;
+    padding:16px 20px;min-width:200px;max-width:260px;
   }
-  .card-kin-tag{font-size:7px;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,232,0,.38);margin-bottom:6px}
-  .card-kin-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em;color:#FFE800;margin-bottom:8px}
-  .card-kin-cta{font-size:8px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,232,0,.45)}
+  .card-kin-tag{font-size:7px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,232,0,.38);margin-bottom:8px}
+  .card-kin-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em;color:#FFE800;margin-bottom:6px;line-height:1.3}
+  .card-kin-desc{font-size:10px;letter-spacing:.04em;line-height:1.6;color:rgba(255,255,255,.38);margin-bottom:10px}
+  .card-kin-cta{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,232,0,.45)}
 
   .card-dred-inner{
     background:rgba(4,3,16,.94);border:1px solid rgba(91,79,207,.20);
     backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     padding:20px 24px;text-align:right;
+    display:flex;flex-direction:column;align-items:flex-end;gap:6px;
   }
-  .card-dred-name{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.02em;color:#5B4FCF}
-  .card-dred-tag{font-size:7px;letter-spacing:.32em;text-transform:uppercase;color:rgba(91,79,207,.32);margin-top:4px}
+  .card-dred-name{font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.02em;color:#5B4FCF;line-height:1}
+  .card-dred-desc{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:rgba(91,79,207,.45)}
 }
 
 /* ════════════════════════════════════════
@@ -1192,7 +1194,8 @@ function buildPC() {
     div.id = `hc-kin-${i}`;
     div.innerHTML = `<div class="card-kin-inner">
       <div class="card-kin-tag">KIN</div>
-      <div class="card-kin-name">${a.label}</div>
+      <div class="card-kin-name">${a.title || a.label}</div>
+      ${a.desc ? `<div class="card-kin-desc">${a.desc}</div>` : ''}
       <div class="card-kin-cta">${lang==='ko'?'열어보기':'explore'} →</div>
     </div>`;
     $cr.appendChild(div);
@@ -1206,8 +1209,8 @@ function buildPC() {
     div.className = 'h-card h-card-dred';
     div.id = `hc-dred-${i}`;
     div.innerHTML = `<div class="card-dred-inner">
-      <div class="card-dred-name">${a.label}</div>
-      <div class="card-dred-tag">DRED</div>
+      <div class="card-dred-name">${a.title || a.label}</div>
+      ${a.desc ? `<div class="card-dred-desc">${a.desc}</div>` : ''}
     </div>`;
     $cr.appendChild(div);
   });

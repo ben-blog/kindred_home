@@ -319,13 +319,13 @@ body{
   pointer-events:none;
 }
 .kin-icon{
-  width:28px;height:28px;
-  background:#FFE500;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Syne',sans-serif;font-weight:800;
-  font-size:11px;color:#000;letter-spacing:-.03em;
+  width:34px;height:34px;
+  border-radius:50%;
+  object-fit:cover;object-position:top center;
   animation:kin-run .35s ease-in-out infinite alternate;
-  box-shadow:0 0 0 2.5px rgba(255,229,0,.25);
+  box-shadow:0 0 0 2.5px rgba(255,229,0,.4);
+  background:rgba(255,229,0,.08);
+  flex-shrink:0;
 }
 @keyframes kin-run{
   from{transform:translateY(0) scaleY(1) scaleX(1)}
@@ -1703,7 +1703,7 @@ function initProgressTrack() {
   runner.className = 'kin-runner';
   runner.id = 'kin-runner';
   runner.style.left = '0%';
-  runner.innerHTML = '<div class="kin-icon" id="kin-icon">KIN</div><div class="kin-shadow"></div>';
+  runner.innerHTML = '<img class="kin-icon" id="kin-icon" src="./assets/kin_thinking1.webp" alt="KIN"><div class="kin-shadow"></div>';
   wrap.appendChild(runner);
 }
 
@@ -1740,13 +1740,19 @@ function renderProgress() {
   });
 }
 
-// 정답/오답 시 KIN 애니
+// 정답/오답 시 KIN 애니 + 이미지 교체
 function flashProgressDot(index, isCorrect) {
   const runner = document.getElementById('kin-runner');
+  const icon   = document.getElementById('kin-icon');
   if(!runner) return;
   runner.classList.remove('jump', 'stumble');
   void runner.offsetWidth;
   runner.classList.add(isCorrect ? 'jump' : 'stumble');
+  // 반응 이미지 교체
+  if(icon) {
+    icon.src = isCorrect ? KIN_IMGS.happy : KIN_IMGS.sad;
+    setTimeout(() => { if(icon) icon.src = KIN_IMGS.thinking; }, 600);
+  }
   setTimeout(() => runner.classList.remove('jump', 'stumble'), 500);
 }
 

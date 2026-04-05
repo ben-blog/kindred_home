@@ -31,7 +31,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 88px 24px 48px;
+  padding: 120px 24px 48px;
   gap: 32px;
 }
 
@@ -39,12 +39,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-align: center;
   max-width: 480px;
 }
 .wc-intro-avatar {
-  width: 72px; height: 72px;
+  width: 144px; height: 144px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255,229,0,.35);
@@ -467,7 +467,6 @@
   font-size: 16px; cursor: pointer; padding: 4px 8px;
 }
 .wc-share-modal-close:hover { color: #fff; }
-#wc-share-btns { display: flex; }
 
 /* ── reduced motion ── */
 @media(prefers-reduced-motion: reduce) {
@@ -475,4 +474,9 @@
   .wc-work { opacity: 1 !important; transform: none !important; }
   .wc-vs   { opacity: 1 !important; transform: none !important; }
   .wc-work-content, .wc-work-img { opacity: 1 !important; }
+}
+
+/* 모바일: 대진표 버튼 숨김 */
+@media(max-width: 767px) {
+  #wc-btn-bracket { display: none; }
 }

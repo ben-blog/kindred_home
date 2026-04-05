@@ -190,21 +190,22 @@ function selectWorks(works) {
 }
 
 function buildBracket(works) {
-  const S    = works.filter(w => w.popularity_tier === 'S');
-  const rest = works.filter(w => w.popularity_tier !== 'S');
-  const shuffledS    = shuffle(S);
-  const pool         = shuffle(rest);
-  const pairs        = [];
-  const usedS        = new Set();
+  const S       = works.filter(w => w.popularity_tier === 'S');
+  const rest    = works.filter(w => w.popularity_tier !== 'S');
+  const shuffledS = shuffle(S);
+  const pool    = shuffle(rest);
+  const pairs   = [];
+  const paired  = new Set();
 
   for (let i = 0; i < 8; i++) {
-    if (shuffledS[i] && !usedS.has(shuffledS[i].id)) {
+    const s = shuffledS[i];
+    if (s && !paired.has(s.id)) {
       const opp = pool.shift();
-      if (opp) { pairs.push([shuffledS[i], opp]); usedS.add(shuffledS[i].id); }
+      if (opp) { pairs.push([s, opp]); paired.add(s.id); paired.add(opp.id); }
     }
   }
 
-  const remaining = shuffle(works.filter(w => !pairs.flat().some(p => p.id === w.id)));
+  const remaining = shuffle(works.filter(w => !paired.has(w.id)));
   for (let i = 0; i < remaining.length; i += 2) {
     if (remaining[i + 1]) pairs.push([remaining[i], remaining[i + 1]]);
   }
@@ -218,12 +219,6 @@ function buildBracket(works) {
 
 function randomBg() {
   return `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
-}
-
-async function loadCover(work, bgEl) {
-  if (!work.mal_id) { bgEl.style.backgroundImage = randomBg(); return; }
-  const url = await fetchAniListCover(work.mal_id).catch(() => null);
-  bgEl.style.backgroundImage = url ? `url(${url})` : randomBg();
 }
 
 async function loadCoverAnimated(work, bgEl, imgWrap) {
@@ -250,13 +245,13 @@ async function renderMatch() {
   // 글로벌 헤더 업데이트
   $('h-title').textContent = getRoundLabel(state.round);
   const prog = $('wc-progress-text');
-  prog.textContent    = `${state.matchPlayed + 1} / ${state.totalMatches}`;
-  prog.style.display  = '';
+  prog.textContent   = `${state.matchPlayed + 1} / ${state.totalMatches}`;
+  prog.style.display = '';
 
   // 이미지 초기화
-  const bgA   = $('wc-bg-a'),    bgB   = $('wc-bg-b');
-  const imgA  = bgA?.closest('.wc-work-img');
-  const imgB  = bgB?.closest('.wc-work-img');
+  const bgA  = $('wc-bg-a'),   bgB  = $('wc-bg-b');
+  const imgA = bgA?.closest('.wc-work-img');
+  const imgB = bgB?.closest('.wc-work-img');
   if (bgA) bgA.style.backgroundImage = '';
   if (bgB) bgB.style.backgroundImage = '';
   imgA?.classList.remove('img-loaded');
@@ -271,19 +266,17 @@ async function renderMatch() {
   wa.style.pointerEvents = '';
   wb.style.pointerEvents = '';
 
-  // 이미지 비동기 로드
+  // 이미지 로드 시작 (애니메이션과 병렬)
   loadCoverAnimated(workA, bgA, imgA);
   loadCoverAnimated(workB, bgB, imgB);
+
+  // 입장 애니메이션
   await sleep(40);
   wa.classList.add('entered');
   await sleep(100);
   wb.classList.add('entered');
   await sleep(150);
   vs.classList.add('entered');
-
-  // 이미지 비동기 로드
-  loadCoverAnimated(workA, bgA, imgA);
-  loadCoverAnimated(workB, bgB, imgB);
 }
 
 // ══════════════════════════════════════════
@@ -456,83 +449,237 @@ async function generateResultShareImage() {
   $('sc-main-title').textContent   = isEn ? winner.title_en : winner.title_ko;
   $('sc-main-obs').textContent     = getWcObs(winner, isEn);
 
-  const bgEl = $('sc-main-bg');
+  const imgEl = $('sc-main-img');
   if (winner.mal_id) {
     const url = await fetchAniListCover(winner.mal_id).catch(() => null);
     if (url) {
-      bgEl.style.backgroundImage = `url(${url})`;
       await new Promise(r => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = r; img.onerror = r;
-        img.src = url;
+        imgEl.onload = r; imgEl.onerror = r;
+        imgEl.src = url;
       });
     }
   }
 
-  const canvas = await html2canvas($('sc-main'), { backgroundColor: '#080806', scale: 2, useCORS: true, logging: false });
+  const canvas = await html2canvas($('sc-main'), {
+    backgroundColor: '#080806', scale: 2, useCORS: true, logging: false,
+    allowTaint: false,
+  });
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
 async function generateBracketShareImage() {
-  if (!window.html2canvas) throw new Error('no html2canvas');
+  const isEn  = getLang() === 'en';
   const winner = state.resultWinner;
-  const isEn   = getLang() === 'en';
 
-  // 우승자 경로 (결승→4강→8강→16강 순)
-  const path = state.history
-    .filter(h => h.winner.id === winner.id)
-    .sort((a, b) => a.round - b.round);
+  // 라운드별 매치 (플레이 순서 유지)
+  const r16 = state.history.filter(h => h.round === 16); // 8경기
+  const r8  = state.history.filter(h => h.round === 8);  // 4경기
+  const r4  = state.history.filter(h => h.round === 4);  // 2경기
+  const r2  = state.history.filter(h => h.round === 2);  // 1경기
 
-  const rNames = { ko: { 2:'결승', 4:'4강', 8:'8강', 16:'16강' }, en: { 2:'Final', 4:'Semi', 8:'Quarter', 16:'Round of 16' } };
-  const dict   = isEn ? rNames.en : rNames.ko;
+  // 우승자 경로 인덱스
+  const wIdx16 = r16.findIndex(h => h.winner.id === winner.id);
+  const wIdx8  = r8.findIndex(h  => h.winner.id === winner.id);
+  const wIdx4  = r4.findIndex(h  => h.winner.id === winner.id);
 
-  const makeCircle = async (work, size) => {
-    const url  = work?.mal_id ? await fetchAniListCover(work.mal_id).catch(() => null) : null;
-    const name = isEn ? work?.title_en : work?.title_ko;
-    const big  = size >= 72;
-    return `<div style="text-align:center;flex-shrink:0;">
-      <div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;margin:0 auto 5px;border:${big ? '2.5' : '1.5'}px solid rgba(255,229,0,${big ? '.8' : '.4'});">
-        ${url ? `<img crossorigin="anonymous" src="${url}" style="width:100%;height:100%;object-fit:cover;" alt="">` : `<div style="width:100%;height:100%;background:#1a1a14;"></div>`}
-      </div>
-      <div style="color:${big ? '#FFE500' : 'rgba(255,255,255,.8)'};font-size:${big ? 12 : 10}px;font-weight:700;max-width:${size + 16}px;word-break:keep-all;">${name || ''}</div>
-    </div>`;
+  // 커버 이미지 미리 로드
+  const loadImg = async work => {
+    if (!work?.mal_id) return null;
+    const url = await fetchAniListCover(work.mal_id).catch(() => null);
+    if (!url) return null;
+    return new Promise(res => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => res(img);
+      img.onerror = () => res(null);
+      img.src = url;
+    });
   };
 
-  let rows = '';
-  for (const match of path) {
-    const rLabel  = dict[match.round] || match.round;
-    const wName   = isEn ? match.winner.title_en : match.winner.title_ko;
-    const lName   = isEn ? match.loser.title_en  : match.loser.title_ko;
-    const showImg = match.round <= 4;
+  // 결승/4강 작품 이미지만 로드
+  const imgCache = new Map();
+  const toLoad = [];
+  if (r2[0]) toLoad.push(r2[0].winner, r2[0].loser);
+  r4.forEach(m => toLoad.push(m.winner, m.loser));
+  await Promise.all([...new Set(toLoad)].map(async w => {
+    if (w && !imgCache.has(w.id)) imgCache.set(w.id, await loadImg(w));
+  }));
 
-    if (showImg) {
-      const size    = match.round === 2 ? 80 : 56;
-      const wCircle = await makeCircle(match.winner, size);
-      const lCircle = await makeCircle(match.loser,  size - 16);
-      rows += `<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);">
-        <div style="font-size:8px;letter-spacing:.15em;color:rgba(255,229,0,.45);width:36px;flex-shrink:0;">${rLabel}</div>
-        <div style="display:flex;align-items:center;gap:10px;">${wCircle}<div style="font-size:9px;color:rgba(255,255,255,.2);">vs</div><div style="opacity:.4;">${lCircle}</div></div>
-      </div>`;
-    } else {
-      rows += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
-        <div style="font-size:8px;letter-spacing:.15em;color:rgba(255,229,0,.35);width:36px;flex-shrink:0;">${rLabel}</div>
-        <div style="font-size:11px;color:rgba(255,229,0,.75);font-weight:700;">${wName}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.18);">vs</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.25);text-decoration:line-through;">${lName}</div>
-      </div>`;
-    }
+  // Canvas 설정
+  const W = 750, H = 660;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  // Y 레이어
+  const Y = { final: 110, sf: 240, qf: 358, r16: 460, footer: 620 };
+  // X 위치 계산 (8개 슬롯 균등 분배)
+  const slotW = W / 8;
+  const xR16 = Array.from({length: 8}, (_, i) => slotW * (i + 0.5));
+  const xR8  = [0,1,2,3].map(i => (xR16[i*2] + xR16[i*2+1]) / 2);
+  const xR4  = [0,1].map(i => (xR8[i*2] + xR8[i*2+1]) / 2);
+  const xR2  = (xR4[0] + xR4[1]) / 2;
+
+  // 색상
+  const COL = { bg: '#080806', yellow: '#FFE500', dim: 'rgba(255,255,255,.12)',
+                text: 'rgba(255,255,255,.85)', muted: 'rgba(255,255,255,.35)',
+                lineWin: '#FFE500', lineLose: 'rgba(255,255,255,.1)' };
+
+  // 배경
+  ctx.fillStyle = COL.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // 헤더
+  ctx.font = '500 10px "DM Mono"';
+  ctx.fillStyle = 'rgba(255,229,0,.5)';
+  ctx.textAlign = 'left';
+  ctx.fillText((isEn ? 'MY BRACKET · KIN WORLDCUP' : '대진표 · KIN 월드컵').toUpperCase(), 24, 28);
+
+  // ── 연결선 그리기 ──
+  function drawLine(x1, y1, x2, y2, isPath) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    const midY = (y1 + y2) / 2;
+    ctx.bezierCurveTo(x1, midY, x2, midY, x2, y2);
+    ctx.strokeStyle = isPath ? COL.lineWin : COL.lineLose;
+    ctx.lineWidth   = isPath ? 2.5 : 1;
+    ctx.stroke();
   }
 
-  $('sc-bracket-eyebrow').textContent = isEn ? 'My Bracket · KIN Worldcup' : '대진표 · KIN 월드컵';
-  $('sc-bracket-content').innerHTML   = rows;
+  // 결승 ↔ 4강 연결
+  drawLine(xR2, Y.final + 50, xR4[0], Y.sf - 36, wIdx4 === 0);
+  drawLine(xR2, Y.final + 50, xR4[1], Y.sf - 36, wIdx4 === 1);
 
-  const imgs = $('sc-bracket').querySelectorAll('img');
-  await Promise.all(Array.from(imgs).map(img =>
-    new Promise(r => { if (img.complete) r(); else { img.onload = r; img.onerror = r; } })
-  ));
+  // 4강 ↔ 8강 연결
+  [0,1,2,3].forEach(i => {
+    const sfIdx = Math.floor(i / 2);
+    const isPath = (i === wIdx8);
+    drawLine(xR8[i], Y.sf + 36, xR4[sfIdx], Y.qf - 10, isPath);
+  });
 
-  const canvas = await html2canvas($('sc-bracket'), { backgroundColor: '#080806', scale: 2, useCORS: true, logging: false });
+  // 8강 ↔ 16강 연결
+  [0,1,2,3,4,5,6,7].forEach(i => {
+    const qfIdx = Math.floor(i / 2);
+    const isPath = (i === wIdx16);
+    drawLine(xR16[i], Y.qf + 10, xR8[qfIdx], Y.r16 - 10, isPath);
+  });
+
+  // ── 원형 이미지 그리기 (결승/4강) ──
+  async function drawCircle(work, x, y, r, isWinner) {
+    const img = work ? imgCache.get(work.id) : null;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (img) {
+      ctx.clip();
+      // 이미지 중앙 crop
+      const scale = Math.max((r * 2) / img.width, (r * 2) / img.height);
+      const sw = img.width * scale, sh = img.height * scale;
+      ctx.drawImage(img, x - sw / 2, y - sh / 2, sw, sh);
+    } else {
+      ctx.fillStyle = '#1a1a14';
+      ctx.fill();
+    }
+    ctx.restore();
+    // 테두리
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = isWinner ? COL.yellow : 'rgba(255,229,0,.3)';
+    ctx.lineWidth   = isWinner ? 2.5 : 1.5;
+    ctx.stroke();
+  }
+
+  function drawName(work, x, y, isWinner) {
+    const name = work ? (isEn ? work.title_en : work.title_ko) : '?';
+    ctx.font = `${isWinner ? '700' : '400'} 11px sans-serif`;
+    ctx.fillStyle = isWinner ? COL.yellow : COL.muted;
+    ctx.textAlign = 'center';
+    ctx.fillText(name.length > 8 ? name.slice(0, 7) + '…' : name, x, y);
+  }
+
+  // 결승 (큰 원 r=46)
+  if (r2[0]) {
+    await drawCircle(r2[0].winner, xR2 - 56, Y.final, 46, true);
+    drawName(r2[0].winner, xR2 - 56, Y.final + 62, true);
+    await drawCircle(r2[0].loser, xR2 + 56, Y.final, 36, false);
+    drawName(r2[0].loser, xR2 + 56, Y.final + 52, false);
+    // 결승 레이블
+    ctx.font = '500 9px "DM Mono"';
+    ctx.fillStyle = 'rgba(255,229,0,.4)';
+    ctx.textAlign = 'center';
+    ctx.fillText(isEn ? 'FINAL' : '결승', xR2, Y.final - 56);
+  }
+
+  // 4강 (중간 원 r=30)
+  for (let i = 0; i < r4.length; i++) {
+    const m = r4[i];
+    const isWinPath = i === wIdx4;
+    await drawCircle(m.winner, xR4[i] - 36, Y.sf, 30, isWinPath);
+    drawName(m.winner, xR4[i] - 36, Y.sf + 44, isWinPath);
+    await drawCircle(m.loser, xR4[i] + 36, Y.sf, 22, false);
+    drawName(m.loser, xR4[i] + 36, Y.sf + 34, false);
+  }
+  // 4강 레이블
+  ctx.font = '500 9px "DM Mono"';
+  ctx.fillStyle = 'rgba(255,229,0,.35)';
+  ctx.textAlign = 'left';
+  ctx.fillText(isEn ? 'SEMI' : '4강', 24, Y.sf - 46);
+
+  // 8강 텍스트
+  ctx.font = '500 9px "DM Mono"';
+  ctx.fillStyle = 'rgba(255,229,0,.35)';
+  ctx.textAlign = 'left';
+  ctx.fillText(isEn ? 'QTR' : '8강', 24, Y.qf - 14);
+
+  r8.forEach((m, i) => {
+    const isPath = i === wIdx8;
+    const wName = isEn ? m.winner.title_en : m.winner.title_ko;
+    const lName = isEn ? m.loser.title_en  : m.loser.title_ko;
+    const x = xR8[i];
+    ctx.font = `700 9px sans-serif`;
+    ctx.fillStyle = isPath ? COL.yellow : 'rgba(255,255,255,.55)';
+    ctx.textAlign = 'center';
+    ctx.fillText((wName.length > 6 ? wName.slice(0,5)+'…' : wName), x, Y.qf);
+    ctx.font = '400 8px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.22)';
+    ctx.fillText((lName.length > 6 ? lName.slice(0,5)+'…' : lName), x, Y.qf + 13);
+  });
+
+  // 16강 텍스트
+  ctx.font = '500 9px "DM Mono"';
+  ctx.fillStyle = 'rgba(255,229,0,.3)';
+  ctx.textAlign = 'left';
+  ctx.fillText(isEn ? 'R16' : '16강', 24, Y.r16 - 10);
+
+  r16.forEach((m, i) => {
+    const isPath = i === wIdx16;
+    const wName = isEn ? m.winner.title_en : m.winner.title_ko;
+    const lName = isEn ? m.loser.title_en  : m.loser.title_ko;
+    const x = xR16[i];
+    ctx.font = `700 8px sans-serif`;
+    ctx.fillStyle = isPath ? COL.yellow : 'rgba(255,255,255,.45)';
+    ctx.textAlign = 'center';
+    ctx.fillText((wName.length > 5 ? wName.slice(0,4)+'…' : wName), x, Y.r16);
+    ctx.font = '400 7px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,.2)';
+    ctx.fillText((lName.length > 5 ? lName.slice(0,4)+'…' : lName), x, Y.r16 + 12);
+  });
+
+  // 구분선
+  ctx.beginPath();
+  ctx.moveTo(24, Y.footer - 20);
+  ctx.lineTo(W - 24, Y.footer - 20);
+  ctx.strokeStyle = 'rgba(255,255,255,.06)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // URL 푸터
+  ctx.font = '400 9px "DM Mono"';
+  ctx.fillStyle = 'rgba(255,255,255,.2)';
+  ctx.textAlign = 'left';
+  ctx.fillText('kinxdred.com/kin/k2', 24, Y.footer);
+
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }
 
@@ -582,8 +729,8 @@ function applyLang(l) {
 
   // 대진 중이면 갱신 (selecting 중 스킵)
   if (!state.selecting && state.roundMatches.length > 0 && state.currentMatch < state.roundMatches.length) {
-    $('h-title').textContent = getRoundLabel(state.round);
     renderMatch();
+    return;
   }
 
   // 결과 화면 lang 전환

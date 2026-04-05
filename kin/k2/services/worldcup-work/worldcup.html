@@ -150,20 +150,16 @@
 
 <!-- 카드 공유 off-screen -->
 <div id="sc-main" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;font-family:'Syne',sans-serif;overflow:hidden;">
-  <div id="sc-main-bg" style="width:100%;height:220px;background-size:cover;background-position:center 20%;"></div>
-  <div style="position:relative;padding:20px 24px 28px;">
+  <div style="position:relative;width:100%;height:220px;overflow:hidden;background:#111;">
+    <img id="sc-main-img" src="" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block;" alt="">
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,8,6,0) 20%,rgba(8,8,6,.9) 100%);"></div>
+  </div>
+  <div style="padding:18px 24px 28px;">
     <div id="sc-main-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:10px;text-transform:uppercase;font-family:'DM Mono',monospace;"></div>
     <div id="sc-main-title"   style="font-size:34px;font-weight:800;color:#FFE500;line-height:1.1;margin-bottom:12px;letter-spacing:-.02em;"></div>
     <div id="sc-main-obs"     style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.75;margin-bottom:20px;font-family:'DM Mono',monospace;"></div>
     <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.22);font-family:'DM Mono',monospace;">kinxdred.com/kin/k2</div>
   </div>
-</div>
-
-<!-- 대진표 off-screen -->
-<div id="sc-bracket" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;padding:24px;font-family:'DM Mono',monospace;overflow:hidden;">
-  <div id="sc-bracket-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:20px;text-transform:uppercase;"></div>
-  <div id="sc-bracket-content"></div>
-  <div style="margin-top:20px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.2);">kinxdred.com/kin/k2</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

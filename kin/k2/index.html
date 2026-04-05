@@ -713,7 +713,7 @@ body{
 }
 .sc-kin-large{
   position:absolute;right:-4px;bottom:0;
-  width:160px;height:190px;
+  width:190px;height:190px;
   object-fit:cover;object-position:top center;
   mask-image:linear-gradient(to top,transparent 0%,black 18%,black 100%);
   -webkit-mask-image:linear-gradient(to top,transparent 0%,black 18%,black 100%);
@@ -1414,6 +1414,30 @@ function detectPattern(answers) {
 function getObs(pattern) {
   const pool = OBS[lang][pattern]||OBS[lang].random;
   return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ═══════════════════════════════════════════
+// 재플레이 힌트 (showResult + applyResultLang 공유)
+// ═══════════════════════════════════════════
+const REPLAY_HINTS = {
+  ko:{
+    perfect:'다음엔 더 어렵게 낼게.',
+    all_low:'한 편만 보고 다시 와봐.',
+    easy_only:'이제 hard 문제만 모아서 줄까?',
+    all_high:'레이블이 바뀔 수도 있어. 다시 해봐.',
+    random:'패턴 없이 나왔어. 다시 하면 다르게 나올 거야.',
+  },
+  en:{
+    perfect:'Next time I go harder.',
+    all_low:'Read one series and come back.',
+    easy_only:'Want only hard questions next time?',
+    all_high:'Your label might change. Try again.',
+    random:'No pattern yet. Another round might tell a different story.',
+  },
+};
+function getReplayHint(pattern) {
+  const map = lang==='ko' ? REPLAY_HINTS.ko : REPLAY_HINTS.en;
+  return map[pattern] || (lang==='ko' ? '레이블이 바뀔 수도 있어.' : 'Your label might change.');
 }
 
 // ═══════════════════════════════════════════
@@ -2153,26 +2177,7 @@ async function showResult() {
 
   // 재플레이 힌트
   const replayHintEl = document.getElementById('result-replay-hint');
-  if(replayHintEl) {
-    const hints = {
-      ko: {
-        perfect:'다음엔 더 어렵게 낼게.',
-        all_low:'한 편만 보고 다시 와봐.',
-        easy_only:'이제 hard 문제만 모아서 줄까?',
-        all_high:'레이블이 바뀔 수도 있어. 다시 해봐.',
-        random:'패턴 없이 나왔어. 다시 하면 다르게 나올 거야.',
-      },
-      en: {
-        perfect:'Next time I go harder.',
-        all_low:'Read one series and come back.',
-        easy_only:'Want only hard questions next time?',
-        all_high:'Your label might change. Try again.',
-        random:'No pattern yet. Another round might tell a different story.',
-      }
-    };
-    const hintMap = lang==='ko' ? hints.ko : hints.en;
-    replayHintEl.textContent = hintMap[state.resultPattern] || (lang==='ko' ? '레이블이 바뀔 수도 있어.' : 'Your label might change.');
-  }
+  if(replayHintEl) replayHintEl.textContent = getReplayHint(state.resultPattern);
   saveSession(state.resultPattern);
 }
 
@@ -2351,11 +2356,11 @@ document.getElementById('btn-share-native').addEventListener('click', async () =
     if(navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
-        title: 'KIN의 만화퀴즈',
+        title: t('KIN의 만화퀴즈', "KIN's Manga Quiz"),
         text: `${state.score}/10 — kinxdred.com/kin/k2`,
       });
     } else {
-      await navigator.share({ title:'KIN의 만화퀴즈', url:'https://kinxdred.com/kin/k2' });
+      await navigator.share({ title: t('KIN의 만화퀴즈', "KIN's Manga Quiz"), url:'https://kinxdred.com/kin/k2' });
     }
   } catch {}
 });
@@ -2452,8 +2457,7 @@ function applyResultLang() {
     state.resultObs = getObs(state.resultPattern);
     obsText.textContent = state.resultObs;
   }
-  // 틀린 문제 목록 재렌더
-  const wl = el('result-wrong-list');
+  // 틀린 문제 목록 재렌더  const wl = el('result-wrong-list');
   if(wl && state.answers.length) {
     wl.innerHTML = '';
     state.answers.filter(a=>!a.is_correct).forEach(a=>{
@@ -2474,6 +2478,9 @@ function applyResultLang() {
       wl.appendChild(div);
     });
   }
+  // 재플레이 힌트 언어 전환
+  const replayEl = document.getElementById('result-replay-hint');
+  if(replayEl && state.resultPattern) replayEl.textContent = getReplayHint(state.resultPattern);
 }
 // ═══════════════════════════════════════════
 // 랜딩 텍스트 언어 적용
@@ -2481,15 +2488,11 @@ function applyResultLang() {
 function applyLandingLang() {
   const lp = document.getElementById('page-landing');
   if(!lp) return;
-  const qs = sel => lp.querySelector(sel);
   const isEn = lang === 'en';
 
   // 버튼 텍스트
   const startBtn = document.getElementById('btn-start');
   if(startBtn) startBtn.querySelector('.btn-start-text').textContent = isEn ? 'Start' : '시작';
-  // 헤더 타이틀 (랜딩에서도 명시적 업데이트)
-  const hTitleL = document.getElementById('h-title');
-  if(hTitleL) hTitleL.textContent = isEn ? "What kind of fan?" : '난 어떤 덕후?';
 
   // 모드 레이블
   const quizLabel = lp.querySelector('#mode-quiz-label');
@@ -2524,21 +2527,7 @@ function applyLandingLang() {
   const metaItems = lp.querySelectorAll('.landing-meta-item');
   if(metaItems[1]) metaItems[1].textContent = isEn ? 'KIN judges' : 'KIN 판정';
 
-  // 헤더 타이틀
-  const hName = document.querySelector('.h-name');
-  if(hName) hName.textContent = isEn ? 'What kind of fan?' : '난 어떤 덕후?';
-
-
-  // 재플레이 힌트 언어 전환
-  const replayEl = document.getElementById('result-replay-hint');
-  if(replayEl && state.resultPattern) {
-    const hints = {
-      ko:{perfect:'다음엔 더 어렵게 낼게.',all_low:'한 편만 보고 다시 와봐.',easy_only:'이제 hard 문제만 모아서 줄까?',all_high:'레이블이 바뀔 수도 있어. 다시 해봐.',random:'패턴 없이 나왔어. 다시 하면 다르게 나올 거야.'},
-      en:{perfect:'Next time I go harder.',all_low:'Read one series and come back.',easy_only:'Want only hard questions next time?',all_high:'Your label might change. Try again.',random:'No pattern yet. Another round might tell a different story.'},
-    };
-    const hintMap = isEn ? hints.en : hints.ko;
-    replayEl.textContent = hintMap[state.resultPattern] || (isEn ? 'Your label might change.' : '레이블이 바뀔 수도 있어.');
-  }
+  // 재플레이 힌트 — applyResultLang에서 처리
 }
 
 function updateLandingState() {

@@ -5,7 +5,6 @@ import {
   getLang, t,
   KIN_IMGS, API_URL,
   SUPA_URL, SUPA_KEY,
-  COVER_MAL_IDS,
   fetchAniListCover, genUUID,
 } from '../../lib/core.js';
 import { initLangToggle, showError } from '../../lib/ui.js';
@@ -147,44 +146,6 @@ const state = {
   history:      [],   // { round, winner, loser }
   selecting:    false,
 };
-
-// ══════════════════════════════════════════
-// 카테고리 화면 마퀴
-// ══════════════════════════════════════════
-
-async function buildMarquee() {
-  const track   = $('wc-marquee-track');
-  const marquee = $('wc-marquee');
-  if (!track || !marquee) return;
-
-  const loaded = [];
-  let started = false;
-
-  function addImg(url, title) {
-    const img = document.createElement('img');
-    img.src = url; img.alt = title; img.loading = 'eager';
-    track.appendChild(img);
-    loaded.push(url);
-    if (!started && loaded.length >= 3) {
-      started = true;
-      marquee.style.display = '';
-    }
-  }
-
-  // 병렬 fetch — 완료 순서대로 추가
-  await Promise.allSettled(
-    COVER_MAL_IDS.map(({ id, title }) =>
-      fetchAniListCover(id)
-        .then(url => { if (url) addImg(url, title); })
-        .catch(() => {})
-    )
-  );
-
-  // 무한 스크롤 — 전체 복제
-  Array.from(track.querySelectorAll('img')).forEach(img => {
-    track.appendChild(img.cloneNode(true));
-  });
-}
 
 // ══════════════════════════════════════════
 // 화면 전환
@@ -737,5 +698,4 @@ initLangToggle(applyLang);
   $('wc-loading').style.display = 'none';
   showSection('wc-category');
   applyLang(getLang());
-  buildMarquee();
 })();

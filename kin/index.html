@@ -47,7 +47,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   display:flex;flex-direction:column;
   gap:3px;padding:3px;
   overflow-y:auto;
-  scroll-snap-type:y proximity;
   -webkit-overflow-scrolling:touch;
 }
 @media(pointer:coarse){
@@ -58,7 +57,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .gallery-row{
   display:flex;gap:3px;
   flex-shrink:0;
-  scroll-snap-align:start;
+}
+@media(pointer:coarse){
+  .gallery-row{scroll-snap-align:start;}
 }
 
 .thumb{

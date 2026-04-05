@@ -479,6 +479,15 @@ body{
   color:var(--kin);letter-spacing:var(--ls-tight);line-height:1;
 }
 .result-score-denom{font-size:var(--t-base);color:rgba(255,255,255,.35);letter-spacing:.08em}
+.result-label{
+  display:inline-block;
+  margin-top:10px;
+  font-size:var(--t-label);letter-spacing:var(--ls-wide);
+  text-transform:uppercase;
+  color:#000;background:var(--kin);
+  padding:5px 14px;border-radius:4px;
+  font-weight:700;
+}
 
 /* 작품 카드 */
 .result-top-work{
@@ -662,6 +671,13 @@ body{
   border-top:6px solid transparent;border-bottom:6px solid transparent;
   border-right:7px solid rgba(255,229,0,.3);
 }
+.sc-label-section{padding:14px 20px 0;}
+.sc-label{
+  display:inline-block;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  font-weight:700;color:#000;background:#FFE500;
+  padding:5px 14px;border-radius:4px;
+}
 .sc-score-section{display:flex;align-items:baseline;gap:8px;padding:6px 20px 0;}
 .sc-score-num{
   font-family:'Syne',sans-serif;font-weight:800;
@@ -841,6 +857,7 @@ body{
       <div class="result-score" id="result-score">0</div>
       <div class="result-score-denom">/ 10</div>
     </div>
+    <div class="result-label" id="result-label"></div>
   </div>
 
   <!-- 작품 이미지 카드 (작품 있을 때) -->
@@ -893,12 +910,16 @@ body{
 <!-- ══════ 공유 카드 (캔버스 렌더용) ══════ -->
 <div id="share-card">
   <div class="sc-header">
-    <span class="sc-header-title">KIN의 만화퀴즈</span>
+    <span class="sc-header-title">난 어떤 덕후? — KIN의 판정</span>
     <span class="sc-header-work" id="sc-header-work"></span>
   </div>
   <div class="sc-work-img-wrap" id="sc-work-img-wrap" style="display:none">
     <img id="sc-work-img" src="" crossorigin="anonymous" alt="">
     <div class="sc-work-img-fade"></div>
+  </div>
+  <!-- 레이블 (판정 중심) -->
+  <div class="sc-label-section">
+    <div class="sc-label" id="sc-label"></div>
   </div>
   <div class="sc-kin-section">
     <img class="sc-kin-face" id="sc-kin-face" src="" alt="KIN">
@@ -1190,6 +1211,44 @@ function getStreakRxn(n) {
 }
 
 // ═══════════════════════════════════════════
+// 판정 레이블
+// ═══════════════════════════════════════════
+const RESULT_LABELS = {
+  ko:{
+    perfect:      '만화방 단골',
+    zero:         '용기 있는 입문자',
+    hard_easy_gap:'이상한 덕후',
+    major_only:   '유명작 생존자',
+    outlier_strong:'소거법의 달인',
+    one_work:     '원작 충성파',
+    author_strong:'작가 추종형',
+    relation_strong:'커플링형',
+    easy_only:    '입문 완료',
+    all_high:     '생각보다 진짜 본 사람',
+    all_low:      '입문자',
+    random:       '무작위 독자',
+  },
+  en:{
+    perfect:      'Manga cafe regular',
+    zero:         'Brave beginner',
+    hard_easy_gap:'Oddly specific fan',
+    major_only:   'Mainstream survivor',
+    outlier_strong:'Process of elimination',
+    one_work:     'Loyal to one',
+    author_strong:'Author follower',
+    relation_strong:'Shipping everything',
+    easy_only:    'Intro complete',
+    all_high:     'Actually watched it',
+    all_low:      'Just starting out',
+    random:       'Random reader',
+  }
+};
+
+function getLabel(pattern) {
+  return (lang==='ko' ? RESULT_LABELS.ko : RESULT_LABELS.en)[pattern] || (lang==='ko' ? '무작위 독자' : 'Random reader');
+}
+
+// ═══════════════════════════════════════════
 // 결과 관찰 패턴
 // ═══════════════════════════════════════════
 const OBS = {
@@ -1287,14 +1346,17 @@ function setQuizBg() {
 // SLOTS
 // ═══════════════════════════════════════════
 const SLOTS = [
+  // Q1-3: 진입 — easy, 포맷 다양하게
   {format:'work',      difficulty:'easy'},
   {format:'character', difficulty:'easy'},
   {format:'outlier',   difficulty:'easy'},
+  // Q4-7: 변별 — mid, 슬슬 생각하게
   {format:'relation',  difficulty:'mid' },
   {format:'character', difficulty:'mid' },
+  {format:'work',      difficulty:'mid' },
   {format:'author',    difficulty:'mid' },
-  {format:'outlier',   difficulty:'mid' },
-  {format:'work',      difficulty:'hard'},
+  // Q8-10: 자존심 — hard
+  {format:'outlier',   difficulty:'hard'},
   {format:'relation',  difficulty:'hard'},
   {format:'author',    difficulty:'hard'},
 ];
@@ -1767,6 +1829,9 @@ async function showResult() {
   state.resultPattern = detectPattern(state.answers);
   state.resultObs     = getObs(state.resultPattern);
   document.getElementById('result-observation-text').textContent = state.resultObs;
+  // 판정 레이블
+  const labelEl = document.getElementById('result-label');
+  if(labelEl) labelEl.textContent = getLabel(state.resultPattern);
 
   const obsMood = state.score>=9?'excited':state.score>=7?'happy':state.score>=5?'thinking':state.score>=3?'serious':'sad';
   state.resultMood = obsMood;
@@ -1929,6 +1994,8 @@ async function generateShareImage() {
   document.getElementById('sc-bubble').textContent = `"${obs}"`;
   document.getElementById('sc-score-num').textContent = state.score;
   document.getElementById('sc-bar').style.width = `${state.score * 10}%`;
+  const scLabel = document.getElementById('sc-label');
+  if(scLabel && state.resultPattern) scLabel.textContent = getLabel(state.resultPattern);
 
   // 작품 이미지 처리
   const imgWrap  = document.getElementById('sc-work-img-wrap');
@@ -2079,6 +2146,7 @@ function applyResultLang() {
   const isEn = lang === 'en';
   const el = id => document.getElementById(id);
   if(el('result-eyebrow'))    el('result-eyebrow').textContent    = isEn ? "KIN's Verdict"   : 'KIN의 판정';
+  if(el('result-label') && state.resultPattern) el('result-label').textContent = getLabel(state.resultPattern);
   if(el('result-wrong-label'))el('result-wrong-label').textContent= isEn ? 'Missed'           : '틀린 문제';
   if(el('btn-share'))         el('btn-share').textContent         = isEn ? 'Share'            : '공유하기';
   if(el('btn-retry'))         el('btn-retry').textContent         = isEn ? 'Try Again'        : '다시 하기';

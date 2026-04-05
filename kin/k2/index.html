@@ -165,13 +165,15 @@
       </div>
 
       <!-- 작품 월드컵 -->
-      <div class="mode-card mode-card-locked">
+      <div class="mode-card mode-card-active" id="mode-worldcup-work">
         <div>
-          <div class="mode-label" style="color:rgba(255,255,255,.28)">작품 월드컵</div>
-          <div class="mode-title" style="color:rgba(255,255,255,.45)">최애 작품 가려내기</div>
-          <div class="mode-sub">1:1 대결 · 토너먼트</div>
+          <div class="mode-label" id="mode-ww-label" style="color:rgba(255,229,0,.6)">작품 월드컵</div>
+          <div class="mode-title" id="mode-ww-title">최애 작품 가려내기</div>
+          <div class="mode-sub" id="mode-ww-sub">1:1 대결 · 16강 토너먼트</div>
         </div>
-        <div class="btn-mode-locked">준비 중</div>
+        <button class="btn-start" id="btn-worldcup-work">
+          <span class="btn-start-text">시작</span>
+        </button>
       </div>
 
     </div>
@@ -187,7 +189,7 @@
 
 <script type="module">
 import {
-  getLang, t, onLangChange, setLang,
+  getLang, t,
   SUPA_URL, SUPA_KEY, COVER_MAL_IDS,
   supaCount, fetchAniListCover, KIN_IMGS,
 } from './lib/core.js';
@@ -295,25 +297,30 @@ function applyLandingLang(l) {
     lockedCards[0].querySelector('.mode-title').textContent = isEn ? 'Pick your favorite character' : '최애 캐릭터 가려내기';
     lockedCards[0].querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
   }
-  if (lockedCards[1]) {
-    lockedCards[1].querySelector('.mode-label').textContent = isEn ? 'Work Worldcup' : '작품 월드컵';
-    lockedCards[1].querySelector('.mode-title').textContent = isEn ? 'Pick your favorite work' : '최애 작품 가려내기';
-    lockedCards[1].querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
-  }
   lp.querySelectorAll('.btn-mode-locked').forEach(btn => { btn.textContent = isEn ? 'Coming soon' : '준비 중'; });
+
+  // 작품 월드컵 카드
+  const wwLabel = document.getElementById('mode-ww-label');
+  const wwTitle = document.getElementById('mode-ww-title');
+  const wwSub   = document.getElementById('mode-ww-sub');
+  const wwBtn   = document.getElementById('btn-worldcup-work');
+  if (wwLabel) wwLabel.textContent = isEn ? 'Work Worldcup' : '작품 월드컵';
+  if (wwTitle) wwTitle.textContent = isEn ? 'Pick your favorite work' : '최애 작품 가려내기';
+  if (wwSub)   wwSub.textContent   = isEn ? '1:1 · 16-team tournament' : '1:1 대결 · 16강 토너먼트';
+  if (wwBtn)   wwBtn.querySelector('.btn-start-text').textContent = isEn ? 'Start' : '시작';
 
   const metaKin = document.getElementById('meta-kin-label');
   if (metaKin) metaKin.textContent = isEn ? 'KIN judges' : 'KIN 판정';
-
-  const todayEl = document.getElementById('today-count');
-  if (todayEl && todayEl.textContent) {
-    // todayCount 재적용은 loadTodayCount가 처리
-  }
 }
 
 // ── 퀴즈 시작 버튼 ──
 document.getElementById('btn-start').addEventListener('click', () => {
   window.location.href = '/kin/k2/quiz';
+});
+
+// ── 작품 월드컵 버튼 ──
+document.getElementById('btn-worldcup-work').addEventListener('click', () => {
+  window.location.href = '/kin/k2/worldcup/work';
 });
 
 // ── 초기화 ──

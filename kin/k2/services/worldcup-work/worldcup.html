@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="/kin/k2/assets/k2_favicon.svg">
+<title>작품 월드컵 — KIN의 만화·애니</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/kin/k2/lib/design-tokens.css">
+<link rel="stylesheet" href="/kin/k2/lib/common.css">
+<link rel="stylesheet" href="/kin/k2/services/worldcup-work/worldcup.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="header">
+  <a class="h-back" href="/kin/k2/">← K2</a>
+  <div class="h-name" id="h-title">작품 월드컵</div>
+  <div id="lang-toggle">
+    <span class="lt active" data-lang="ko">KO</span>
+    <span class="lt-sep"> / </span>
+    <span class="lt" data-lang="en">EN</span>
+  </div>
+</header>
+
+<div id="wc-loading">loading</div>
+<div id="error-msg"></div>
+
+<div class="wc-page" id="wc-page">
+
+  <!-- ── 카테고리 선택 ── -->
+  <section id="wc-category" style="display:none">
+    <div class="wc-kin-intro">
+      <img class="wc-kin-avatar" id="wc-intro-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
+      <p class="wc-kin-line" id="wc-intro-line">이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.</p>
+    </div>
+    <div class="wc-category-cards">
+      <div class="wc-cat-card" data-category="battle">
+        <div class="wc-cat-title" id="cat-battle-title">소년 배틀·성장</div>
+        <div class="wc-cat-sub" id="cat-battle-sub">성장, 전투, 우정이 강한 작품들</div>
+      </div>
+      <div class="wc-cat-card" data-category="thriller">
+        <div class="wc-cat-title" id="cat-thriller-title">심리·드라마</div>
+        <div class="wc-cat-sub" id="cat-thriller-sub">압박감과 해석 욕구가 남는 작품들</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 대진 화면 ── -->
+  <section id="wc-arena" style="display:none">
+
+    <div class="wc-round-header">
+      <span class="wc-round-label" id="wc-round-label">16강</span>
+      <span class="wc-progress-text" id="wc-progress-text">1 / 15</span>
+    </div>
+
+    <!-- KIN 배너 (시작 + 결승 직전) -->
+    <div class="wc-kin-banner" id="wc-kin-banner">
+      <img src="/kin/k2/assets/kin_serious.webp" alt="KIN" id="wc-banner-avatar">
+      <span class="wc-kin-banner-text" id="wc-banner-text"></span>
+    </div>
+
+    <!-- 대진 -->
+    <div class="wc-match" id="wc-match">
+      <!-- 왼쪽/위 -->
+      <div class="wc-work" id="wc-work-a" data-side="a">
+        <div class="wc-work-bg" id="wc-bg-a"></div>
+        <div class="wc-work-overlay"></div>
+        <div class="wc-work-content">
+          <div class="wc-work-title" id="wc-title-a"></div>
+          <div class="wc-work-hook" id="wc-hook-a"></div>
+        </div>
+      </div>
+
+      <!-- VS -->
+      <div class="wc-vs">
+        <span class="wc-vs-text">VS</span>
+      </div>
+
+      <!-- 오른쪽/아래 -->
+      <div class="wc-work" id="wc-work-b" data-side="b">
+        <div class="wc-work-bg" id="wc-bg-b"></div>
+        <div class="wc-work-overlay"></div>
+        <div class="wc-work-content">
+          <div class="wc-work-title" id="wc-title-b"></div>
+          <div class="wc-work-hook" id="wc-hook-b"></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── 결과 화면 ── -->
+  <section id="wc-result" style="display:none">
+    <div class="wc-result-eyebrow" id="wc-result-eyebrow">KIN의 판정</div>
+    <div class="wc-result-title" id="wc-result-title"></div>
+
+    <!-- 우승작 카드 -->
+    <div class="wc-winner-card">
+      <div class="wc-winner-bg" id="wc-winner-bg"></div>
+      <div class="wc-winner-overlay"></div>
+      <div class="wc-winner-content">
+        <div class="wc-winner-label" id="wc-winner-label">이번 월드컵 우승</div>
+        <div class="wc-winner-title" id="wc-winner-title"></div>
+      </div>
+    </div>
+
+    <!-- TOP4 -->
+    <div class="wc-top4" id="wc-top4"></div>
+
+    <!-- KIN 독해 -->
+    <div class="wc-observation">
+      <img class="wc-obs-avatar" id="wc-obs-avatar" src="" alt="KIN">
+      <div>
+        <div class="wc-obs-label">KIN</div>
+        <div class="wc-obs-text" id="wc-obs-text"></div>
+      </div>
+    </div>
+
+    <div class="wc-result-btns">
+      <button class="btn-primary" id="wc-btn-retry">다시 하기</button>
+      <a class="btn-secondary" href="/kin/k2/">← 갤러리</a>
+    </div>
+  </section>
+
+</div>
+
+<script type="module" src="/kin/k2/services/worldcup-work/worldcup.js"></script>
+</body>
+</html>

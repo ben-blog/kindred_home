@@ -2,7 +2,7 @@
   "rewrites": [
     { "source": "/kin/k2/quiz",               "destination": "/kin/k2/services/quiz/quiz.html" },
     { "source": "/kin/k2/result",              "destination": "/kin/k2/services/result/result.html" },
-    { "source": "/kin/k2/worldcup/character",  "destination": "/kin/k2/services/worldcup-character/worldcup.html" },
-    { "source": "/kin/k2/worldcup/work",       "destination": "/kin/k2/services/worldcup-work/worldcup.html" }
+    { "source": "/kin/k2/worldcup/work",       "destination": "/kin/k2/services/worldcup-work/worldcup.html" },
+    { "source": "/kin/k2/worldcup/character",  "destination": "/kin/k2/services/worldcup-character/worldcup.html" }
   ]
 }

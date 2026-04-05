@@ -1,0 +1,399 @@
+/* ═══════════════════════════════
+   WORLDCUP PAGE
+═══════════════════════════════ */
+.wc-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* ── 카테고리 선택 화면 ── */
+#wc-category {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 48px;
+  gap: 32px;
+}
+
+.wc-kin-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 480px;
+  text-align: center;
+}
+.wc-kin-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255,229,0,.3);
+}
+.wc-kin-line {
+  font-size: var(--t-sm);
+  color: rgba(255,255,255,.7);
+  line-height: 1.75;
+  word-break: keep-all;
+}
+
+.wc-category-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+.wc-cat-card {
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,229,0,.25);
+  background: rgba(255,229,0,.04);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  text-align: left;
+}
+.wc-cat-card:hover { background: rgba(255,229,0,.09); border-color: rgba(255,229,0,.5); }
+.wc-cat-title {
+  font-size: var(--t-base);
+  font-weight: 700;
+  color: var(--kin);
+  margin-bottom: 6px;
+}
+.wc-cat-sub {
+  font-size: var(--t-sm);
+  color: rgba(255,255,255,.45);
+  line-height: 1.6;
+}
+
+/* ── 라운드 표시 ── */
+#wc-arena {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wc-round-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 18px 24px;
+  padding-top: max(18px, env(safe-area-inset-top));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(8,8,6,.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,229,0,.07);
+}
+.wc-round-label {
+  font-size: var(--t-label);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: rgba(255,229,0,.6);
+}
+.wc-progress-text {
+  font-size: var(--t-label);
+  color: rgba(255,255,255,.35);
+  letter-spacing: var(--ls-mono);
+}
+
+/* ── KIN 개입 배너 ── */
+.wc-kin-banner {
+  display: none;
+  position: fixed;
+  top: 60px; left: 0; right: 0;
+  z-index: 99;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: rgba(8,8,6,.97);
+  border-bottom: 1px solid rgba(255,229,0,.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.wc-kin-banner.show { display: flex; }
+.wc-kin-banner img {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,229,0,.3);
+}
+.wc-kin-banner-text {
+  font-size: var(--t-sm);
+  color: #FFE500;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+/* ── 대진 영역 — 모바일: 위아래, PC: 좌우 ── */
+.wc-match {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-top: 60px; /* header 높이 */
+}
+
+@media(min-width: 768px) {
+  .wc-match { flex-direction: row; }
+}
+
+/* ── 작품 카드 ── */
+.wc-work {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 38dvh;
+  transition: filter .2s;
+}
+.wc-work:hover { filter: brightness(1.08); }
+
+@media(min-width: 768px) {
+  .wc-work { min-height: calc(100dvh - 60px); }
+}
+
+.wc-work-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  filter: brightness(.65);
+  transition: filter .3s;
+}
+.wc-work:hover .wc-work-bg { filter: brightness(.78); }
+
+.wc-work-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(8,8,6,.85) 0%,
+    rgba(8,8,6,.2) 50%,
+    rgba(8,8,6,0) 100%
+  );
+}
+
+.wc-work-content {
+  position: relative; z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px 20px;
+  gap: 8px;
+}
+
+.wc-work-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(20px, 4.5vw, 30px);
+  color: #fff;
+  letter-spacing: var(--ls-tight);
+  text-shadow: 0 2px 8px rgba(0,0,0,.8);
+  line-height: 1.15;
+}
+.wc-work-hook {
+  font-size: var(--t-sm);
+  color: rgba(255,255,255,.75);
+  line-height: 1.65;
+  text-shadow: 0 1px 4px rgba(0,0,0,.9);
+  word-break: keep-all;
+}
+
+/* ── VS 구분선 ── */
+.wc-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+/* 모바일: 가로선 */
+.wc-vs {
+  height: 44px;
+  border-top: 1px solid rgba(255,229,0,.12);
+  border-bottom: 1px solid rgba(255,229,0,.12);
+}
+
+/* PC: 세로선 */
+@media(min-width: 768px) {
+  .wc-vs {
+    height: auto;
+    width: 56px;
+    border-top: none;
+    border-bottom: none;
+    border-left: 1px solid rgba(255,229,0,.12);
+    border-right: 1px solid rgba(255,229,0,.12);
+  }
+}
+
+.wc-vs-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: rgba(255,229,0,.5);
+  letter-spacing: .15em;
+}
+
+/* ── 결과 화면 ── */
+#wc-result {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 80px 24px 72px;
+  padding-bottom: max(72px, calc(env(safe-area-inset-bottom) + 72px));
+  max-width: 600px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+.wc-result-eyebrow {
+  font-size: var(--t-label);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: rgba(255,229,0,.6);
+  margin-top: 20px;
+}
+.wc-result-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(28px, 7vw, 48px);
+  color: var(--kin);
+  letter-spacing: var(--ls-tight);
+  line-height: 1.1;
+}
+
+/* 우승작 카드 */
+.wc-winner-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 260px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,229,0,.3);
+}
+.wc-winner-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  filter: brightness(.6);
+}
+.wc-winner-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,.75) 100%);
+}
+.wc-winner-content {
+  position: relative; z-index: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wc-winner-label {
+  font-size: var(--t-label);
+  letter-spacing: var(--ls-wide);
+  color: rgba(255,229,0,.85);
+  text-transform: uppercase;
+  text-shadow: 0 1px 4px rgba(0,0,0,.8);
+}
+.wc-winner-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: clamp(24px, 6vw, 36px);
+  color: #fff;
+  letter-spacing: var(--ls-tight);
+  text-shadow: 0 2px 8px rgba(0,0,0,.9);
+}
+
+/* TOP4 */
+.wc-top4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.wc-top4-item {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+}
+.wc-top4-rank {
+  font-size: var(--t-label);
+  color: rgba(255,229,0,.5);
+  letter-spacing: var(--ls-mono);
+  margin-bottom: 4px;
+}
+.wc-top4-name {
+  font-size: var(--t-sm);
+  color: rgba(255,255,255,.8);
+  font-weight: 700;
+}
+
+/* KIN 독해 */
+.wc-observation {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid rgba(255,229,0,.22);
+  background: rgba(255,229,0,.04);
+  border-radius: 12px;
+}
+.wc-obs-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,229,0,.35);
+}
+.wc-obs-label {
+  font-size: var(--t-label);
+  letter-spacing: var(--ls-wide);
+  color: rgba(255,229,0,.55);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.wc-obs-text {
+  font-size: var(--t-md);
+  line-height: 1.8;
+  color: rgba(255,255,255,.9);
+  word-break: keep-all;
+}
+
+/* 버튼 */
+.wc-result-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 48px;
+}
+
+/* ── 로딩 ── */
+#wc-loading {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  font-size: var(--t-label);
+  letter-spacing: .35em;
+  color: rgba(255,229,0,.35);
+  text-transform: uppercase;
+  animation: blink 1.4s ease infinite;
+}
+
+/* ── reduced motion ── */
+@media(prefers-reduced-motion: reduce) {
+  .wc-work, .wc-work-bg { transition: none !important; }
+}
+
+/* ── 모바일 최적화 ── */
+@media(max-width: 480px) {
+  .wc-work-content { padding: 18px 16px; }
+  .wc-work-hook { font-size: 12px; }
+}

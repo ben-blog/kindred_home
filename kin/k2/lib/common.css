@@ -1,0 +1,89 @@
+/* ── 리셋 ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+*{-webkit-tap-highlight-color:transparent}
+
+/* ── BODY ── */
+body{
+  width:100%;min-height:100dvh;
+  background:var(--bg);
+  font-family:'DM Mono',monospace;color:#fff;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* ── 폰트 렌더링 보정 ── */
+.h-name{
+  font-synthesis:none;font-optical-sizing:none;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── HEADER ── */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px 24px;padding-top:max(18px,env(safe-area-inset-top));
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(8,8,6,.95);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid rgba(255,229,0,.07);
+}
+.h-name{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:var(--t-base);color:var(--kin);
+  letter-spacing:var(--ls-tight);
+}
+.h-back{
+  font-size:var(--t-label);letter-spacing:var(--ls-mono);
+  color:rgba(255,255,255,.55);text-transform:uppercase;
+  cursor:pointer;transition:color .2s;text-decoration:none;
+  padding:12px 4px;min-height:44px;display:flex;align-items:center;
+}
+@media(hover:hover){.h-back:hover{color:var(--kin)}}
+
+#lang-toggle{display:flex;align-items:center;font-size:var(--t-label);letter-spacing:var(--ls-mono)}
+.lt{padding:10px 12px;cursor:pointer;color:rgba(255,255,255,.45);transition:color .2s;user-select:none;border-radius:3px;min-height:44px;display:flex;align-items:center;}
+.lt.active{color:var(--kin)}
+.lt-sep{color:rgba(255,255,255,.2)}
+.lt.disabled{opacity:.25;pointer-events:none}
+
+/* ── LOADING ── */
+#loading{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);transition:opacity .4s;
+}
+#loading span{
+  font-size:var(--t-label);letter-spacing:.35em;
+  color:rgba(255,229,0,.35);text-transform:uppercase;
+  animation:blink 1.4s ease infinite;
+}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ── ERROR TOAST ── */
+#error-msg{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  padding:11px 20px;
+  background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);
+  font-size:var(--t-sm);color:#F87171;letter-spacing:.08em;
+  display:none;z-index:200;max-width:90vw;text-align:center;word-break:keep-all;
+}
+
+/* ── 버튼 공통 ── */
+.btn-primary{
+  padding:13px 22px;background:var(--kin);color:#000;border:none;
+  font-family:'DM Mono',monospace;font-size:var(--t-label);
+  letter-spacing:var(--ls-mono);text-transform:uppercase;
+  cursor:pointer;transition:opacity .2s;border-radius:10px;min-height:46px;
+}
+.btn-secondary{
+  padding:13px 22px;background:transparent;
+  border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.6);
+  font-family:'DM Mono',monospace;font-size:var(--t-label);
+  letter-spacing:var(--ls-mono);text-transform:uppercase;
+  cursor:pointer;transition:all .2s;border-radius:10px;
+  text-decoration:none;display:inline-flex;align-items:center;min-height:46px;
+}
+@media(hover:hover){
+  .btn-primary:hover{opacity:.85}
+  .btn-secondary:hover{border-color:rgba(255,229,0,.45);color:var(--kin)}
+}

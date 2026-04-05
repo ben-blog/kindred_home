@@ -274,8 +274,7 @@ body{
   border:1px solid rgba(255,255,255,.08);
 }
 .cover-img:hover{opacity:.95}
-/* 모바일에서 커버 마퀴 숨김 */
-@media(max-width:767px){.cover-marquee{display:none}}
+
 
 /* ── 퀴즈 배경 이미지 ── */
 #quiz-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
@@ -699,9 +698,11 @@ body{
   .kin-rxn-avatar{width:48px;height:48px}
   .kin-rxn-bubble{font-size:var(--t-sm);padding:10px 14px}
 }
-/* 모바일: manga-gate 숨김 (404 이슈 + 레이아웃 불필요) */
+/* 모바일: manga-gate 숨김 / 마퀴 크기 조정 */
 @media(max-width:767px){
   .manga-gate{display:none}
+  .cover-marquee{margin-top:20px}
+  .cover-img{width:78px;height:110px;border-radius:6px;margin-right:8px}
 }
 
 /* ── reduced motion ── */
@@ -1386,9 +1387,6 @@ async function buildCoverMarquee() {
   const track = document.getElementById('cover-marquee-track');
   const marquee = document.getElementById('cover-marquee');
   if(!track || !marquee) return;
-
-  // PC에서만 표시
-  if(window.innerWidth < 768) return;
 
   const urls = [];
   for(const {id, title} of COVER_MAL_IDS) {

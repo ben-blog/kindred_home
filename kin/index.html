@@ -47,19 +47,23 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   display:flex;flex-direction:column;
   gap:3px;padding:3px;
   overflow-y:auto;
-  scroll-snap-type:y mandatory;
+  scroll-snap-type:y proximity;
   -webkit-overflow-scrolling:touch;
+}
+@media(pointer:coarse){
+  #gallery{scroll-snap-type:y mandatory;}
+  .gallery-row{scroll-snap-stop:always;}
 }
 
 .gallery-row{
   display:flex;gap:3px;
   flex-shrink:0;
   scroll-snap-align:start;
-  scroll-snap-stop:always;
 }
 
 .thumb{
-  flex:1;
+  flex:1 1 0%;
+  min-width:0;
   position:relative;overflow:hidden;cursor:pointer;
   aspect-ratio:3/4;
   opacity:0;transform:scale(.94);

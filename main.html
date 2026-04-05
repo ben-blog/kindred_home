@@ -125,8 +125,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
     padding-bottom:10px;
   }
   .vm-char-kin{color:rgba(255,232,0,.85)}
-  .vm-char-dred{color:rgba(91,79,207,.85);cursor:pointer;transition:opacity .2s}
-  .vm-char-dred:hover{opacity:.7}
+  .vm-char-dred{color:rgba(91,79,207,.85)}
   .vm-line{width:100%;height:1px;background:rgba(255,255,255,.12);margin:3px 0}
   .vm-item{
     font-size:10px;letter-spacing:.02em;text-transform:uppercase;
@@ -134,6 +133,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
     white-space:nowrap;
   }
   .vm-item-kin{color:rgba(255,232,0,.72)}
+  .vm-item-dred{color:rgba(91,79,207,.72);text-align:right}
   .vm-item:hover{opacity:1!important}
   .vm-item.vm-dimmed{opacity:.15!important}
 
@@ -147,7 +147,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   }
   .h-card-kin.on{opacity:1;transform:translateY(-50%) translateX(0)}
   .h-card-dred{
-    right:calc(3vw + 70px);
+    right:calc(3vw + 140px);
     transform:translateY(-50%) translateX(12px);
     transition:opacity .12s ease,transform .14s cubic-bezier(.16,1,.3,1);
   }
@@ -1097,7 +1097,6 @@ if (IS_TOUCH) {
       tx0 = e.touches[0].clientX;
       ty0 = e.touches[0].clientY;
       swipeHandled = false;
-      if (zone === $kinZone && !activeSheet && getPhase(elapsed).n === 'WORLDS') showBubble();
       if (zone === $dredZone) dredHovered = true;
     }, {passive:true});
     zone.addEventListener('touchmove', e => {
@@ -1106,7 +1105,6 @@ if (IS_TOUCH) {
       const dy = e.touches[0].clientY - ty0;
       if (dy < -40) {
         swipeHandled = true;
-        hideBubble();
         openSheet(sheetName);
       }
     }, {passive:true});
@@ -1115,10 +1113,10 @@ if (IS_TOUCH) {
       const dx = e.changedTouches[0].clientX - tx0;
       const dy = e.changedTouches[0].clientY - ty0;
       if (Math.hypot(dx, dy) < 12 && getPhase(elapsed).n === 'WORLDS') {
-        hideBubble();
-        navTo(galleryPath);
+        // 탭: KIN은 말풍선 잠깐 보여주고 갤러리 이동
+        if (zone === $kinZone) { showBubble(); setTimeout(() => { hideBubble(); navTo(galleryPath); }, 400); }
+        else navTo(galleryPath);
       } else {
-        if (zone === $kinZone) setTimeout(hideBubble, 1400);
         if (zone === $dredZone) setTimeout(() => { dredHovered = false; }, 800);
       }
     }, {passive:true});
@@ -1178,12 +1176,16 @@ function buildPC() {
   });
   $km.innerHTML = kmHTML;
 
-  // DRED 메뉴 — 레이블만, 아이템 없음. 레이블 자체가 호버 트리거.
-  const firstDred = mainActions.dred[0];
-  const firstDredAction = firstDred?.actions?.[lang]?.[0];
-  $dm.innerHTML = `<span class="vm-char vm-char-dred"
-    data-card="hc-dred-0"
-    data-url="${firstDredAction?.url || ''}">DRED</span>`;
+  // DRED 메뉴 — KIN과 동일한 목록 구조. 이름만 표시 (설명 없음).
+  let dmHTML = `<span class="vm-char vm-char-dred">DRED</span>`;
+  mainActions.dred.forEach((item, i) => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    dmHTML += `<div class="vm-line"></div>
+      <div class="vm-item vm-item-dred" data-card="hc-dred-${i}" data-url="${a.url}"
+        style="opacity:${i===0?.65:.48}">${a.label}</div>`;
+  });
+  $dm.innerHTML = dmHTML;
 
   // KIN 카드
   mainActions.kin.forEach((item, i) => {
@@ -1256,7 +1258,7 @@ function attachPCHoverHandlers() {
     }, 320);
   }
 
-  // KIN: vm-item hover
+  // KIN + DRED: vm-item hover
   document.querySelectorAll('.vm-item').forEach(el => {
     el.addEventListener('mouseenter', () => showCard(el.dataset.card));
     el.addEventListener('mouseleave', hideCard);
@@ -1265,18 +1267,6 @@ function attachPCHoverHandlers() {
       navTo(el.dataset.url);
     });
   });
-
-  // DRED: vm-char-dred 레이블 hover
-  const $dredLabel = document.querySelector('.vm-char-dred');
-  if ($dredLabel) {
-    $dredLabel.addEventListener('mouseenter', () => showCard($dredLabel.dataset.card));
-    $dredLabel.addEventListener('mouseleave', hideCard);
-    $dredLabel.addEventListener('click', () => {
-      if (getPhase(elapsed).n !== 'WORLDS') return;
-      if (!$dredLabel.dataset.url) return; // 빈 URL 방어
-      navTo($dredLabel.dataset.url);
-    });
-  }
 
   document.querySelectorAll('.h-card').forEach(card => {
     card.addEventListener('mouseenter', () => clearTimeout(leaveTimer));

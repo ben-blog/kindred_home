@@ -103,6 +103,19 @@ const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const shuffle = arr => [...arr].sort(() => Math.random() - .5);
 
+// 한국어 조사 자동 선택 (받침 여부 감지)
+function getJosa(word, type) {
+  if (!word) return type === '이/가' ? '이' : type === '을/를' ? '을' : '은';
+  const last = word[word.length - 1];
+  const code = last.charCodeAt(0);
+  const isKorean = code >= 0xAC00 && code <= 0xD7A3;
+  const hasBatchim = isKorean && (code - 0xAC00) % 28 !== 0;
+  if (type === '이/가') return hasBatchim ? '이' : '가';
+  if (type === '을/를') return hasBatchim ? '을' : '를';
+  if (type === '은/는') return hasBatchim ? '은' : '는';
+  return '';
+}
+
 // ── 상태 ──
 const state = {
   category: null,
@@ -347,6 +360,8 @@ async function selectWork(winnerWork, loserWork) {
 function updateBracketHover() {
   const panel = $('wc-bracket-hover');
   if (!panel) return;
+  // 모바일에서는 패널이 display:none이므로 DOM 갱신 불필요
+  if (window.matchMedia('(max-width: 767px)').matches) return;
   const isEn = getLang() === 'en';
   const rNames = isEn ? ROUND_NAMES.en : ROUND_NAMES.ko;
   const rounds = [16, 8, 4, 2];
@@ -403,72 +418,42 @@ function updatePathPanel() {
   });
 }
 
-// ── 브라켓 팝업 업데이트 ──
-function updateBracketPopup() {
-  const popup = $('wc-bracket-hover');
-  if (!popup) return;
-  const isEn = getLang() === 'en';
-  const rNames = { ko: { 16:'16강', 8:'8강', 4:'4강', 2:'결승' }, en: { 16:'R16', 8:'QF', 4:'SF', 2:'Final' } };
-  const rounds = [16, 8, 4, 2];
-  let html = '';
-
-  rounds.forEach(r => {
-    const done = state.matchResults.filter(m => m.round === r);
-    const isCurrent = state.round === r;
-    if (done.length === 0 && !isCurrent) return; // 아직 진행 안 한 라운드
-
-    const label = rNames[isEn ? 'en' : 'ko'][r] || r;
-    html += `<div class="wc-bracket-round">`;
-    html += `<div class="wc-bracket-round-label">${label}</div>`;
-    html += `<div class="wc-bracket-matches">`;
-
-    done.forEach(m => {
-      const w = isEn ? m.winner.title_en : m.winner.title_ko;
-      const l = isEn ? m.loser.title_en  : m.loser.title_ko;
-      html += `<div class="wc-bracket-match done"><span class="wc-bm-loser">${l}</span><span class="wc-bm-sep"> › </span><span class="wc-bm-winner">${w}</span></div>`;
-    });
-
-    if (isCurrent && state.currentMatch < state.roundMatches.length) {
-      const pair = state.roundMatches[state.currentMatch];
-      const a = isEn ? pair[0].title_en : pair[0].title_ko;
-      const b = isEn ? pair[1].title_en : pair[1].title_ko;
-      html += `<div class="wc-bracket-match current"><span class="wc-bm-pending">${a}</span><span class="wc-bm-sep"> vs </span><span class="wc-bm-pending">${b}</span></div>`;
-    }
-
-    html += `</div></div>`;
-  });
-
-  popup.innerHTML = html;
-}
-
 // ── 공유 이미지 생성 ──
 let shareBlob = null, shareBlobUrl = null;
 
 async function generateResultShareImage() {
-  // 기본 결과 공유카드 (기존 퀴즈와 유사하게 단순화)
   if (!window.html2canvas) throw new Error('no html2canvas');
-  const { resultWinner: w } = state;
-  const isEn = getLang() === 'en';
-  const card = $('sc-bracket');
-  const title = isEn ? w.title_en : w.title_ko;
-  const obs = getWcObs(w, isEn);
-  const coverUrl = w.mal_id ? await fetchAniListCover(w.mal_id).catch(() => null) : null;
+  const winner = state.resultWinner;
+  const isEn   = getLang() === 'en';
 
-  card.innerHTML = `
-    <div style="background:#080806;padding:28px 24px;font-family:sans-serif;min-height:300px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-bottom:1px solid rgba(255,229,0,.12);padding-bottom:14px;">
-        <div style="color:#FFE500;font-size:11px;letter-spacing:.15em;">${isEn ? 'MY PICK — KIN WORLDCUP' : '내 픽 — KIN 월드컵'}</div>
-        <div style="color:rgba(255,255,255,.25);font-size:10px;">kinxdred.com/kin/k2</div>
-      </div>
-      ${coverUrl ? `<div style="width:100%;height:180px;border-radius:10px;overflow:hidden;margin-bottom:16px;"><img crossorigin="anonymous" src="${coverUrl}" style="width:100%;height:100%;object-fit:cover;" alt=""></div>` : ''}
-      <div style="color:#FFE500;font-size:22px;font-weight:800;margin-bottom:10px;">${title}</div>
-      <div style="color:rgba(255,255,255,.65);font-size:12px;line-height:1.7;">${obs}</div>
-    </div>`;
+  // sc-main 채우기
+  const bgEl = $('sc-main-bg');
+  const scTitle = $('sc-main-title');
+  const scObs   = $('sc-main-obs');
+  const scEyebrow = $('sc-main-eyebrow');
 
+  if (scEyebrow) scEyebrow.textContent = isEn ? 'My Pick · KIN Worldcup' : '내 픽 · KIN 월드컵';
+  if (scTitle) scTitle.textContent = isEn ? winner.title_en : winner.title_ko;
+  if (scObs)   scObs.textContent   = getWcObs(winner, isEn);
+
+  if (bgEl && winner.mal_id) {
+    const url = await fetchAniListCover(winner.mal_id).catch(() => null);
+    if (url) {
+      bgEl.style.backgroundImage = `url(${url})`;
+      await new Promise(r => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = r; img.onerror = r;
+        img.src = url;
+      });
+    }
+  }
+
+  const card = $('sc-main');
   const imgs = card.querySelectorAll('img');
-  await Promise.all(Array.from(imgs).map(img => new Promise(r => {
-    if (img.complete) r(); else { img.onload = r; img.onerror = r; }
-  })));
+  await Promise.all(Array.from(imgs).map(img =>
+    new Promise(r => { if (img.complete) r(); else { img.onload = r; img.onerror = r; } })
+  ));
 
   const canvas = await html2canvas(card, { backgroundColor: '#080806', scale: 2, useCORS: true, logging: false });
   return new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -476,74 +461,67 @@ async function generateResultShareImage() {
 
 async function generateBracketShareImage() {
   if (!window.html2canvas) throw new Error('no html2canvas');
-  const isEn = getLang() === 'en';
-  const card = $('sc-bracket');
-  const rLabel = { ko: { 16:'16강', 8:'8강', 4:'4강', 2:'결승' }, en: { 16:'R16', 8:'QF', 4:'SF', 2:'Final' } };
+  const winner = state.resultWinner;
+  const isEn   = getLang() === 'en';
 
-  // 커버 이미지 미리 fetch (캐시됨)
+  // 우승자 경로: 결승→4강→8강→16강 순서 (top = 결승)
+  const path = state.history
+    .filter(h => h.winner.id === winner.id)
+    .sort((a, b) => a.round - b.round); // round 2(결승), 4, 8, 16
+
   const getCircle = async (work, size) => {
-    const url = work?.mal_id ? await fetchAniListCover(work.mal_id).catch(() => null) : null;
+    const url  = work?.mal_id ? await fetchAniListCover(work.mal_id).catch(() => null) : null;
     const name = isEn ? work?.title_en : work?.title_ko;
-    return `<div style="text-align:center;">
-      <div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;margin:0 auto 6px;border:${size >= 80 ? '2.5' : '1.5'}px solid rgba(255,229,0,${size >= 80 ? '.7' : '.4'});">
+    return `<div style="text-align:center;flex-shrink:0;">
+      <div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;margin:0 auto 5px;border:${size >= 72 ? '2.5' : '1.5'}px solid rgba(255,229,0,${size >= 72 ? '.8' : '.4'});">
         ${url ? `<img crossorigin="anonymous" src="${url}" style="width:100%;height:100%;object-fit:cover;" alt="">` : `<div style="width:100%;height:100%;background:#1a1a14;"></div>`}
       </div>
-      <div style="color:${size >= 80 ? '#FFE500' : 'rgba(255,255,255,.85)'};font-size:${size >= 80 ? 13 : 10}px;font-weight:700;">${name || ''}</div>
+      <div style="color:${size >= 72 ? '#FFE500' : 'rgba(255,255,255,.8)'};font-size:${size >= 72 ? 12 : 10}px;font-weight:700;max-width:${size + 16}px;word-break:keep-all;">${name || ''}</div>
     </div>`;
   };
 
-  const final = state.matchResults.find(m => m.round === 2);
-  const sf    = state.matchResults.filter(m => m.round === 4);
-  const qf    = state.matchResults.filter(m => m.round === 8);
-  const r16   = state.matchResults.filter(m => m.round === 16);
+  const rNames = { ko: { 2:'결승', 4:'4강', 8:'8강', 16:'16강' }, en: { 2:'Final', 4:'Semi', 8:'Quarter', 16:'Round of 16' } };
+  const dict   = isEn ? rNames.en : rNames.ko;
 
-  // 결승
-  const finalHtml = final ? await getCircle(final.winner, 100) : '';
-  // 4강 (winner 원 + loser 취소선)
-  const sfCircles = await Promise.all(sf.map(async m => {
-    const w = await getCircle(m.winner, 64);
-    const lName = isEn ? m.loser.title_en : m.loser.title_ko;
-    return `${w}<div style="font-size:9px;color:rgba(255,255,255,.2);text-decoration:line-through;margin-top:2px;">${lName}</div>`;
-  }));
-  // 8강 텍스트
-  const qfHtml = qf.map(m => {
-    const w = isEn ? m.winner.title_en : m.winner.title_ko;
-    const l = isEn ? m.loser.title_en  : m.loser.title_ko;
-    return `<div style="font-size:9px;padding:3px 6px;background:rgba(255,229,0,.05);border:1px solid rgba(255,229,0,.15);border-radius:4px;color:rgba(255,229,0,.8);">${l} <span style="color:rgba(255,255,255,.2)">›</span> ${w}</div>`;
-  }).join('');
-  // 16강 텍스트
-  const r16Html = r16.map(m => {
-    const w = isEn ? m.winner.title_en : m.winner.title_ko;
-    return `<div style="font-size:8px;padding:2px 5px;border-radius:3px;color:rgba(255,229,0,.5);">${w}</div>`;
-  }).join('');
+  let rows = '';
+  for (const match of path) {
+    const rLabel = dict[match.round] || match.round;
+    const wName  = isEn ? match.winner.title_en : match.winner.title_ko;
+    const lName  = isEn ? match.loser.title_en  : match.loser.title_ko;
+    const showImg = match.round <= 4;
 
-  card.innerHTML = `
-    <div style="background:#080806;padding:24px 18px;font-family:sans-serif;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(255,229,0,.12);">
-        <div style="color:#FFE500;font-size:10px;letter-spacing:.15em;">${isEn ? 'MY BRACKET' : '내 브라켓'}</div>
-        <div style="color:rgba(255,255,255,.25);font-size:9px;">kinxdred.com/kin/k2</div>
-      </div>
+    if (showImg) {
+      const size = match.round === 2 ? 80 : 56;
+      const wCircle = await getCircle(match.winner, size);
+      const lCircle = match.round <= 4 ? await getCircle(match.loser, size - 16) : '';
+      rows += `<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="font-size:8px;letter-spacing:.15em;color:rgba(255,229,0,.45);width:36px;flex-shrink:0;">${rLabel}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${wCircle}
+          <div style="font-size:9px;color:rgba(255,255,255,.2);">vs</div>
+          <div style="opacity:.4;">${lCircle}</div>
+        </div>
+      </div>`;
+    } else {
+      rows += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+        <div style="font-size:8px;letter-spacing:.15em;color:rgba(255,229,0,.35);width:36px;flex-shrink:0;">${rLabel}</div>
+        <div style="font-size:11px;color:rgba(255,229,0,.75);font-weight:700;">${wName}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.18);">vs</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.25);text-decoration:line-through;">${lName}</div>
+      </div>`;
+    }
+  }
 
-      ${final ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:10px;">${rLabel[isEn ? 'en' : 'ko'][2]}</div>
-      <div style="display:flex;justify-content:center;margin-bottom:14px;">${finalHtml}</div>
-      <div style="text-align:center;color:rgba(255,229,0,.15);font-size:9px;margin-bottom:14px;">────────────────</div>` : ''}
-
-      ${sf.length ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:10px;">${rLabel[isEn ? 'en' : 'ko'][4]}</div>
-      <div style="display:flex;justify-content:center;gap:24px;margin-bottom:14px;">${sfCircles.join('')}</div>
-      <div style="text-align:center;color:rgba(255,229,0,.15);font-size:9px;margin-bottom:14px;">────────────────</div>` : ''}
-
-      ${qf.length ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:8px;">${rLabel[isEn ? 'en' : 'ko'][8]}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:14px;">${qfHtml}</div>
-      <div style="text-align:center;color:rgba(255,229,0,.15);font-size:9px;margin-bottom:10px;">────────────────</div>` : ''}
-
-      ${r16.length ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:8px;">${rLabel[isEn ? 'en' : 'ko'][16]}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;">${r16Html}</div>` : ''}
-    </div>`;
+  const card    = $('sc-bracket');
+  const content = $('sc-bracket-content');
+  const eyebrow = $('sc-bracket-eyebrow');
+  if (eyebrow) eyebrow.textContent = isEn ? 'My Bracket · KIN Worldcup' : '대진표 · KIN 월드컵';
+  if (content) content.innerHTML = rows;
 
   const imgs = card.querySelectorAll('img');
-  await Promise.all(Array.from(imgs).map(img => new Promise(r => {
-    if (img.complete) r(); else { img.onload = r; img.onerror = r; }
-  })));
+  await Promise.all(Array.from(imgs).map(img =>
+    new Promise(r => { if (img.complete) r(); else { img.onload = r; img.onerror = r; } })
+  ));
 
   const canvas = await html2canvas(card, { backgroundColor: '#080806', scale: 2, useCORS: true, logging: false });
   return new Promise(r => canvas.toBlob(r, 'image/png'));
@@ -632,63 +610,48 @@ async function showResult(winner) {
 function renderResultContent(isEn) {
   const winner = state.resultWinner;
   if (!winner) return;
-  const second = state.top4[1]; // 준우승
-  const third  = state.top4[2]; // 공동 3위 중 1명
+  const second = state.top4[1];
 
-  // eyebrow
   $('wc-result-eyebrow').textContent = isEn ? 'Your Pick' : '네가 선택한 우승작';
+  $('wc-result-title').textContent   = isEn ? winner.title_en : winner.title_ko;
 
-  // 1위 타이틀
-  $('wc-result-title').textContent = isEn ? winner.title_en : winner.title_ko;
-
-  // 1위 카드
   loadCoverCached(winner, $('wc-winner-bg'));
   $('wc-winner-hook').textContent  = isEn ? winner.hook_en  : winner.hook_ko;
   $('wc-winner-quote').textContent = getQuote(winner, isEn);
 
   if (second) {
-    const s2card = $('wc-second-card');
     $('wc-second-label').textContent = isEn ? '🥈 Runner-up' : '🥈 준우승';
     $('wc-second-title').textContent = isEn ? second.title_en : second.title_ko;
     $('wc-second-hook').textContent  = isEn ? second.hook_en  : second.hook_ko;
     $('wc-second-quote').textContent = getQuote(second, isEn);
     loadCoverCached(second, $('wc-second-bg'));
-    if (s2card) s2card.style.display = '';
+    const s2 = $('wc-second-card');
+    if (s2) s2.style.display = '';
   }
 
-  if (third) {
-    const s3card = $('wc-third-card');
-    $('wc-third-label').textContent = isEn ? '🥉 3rd Place' : '🥉 공동 3위';
-    $('wc-third-title').textContent = isEn ? third.title_en : third.title_ko;
-    $('wc-third-hook').textContent  = isEn ? third.hook_en  : third.hook_ko;
-    $('wc-third-quote').textContent = getQuote(third, isEn);
-    loadCoverCached(third, $('wc-third-bg'));
-    if (s3card) s3card.style.display = '';
-  }
-
-  // KIN 독해
   $('wc-obs-text').textContent = getWcObs(winner, isEn);
-  $('wc-obs-avatar').src = KIN_IMGS.happy;
+  $('wc-obs-avatar').src       = KIN_IMGS.happy;
 
-  // 버튼
-  $('wc-btn-retry').textContent = isEn ? 'Try Again' : '다시 하기';
-  const btnShare = $('wc-btn-share');
-  const btnBracket = $('wc-btn-share-bracket');
-  if (btnShare) btnShare.textContent = isEn ? 'Share' : '공유';
-  if (btnBracket) btnBracket.textContent = isEn ? 'Share bracket' : '브라켓 공유';
+  $('wc-btn-retry').textContent   = isEn ? 'Try Again'  : '다시 하기';
+  $('wc-btn-share').textContent   = isEn ? 'Share Card' : '카드 공유';
+  $('wc-btn-bracket').textContent = isEn ? 'Bracket'    : '대진표';
 }
 
 // ── KIN 독해 문구 ──
 function getWcObs(winner, isEn) {
-  const tier = winner.popularity_tier;
+  const tier  = winner.popularity_tier;
+  const title = winner.title_ko;
   if (isEn) {
-    if (tier === 'S') return `You went with the classic. ${winner.title_en} as your winner says you trust what's already been proven.`;
-    if (tier === 'A') return `Interesting. You passed on the obvious choices and landed on ${winner.title_en}. That's a real preference, not just familiarity.`;
-    return `${winner.title_en} winning this says something. You're not picking by reputation. You're picking by feel.`;
+    const en = winner.title_en;
+    if (tier === 'S') return `You went with the classic. ${en} as your winner says you trust what's already been proven.`;
+    if (tier === 'A') return `Interesting. You passed on the obvious choices and landed on ${en}. That's a real preference, not just familiarity.`;
+    return `${en} winning this says something. You're not picking by reputation. You're picking by feel.`;
   }
-  if (tier === 'S') return `${winner.title_ko}를 골랐구나. 검증된 걸 고른 거야. 근데 그게 네 취향이랑 딱 맞는다는 거잖아.`;
-  if (tier === 'A') return `${winner.title_ko}까지 올라올 줄은 몰랐어. 유명한 것보다 네 결에 맞는 걸 고른 거야.`;
-  return `${winner.title_ko}가 우승이라니. 인지도랑 상관없이 뭔가 다른 기준으로 고른 거야. 그 기준이 뭔지 나도 궁금하다.`;
+  const ga  = getJosa(title, '이/가');
+  const eul = getJosa(title, '을/를');
+  if (tier === 'S') return `${title}${eul} 골랐구나. 검증된 걸 고른 거야. 근데 그게 네 취향이랑 딱 맞는다는 거잖아.`;
+  if (tier === 'A') return `${title}까지 올라올 줄은 몰랐어. 유명한 것보다 네 결에 맞는 걸 고른 거야.`;
+  return `${title}${ga} 우승이라니. 인지도랑 상관없이 뭔가 다른 기준으로 고른 거야. 그 기준이 뭔지 나도 궁금하다.`;
 }
 
 // ── lang 전환 ──
@@ -798,7 +761,7 @@ document.addEventListener('touchend', e => {
 
 // ── 공유 버튼 ──
 $('wc-btn-share').addEventListener('click', () => openShareModal(generateResultShareImage));
-$('wc-btn-share-bracket').addEventListener('click', () => openShareModal(generateBracketShareImage));
+$('wc-btn-bracket').addEventListener('click', () => openShareModal(generateBracketShareImage));
 
 $('wc-share-modal-close').addEventListener('click', () => {
   $('wc-share-modal').classList.remove('open');
@@ -810,7 +773,7 @@ $('wc-btn-share-save').addEventListener('click', async () => {
   if (isIOS) {
     try {
       const file = new File([shareBlob], 'kin-worldcup.png', { type: 'image/png' });
-      await navigator.share({ files: [file], title: getLang() === 'en' ? "KIN Worldcup" : 'KIN 월드컵' });
+      await navigator.share({ files: [file], title: getLang() === 'en' ? 'KIN Worldcup' : 'KIN 월드컵' });
     } catch { window.open(shareBlobUrl, '_blank'); }
   } else {
     const a = document.createElement('a');
@@ -830,14 +793,41 @@ $('wc-btn-share-native').addEventListener('click', async () => {
   } catch {}
 });
 
-// ── 경로 패널 토글 ──
-$('wc-path-toggle').addEventListener('click', () => {
-  const panel  = $('wc-path-panel');
-  const toggle = $('wc-path-toggle');
-  const isOpen = panel.classList.toggle('open');
-  toggle.classList.toggle('open', isOpen);
+// ── 경로 패널 — PC: 호버, 모바일: 탭 ──
+const pathToggle = $('wc-path-toggle');
+const pathPanel  = $('wc-path-panel');
+const isTouchDevice = () => window.matchMedia('(hover: none)').matches;
+let pathTimer = null;
+
+function openPath() {
+  clearTimeout(pathTimer);
+  pathPanel.classList.add('open');
+  pathToggle.classList.add('open');
   const isEn = getLang() === 'en';
-  toggle.textContent = isOpen
+  pathToggle.textContent = isEn ? 'My picks ↑' : '내 선택 ↑';
+}
+function closePath(delay = 0) {
+  pathTimer = setTimeout(() => {
+    pathPanel.classList.remove('open');
+    pathToggle.classList.remove('open');
+    const isEn = getLang() === 'en';
+    pathToggle.textContent = isEn ? 'My picks ↓' : '내 선택 ↓';
+  }, delay);
+}
+
+// PC: 호버
+pathToggle.addEventListener('mouseenter', () => { if (!isTouchDevice()) openPath(); });
+pathToggle.addEventListener('mouseleave', () => { if (!isTouchDevice()) closePath(120); });
+pathPanel.addEventListener('mouseenter',  () => { if (!isTouchDevice()) openPath(); });
+pathPanel.addEventListener('mouseleave',  () => { if (!isTouchDevice()) closePath(120); });
+
+// 모바일: 탭 토글
+pathToggle.addEventListener('click', () => {
+  if (!isTouchDevice()) return;
+  const isOpen = pathPanel.classList.toggle('open');
+  pathToggle.classList.toggle('open', isOpen);
+  const isEn = getLang() === 'en';
+  pathToggle.textContent = isOpen
     ? (isEn ? 'My picks ↑' : '내 선택 ↑')
     : (isEn ? 'My picks ↓' : '내 선택 ↓');
 });
@@ -846,18 +836,12 @@ $('wc-path-toggle').addEventListener('click', () => {
 $('wc-btn-retry').addEventListener('click', () => {
   Object.assign(state, {
     category: null, works: [], roundMatches: [], winners: [],
-    top4: [], matchPlayed: 0, resultWinner: null,
-    history: [], matchResults: [], initialPairs: [],
-    selecting: false, sessionKey: genUUID(),
+    top4: [], round: 16, currentMatch: 0, matchPlayed: 0,
+    resultWinner: null, history: [], selecting: false,
+    sessionKey: genUUID(),
   });
   resultCoverCache.clear();
-  const panel = $('wc-path-panel');
-  if (panel) panel.classList.remove('open');
-  const toggle = $('wc-path-toggle');
-  if (toggle) {
-    toggle.classList.remove('open');
-    toggle.textContent = getLang() === 'en' ? 'My picks ↓' : '내 선택 ↓';
-  }
+  closePath();
   showSection('wc-category');
 });
 

@@ -198,7 +198,7 @@
   transition: max-height .3s ease, padding .3s ease;
 }
 .wc-path-panel.open {
-  max-height: 200px;
+  max-height: min(50vh, 360px);
   overflow-y: auto;
 }
 .wc-path-list {
@@ -573,12 +573,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 80px 24px 72px;
-  padding-bottom: max(72px, calc(env(safe-area-inset-bottom) + 72px));
+  padding: 72px 24px 56px;
+  padding-bottom: max(56px, calc(env(safe-area-inset-bottom) + 56px));
   max-width: 680px;
   margin: 0 auto;
   width: 100%;
-  gap: 16px;
+  gap: 12px;
 }
 
 .wc-result-eyebrow {
@@ -586,26 +586,26 @@
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
   color: rgba(255,229,0,.6);
-  margin-top: 20px;
+  margin-top: 16px;
 }
 .wc-result-title {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: clamp(32px, 8vw, 52px);
+  font-size: clamp(28px, 7vw, 48px);
   color: var(--kin);
   letter-spacing: var(--ls-tight);
   line-height: 1.05;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 /* 1위 이미지 카드 */
 .wc-winner-card {
   position: relative;
   width: 100%;
-  height: clamp(220px, 40vw, 320px);
+  height: clamp(200px, 38vw, 300px);
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255,229,0,.25);
+  border: 1px solid rgba(255,229,0,.3);
 }
 .wc-winner-bg {
   position: absolute; inset: 0;
@@ -614,88 +614,77 @@
 }
 .wc-winner-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(8,8,6,0) 30%,
-    rgba(8,8,6,.5) 100%
-  );
+  background: linear-gradient(to bottom, rgba(8,8,6,0) 30%, rgba(8,8,6,.5) 100%);
 }
 
 /* 1위 hook + 명대사 */
 .wc-winner-texts {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 4px 0 8px;
+  gap: 6px;
+  padding: 2px 0 4px;
 }
 .wc-winner-hook {
   font-size: var(--t-md);
-  color: rgba(255,255,255,.75);
-  line-height: 1.75;
+  color: rgba(255,255,255,.7);
+  line-height: 1.7;
   word-break: keep-all;
 }
 .wc-winner-quote {
   font-size: var(--t-sm);
-  color: rgba(255,229,0,.65);
-  line-height: 1.65;
+  color: rgba(255,229,0,.6);
+  line-height: 1.6;
   font-style: italic;
   border-left: 2px solid rgba(255,229,0,.3);
   padding-left: 12px;
 }
 
-/* 2위 / 3위 포디움 */
-.wc-podium {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.wc-podium-card {
+/* 2위 — 수평 레이아웃 (이미지 왼쪽, 텍스트 오른쪽) */
+.wc-second-row {
+  display: flex;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,.09);
-  background: rgba(255,255,255,.03);
-  display: flex;
-  flex-direction: column;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.025);
+  min-height: 140px;
 }
-
-.wc-podium-img-wrap {
+.wc-second-img {
+  width: 130px;
+  flex-shrink: 0;
   position: relative;
-  height: clamp(100px, 18vw, 160px);
   overflow: hidden;
 }
-.wc-podium-bg {
+@media(min-width: 480px) { .wc-second-img { width: 160px; } }
+.wc-second-bg {
   position: absolute; inset: 0;
   background-size: cover;
   background-position: center 20%;
-  filter: brightness(.75);
-  transition: filter .3s;
+  filter: brightness(.7);
 }
-.wc-podium-card:hover .wc-podium-bg { filter: brightness(.9); }
-
-.wc-podium-body {
-  padding: 14px 14px 16px;
+.wc-second-body {
+  flex: 1;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  gap: 5px;
 }
-.wc-podium-rank {
+.wc-second-rank {
   font-size: var(--t-label);
-  color: rgba(255,229,0,.55);
+  color: rgba(255,255,255,.35);
   letter-spacing: var(--ls-mono);
 }
-.wc-podium-title {
+.wc-second-title {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
-  font-size: clamp(14px, 2.2vw, 18px);
-  color: #fff;
+  font-size: clamp(15px, 2.5vw, 20px);
+  color: rgba(255,255,255,.85);
   letter-spacing: var(--ls-tight);
   line-height: 1.2;
 }
-.wc-podium-hook {
+.wc-second-hook {
   font-size: 11px;
-  color: rgba(255,255,255,.45);
+  color: rgba(255,255,255,.38);
   line-height: 1.6;
   word-break: keep-all;
   display: -webkit-box;
@@ -703,15 +692,14 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.wc-podium-quote {
+.wc-second-quote {
   font-size: 11px;
-  color: rgba(255,229,0,.55);
-  line-height: 1.5;
+  color: rgba(255,229,0,.45);
   font-style: italic;
-  border-left: 1.5px solid rgba(255,229,0,.25);
+  border-left: 1.5px solid rgba(255,229,0,.2);
   padding-left: 8px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -721,14 +709,13 @@
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  padding: 20px;
-  border: 1px solid rgba(255,229,0,.22);
+  padding: 18px;
+  border: 1px solid rgba(255,229,0,.2);
   background: rgba(255,229,0,.04);
   border-radius: 12px;
-  margin-top: 8px;
 }
 .wc-obs-avatar {
-  width: 52px; height: 52px;
+  width: 48px; height: 48px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -739,7 +726,7 @@
   letter-spacing: var(--ls-wide);
   color: rgba(255,229,0,.55);
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .wc-obs-text {
   font-size: var(--t-md);
@@ -752,7 +739,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
   margin-top: 4px;
 }
 
@@ -773,6 +760,6 @@
 /* 모바일 */
 @media(max-width: 480px) {
   #wc-category { padding: 72px 20px 40px; gap: 28px; }
-  .wc-result-page { padding: 72px 18px 48px; }
+  #wc-result { padding: 72px 18px 48px; }
 }
 

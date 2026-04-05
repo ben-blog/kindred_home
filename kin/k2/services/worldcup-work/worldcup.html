@@ -122,33 +122,17 @@
       <p class="wc-winner-quote" id="wc-winner-quote"></p>
     </div>
 
-    <!-- 2위 / 3위 -->
-    <div class="wc-podium">
-
-      <div class="wc-podium-card" id="wc-second-card">
-        <div class="wc-podium-img-wrap">
-          <div class="wc-podium-bg" id="wc-second-bg"></div>
-        </div>
-        <div class="wc-podium-body">
-          <div class="wc-podium-rank" id="wc-second-label">🥈 준우승</div>
-          <div class="wc-podium-title" id="wc-second-title"></div>
-          <div class="wc-podium-hook" id="wc-second-hook"></div>
-          <div class="wc-podium-quote" id="wc-second-quote"></div>
-        </div>
+    <!-- 2위 수평 카드 -->
+    <div class="wc-second-row" id="wc-second-card">
+      <div class="wc-second-img">
+        <div class="wc-second-bg" id="wc-second-bg"></div>
       </div>
-
-      <div class="wc-podium-card" id="wc-third-card">
-        <div class="wc-podium-img-wrap">
-          <div class="wc-podium-bg" id="wc-third-bg"></div>
-        </div>
-        <div class="wc-podium-body">
-          <div class="wc-podium-rank" id="wc-third-label">🥉 공동 3위</div>
-          <div class="wc-podium-title" id="wc-third-title"></div>
-          <div class="wc-podium-hook" id="wc-third-hook"></div>
-          <div class="wc-podium-quote" id="wc-third-quote"></div>
-        </div>
+      <div class="wc-second-body">
+        <div class="wc-second-rank" id="wc-second-label">🥈 준우승</div>
+        <div class="wc-second-title" id="wc-second-title"></div>
+        <div class="wc-second-hook" id="wc-second-hook"></div>
+        <div class="wc-second-quote" id="wc-second-quote"></div>
       </div>
-
     </div>
 
     <!-- KIN 독해 -->
@@ -162,8 +146,8 @@
 
     <div class="wc-result-btns">
       <button class="btn-primary" id="wc-btn-retry">다시 하기</button>
-      <button class="btn-secondary" id="wc-btn-share">공유</button>
-      <button class="btn-secondary" id="wc-btn-share-bracket">브라켓 공유</button>
+      <button class="btn-secondary" id="wc-btn-share">카드 공유</button>
+      <button class="btn-secondary" id="wc-btn-bracket">대진표</button>
       <a class="btn-secondary" href="/kin/k2/">← 갤러리</a>
     </div>
 
@@ -184,9 +168,25 @@
   </div>
 </div>
 
-<!-- 브라켓 공유 카드 (off-screen, html2canvas용) -->
-<div id="sc-bracket" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;"></div>
+<!-- 메인 공유카드 (off-screen) -->
+<div id="sc-main" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;font-family:'Syne',sans-serif;overflow:hidden;">
+  <div id="sc-main-bg" style="width:100%;height:220px;background-size:cover;background-position:center 20%;"></div>
+  <div style="position:relative;padding:20px 24px 28px;">
+    <div id="sc-main-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:10px;text-transform:uppercase;font-family:'DM Mono',monospace;">내 픽 · KIN 월드컵</div>
+    <div id="sc-main-title" style="font-size:34px;font-weight:800;color:#FFE500;line-height:1.1;margin-bottom:12px;letter-spacing:-.02em;"></div>
+    <div id="sc-main-obs" style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.75;margin-bottom:20px;font-family:'DM Mono',monospace;"></div>
+    <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.22);font-family:'DM Mono',monospace;">kinxdred.com/kin/k2</div>
+  </div>
+</div>
+
+<!-- 대진표 공유카드 (off-screen) -->
+<div id="sc-bracket" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;padding:24px;font-family:'DM Mono',monospace;overflow:hidden;">
+  <div id="sc-bracket-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:20px;text-transform:uppercase;">대진표 · KIN 월드컵</div>
+  <div id="sc-bracket-content"></div>
+  <div style="margin-top:20px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.2);">kinxdred.com/kin/k2</div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script type="module" src="/kin/k2/services/worldcup-work/worldcup.js"></script>
 </body>
 </html>
-<script type="module" src="/kin/k2/services/worldcup-work/worldcup.js"></script>

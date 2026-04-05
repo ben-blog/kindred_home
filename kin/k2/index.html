@@ -469,7 +469,7 @@ body{
   background:rgba(248,113,113,.15);border:2px solid #F87171;color:#F87171;
   animation:shake .4s ease;
 }
-.choice-btn.faded{opacity:.18;cursor:default;}
+.choice-btn.faded{opacity:.32;cursor:default;}
 .choice-btn.correct.attention{animation:correct-pulse .55s ease .1s;}
 @keyframes bounce-up{
   0%{transform:translateY(0)} 35%{transform:translateY(-7px)} 100%{transform:translateY(0)}
@@ -2100,7 +2100,7 @@ async function showResult() {
         : fbName;
       document.getElementById('result-work-name').textContent = fbDisplayName;
       document.getElementById('result-work-sub').textContent = t('이번 세션 등장 작품', 'appeared this session');
-      document.getElementById('result-work-label').textContent = t('이번 세션 작품', 'this session');
+      document.querySelector('.result-work-label').textContent = t('이번 세션 작품', 'this session');
       fetchAniListCover(fbData.mal_id).then(url => {
         const bg = document.getElementById('result-work-bg');
         if(url) {
@@ -2265,24 +2265,15 @@ async function generateShareImage() {
   const scTitle = document.getElementById('sc-header-title');
   if(scTitle) scTitle.textContent = lang==='en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
 
-  // 작품 이미지 처리
-  // 커버 배경 (새 A 디자인)
+  // 작품 이미지 처리 — 커버 배경 (새 A 디자인)
   const coverBg = document.getElementById('sc-cover-bg');
-  const imgWrap  = document.getElementById('sc-work-img-wrap');
-  const headerWork = document.getElementById('sc-header-work');
-  const malId    = state.topWork?.mal_id;
-  const workName = state.topWork?.name || '';
+  const malId   = state.topWork?.mal_id;
 
-  headerWork.textContent = workName;
-  imgWrap.style.display  = 'none';
-
+  if(coverBg) coverBg.style.backgroundImage = '';
   if(malId) {
     try {
       const coverUrl = await fetchAniListCover(malId);
-      if(coverUrl) {
-        imgWrap.style.backgroundImage = `url(${coverUrl})`;
-        imgWrap.style.display = 'block';
-      }
+      if(coverUrl && coverBg) coverBg.style.backgroundImage = `url(${coverUrl})`;
     } catch{}
   }
 
@@ -2435,7 +2426,13 @@ function applyResultLang() {
   if(el('btn-retry'))         el('btn-retry').textContent         = isEn ? 'Try Again'        : '다시 하기';
   if(el('btn-gallery'))       el('btn-gallery').textContent       = isEn ? '← Gallery'        : '← 갤러리';
   const workLabel = document.querySelector('.result-work-label');
-  if(workLabel) workLabel.textContent = isEn ? 'You know this one' : '가장 잘 아는 작품';
+  if(workLabel) {
+    if(state.topWork) {
+      workLabel.textContent = isEn ? 'You know this one' : '가장 잘 아는 작품';
+    } else {
+      workLabel.textContent = isEn ? 'this session' : '이번 세션 작품';
+    }
+  }
   // work-sub 재계산
   const sub = el('result-work-sub');
   if(sub && state.topWork) {

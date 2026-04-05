@@ -191,13 +191,14 @@
   top: 53px; left: 0; right: 0;
   z-index: 98;
   background: rgba(8,8,6,.98);
-  border-bottom: 1px solid rgba(255,229,0,.1);
+  border-bottom: 0px solid rgba(255,229,0,.1);
   padding: 0 24px;
   max-height: 0;
   overflow: hidden;
-  transition: max-height .3s ease, padding .3s ease;
+  transition: max-height .3s ease, padding .3s ease, border-bottom-width .3s ease;
 }
 .wc-path-panel.open {
+  border-bottom-width: 1px;
   padding: 12px 24px 16px;
   max-height: min(50vh, 360px);
   overflow-y: auto;

@@ -2,8 +2,8 @@
 // result.js — 결과 페이지
 // ═══════════════════════════════════════════
 import {
-  getLang, t, onLangChange,
-  KIN_IMGS, API_URL,
+  getLang, setLang, t,
+  KIN_IMGS,
   fetchAniListCover, loadImgCORS,
   getLabel, getObs, getReplayHint,
 } from '../../lib/core.js';
@@ -11,11 +11,13 @@ import { initLangToggle, hideLoading } from '../../lib/ui.js';
 
 // ── localStorage에서 퀴즈 결과 로드 ──
 const raw = localStorage.getItem('k2_quiz_result');
-if (!raw) { window.location.href = '/kin/k2/'; }
+if (!raw) {
+  window.location.href = '/kin/k2/';
+  throw new Error('no quiz data');
+}
 const data = JSON.parse(raw);
 
 // 저장된 lang으로 초기화 (퀴즈 당시 언어 유지)
-import { setLang } from '../../lib/core.js';
 if (data.lang && data.lang !== getLang()) setLang(data.lang);
 
 // ── lang 토글 초기화 ──

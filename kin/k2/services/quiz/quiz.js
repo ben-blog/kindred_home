@@ -2,14 +2,13 @@
 // quiz.js — 퀴즈 서비스
 // ═══════════════════════════════════════════
 import {
-  getLang, t, onLangChange,
-  SUPA_URL, SUPA_KEY, API_URL,
-  KIN_IMGS, BG_IMAGES,
+  getLang, t,
+  KIN_IMGS, API_URL,
   SLOTS, FORMAT_LABELS,
   supaFetch, supaCount, genUUID,
-  getRandomBg, fetchAniListCover,
+  getRandomBg,
   getRxn, getStreakRxn,
-  detectPattern, getLabel, getObs, getReplayHint,
+  detectPattern, getObs,
 } from '../../lib/core.js';
 import { initLangToggle, lockLang, unlockLang, showError, hideLoading } from '../../lib/ui.js';
 

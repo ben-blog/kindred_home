@@ -125,14 +125,7 @@ body{
 /* 배경 요소 */
 .manga-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
 .speedlines{display:none;} /* 속도선 제거 */
-.manga-gate{
-  position:absolute;right:0;bottom:0;
-  width:min(55vw,480px);height:auto;max-height:90vh;
-  object-fit:contain;object-position:right bottom;
-  opacity:.35;
-  mask-image:linear-gradient(to top,transparent 0%,black 8%,black 70%,transparent 100%);
-  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 8%,black 70%,transparent 100%);
-}
+
 
 /* 랜딩 레이아웃 */
 .landing-v4{
@@ -175,11 +168,7 @@ body{
   .landing-v4-meta{display:none}
   /* PC: manga-bg를 왼쪽 40%만 커버 */
   .manga-bg{width:40%;right:auto;}
-  .manga-gate{
-    width:min(75%,360px);
-    opacity:.25;
-    right:0;
-  }
+  
 
 }
 
@@ -763,7 +752,7 @@ body{
 }
 /* 모바일: manga-gate 숨김 / 마퀴 크기 조정 */
 @media(max-width:767px){
-  .manga-gate{display:none}
+  
   .cover-marquee{margin-top:20px}
   .cover-img{width:78px;height:110px;border-radius:6px;margin-right:8px}
 }
@@ -771,7 +760,7 @@ body{
 /* ── reduced motion ── */
 @media(prefers-reduced-motion:reduce){
   #grain,.choice-btn,.quiz-question,#streak-glow,.streak-particle,
-  .speedlines,.manga-gate,.btn-start-arrow,
+  .btn-start-arrow,
   .cover-marquee-track,#quiz-bg img{
     animation:none!important;transition:none!important
   }
@@ -854,7 +843,6 @@ body{
 
   <!-- 배경 -->
   <div class="manga-bg" aria-hidden="true">
-    <img class="manga-gate" id="manga-gate" src="./assets/manga_gate1.png" alt="" onerror="this.style.display='none'">
   </div>
 
   <div class="landing-v4">
@@ -2455,12 +2443,9 @@ function applyLandingLang() {
   const hName = document.querySelector('.h-name');
   if(hName) hName.textContent = isEn ? 'What kind of fan?' : '난 어떤 덕후?';
 
-  // manga-gate 이미지
-  const mg = document.getElementById('manga-gate');
-  if(mg) mg.src = isEn ? './assets/manga_gate1.png' : './assets/manga_gate2.png';
 
   // 재플레이 힌트 언어 전환
-  const replayEl = el('result-replay-hint');
+  const replayEl = document.getElementById('result-replay-hint');
   if(replayEl && state.resultPattern) {
     const hints = {
       ko:{perfect:'다음엔 더 어렵게 낼게.',all_low:'한 편만 보고 다시 와봐.',easy_only:'이제 hard 문제만 모아서 줄까?',all_high:'레이블이 바뀔 수도 있어. 다시 해봐.',random:'패턴 없이 나왔어. 다시 하면 다르게 나올 거야.'},

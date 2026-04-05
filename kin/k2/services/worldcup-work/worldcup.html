@@ -87,6 +87,8 @@
       <!-- VS -->
       <div class="wc-vs" id="wc-vs">
         <span class="wc-vs-text">VS</span>
+        <!-- 호버 브라켓 패널 (PC only) -->
+        <div class="wc-bracket-hover" id="wc-bracket-hover"></div>
       </div>
 
       <!-- 오른쪽/아래 카드 -->
@@ -160,6 +162,8 @@
 
     <div class="wc-result-btns">
       <button class="btn-primary" id="wc-btn-retry">다시 하기</button>
+      <button class="btn-secondary" id="wc-btn-share">공유</button>
+      <button class="btn-secondary" id="wc-btn-share-bracket">브라켓 공유</button>
       <a class="btn-secondary" href="/kin/k2/">← 갤러리</a>
     </div>
 
@@ -167,6 +171,21 @@
 
 </div>
 
-<script type="module" src="/kin/k2/services/worldcup-work/worldcup.js"></script>
+<!-- 공유 모달 -->
+<div class="wc-share-modal" id="wc-share-modal">
+  <div class="wc-share-modal-box">
+    <button class="wc-share-modal-close" id="wc-share-modal-close">✕</button>
+    <div id="wc-share-loading" style="display:none;color:rgba(255,229,0,.5);font-size:12px;letter-spacing:.2em;text-align:center;padding:32px 0;">생성 중...</div>
+    <img id="wc-share-img" style="display:none;max-width:100%;border-radius:8px;" alt="" crossorigin="anonymous">
+    <div id="wc-share-btns" style="display:none;gap:8px;margin-top:12px;">
+      <button class="btn-primary" id="wc-btn-share-save">저장</button>
+      <button class="btn-secondary" id="wc-btn-share-native">공유</button>
+    </div>
+  </div>
+</div>
+
+<!-- 브라켓 공유 카드 (off-screen, html2canvas용) -->
+<div id="sc-bracket" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>

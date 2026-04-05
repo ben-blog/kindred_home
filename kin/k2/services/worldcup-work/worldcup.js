@@ -120,6 +120,12 @@ const state = {
   selecting: false,   // 클릭/스와이프 중 중복 방지
 };
 
+// ── 라운드명 (공통) ──
+const ROUND_NAMES = {
+  ko: { 16:'16강', 8:'8강', 4:'4강', 2:'결승' },
+  en: { 16:'Round of 16', 8:'Quarter-final', 4:'Semi-final', 2:'Final' },
+};
+
 // ── lang 초기화 ──
 initLangToggle(applyLang);
 
@@ -213,11 +219,7 @@ async function loadCover(work, bgEl) {
 
 // ── 라운드 레이블 ──
 function getRoundLabel(round) {
-  const labels = {
-    ko: { 16: '16강', 8: '8강', 4: '4강', 2: '결승' },
-    en: { 16: 'Round of 16', 8: 'Quarter-final', 4: 'Semi-final', 2: 'Final' },
-  };
-  return (getLang() === 'ko' ? labels.ko : labels.en)[round] || `${round}강`;
+  return (getLang() === 'ko' ? ROUND_NAMES.ko : ROUND_NAMES.en)[round] || `${round}강`;
 }
 
 // ── KIN 배너 표시 ──
@@ -260,6 +262,7 @@ async function renderMatch() {
   // 라운드 표시
   $('wc-round-label').textContent = getRoundLabel(state.round);
   $('wc-progress-text').textContent = `${state.matchPlayed + 1} / ${state.totalMatches}`;
+  updateBracketHover();
 
   // 결승 직전 KIN 배너
   if (state.round === 2) {
@@ -312,6 +315,7 @@ async function selectWork(winnerWork, loserWork) {
 
   state.history.push({ round: state.round, winner: winnerWork, loser: loserWork });
   updatePathPanel();
+  updateBracketHover();
 
   if (state.round === 4) state.top4.push(loserWork);
 
@@ -340,18 +344,56 @@ async function selectWork(winnerWork, loserWork) {
   }
 }
 
-// ── 경로 패널 업데이트 ──
+function updateBracketHover() {
+  const panel = $('wc-bracket-hover');
+  if (!panel) return;
+  const isEn = getLang() === 'en';
+  const rNames = isEn ? ROUND_NAMES.en : ROUND_NAMES.ko;
+  const rounds = [16, 8, 4, 2];
+  const byRound = {};
+  rounds.forEach(r => { byRound[r] = state.history.filter(h => h.round === r); });
+  const curPair = state.roundMatches[state.currentMatch];
+
+  let html = '';
+  rounds.forEach(r => {
+    const label = rNames[r];
+    const done = byRound[r];
+    const totalInRound = r / 2;
+
+    html += `<div class="wc-bracket-round">`;
+    html += `<div class="wc-bracket-round-label">${label}</div>`;
+    html += `<div class="wc-bracket-matches">`;
+
+    done.forEach(h => {
+      const w = isEn ? h.winner.title_en : h.winner.title_ko;
+      const l = isEn ? h.loser.title_en  : h.loser.title_ko;
+      html += `<div class="wc-bracket-match done"><span class="wc-bm-winner">${w}</span><span class="wc-bm-sep">vs</span><span class="wc-bm-loser">${l}</span></div>`;
+    });
+
+    if (curPair && state.round === r && done.length < totalInRound) {
+      const a = isEn ? curPair[0].title_en : curPair[0].title_ko;
+      const b = isEn ? curPair[1].title_en : curPair[1].title_ko;
+      html += `<div class="wc-bracket-match current"><span class="wc-bm-winner">${a}</span><span class="wc-bm-sep">vs</span><span class="wc-bm-winner">${b}</span></div>`;
+    }
+
+    const remaining = totalInRound - done.length - (state.round === r ? 1 : 0);
+    for (let i = 0; i < Math.max(0, remaining); i++) {
+      html += `<div class="wc-bracket-match"><span class="wc-bm-pending">—</span></div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  panel.innerHTML = html;
+}
 function updatePathPanel() {
   const list = $('wc-path-list');
   if (!list) return;
   const isEn = getLang() === 'en';
-  const rNames = {
-    ko: { 16:'16강', 8:'8강', 4:'4강', 2:'결승' },
-    en: { 16:'16', 8:'QF', 4:'SF', 2:'F' },
-  };
+  const rNames = isEn ? ROUND_NAMES.en : ROUND_NAMES.ko;
   list.innerHTML = '';
   state.history.forEach(h => {
-    const rLabel = (isEn ? rNames.en : rNames.ko)[h.round] || h.round;
+    const rLabel = rNames[h.round] || h.round;
     const wName  = isEn ? h.winner.title_en : h.winner.title_ko;
     const lName  = isEn ? h.loser.title_en  : h.loser.title_ko;
     const el = document.createElement('div');
@@ -361,7 +403,177 @@ function updatePathPanel() {
   });
 }
 
-// ── 결과 화면 ──
+// ── 브라켓 팝업 업데이트 ──
+function updateBracketPopup() {
+  const popup = $('wc-bracket-hover');
+  if (!popup) return;
+  const isEn = getLang() === 'en';
+  const rNames = { ko: { 16:'16강', 8:'8강', 4:'4강', 2:'결승' }, en: { 16:'R16', 8:'QF', 4:'SF', 2:'Final' } };
+  const rounds = [16, 8, 4, 2];
+  let html = '';
+
+  rounds.forEach(r => {
+    const done = state.matchResults.filter(m => m.round === r);
+    const isCurrent = state.round === r;
+    if (done.length === 0 && !isCurrent) return; // 아직 진행 안 한 라운드
+
+    const label = rNames[isEn ? 'en' : 'ko'][r] || r;
+    html += `<div class="wc-bracket-round">`;
+    html += `<div class="wc-bracket-round-label">${label}</div>`;
+    html += `<div class="wc-bracket-matches">`;
+
+    done.forEach(m => {
+      const w = isEn ? m.winner.title_en : m.winner.title_ko;
+      const l = isEn ? m.loser.title_en  : m.loser.title_ko;
+      html += `<div class="wc-bracket-match done"><span class="wc-bm-loser">${l}</span><span class="wc-bm-sep"> › </span><span class="wc-bm-winner">${w}</span></div>`;
+    });
+
+    if (isCurrent && state.currentMatch < state.roundMatches.length) {
+      const pair = state.roundMatches[state.currentMatch];
+      const a = isEn ? pair[0].title_en : pair[0].title_ko;
+      const b = isEn ? pair[1].title_en : pair[1].title_ko;
+      html += `<div class="wc-bracket-match current"><span class="wc-bm-pending">${a}</span><span class="wc-bm-sep"> vs </span><span class="wc-bm-pending">${b}</span></div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  popup.innerHTML = html;
+}
+
+// ── 공유 이미지 생성 ──
+let shareBlob = null, shareBlobUrl = null;
+
+async function generateResultShareImage() {
+  // 기본 결과 공유카드 (기존 퀴즈와 유사하게 단순화)
+  if (!window.html2canvas) throw new Error('no html2canvas');
+  const { resultWinner: w } = state;
+  const isEn = getLang() === 'en';
+  const card = $('sc-bracket');
+  const title = isEn ? w.title_en : w.title_ko;
+  const obs = getWcObs(w, isEn);
+  const coverUrl = w.mal_id ? await fetchAniListCover(w.mal_id).catch(() => null) : null;
+
+  card.innerHTML = `
+    <div style="background:#080806;padding:28px 24px;font-family:sans-serif;min-height:300px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;border-bottom:1px solid rgba(255,229,0,.12);padding-bottom:14px;">
+        <div style="color:#FFE500;font-size:11px;letter-spacing:.15em;">${isEn ? 'MY PICK — KIN WORLDCUP' : '내 픽 — KIN 월드컵'}</div>
+        <div style="color:rgba(255,255,255,.25);font-size:10px;">kinxdred.com/kin/k2</div>
+      </div>
+      ${coverUrl ? `<div style="width:100%;height:180px;border-radius:10px;overflow:hidden;margin-bottom:16px;"><img crossorigin="anonymous" src="${coverUrl}" style="width:100%;height:100%;object-fit:cover;" alt=""></div>` : ''}
+      <div style="color:#FFE500;font-size:22px;font-weight:800;margin-bottom:10px;">${title}</div>
+      <div style="color:rgba(255,255,255,.65);font-size:12px;line-height:1.7;">${obs}</div>
+    </div>`;
+
+  const imgs = card.querySelectorAll('img');
+  await Promise.all(Array.from(imgs).map(img => new Promise(r => {
+    if (img.complete) r(); else { img.onload = r; img.onerror = r; }
+  })));
+
+  const canvas = await html2canvas(card, { backgroundColor: '#080806', scale: 2, useCORS: true, logging: false });
+  return new Promise(r => canvas.toBlob(r, 'image/png'));
+}
+
+async function generateBracketShareImage() {
+  if (!window.html2canvas) throw new Error('no html2canvas');
+  const isEn = getLang() === 'en';
+  const card = $('sc-bracket');
+  const rLabel = { ko: { 16:'16강', 8:'8강', 4:'4강', 2:'결승' }, en: { 16:'R16', 8:'QF', 4:'SF', 2:'Final' } };
+
+  // 커버 이미지 미리 fetch (캐시됨)
+  const getCircle = async (work, size) => {
+    const url = work?.mal_id ? await fetchAniListCover(work.mal_id).catch(() => null) : null;
+    const name = isEn ? work?.title_en : work?.title_ko;
+    return `<div style="text-align:center;">
+      <div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;margin:0 auto 6px;border:${size >= 80 ? '2.5' : '1.5'}px solid rgba(255,229,0,${size >= 80 ? '.7' : '.4'});">
+        ${url ? `<img crossorigin="anonymous" src="${url}" style="width:100%;height:100%;object-fit:cover;" alt="">` : `<div style="width:100%;height:100%;background:#1a1a14;"></div>`}
+      </div>
+      <div style="color:${size >= 80 ? '#FFE500' : 'rgba(255,255,255,.85)'};font-size:${size >= 80 ? 13 : 10}px;font-weight:700;">${name || ''}</div>
+    </div>`;
+  };
+
+  const final = state.matchResults.find(m => m.round === 2);
+  const sf    = state.matchResults.filter(m => m.round === 4);
+  const qf    = state.matchResults.filter(m => m.round === 8);
+  const r16   = state.matchResults.filter(m => m.round === 16);
+
+  // 결승
+  const finalHtml = final ? await getCircle(final.winner, 100) : '';
+  // 4강 (winner 원 + loser 취소선)
+  const sfCircles = await Promise.all(sf.map(async m => {
+    const w = await getCircle(m.winner, 64);
+    const lName = isEn ? m.loser.title_en : m.loser.title_ko;
+    return `${w}<div style="font-size:9px;color:rgba(255,255,255,.2);text-decoration:line-through;margin-top:2px;">${lName}</div>`;
+  }));
+  // 8강 텍스트
+  const qfHtml = qf.map(m => {
+    const w = isEn ? m.winner.title_en : m.winner.title_ko;
+    const l = isEn ? m.loser.title_en  : m.loser.title_ko;
+    return `<div style="font-size:9px;padding:3px 6px;background:rgba(255,229,0,.05);border:1px solid rgba(255,229,0,.15);border-radius:4px;color:rgba(255,229,0,.8);">${l} <span style="color:rgba(255,255,255,.2)">›</span> ${w}</div>`;
+  }).join('');
+  // 16강 텍스트
+  const r16Html = r16.map(m => {
+    const w = isEn ? m.winner.title_en : m.winner.title_ko;
+    return `<div style="font-size:8px;padding:2px 5px;border-radius:3px;color:rgba(255,229,0,.5);">${w}</div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div style="background:#080806;padding:24px 18px;font-family:sans-serif;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(255,229,0,.12);">
+        <div style="color:#FFE500;font-size:10px;letter-spacing:.15em;">${isEn ? 'MY BRACKET' : '내 브라켓'}</div>
+        <div style="color:rgba(255,255,255,.25);font-size:9px;">kinxdred.com/kin/k2</div>
+      </div>
+
+      ${final ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:10px;">${rLabel[isEn ? 'en' : 'ko'][2]}</div>
+      <div style="display:flex;justify-content:center;margin-bottom:14px;">${finalHtml}</div>
+      <div style="text-align:center;color:rgba(255,229,0,.15);font-size:9px;margin-bottom:14px;">────────────────</div>` : ''}
+
+      ${sf.length ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:10px;">${rLabel[isEn ? 'en' : 'ko'][4]}</div>
+      <div style="display:flex;justify-content:center;gap:24px;margin-bottom:14px;">${sfCircles.join('')}</div>
+      <div style="text-align:center;color:rgba(255,229,0,.15);font-size:9px;margin-bottom:14px;">────────────────</div>` : ''}
+
+      ${qf.length ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:8px;">${rLabel[isEn ? 'en' : 'ko'][8]}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:14px;">${qfHtml}</div>
+      <div style="text-align:center;color:rgba(255,229,0,.15);font-size:9px;margin-bottom:10px;">────────────────</div>` : ''}
+
+      ${r16.length ? `<div style="font-size:9px;letter-spacing:.12em;color:rgba(255,229,0,.4);text-align:center;margin-bottom:8px;">${rLabel[isEn ? 'en' : 'ko'][16]}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;">${r16Html}</div>` : ''}
+    </div>`;
+
+  const imgs = card.querySelectorAll('img');
+  await Promise.all(Array.from(imgs).map(img => new Promise(r => {
+    if (img.complete) r(); else { img.onload = r; img.onerror = r; }
+  })));
+
+  const canvas = await html2canvas(card, { backgroundColor: '#080806', scale: 2, useCORS: true, logging: false });
+  return new Promise(r => canvas.toBlob(r, 'image/png'));
+}
+
+// ── 공유 모달 공통 ──
+async function openShareModal(generateFn) {
+  const modal   = $('wc-share-modal');
+  const loading = $('wc-share-loading');
+  const imgEl   = $('wc-share-img');
+  const btns    = $('wc-share-btns');
+
+  modal.classList.add('open');
+  loading.style.display = 'block';
+  imgEl.style.display = 'none';
+  btns.style.display  = 'none';
+
+  try {
+    shareBlob = await generateFn();
+    if (shareBlobUrl) URL.revokeObjectURL(shareBlobUrl);
+    shareBlobUrl = URL.createObjectURL(shareBlob);
+    imgEl.src = shareBlobUrl;
+    imgEl.style.display = 'block';
+    btns.style.display  = 'flex';
+  } catch (e) {
+    modal.classList.remove('open');
+  } finally {
+    loading.style.display = 'none';
+  }
+}
 const resultCoverCache = new Map(); // mal_id → url (결과 lang 전환 시 재요청 방지)
 
 async function loadCoverCached(work, bgEl) {
@@ -460,6 +672,10 @@ function renderResultContent(isEn) {
 
   // 버튼
   $('wc-btn-retry').textContent = isEn ? 'Try Again' : '다시 하기';
+  const btnShare = $('wc-btn-share');
+  const btnBracket = $('wc-btn-share-bracket');
+  if (btnShare) btnShare.textContent = isEn ? 'Share' : '공유';
+  if (btnBracket) btnBracket.textContent = isEn ? 'Share bracket' : '브라켓 공유';
 }
 
 // ── KIN 독해 문구 ──
@@ -580,6 +796,40 @@ document.addEventListener('touchend', e => {
   else        selectWork(workB, workA); // 아래 스와이프 → 아래쪽 카드(B) 선택
 }, { passive: true });
 
+// ── 공유 버튼 ──
+$('wc-btn-share').addEventListener('click', () => openShareModal(generateResultShareImage));
+$('wc-btn-share-bracket').addEventListener('click', () => openShareModal(generateBracketShareImage));
+
+$('wc-share-modal-close').addEventListener('click', () => {
+  $('wc-share-modal').classList.remove('open');
+});
+
+$('wc-btn-share-save').addEventListener('click', async () => {
+  if (!shareBlob) return;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    try {
+      const file = new File([shareBlob], 'kin-worldcup.png', { type: 'image/png' });
+      await navigator.share({ files: [file], title: getLang() === 'en' ? "KIN Worldcup" : 'KIN 월드컵' });
+    } catch { window.open(shareBlobUrl, '_blank'); }
+  } else {
+    const a = document.createElement('a');
+    a.href = shareBlobUrl; a.download = 'kin-worldcup.png'; a.click();
+  }
+});
+
+$('wc-btn-share-native').addEventListener('click', async () => {
+  if (!shareBlob) return;
+  const file = new File([shareBlob], 'kin-worldcup.png', { type: 'image/png' });
+  try {
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'KIN 월드컵', text: 'kinxdred.com/kin/k2' });
+    } else {
+      await navigator.share({ title: 'KIN 월드컵', url: 'https://kinxdred.com/kin/k2' });
+    }
+  } catch {}
+});
+
 // ── 경로 패널 토글 ──
 $('wc-path-toggle').addEventListener('click', () => {
   const panel  = $('wc-path-panel');
@@ -597,7 +847,8 @@ $('wc-btn-retry').addEventListener('click', () => {
   Object.assign(state, {
     category: null, works: [], roundMatches: [], winners: [],
     top4: [], matchPlayed: 0, resultWinner: null,
-    history: [], selecting: false, sessionKey: genUUID(),
+    history: [], matchResults: [], initialPairs: [],
+    selecting: false, sessionKey: genUUID(),
   });
   resultCoverCache.clear();
   const panel = $('wc-path-panel');

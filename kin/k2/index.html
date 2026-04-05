@@ -948,7 +948,7 @@ body{
 
 <!-- ══════ RESULT ══════ -->
 <div class="page" id="page-result">
-  <div>
+  <div style="margin-top:20px">
     <div class="landing-eyebrow" id="result-eyebrow" style="margin-bottom:10px">KIN의 판정</div>
     <div class="result-score-wrap">
       <div class="result-score" id="result-score">0</div>
@@ -2072,8 +2072,17 @@ async function showResult() {
     // AniList로 커버 fetch (CORS 안전)
     if(wData.mal_id) {
       fetchAniListCover(wData.mal_id).then(url => {
-        if(url) document.getElementById('result-work-bg').style.backgroundImage=`url(${url})`;
-      }).catch(()=>{});
+        const bg = document.getElementById('result-work-bg');
+        if(url) {
+          bg.style.backgroundImage = `url(${url})`;
+        } else {
+          const bgIdx = Math.floor(Math.random()*10)+1;
+          bg.style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+        }
+      }).catch(()=>{
+        const bgIdx = Math.floor(Math.random()*10)+1;
+        document.getElementById('result-work-bg').style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+      });
     }
   } else {
     // topWork 없을 때 — 세션 작품 중 mal_id 있는 것 랜덤 선택
@@ -2093,8 +2102,17 @@ async function showResult() {
       document.getElementById('result-work-sub').textContent = t('이번 세션 등장 작품', 'appeared this session');
       document.getElementById('result-work-label').textContent = t('이번 세션 작품', 'this session');
       fetchAniListCover(fbData.mal_id).then(url => {
-        if(url) document.getElementById('result-work-bg').style.backgroundImage=`url(${url})`;
-      }).catch(()=>{});
+        const bg = document.getElementById('result-work-bg');
+        if(url) {
+          bg.style.backgroundImage = `url(${url})`;
+        } else {
+          const bgIdx = Math.floor(Math.random()*10)+1;
+          bg.style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+        }
+      }).catch(()=>{
+        const bgIdx = Math.floor(Math.random()*10)+1;
+        document.getElementById('result-work-bg').style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+      });
     } else {
       // mal_id도 없으면 bg 이미지 fallback
       document.getElementById('result-work-card').style.display='none';
@@ -2104,7 +2122,9 @@ async function showResult() {
     }
   }
 
-  document.getElementById('result-obs-avatar').src = KIN_IMGS[obsMood];
+  const obsAvatar = document.getElementById('result-obs-avatar');
+  obsAvatar.onerror = () => { obsAvatar.src = KIN_IMGS.happy; };
+  obsAvatar.src = KIN_IMGS[obsMood];
 
   // 틀린 문제
   const wrong = state.answers.filter(a=>!a.is_correct);

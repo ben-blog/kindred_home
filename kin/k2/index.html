@@ -910,7 +910,7 @@ body{
 <!-- ══════ 공유 카드 (캔버스 렌더용) ══════ -->
 <div id="share-card">
   <div class="sc-header">
-    <span class="sc-header-title">난 어떤 덕후? — KIN의 판정</span>
+    <span class="sc-header-title" id="sc-header-title">난 어떤 덕후? — KIN의 판정</span>
     <span class="sc-header-work" id="sc-header-work"></span>
   </div>
   <div class="sc-work-img-wrap" id="sc-work-img-wrap" style="display:none">
@@ -1996,6 +1996,8 @@ async function generateShareImage() {
   document.getElementById('sc-bar').style.width = `${state.score * 10}%`;
   const scLabel = document.getElementById('sc-label');
   if(scLabel && state.resultPattern) scLabel.textContent = getLabel(state.resultPattern);
+  const scTitle = document.getElementById('sc-header-title');
+  if(scTitle) scTitle.textContent = lang==='en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
 
   // 작품 이미지 처리
   const imgWrap  = document.getElementById('sc-work-img-wrap');

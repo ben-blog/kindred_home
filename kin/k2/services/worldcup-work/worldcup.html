@@ -14,7 +14,7 @@
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- 공통 헤더 -->
 <header id="header">
   <a class="h-back" href="/kin/k2/">← K2</a>
   <div class="h-name" id="h-title">작품 월드컵</div>
@@ -28,17 +28,17 @@
 <div id="wc-loading">loading</div>
 <div id="error-msg"></div>
 
-<div class="wc-page" id="wc-page">
+<div class="wc-page">
 
   <!-- ── 카테고리 선택 ── -->
   <section id="wc-category" style="display:none">
-    <div class="wc-kin-intro">
-      <img class="wc-kin-avatar" id="wc-intro-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
-      <div class="wc-kin-label">KIN</div>
-      <p class="wc-kin-line" id="wc-intro-line">이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.</p>
-      <p class="wc-kin-sub" id="wc-intro-sub">카테고리를 선택하면 16강 토너먼트가 시작돼.<br>1:1 대결에서 네 취향에 더 가까운 쪽을 골라.</p>
+    <div class="wc-intro">
+      <img class="wc-intro-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN" id="wc-intro-avatar">
+      <div class="wc-intro-kin-label">KIN</div>
+      <p class="wc-intro-line" id="wc-intro-line">이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.</p>
+      <p class="wc-intro-sub" id="wc-intro-sub">카테고리를 선택하면 16강 토너먼트가 시작돼.<br>1:1 대결에서 네 취향에 더 가까운 쪽을 골라.</p>
     </div>
-    <div class="wc-category-cards">
+    <div class="wc-cat-cards">
       <div class="wc-cat-card" data-category="battle">
         <div class="wc-cat-title" id="cat-battle-title">소년 배틀·성장</div>
         <div class="wc-cat-sub" id="cat-battle-sub">성장, 전투, 우정이 강한 작품들</div>
@@ -53,98 +53,78 @@
   <!-- ── 대진 화면 ── -->
   <section id="wc-arena" style="display:none">
 
+    <!-- 고정 헤더 -->
     <div class="wc-round-header">
       <span class="wc-round-label" id="wc-round-label">16강</span>
       <span class="wc-progress-text" id="wc-progress-text">1 / 15</span>
-      <button class="wc-path-toggle" id="wc-path-toggle">내 선택 ↓</button>
-    </div>
-
-    <!-- 경로 패널 (상단, 독립) -->
-    <div class="wc-path-panel" id="wc-path-panel">
-      <div class="wc-path-list" id="wc-path-list"></div>
-    </div>
-
-    <!-- 내 선택 중앙 모달 -->
-    <div class="wc-picks-modal" id="wc-picks-modal">
-      <div class="wc-picks-modal-box">
-        <div class="wc-picks-modal-header">
-          <span class="wc-picks-modal-title" id="wc-picks-modal-title">내 선택</span>
-          <button class="wc-picks-modal-close" id="wc-picks-modal-close">✕</button>
-        </div>
-        <div class="wc-picks-modal-list" id="wc-picks-modal-list"></div>
-      </div>
     </div>
 
     <!-- KIN 배너 -->
     <div class="wc-kin-banner" id="wc-kin-banner">
-      <img src="/kin/k2/assets/kin_serious.webp" alt="KIN" id="wc-banner-avatar">
-      <span class="wc-kin-banner-text" id="wc-banner-text"></span>
+      <img id="wc-banner-avatar" src="/kin/k2/assets/kin_serious.webp" alt="KIN">
+      <span id="wc-banner-text"></span>
     </div>
 
-    <!-- 대진 -->
+    <!-- 대진 영역 -->
     <div class="wc-match" id="wc-match">
 
-      <!-- 왼쪽/위 카드 -->
-      <div class="wc-work" id="wc-work-a" data-side="a">
+      <div class="wc-work" id="wc-work-a">
         <div class="wc-work-img">
           <div class="wc-work-bg" id="wc-bg-a"></div>
         </div>
         <div class="wc-work-content">
           <div class="wc-work-title" id="wc-title-a"></div>
-          <div class="wc-work-hook" id="wc-hook-a"></div>
+          <div class="wc-work-hook"  id="wc-hook-a"></div>
         </div>
       </div>
 
-      <!-- VS -->
       <div class="wc-vs" id="wc-vs">
         <span class="wc-vs-text">VS</span>
       </div>
 
-      <!-- 오른쪽/아래 카드 -->
-      <div class="wc-work" id="wc-work-b" data-side="b">
+      <div class="wc-work" id="wc-work-b">
         <div class="wc-work-img">
           <div class="wc-work-bg" id="wc-bg-b"></div>
         </div>
         <div class="wc-work-content">
           <div class="wc-work-title" id="wc-title-b"></div>
-          <div class="wc-work-hook" id="wc-hook-b"></div>
+          <div class="wc-work-hook"  id="wc-hook-b"></div>
         </div>
       </div>
 
     </div>
-
   </section>
 
   <!-- ── 결과 화면 ── -->
   <section id="wc-result" style="display:none">
 
     <div class="wc-result-eyebrow" id="wc-result-eyebrow">네가 선택한 우승작</div>
-    <div class="wc-result-title" id="wc-result-title"></div>
+    <div class="wc-result-title"   id="wc-result-title"></div>
 
-    <!-- 1위 카드 -->
+    <!-- 1위 -->
     <div class="wc-winner-card">
-      <div class="wc-winner-bg" id="wc-winner-bg"></div>
+      <div class="wc-winner-bg"      id="wc-winner-bg"></div>
       <div class="wc-winner-overlay"></div>
     </div>
     <div class="wc-winner-texts">
-      <p class="wc-winner-hook" id="wc-winner-hook"></p>
+      <p class="wc-winner-hook"  id="wc-winner-hook"></p>
       <p class="wc-winner-quote" id="wc-winner-quote"></p>
     </div>
 
-    <!-- 2위 수평 카드 -->
+    <!-- 2위 수평 -->
     <div class="wc-second-row" id="wc-second-card">
       <div class="wc-second-img">
         <div class="wc-second-bg" id="wc-second-bg"></div>
       </div>
       <div class="wc-second-body">
-        <div class="wc-second-rank" id="wc-second-label">🥈 준우승</div>
+        <div class="wc-second-rank"  id="wc-second-label">🥈 준우승</div>
         <div class="wc-second-title" id="wc-second-title"></div>
-        <div class="wc-second-hook" id="wc-second-hook"></div>
+        <div class="wc-second-hook"  id="wc-second-hook"></div>
         <div class="wc-second-quote" id="wc-second-quote"></div>
       </div>
     </div>
 
-    <!-- KIN 독해 -->
+    <!-- KIN 멘트 -->
     <div class="wc-observation">
       <img class="wc-obs-avatar" id="wc-obs-avatar" src="" alt="KIN">
       <div>
@@ -154,7 +134,7 @@
     </div>
 
     <div class="wc-result-btns">
-      <button class="btn-primary" id="wc-btn-retry">다시 하기</button>
+      <button class="btn-primary"   id="wc-btn-retry">다시 하기</button>
       <button class="btn-secondary" id="wc-btn-share">카드 공유</button>
       <button class="btn-secondary" id="wc-btn-bracket">대진표</button>
       <a class="btn-secondary" href="/kin/k2/">← 갤러리</a>
@@ -171,26 +151,26 @@
     <div id="wc-share-loading" style="display:none;color:rgba(255,229,0,.5);font-size:12px;letter-spacing:.2em;text-align:center;padding:32px 0;">생성 중...</div>
     <img id="wc-share-img" style="display:none;max-width:100%;border-radius:8px;" alt="" crossorigin="anonymous">
     <div id="wc-share-btns" style="display:none;gap:8px;margin-top:12px;">
-      <button class="btn-primary" id="wc-btn-share-save">저장</button>
+      <button class="btn-primary"   id="wc-btn-share-save">저장</button>
       <button class="btn-secondary" id="wc-btn-share-native">공유</button>
     </div>
   </div>
 </div>
 
-<!-- 메인 공유카드 (off-screen) -->
+<!-- 카드 공유 off-screen -->
 <div id="sc-main" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;font-family:'Syne',sans-serif;overflow:hidden;">
   <div id="sc-main-bg" style="width:100%;height:220px;background-size:cover;background-position:center 20%;"></div>
   <div style="position:relative;padding:20px 24px 28px;">
-    <div id="sc-main-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:10px;text-transform:uppercase;font-family:'DM Mono',monospace;">내 픽 · KIN 월드컵</div>
-    <div id="sc-main-title" style="font-size:34px;font-weight:800;color:#FFE500;line-height:1.1;margin-bottom:12px;letter-spacing:-.02em;"></div>
-    <div id="sc-main-obs" style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.75;margin-bottom:20px;font-family:'DM Mono',monospace;"></div>
+    <div id="sc-main-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:10px;text-transform:uppercase;font-family:'DM Mono',monospace;"></div>
+    <div id="sc-main-title"   style="font-size:34px;font-weight:800;color:#FFE500;line-height:1.1;margin-bottom:12px;letter-spacing:-.02em;"></div>
+    <div id="sc-main-obs"     style="font-size:13px;color:rgba(255,255,255,.75);line-height:1.75;margin-bottom:20px;font-family:'DM Mono',monospace;"></div>
     <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.22);font-family:'DM Mono',monospace;">kinxdred.com/kin/k2</div>
   </div>
 </div>
 
-<!-- 대진표 공유카드 (off-screen) -->
+<!-- 대진표 off-screen -->
 <div id="sc-bracket" style="position:fixed;left:-9999px;top:0;width:375px;background:#080806;padding:24px;font-family:'DM Mono',monospace;overflow:hidden;">
-  <div id="sc-bracket-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:20px;text-transform:uppercase;">대진표 · KIN 월드컵</div>
+  <div id="sc-bracket-eyebrow" style="font-size:9px;letter-spacing:3px;color:rgba(255,229,0,.55);margin-bottom:20px;text-transform:uppercase;"></div>
   <div id="sc-bracket-content"></div>
   <div style="margin-top:20px;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.2);">kinxdred.com/kin/k2</div>
 </div>

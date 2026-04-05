@@ -275,7 +275,6 @@ async function renderMatch() {
   // 라운드 표시
   $('wc-round-label').textContent = getRoundLabel(state.round);
   $('wc-progress-text').textContent = `${state.matchPlayed + 1} / ${state.totalMatches}`;
-  updateBracketHover();
 
   // 결승 직전 KIN 배너
   if (state.round === 2) {
@@ -328,7 +327,6 @@ async function selectWork(winnerWork, loserWork) {
 
   state.history.push({ round: state.round, winner: winnerWork, loser: loserWork });
   updatePathPanel();
-  updateBracketHover();
 
   if (state.round === 4) state.top4.push(loserWork);
 
@@ -357,50 +355,6 @@ async function selectWork(winnerWork, loserWork) {
   }
 }
 
-function updateBracketHover() {
-  const panel = $('wc-bracket-hover');
-  if (!panel) return;
-  // 모바일에서는 패널이 display:none이므로 DOM 갱신 불필요
-  if (window.matchMedia('(max-width: 767px)').matches) return;
-  const isEn = getLang() === 'en';
-  const rNames = isEn ? ROUND_NAMES.en : ROUND_NAMES.ko;
-  const rounds = [16, 8, 4, 2];
-  const byRound = {};
-  rounds.forEach(r => { byRound[r] = state.history.filter(h => h.round === r); });
-  const curPair = state.roundMatches[state.currentMatch];
-
-  let html = '';
-  rounds.forEach(r => {
-    const label = rNames[r];
-    const done = byRound[r];
-    const totalInRound = r / 2;
-
-    html += `<div class="wc-bracket-round">`;
-    html += `<div class="wc-bracket-round-label">${label}</div>`;
-    html += `<div class="wc-bracket-matches">`;
-
-    done.forEach(h => {
-      const w = isEn ? h.winner.title_en : h.winner.title_ko;
-      const l = isEn ? h.loser.title_en  : h.loser.title_ko;
-      html += `<div class="wc-bracket-match done"><span class="wc-bm-winner">${w}</span><span class="wc-bm-sep">vs</span><span class="wc-bm-loser">${l}</span></div>`;
-    });
-
-    if (curPair && state.round === r && done.length < totalInRound) {
-      const a = isEn ? curPair[0].title_en : curPair[0].title_ko;
-      const b = isEn ? curPair[1].title_en : curPair[1].title_ko;
-      html += `<div class="wc-bracket-match current"><span class="wc-bm-winner">${a}</span><span class="wc-bm-sep">vs</span><span class="wc-bm-winner">${b}</span></div>`;
-    }
-
-    const remaining = totalInRound - done.length - (state.round === r ? 1 : 0);
-    for (let i = 0; i < Math.max(0, remaining); i++) {
-      html += `<div class="wc-bracket-match"><span class="wc-bm-pending">—</span></div>`;
-    }
-
-    html += `</div></div>`;
-  });
-
-  panel.innerHTML = html;
-}
 function updatePathPanel() {
   // 패널 갱신은 모달 열 때 실시간으로 처리하므로 여기선 생략
 }

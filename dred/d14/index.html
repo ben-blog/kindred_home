@@ -15,13 +15,14 @@
       position:fixed; inset:0; width:100%; height:100%;
       opacity:0; transition:opacity 2.5s ease-in-out; z-index:1;
     }
-    #gl.visible { opacity:0.82; }
+    #gl.visible { opacity:1; }
 
+    /* 하단 텍스트 가독성 그라데이션 */
     .vignette {
       position:fixed; inset:0; z-index:2; pointer-events:none;
       background:
-        linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 22%, rgba(0,0,0,0.12) 50%, transparent 75%),
-        linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, transparent 15%);
+        linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 20%, rgba(0,0,0,0.08) 45%, transparent 65%),
+        linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 12%);
     }
 
     .black-overlay {
@@ -90,44 +91,11 @@
       color:var(--text-ui); letter-spacing:0.1em;
       background:none; border:none; cursor:pointer;
       opacity:0; transition:opacity 0.6s ease, color 0.2s;
-      pointer-events:none; z-index:15;
+      pointer-events:none; z-index:15; min-width:2rem; text-align:right;
     }
     .share-btn.visible { opacity:1; pointer-events:auto; }
     .share-btn:hover { color:#888; }
-
-    .share-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,0.9);
-      z-index:50; display:flex; align-items:center; justify-content:center;
-      opacity:0; pointer-events:none; transition:opacity 0.3s ease;
-    }
-    .share-overlay.visible { opacity:1; pointer-events:auto; }
-
-    .share-card {
-      width:300px; height:300px; background:#000; border:1px solid #1a1a1a;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:1.4rem; padding:2.5rem 2rem; text-align:center; position:relative;
-    }
-    .share-card-label {
-      font-family:'DM Mono',monospace; font-size:10px; font-weight:300; color:#2a2a2a;
-      letter-spacing:0.12em; position:absolute; top:1.2rem;
-      left:50%; transform:translateX(-50%); white-space:nowrap;
-    }
-    .share-card-ts { font-family:'Share Tech Mono',monospace; font-size:2.8rem; color:#fff; letter-spacing:0.06em; }
-    .share-card-msg { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1rem; color:var(--text-msg); line-height:1.6; }
-    .share-card-url {
-      font-family:'DM Mono',monospace; font-size:9px; color:#222; letter-spacing:0.08em;
-      position:absolute; bottom:1.2rem; left:50%; transform:translateX(-50%); white-space:nowrap;
-    }
-    .share-card-hint {
-      position:absolute; bottom:-2.2rem; left:50%; transform:translateX(-50%);
-      font-family:'DM Mono',monospace; font-size:10px; color:#2a2a2a; white-space:nowrap;
-    }
-    .share-close {
-      position:absolute; top:1.5rem; right:1.5rem;
-      font-family:'DM Mono',monospace; font-size:11px; color:#2a2a2a;
-      cursor:pointer; background:none; border:none; z-index:51;
-    }
-    .share-close:hover { color:#666; }
+    .share-btn:disabled { opacity:0.4; cursor:default; }
   </style>
 </head>
 <body>
@@ -152,17 +120,6 @@
 
 <button class="share-btn" id="shareBtn"></button>
 
-<div class="share-overlay" id="shareOverlay">
-  <div class="share-card" id="shareCard">
-    <span class="share-card-label">D14 · hour</span>
-    <div class="share-card-ts" id="cardTs"></div>
-    <div class="share-card-msg" id="cardMsg"></div>
-    <span class="share-card-url">kinxdred.com/dred/d14</span>
-    <span class="share-card-hint" id="cardHint"></span>
-  </div>
-  <button class="share-close" id="shareClose">&#x2715;</button>
-</div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ── 설정 ───────────────────────────────────────────────
@@ -175,101 +132,89 @@ const IMAGE_CONFIG = [
   { url:`${CDN}/dred_rooftop_sunset_v1.webp`, effect:2.0, transition:2.0 },
 ];
 
-const IMAGE_ASPECT        = 0.75;   // width/height — 실제 이미지에 맞게 조정
+const IMAGE_ASPECT        = 0.75;
 const HOLD_DURATION       = 25000;
 const TRANSITION_DURATION = 5000;
+
+// 공유 이미지 크기 (4:5 Instagram)
+const SHARE_W = 1080, SHARE_H = 1350;
 
 // ── D14 로직 ───────────────────────────────────────────
 const lang    = navigator.language?.startsWith('ko') ? 'ko' : 'en';
 const now     = new Date();
 const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-
-// lang을 HTML에도 반영
 document.documentElement.lang = lang;
 
-const period = (h => {
+const period = (h=>{
   if(h>=2&&h<5)return 0; if(h>=5&&h<8)return 1;
   if(h>=8&&h<12)return 2; if(h>=12&&h<14)return 3;
   if(h>=14&&h<18)return 4; if(h>=18&&h<21)return 5; return 6;
 })(now.getHours());
 
-function getVisitorId() {
-  let id = localStorage.getItem('d14_visitor_id');
-  if(!id){ id='v_'+crypto.randomUUID().replace(/-/g,'').slice(0,16); localStorage.setItem('d14_visitor_id',id); }
+function getVisitorId(){
+  let id=localStorage.getItem('d14_visitor_id');
+  if(!id){id='v_'+crypto.randomUUID().replace(/-/g,'').slice(0,16);localStorage.setItem('d14_visitor_id',id);}
   return id;
 }
-const visitorId = getVisitorId();
-const visitKey  = `d14_visits_${dateStr}`;
-const visitNum  = parseInt(localStorage.getItem(visitKey)||'0')+1;
-localStorage.setItem(visitKey, String(visitNum));
+const visitorId=getVisitorId();
+const visitKey=`d14_visits_${dateStr}`;
+const visitNum=parseInt(localStorage.getItem(visitKey)||'0')+1;
+localStorage.setItem(visitKey,String(visitNum));
+const cacheKey=`d14_${visitorId}_${dateStr}_${period}`;
+const getCached=()=>localStorage.getItem(cacheKey);
+const setCache=msg=>localStorage.setItem(cacheKey,msg);
 
-const cacheKey  = `d14_${visitorId}_${dateStr}_${period}`;
-const getCached = () => localStorage.getItem(cacheKey);
-const setCache  = msg => localStorage.setItem(cacheKey, msg);
-
-const FALLBACK = {
+const FALLBACK={
   ko:["아무것도 끝나지 않은 채로 새벽이 왔어.","오늘이 어제처럼 될 것 같은 기분.","지금 뭔가 미루고 있어.","밥 먹는 동안 피하고 있는 게 있어.","가장 느린 빛이 드는 시간이야.","오늘 만난 사람들이 아직 몸에 남아있어.","오늘이 이미 정해진 것 같은 기분."],
   en:["Dawn arrived and nothing ended.","Already feels like yesterday.","Something being put off right now.","Avoiding something over lunch.","The slowest light of the day.","The people from today still linger.","The day already feels decided."]
 };
 
-async function fetchMessage() {
-  const cached = getCached();
-  if(cached) return cached;
-  try {
-    const params = new URLSearchParams({
-      lang, hour:now.getHours(), day:now.getDay(),
-      month:now.getMonth()+1, isWeekend:(now.getDay()===0||now.getDay()===6), visitCount:visitNum
-    });
-    // AbortSignal.timeout 미지원 브라우저 대응
-    const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), 8000);
-    const res = await fetch(`${API_BASE}/api/d14/now?${params}`, {signal:controller.signal});
+async function fetchMessage(){
+  const cached=getCached(); if(cached)return cached;
+  try{
+    const params=new URLSearchParams({lang,hour:now.getHours(),day:now.getDay(),month:now.getMonth()+1,isWeekend:(now.getDay()===0||now.getDay()===6),visitCount:visitNum});
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),8000);
+    const res=await fetch(`${API_BASE}/api/d14/now?${params}`,{signal:ctrl.signal});
     clearTimeout(timer);
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const msg = (data.message||'').replace(/\\n/g,'\n') || FALLBACK[lang][period];
-    setCache(msg); return msg;
-  } catch {
-    const msg = FALLBACK[lang][period];
-    setCache(msg); return msg;
+    if(!res.ok)throw new Error();
+    const data=await res.json();
+    const msg=(data.message||'').replace(/\\n/g,'\n')||FALLBACK[lang][period];
+    setCache(msg);return msg;
+  }catch{
+    const msg=FALLBACK[lang][period];setCache(msg);return msg;
   }
 }
 
-function typewrite(el, text, delay, onDone) {
-  let i=0; el.textContent='';
-  const cur=document.createElement('span'); cur.className='cursor'; el.appendChild(cur);
+function typewrite(el,text,delay,onDone){
+  let i=0;el.textContent='';
+  const cur=document.createElement('span');cur.className='cursor';el.appendChild(cur);
   const iv=setInterval(()=>{
-    if(i<text.length){
-      const ch=text[i++];
-      el.insertBefore(ch==='\n'?document.createElement('br'):document.createTextNode(ch), cur);
-    } else {
-      clearInterval(iv);
-      setTimeout(()=>{ cur.remove(); if(onDone)onDone(); },200);
-    }
+    if(i<text.length){const ch=text[i++];el.insertBefore(ch==='\n'?document.createElement('br'):document.createTextNode(ch),cur);}
+    else{clearInterval(iv);setTimeout(()=>{cur.remove();if(onDone)onDone();},200);}
   },delay);
 }
 
-const $ = id => document.getElementById(id);
-$('tsDisplay').textContent = timeStr;
-$('cardTs').textContent    = timeStr;
-$('shareBtn').textContent  = lang==='ko'?'공유':'share';
-$('cardHint').textContent  = lang==='ko'?'스크린샷으로 저장하세요':'screenshot to save';
+const $=id=>document.getElementById(id);
+$('tsDisplay').textContent=timeStr;
+$('shareBtn').textContent=lang==='ko'?'공유':'share';
 
 // ── Three.js ────────────────────────────────────────────
-const canvas   = $('gl');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:false});
+const canvas=$('gl');
+// preserveDrawingBuffer: 공유 이미지 캡처에 필요
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,preserveDrawingBuffer:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-const scene  = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
-const clock  = new THREE.Clock();
+renderer.setSize(window.innerWidth,window.innerHeight);
+const scene=new THREE.Scene();
+const camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const clock=new THREE.Clock();
 
-const vertexShader = `
+const vertexShader=`
 varying vec2 vUv;
-void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`;
+void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`;
 
-const fragmentShader = `
+const fragmentShader=`
 precision highp float;
 uniform sampler2D uTex1,uTex2;
 uniform float uProgress,uTime,uImageAspect,uPhase,uEffect,uTransition;
@@ -283,88 +228,98 @@ float noise(vec2 p){
 }
 float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.1;a*=0.5;}return v;}
 
-// object-fit: cover
-vec2 coverUv(vec2 uv){
+// B+C 전략: contain + 엣지 블리드
+// 이미지 원본 구도 유지, 바깥 영역은 엣지 색상이 어둠으로 번짐
+vec2 containUv(vec2 uv){
   float sa=uResolution.x/uResolution.y;
-  if(sa>uImageAspect){float sc=sa/uImageAspect;return vec2(uv.x,(uv.y-0.5)/sc+0.5);}
-  else{float sc=uImageAspect/sa;return vec2((uv.x-0.5)/sc+0.5,uv.y);}
+  if(sa>uImageAspect){
+    // PC: 높이 맞춤, 좌우 블리드
+    float imgW=uImageAspect/sa;
+    return vec2((uv.x-0.5)/imgW+0.5, uv.y);
+  } else {
+    // 모바일: 너비 맞춤, 상하 블리드
+    float imgH=(sa/uImageAspect);
+    return vec2(uv.x, (uv.y-0.5)/imgH+0.5);
+  }
 }
 
-// 미세한 parallax drift
-vec2 drift(vec2 uv){
-  return uv+vec2(sin(uTime*0.07)*0.007,cos(uTime*0.05)*0.005);
+float bleedFactor(vec2 imgUv){
+  float dx=max(0.0,max(-imgUv.x,imgUv.x-1.0));
+  float dy=max(0.0,max(-imgUv.y,imgUv.y-1.0));
+  float dist=length(vec2(dx,dy));
+  return exp(-dist*8.0)*0.45;
 }
+
+vec2 drift(vec2 uv){return uv+vec2(sin(uTime*0.07)*0.006,cos(uTime*0.05)*0.004);}
 
 void main(){
-  vec2 uv=coverUv(vUv);
-  vec2 duv=clamp(drift(uv),0.001,0.999);
+  vec2 imgUv=containUv(vUv);
+  bool inImage=imgUv.x>=0.0&&imgUv.x<=1.0&&imgUv.y>=0.0&&imgUv.y<=1.0;
+  float bleed=inImage?1.0:bleedFactor(imgUv);
+  vec2 driftedUv=clamp(drift(imgUv),0.001,0.999);
+  vec2 imgUvC=clamp(imgUv,0.001,0.999);
 
   if(uPhase<0.5){
-    // HOLDING: ambient 효과
-    vec4 c=texture2D(uTex1,duv);
+    // HOLDING
+    vec4 c=texture2D(uTex1,inImage?driftedUv:imgUvC)*bleed;
 
-    if(uEffect<0.5){
-      // Rush hour: 도시 불빛 아래→위로 흘러
-      float mask=smoothstep(0.65,0.28,uv.y);
-      for(int i=0;i<6;i++){
-        float fi=float(i);
-        float xp=fract(fi*0.17+0.06), yp=fract(uTime*(0.08+fi*0.035)+fi*0.22);
-        float pt=exp(-abs(uv.x-xp)*60.0)*exp(-abs(uv.y-yp)*45.0);
-        c.rgb+=vec3(1.0,0.82,0.32)*pt*mask*0.3;
+    if(bleed>0.01){
+      if(uEffect<0.5){
+        // Rush hour: 도시 불빛 상승 (이미지 영역에만)
+        float mask=smoothstep(0.65,0.28,imgUv.y)*bleed;
+        for(int i=0;i<6;i++){
+          float fi=float(i);
+          float xp=fract(fi*0.17+0.06),yp=fract(uTime*(0.08+fi*0.035)+fi*0.22);
+          float pt=exp(-abs(imgUv.x-xp)*60.0)*exp(-abs(imgUv.y-yp)*45.0);
+          c.rgb+=vec3(1.0,0.82,0.32)*pt*mask*0.3;
+        }
+      } else if(uEffect<1.5){
+        // Highway: 수평 streak
+        for(int i=0;i<4;i++){
+          float fi=float(i);
+          float xp=fract(uTime*(0.38+fi*0.16)+fi*0.28),yp=0.40+fi*0.08,len=0.20;
+          float s=smoothstep(xp-len,xp,imgUv.x)*smoothstep(xp+0.04,xp,imgUv.x)*exp(-abs(imgUv.y-yp)*30.0);
+          c.rgb+=vec3(1.0,0.42,0.08)*s*0.32*bleed;
+        }
+      } else {
+        // Rooftop: 하늘 pulse + 네온
+        float sky=smoothstep(0.55,0.0,imgUv.y)*bleed;
+        c.rgb+=vec3(0.06,0.01,0.18)*sky*(sin(uTime*1.1)*0.5+0.5)*0.10;
+        float neon=smoothstep(0.88,1.0,imgUv.y)*bleed;
+        c.rgb+=vec3(0.5,0.0,0.85)*neon*(sin(uTime*2.0+imgUv.x*9.0)*0.5+0.5)*0.22;
       }
-    } else if(uEffect<1.5){
-      // Highway: 수평 빛 streak 간헐적 통과
-      for(int i=0;i<4;i++){
-        float fi=float(i);
-        float xp=fract(uTime*(0.38+fi*0.16)+fi*0.28), yp=0.40+fi*0.08, len=0.20;
-        float s=smoothstep(xp-len,xp,uv.x)*smoothstep(xp+0.04,xp,uv.x)*exp(-abs(uv.y-yp)*30.0);
-        c.rgb+=vec3(1.0,0.42,0.08)*s*0.32;
-      }
-    } else {
-      // Rooftop: 하늘 온도 pulse + 하단 네온
-      float sky=smoothstep(0.55,0.0,uv.y);
-      c.rgb+=vec3(0.06,0.01,0.18)*sky*(sin(uTime*1.1)*0.5+0.5)*0.10;
-      float neon=smoothstep(0.88,1.0,uv.y);
-      c.rgb+=vec3(0.5,0.0,0.85)*neon*(sin(uTime*2.0+uv.x*9.0)*0.5+0.5)*0.22;
     }
     gl_FragColor=c;
 
   } else {
     // TRANSITIONING
-    vec4 c1=texture2D(uTex1,duv);
-    vec4 c2=texture2D(uTex2,clamp(uv,0.001,0.999));
+    vec2 d1=inImage?driftedUv:imgUvC;
+    vec4 c1=texture2D(uTex1,d1)*bleed;
+    vec4 c2=texture2D(uTex2,imgUvC)*bleed;
 
     if(uTransition<0.5){
-      // Rush hour→Highway: 빛 워시가 아래→위로 상승
-      // waveY: 화면 아래(1+margin)에서 시작해 위(-margin)로 이동
-      float n=noise(uv*3.5+vec2(uTime*0.07,0.0))*0.16;
-      float edgeW=0.22, nMax=0.16;
+      float n=noise(imgUv*3.5+vec2(uTime*0.07,0.0))*0.16;
+      float edgeW=0.22,nMax=0.16;
       float waveY=(1.0+nMax+edgeW)-uProgress*(1.0+nMax+2.0*edgeW);
-      // uv.y+n > waveY → 파도 아래 (c2 표시)
-      float blend=smoothstep(waveY, waveY+edgeW, uv.y+n);
-      float front=exp(-abs(uv.y+n-(waveY+edgeW*0.5))*10.0);
-      c1.rgb+=vec3(1.0,0.82,0.32)*front*(1.0-blend)*0.42;
+      float blend=smoothstep(waveY,waveY+edgeW,imgUv.y+n);
+      float front=exp(-abs(imgUv.y+n-(waveY+edgeW*0.5))*10.0);
+      c1.rgb+=vec3(1.0,0.82,0.32)*front*(1.0-blend)*0.42*bleed;
       gl_FragColor=mix(c1,c2,clamp(blend,0.0,1.0));
 
     } else if(uTransition<1.5){
-      // Highway→Rooftop: 대각선 streak sweep
-      float diag=uv.x*0.62+(1.0-uv.y)*0.38;
-      float n=noise(uv*4.0)*0.11;
-      float edgeW=0.22, nMax=0.11;
-      // thresh: min(diag+n) 아래서 시작해 max(diag+n) 위로 이동
+      float diag=imgUv.x*0.62+(1.0-imgUv.y)*0.38;
+      float n=noise(imgUv*4.0)*0.11;
+      float edgeW=0.22,nMax=0.11;
       float thresh=uProgress*(1.0+nMax+2.0*edgeW)-(nMax+edgeW);
-      // diag+n < thresh → 파도가 지나간 픽셀 (c2 표시)
-      float blend=smoothstep(diag+n-edgeW, diag+n+edgeW, thresh);
+      float blend=smoothstep(diag+n-edgeW,diag+n+edgeW,thresh);
       float edge=exp(-abs(thresh-(diag+n))*7.0);
-      c1.rgb+=vec3(1.0,0.45,0.08)*edge*(1.0-blend)*0.52;
+      c1.rgb+=vec3(1.0,0.45,0.08)*edge*(1.0-blend)*0.52*bleed;
       gl_FragColor=mix(c1,c2,clamp(blend,0.0,1.0));
 
     } else {
-      // Rooftop→Rush hour: 하늘 어두워짐 + FBM dissolve
-      // progress를 n의 분포에 맞게 blend: blend=1 when progress > n
-      float n=fbm(uv*2.0+vec2(uTime*0.02));
-      float blend=smoothstep(n-0.15, n+0.15, uProgress);
-      float sky=smoothstep(0.55,0.0,uv.y);
+      float n=fbm(imgUv*2.0+vec2(uTime*0.02));
+      float blend=smoothstep(n-0.15,n+0.15,uProgress);
+      float sky=smoothstep(0.55,0.0,imgUv.y)*bleed;
       float dark=smoothstep(0.0,0.6,uProgress);
       c1.rgb*=(1.0-sky*dark*0.52);
       gl_FragColor=mix(c1,c2,clamp(blend,0.0,1.0));
@@ -373,66 +328,61 @@ void main(){
 }`;
 
 function makeBlack(){
-  const c=document.createElement('canvas'); c.width=c.height=2;
+  const c=document.createElement('canvas');c.width=c.height=2;
   c.getContext('2d').fillRect(0,0,2,2);
   return new THREE.CanvasTexture(c);
 }
 
-const uniforms = {
-  uTex1:{value:makeBlack()}, uTex2:{value:makeBlack()},
-  uProgress:{value:0.0}, uTime:{value:0.0},
+const uniforms={
+  uTex1:{value:makeBlack()},uTex2:{value:makeBlack()},
+  uProgress:{value:0.0},uTime:{value:0.0},
   uResolution:{value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
   uImageAspect:{value:IMAGE_ASPECT},
-  uPhase:{value:0.0}, uEffect:{value:0.0}, uTransition:{value:0.0},
+  uPhase:{value:0.0},uEffect:{value:0.0},uTransition:{value:0.0},
 };
 
-scene.add(new THREE.Mesh(
-  new THREE.PlaneGeometry(2,2),
-  new THREE.ShaderMaterial({uniforms, vertexShader, fragmentShader})
-));
+scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),
+  new THREE.ShaderMaterial({uniforms,vertexShader,fragmentShader})));
 
 // ── 텍스처 로딩 ───────────────────────────────────────
-const loader = new THREE.TextureLoader();
-loader.crossOrigin = 'anonymous';
+const loader=new THREE.TextureLoader();
+loader.crossOrigin='anonymous';
 
 function loadTextures(){
   return new Promise(resolve=>{
-    const loaded=[]; let count=0;
+    const loaded=[];let count=0;
     IMAGE_CONFIG.forEach((cfg,i)=>{
-      loader.load(cfg.url, tex=>{
+      loader.load(cfg.url,tex=>{
         tex.minFilter=tex.magFilter=THREE.LinearFilter;
         loaded[i]=tex;
-        if(++count===IMAGE_CONFIG.length) resolve(loaded);
-      }, undefined, ()=>{
+        if(++count===IMAGE_CONFIG.length)resolve(loaded);
+      },undefined,()=>{
         loaded[i]=makeBlack();
-        if(++count===IMAGE_CONFIG.length) resolve(loaded);
+        if(++count===IMAGE_CONFIG.length)resolve(loaded);
       });
     });
   });
 }
 
 // ── 상태 머신 ─────────────────────────────────────────
-let textures   = null;
-let currentIdx = Math.floor(Math.random()*IMAGE_CONFIG.length);
-let nextIdx    = (currentIdx+1)%IMAGE_CONFIG.length;
-let glPhase    = 'holding';
-let phaseStart = 0;
+let textures=null;
+let currentIdx=Math.floor(Math.random()*IMAGE_CONFIG.length);
+let nextIdx=(currentIdx+1)%IMAGE_CONFIG.length;
+let glPhase='holding';
+let phaseStart=0;
 
 function animateGL(){
   requestAnimationFrame(animateGL);
-  uniforms.uTime.value = clock.getElapsedTime();
-  if(!textures){ renderer.render(scene,camera); return; }
-
-  const elapsed = Date.now()-phaseStart;
-
+  uniforms.uTime.value=clock.getElapsedTime();
+  if(!textures){renderer.render(scene,camera);return;}
+  const elapsed=Date.now()-phaseStart;
   if(glPhase==='holding'){
-    // 상태 변화 시에만 uniform 업데이트
     if(elapsed>HOLD_DURATION){
       nextIdx=(currentIdx+1)%IMAGE_CONFIG.length;
       uniforms.uTex2.value=textures[nextIdx];
       uniforms.uTransition.value=IMAGE_CONFIG[currentIdx].transition;
       uniforms.uPhase.value=1.0;
-      glPhase='transitioning'; phaseStart=Date.now();
+      glPhase='transitioning';phaseStart=Date.now();
     }
   } else {
     const p=Math.min(elapsed/TRANSITION_DURATION,1.0);
@@ -442,20 +392,16 @@ function animateGL(){
       currentIdx=nextIdx;
       uniforms.uTex1.value=textures[currentIdx];
       uniforms.uEffect.value=IMAGE_CONFIG[currentIdx].effect;
-      uniforms.uProgress.value=0.0;
-      uniforms.uPhase.value=0.0;
-      glPhase='holding'; phaseStart=Date.now();
+      uniforms.uProgress.value=0.0;uniforms.uPhase.value=0.0;
+      glPhase='holding';phaseStart=Date.now();
     }
   }
   renderer.render(scene,camera);
 }
 
-// ── WebGL context loss 처리 (모바일 필수) ──────────────
-canvas.addEventListener('webglcontextlost', e=>{
-  e.preventDefault(); // 기본 동작 막아야 복구 가능
-});
-canvas.addEventListener('webglcontextrestored', ()=>{
-  // 복구 시 textures 재로드 후 재시작
+// ── WebGL context loss ────────────────────────────────
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();});
+canvas.addEventListener('webglcontextrestored',()=>{
   textures=null;
   loadTextures().then(loaded=>{
     textures=loaded;
@@ -466,33 +412,142 @@ canvas.addEventListener('webglcontextrestored', ()=>{
   });
 });
 
-// ── 탭 전환 시 clock 보정 ──────────────────────────────
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden) clock.getDelta(); // 숨겨진 동안의 시간 delta 소비 → 점프 방지
+  if(!document.hidden)clock.getDelta();
 });
+
+// ── 공유 이미지 생성 ──────────────────────────────────
+let currentMessage='';
+
+async function generateShareImage(){
+  await document.fonts.ready;
+
+  // 현재 WebGL 프레임 캡처
+  renderer.render(scene,camera); // 최신 프레임 강제 렌더
+  const glDataUrl=canvas.toDataURL('image/png');
+
+  // 4:5 캔버스 생성
+  const sc=document.createElement('canvas');
+  sc.width=SHARE_W; sc.height=SHARE_H;
+  const ctx=sc.getContext('2d');
+
+  // 배경 검정
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,SHARE_W,SHARE_H);
+
+  // WebGL 이미지 로드 후 그리기
+  await new Promise((resolve, reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      // B+C 전략: contain + 블리드
+      const screenAspect=SHARE_W/SHARE_H;
+      let drawX,drawY,drawW,drawH;
+      if(screenAspect>IMAGE_ASPECT){
+        drawH=SHARE_H; drawW=SHARE_H*IMAGE_ASPECT;
+        drawX=(SHARE_W-drawW)/2; drawY=0;
+      } else {
+        drawW=SHARE_W; drawH=SHARE_W/IMAGE_ASPECT;
+        drawX=0; drawY=(SHARE_H-drawH)/2;
+      }
+      // 블리드 배경 (어두운 버전)
+      ctx.globalAlpha=0.35;
+      ctx.drawImage(img,0,0,SHARE_W,SHARE_H);
+      ctx.globalAlpha=1.0;
+      // 원본 비율 이미지
+      ctx.drawImage(img,drawX,drawY,drawW,drawH);
+      resolve();
+    };
+    img.onerror=()=>reject(new Error('canvas capture failed'));
+    img.src=glDataUrl;
+  });
+
+  // 하단 그라데이션 오버레이
+  const grad=ctx.createLinearGradient(0,SHARE_H*0.42,0,SHARE_H);
+  grad.addColorStop(0,'rgba(0,0,0,0)');
+  grad.addColorStop(0.45,'rgba(0,0,0,0.65)');
+  grad.addColorStop(1,'rgba(0,0,0,0.94)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,SHARE_W,SHARE_H);
+
+  // ── 텍스트 레이아웃 (아래서 위로) ─────────────────
+  const pad=72;
+
+  // D14 · hour (우하단)
+  ctx.font='300 28px "DM Mono", monospace';
+  ctx.fillStyle='rgba(68,68,68,0.85)';
+  ctx.textAlign='right';
+  ctx.fillText('D14 · hour',SHARE_W-pad,SHARE_H-pad);
+
+  // 타임스탬프 — D14 라벨 위
+  const tsSize=108;
+  const tsBaseline=SHARE_H-pad-28-24; // 라벨 높이(28)+간격(24)
+  ctx.font=`400 ${tsSize}px "Share Tech Mono", monospace`;
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.textAlign='left';
+  ctx.fillText(timeStr,pad,tsBaseline);
+
+  // 메시지 — 타임스탬프 위 (아래 줄부터 쌓아올림)
+  ctx.font='italic 400 50px "Cormorant Garamond", Georgia, serif';
+  ctx.fillStyle='rgba(144,144,144,0.9)';
+  const lines=currentMessage.split('\n');
+  const lineH=66;
+  const msgBottom=tsBaseline-tsSize-28; // 타임스탬프 상단에서 28px 위
+  lines.forEach((line,i)=>{
+    // i=0: 첫째줄(상단), i=last: 마지막줄(하단)
+    const y=msgBottom-(lines.length-1-i)*lineH;
+    ctx.fillText(line,pad,y);
+  });
+
+  return new Promise(resolve=>{
+    sc.toBlob(blob=>resolve(blob),'image/png');
+  });
+}
+
+async function handleShare(){
+  const btn=$('shareBtn');
+  btn.disabled=true;
+  btn.textContent='...';
+  try{
+    const blob=await generateShareImage();
+    const file=new File([blob],`dred-d14-${timeStr.replace(':','')}.png`,{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file]});
+    } else {
+      // 폴백: 다운로드
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=file.name; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+  } catch(e){
+    if(e?.name!=='AbortError') console.warn('Share failed:',e);
+  } finally{
+    btn.disabled=false;
+    btn.textContent=lang==='ko'?'공유':'share';
+  }
+}
 
 // ── 메인 ─────────────────────────────────────────────
 async function run(){
   const [message,loaded]=await Promise.all([
-    fetchMessage(), loadTextures(),
+    fetchMessage(),loadTextures(),
     new Promise(r=>setTimeout(r,2800))
   ]);
+  currentMessage=message;
   textures=loaded;
   uniforms.uTex1.value=textures[currentIdx];
   uniforms.uTex2.value=textures[nextIdx];
   uniforms.uEffect.value=IMAGE_CONFIG[currentIdx].effect;
-  uniforms.uPhase.value=0.0;
-  uniforms.uProgress.value=0.0;
+  uniforms.uPhase.value=0.0;uniforms.uProgress.value=0.0;
   phaseStart=Date.now();
   canvas.classList.add('visible');
   $('msgWrap').classList.add('visible');
   typewrite($('msgDisplay'),message,65,()=>{
     $('shareBtn').classList.add('visible');
-    $('cardMsg').innerHTML=message.replace(/\n/g,'<br>');
   });
 }
 
-// ── 진입 타이밍 ───────────────────────────────────────
+// ── 진입 ─────────────────────────────────────────────
 setTimeout(()=>{
   $('blackOverlay').classList.add('gone');
   setTimeout(()=>{
@@ -501,17 +556,8 @@ setTimeout(()=>{
   },400);
 },800);
 
-// ── 공유 (오버레이 바깥 탭으로도 닫힘) ──────────────────
-function openShare(){ $('shareOverlay').classList.add('visible'); }
-function closeShare(){ $('shareOverlay').classList.remove('visible'); }
+$('shareBtn').addEventListener('click',handleShare);
 
-$('shareBtn').addEventListener('click', openShare);
-$('shareClose').addEventListener('click', closeShare);
-$('shareOverlay').addEventListener('click', e=>{
-  if(e.target===$('shareOverlay')) closeShare();
-});
-
-// ── 리사이즈 ──────────────────────────────────────────
 window.addEventListener('resize',()=>{
   renderer.setSize(window.innerWidth,window.innerHeight);
   uniforms.uResolution.value.set(window.innerWidth,window.innerHeight);

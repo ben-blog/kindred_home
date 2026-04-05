@@ -402,20 +402,7 @@ function updateBracketHover() {
   panel.innerHTML = html;
 }
 function updatePathPanel() {
-  const list = $('wc-path-list');
-  if (!list) return;
-  const isEn = getLang() === 'en';
-  const rNames = isEn ? ROUND_NAMES.en : ROUND_NAMES.ko;
-  list.innerHTML = '';
-  state.history.forEach(h => {
-    const rLabel = rNames[h.round] || h.round;
-    const wName  = isEn ? h.winner.title_en : h.winner.title_ko;
-    const lName  = isEn ? h.loser.title_en  : h.loser.title_ko;
-    const el = document.createElement('div');
-    el.className = 'wc-path-item';
-    el.innerHTML = `<span class="wc-path-round">${rLabel}</span><span class="wc-path-loser">${lName}</span><span class="wc-path-arrow">→</span><span class="wc-path-winner">${wName}</span><span class="wc-path-check">✓</span>`;
-    list.appendChild(el);
-  });
+  // 패널 갱신은 모달 열 때 실시간으로 처리하므로 여기선 생략
 }
 
 // ── 공유 이미지 생성 ──
@@ -677,15 +664,6 @@ function applyLang(l) {
     renderMatch();
   }
 
-  // 경로 토글 텍스트 갱신
-  const toggle = $('wc-path-toggle');
-  if (toggle) {
-    const isOpen = $('wc-path-panel')?.classList.contains('open');
-    toggle.textContent = isOpen
-      ? (isEn ? 'My picks ↑' : '내 선택 ↑')
-      : (isEn ? 'My picks ↓' : '내 선택 ↓');
-  }
-
   // 결과 화면 lang 전환
   if (state.resultWinner) {
     renderResultContent(isEn);
@@ -793,33 +771,33 @@ $('wc-btn-share-native').addEventListener('click', async () => {
   } catch {}
 });
 
-// ── 경로 패널 — PC: 호버, 모바일: 없음 ──
-const pathToggle = $('wc-path-toggle');
-const pathPanel  = $('wc-path-panel');
-let pathTimer = null;
+// ── 내 선택 중앙 모달 ──
+const picksModal = $('wc-picks-modal');
 
-function openPath() {
+function openPicksModal() {
   if (state.history.length === 0) return;
-  clearTimeout(pathTimer);
-  pathPanel.classList.add('open');
-  pathToggle.classList.add('open');
-  pathToggle.textContent = getLang() === 'en' ? 'My picks ↑' : '내 선택 ↑';
-}
-function closePath(delay = 0) {
-  pathTimer = setTimeout(() => {
-    pathPanel.classList.remove('open');
-    pathToggle.classList.remove('open');
-    pathToggle.textContent = getLang() === 'en' ? 'My picks ↓' : '내 선택 ↓';
-  }, delay);
+  const isEn = getLang() === 'en';
+  $('wc-picks-modal-title').textContent = isEn ? 'My Picks' : '내 선택';
+  const list = $('wc-picks-modal-list');
+  const rNames = isEn ? ROUND_NAMES.en : ROUND_NAMES.ko;
+  list.innerHTML = '';
+  state.history.forEach(h => {
+    const rLabel = rNames[h.round] || h.round;
+    const wName  = isEn ? h.winner.title_en : h.winner.title_ko;
+    const lName  = isEn ? h.loser.title_en  : h.loser.title_ko;
+    const el = document.createElement('div');
+    el.className = 'wc-path-item';
+    el.innerHTML = `<span class="wc-path-round">${rLabel}</span><span class="wc-path-loser">${lName}</span><span class="wc-path-arrow">→</span><span class="wc-path-winner">${wName}</span><span class="wc-path-check">✓</span>`;
+    list.appendChild(el);
+  });
+  picksModal.classList.add('open');
 }
 
-// PC only (hover: hover = 마우스 포인터 있는 기기)
-if (window.matchMedia('(hover: hover)').matches) {
-  pathToggle.addEventListener('mouseenter', openPath);
-  pathToggle.addEventListener('mouseleave', () => closePath(150));
-  pathPanel.addEventListener('mouseenter', () => clearTimeout(pathTimer));
-  pathPanel.addEventListener('mouseleave', () => closePath(150));
-}
+$('wc-path-toggle').addEventListener('click', openPicksModal);
+$('wc-picks-modal-close').addEventListener('click', () => picksModal.classList.remove('open'));
+picksModal.addEventListener('click', e => {
+  if (e.target === picksModal) picksModal.classList.remove('open');
+});
 
 // ── 다시 하기 ──
 $('wc-btn-retry').addEventListener('click', () => {
@@ -830,7 +808,7 @@ $('wc-btn-retry').addEventListener('click', () => {
     sessionKey: genUUID(),
   });
   resultCoverCache.clear();
-  closePath();
+  picksModal.classList.remove('open');
   showSection('wc-category');
 });
 

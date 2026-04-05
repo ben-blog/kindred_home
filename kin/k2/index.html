@@ -771,9 +771,7 @@ body{
   .kin-rxn-avatar{width:48px;height:48px}
   .kin-rxn-bubble{font-size:var(--t-sm);padding:10px 14px}
 }
-/* 모바일: manga-gate 숨김 / 마퀴 크기 조정 */
 @media(max-width:767px){
-  
   .cover-marquee{margin-top:20px}
   .cover-img{width:78px;height:110px;border-radius:6px;margin-right:8px}
 }
@@ -949,7 +947,7 @@ body{
 <!-- ══════ RESULT ══════ -->
 <div class="page" id="page-result">
   <div style="margin-top:20px">
-    <div class="landing-eyebrow" id="result-eyebrow" style="margin-bottom:10px">KIN의 판정</div>
+    <div class="landing-eyebrow" id="result-eyebrow">KIN의 판정</div>
     <div class="result-score-wrap">
       <div class="result-score" id="result-score">0</div>
       <div class="result-score-denom">/ 10</div>
@@ -1591,9 +1589,11 @@ async function buildCoverMarquee() {
   // 이미지 로드 후 애니 시작 — 로드 전 시작하면 max-content 계산 불안정
   const imgs = track.querySelectorAll('img');
   let loaded = 0;
+  let marqueeStarted = false;
   const startAnim = () => {
     loaded++;
-    if(loaded >= Math.min(imgs.length, 6)) { // 최소 6장 로드 시 시작
+    if(!marqueeStarted && loaded >= Math.min(imgs.length, 6)) {
+      marqueeStarted = true;
       marquee.style.display = 'block';
     }
   };
@@ -2457,7 +2457,8 @@ function applyResultLang() {
     state.resultObs = getObs(state.resultPattern);
     obsText.textContent = state.resultObs;
   }
-  // 틀린 문제 목록 재렌더  const wl = el('result-wrong-list');
+  // 틀린 문제 목록 재렌더
+  const wl = el('result-wrong-list');
   if(wl && state.answers.length) {
     wl.innerHTML = '';
     state.answers.filter(a=>!a.is_correct).forEach(a=>{
@@ -2470,9 +2471,7 @@ function applyResultLang() {
       qDiv.textContent = qText.slice(0,55)+(qText.length>55?'…':'');
       const aDiv = document.createElement('div');
       aDiv.className = 'wrong-item-answer';
-      // 현재 lang에 맞는 정답 표시
-      const qItem = state.questions.find(q=>q.item_id===a.item_id);
-      const ans = isEn ? (qItem?.correctAnswerEn || a.correct_answer) : (qItem?.correctAnswerKo || a.correct_answer);
+      const ans = isEn ? (item.correctAnswerEn || a.correct_answer) : (item.correctAnswerKo || a.correct_answer);
       aDiv.textContent = `→ ${ans}`;
       div.appendChild(qDiv); div.appendChild(aDiv);
       wl.appendChild(div);
@@ -2492,7 +2491,8 @@ function applyLandingLang() {
 
   // 버튼 텍스트
   const startBtn = document.getElementById('btn-start');
-  if(startBtn) startBtn.querySelector('.btn-start-text').textContent = isEn ? 'Start' : '시작';
+  const startBtnText = startBtn?.querySelector('.btn-start-text');
+  if(startBtnText) startBtnText.textContent = isEn ? 'Start' : '시작';
 
   // 모드 레이블
   const quizLabel = lp.querySelector('#mode-quiz-label');
@@ -2546,7 +2546,11 @@ function updateLandingState() {
       const label = modeQuiz.querySelector('.mode-label');
       const btn   = modeQuiz.querySelector('.btn-start');
       if(label) { label.textContent = isEn ? 'Quiz · Done' : '퀴즈 · 완료'; label.style.color='rgba(74,222,128,.7)'; }
-      if(btn)   { btn.textContent = isEn ? 'Again' : '다시'; }
+      if(btn) {
+        const btnText = btn.querySelector('.btn-start-text');
+        if(btnText) btnText.textContent = isEn ? 'Again' : '다시';
+        else btn.textContent = isEn ? 'Again' : '다시';
+      }
     }
     if(avatar) avatar.src = KIN_IMGS.happy;
   } else {

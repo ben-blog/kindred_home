@@ -685,63 +685,56 @@ body{
   animation:blink 1.2s ease infinite;
 }
 
-/* ── 공유 카드 ── */
+/* ── 공유 카드 — 새 A 디자인 ── */
 #share-card{
   position:fixed;left:-9999px;top:-9999px;
-  width:375px;background:var(--bg);
+  width:375px;background:#080806;
   font-family:'DM Mono',monospace;overflow:hidden;
 }
-.sc-header{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:14px 20px;border-bottom:1px solid rgba(255,229,0,.1);
+.sc-top{position:relative;height:210px;overflow:hidden;}
+.sc-cover-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center 20%;
+  filter:brightness(.35);
 }
-.sc-header-title{font-size:10px;letter-spacing:.28em;color:rgba(255,229,0,.6);text-transform:uppercase}
-.sc-header-work{font-size:10px;letter-spacing:.08em;color:rgba(255,255,255,.4);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sc-work-img-wrap{
-  position:relative;width:100%;height:190px;overflow:hidden;
-  background-size:cover;background-position:center top;
+.sc-top-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to right,rgba(8,8,6,.92) 0%,rgba(8,8,6,.55) 55%,rgba(8,8,6,.1) 100%);
 }
-.sc-work-img-wrap img{display:none}
-.sc-work-img-fade{
-  position:absolute;bottom:0;left:0;right:0;height:90px;
-  background:linear-gradient(to bottom,transparent,var(--bg));
+.sc-kin-large{
+  position:absolute;right:-4px;bottom:0;
+  width:160px;height:190px;
+  object-fit:cover;object-position:top center;
+  mask-image:linear-gradient(to top,transparent 0%,black 18%,black 100%);
+  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 18%,black 100%);
 }
-.sc-kin-section{
-  display:flex;gap:14px;align-items:flex-start;padding:18px 20px 10px;
+.sc-top-content{
+  position:relative;z-index:2;
+  padding:20px 20px;height:100%;
+  display:flex;flex-direction:column;justify-content:space-between;
+  max-width:215px;
 }
-.sc-kin-face{
-  width:68px;height:68px;border-radius:50%;
-  object-fit:cover;flex-shrink:0;border:2px solid rgba(255,229,0,.4);
+.sc-eyebrow{font-size:10px;letter-spacing:.22em;color:rgba(255,229,0,.5);text-transform:uppercase;}
+.sc-label-large{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:34px;color:#FFE500;
+  letter-spacing:-.03em;line-height:1;font-synthesis:none;
 }
-.sc-bubble{
-  position:relative;flex:1;padding:11px 15px;
-  background:rgba(255,229,0,.07);border:1px solid rgba(255,229,0,.3);
-  border-radius:0 8px 8px 8px;
-  font-size:var(--t-sm);color:#FFE500;line-height:1.75;word-break:keep-all;
-}
-.sc-bubble::before{
-  content:'';position:absolute;left:-7px;top:14px;
-  width:0;height:0;
-  border-top:6px solid transparent;border-bottom:6px solid transparent;
-  border-right:7px solid rgba(255,229,0,.3);
-}
-.sc-label-section{padding:14px 20px 0;}
-.sc-label{
-  display:inline-block;
-  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
-  font-weight:700;color:#000;background:#FFE500;
-  padding:5px 14px;border-radius:4px;
-}
-.sc-score-section{display:flex;align-items:baseline;gap:8px;padding:6px 20px 0;}
+.sc-score-row{display:flex;align-items:baseline;gap:5px}
 .sc-score-num{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:80px;color:#FFE500;letter-spacing:var(--ls-tight);line-height:1;
-  font-synthesis:none;
+  font-size:30px;color:#fff;letter-spacing:-.03em;line-height:1;font-synthesis:none;
 }
-.sc-score-denom{font-size:var(--t-base);color:rgba(255,255,255,.35);letter-spacing:.08em}
-.sc-bar-wrap{margin:10px 20px 0;height:3px;background:rgba(255,255,255,.1);border-radius:2px;}
-.sc-bar{height:100%;background:#FFE500;border-radius:2px}
-.sc-footer{padding:12px 20px 18px;font-size:var(--t-label);letter-spacing:var(--ls-wide);color:rgba(255,229,0,.35);}
+.sc-score-denom{font-size:12px;color:rgba(255,255,255,.32);letter-spacing:.06em}
+.sc-bottom{padding:16px 20px 18px;}
+.sc-comment{
+  font-size:12px;color:rgba(255,255,255,.78);
+  line-height:1.72;word-break:keep-all;margin-bottom:14px;
+}
+.sc-bar-row{display:flex;align-items:center;gap:12px;}
+.sc-bar-wrap{flex:1;height:2px;background:rgba(255,255,255,.1);border-radius:1px;}
+.sc-bar{height:100%;background:#FFE500;border-radius:1px}
+.sc-url{font-size:9px;letter-spacing:.18em;color:rgba(255,229,0,.32);text-transform:uppercase;white-space:nowrap;}
 
 /* ── LOADING ── */
 #loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);transition:opacity .4s}
@@ -1011,32 +1004,30 @@ body{
   <div id="share-modal-close">닫기</div>
 </div>
 
-<!-- ══════ 공유 카드 (캔버스 렌더용) ══════ -->
+<!-- ══════ 공유 카드 (캔버스 렌더용) — 새 A 디자인 ══════ -->
 <div id="share-card">
-  <div class="sc-header">
-    <span class="sc-header-title" id="sc-header-title">난 어떤 덕후? — KIN의 판정</span>
-    <span class="sc-header-work" id="sc-header-work"></span>
+  <!-- 상단: 커버 배경 + KIN 크게 + 레이블 + 점수 -->
+  <div class="sc-top">
+    <div class="sc-cover-bg" id="sc-cover-bg"></div>
+    <div class="sc-top-overlay"></div>
+    <img class="sc-kin-large" id="sc-kin-face" src="" alt="KIN" crossorigin="anonymous">
+    <div class="sc-top-content">
+      <div class="sc-eyebrow" id="sc-header-title">KIN의 판정</div>
+      <div class="sc-label-large" id="sc-label"></div>
+      <div class="sc-score-row">
+        <span class="sc-score-num" id="sc-score-num">0</span>
+        <span class="sc-score-denom">/ 10</span>
+      </div>
+    </div>
   </div>
-  <div class="sc-work-img-wrap" id="sc-work-img-wrap" style="display:none">
-    <img id="sc-work-img" src="" crossorigin="anonymous" alt="">
-    <div class="sc-work-img-fade"></div>
+  <!-- 하단: KIN 코멘트 + 바 + URL -->
+  <div class="sc-bottom">
+    <div class="sc-comment" id="sc-bubble"></div>
+    <div class="sc-bar-row">
+      <div class="sc-bar-wrap"><div class="sc-bar" id="sc-bar"></div></div>
+      <span class="sc-url">kinxdred.com/kin/k2</span>
+    </div>
   </div>
-  <!-- 레이블 (판정 중심) -->
-  <div class="sc-label-section">
-    <div class="sc-label" id="sc-label"></div>
-  </div>
-  <div class="sc-kin-section">
-    <img class="sc-kin-face" id="sc-kin-face" src="" alt="KIN">
-    <div class="sc-bubble" id="sc-bubble"></div>
-  </div>
-  <div class="sc-score-section">
-    <div class="sc-score-num" id="sc-score-num">0</div>
-    <div class="sc-score-denom">/ 10</div>
-  </div>
-  <div class="sc-bar-wrap">
-    <div class="sc-bar" id="sc-bar"></div>
-  </div>
-  <div class="sc-footer">kinxdred.com/kin/k2</div>
 </div>
 
 <script>
@@ -2199,6 +2190,8 @@ async function generateShareImage() {
   if(scTitle) scTitle.textContent = lang==='en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
 
   // 작품 이미지 처리
+  // 커버 배경 (새 A 디자인)
+  const coverBg = document.getElementById('sc-cover-bg');
   const imgWrap  = document.getElementById('sc-work-img-wrap');
   const headerWork = document.getElementById('sc-header-work');
   const malId    = state.topWork?.mal_id;

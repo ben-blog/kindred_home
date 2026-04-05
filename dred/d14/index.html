@@ -133,8 +133,8 @@ const IMAGE_CONFIG = [
 ];
 
 const IMAGE_ASPECT        = 0.75;
-const HOLD_DURATION       = 25000;
-const TRANSITION_DURATION = 5000;
+const HOLD_DURATION       = 2000;   // 이미지당 유지 시간
+const TRANSITION_DURATION = 1500;  // 전환 시간 — 사이클 ≈ 10.5s
 
 // 공유 이미지 크기 (4:5 Instagram)
 const SHARE_W = 1080, SHARE_H = 1350;
@@ -228,100 +228,160 @@ float noise(vec2 p){
 }
 float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.1;a*=0.5;}return v;}
 
-// B+C 전략: contain + 엣지 블리드
-// 이미지 원본 구도 유지, 바깥 영역은 엣지 색상이 어둠으로 번짐
+// B+C: contain + 엣지 블리드. 이미지 구도 유지.
 vec2 containUv(vec2 uv){
   float sa=uResolution.x/uResolution.y;
-  if(sa>uImageAspect){
-    // PC: 높이 맞춤, 좌우 블리드
-    float imgW=uImageAspect/sa;
-    return vec2((uv.x-0.5)/imgW+0.5, uv.y);
-  } else {
-    // 모바일: 너비 맞춤, 상하 블리드
-    float imgH=(sa/uImageAspect);
-    return vec2(uv.x, (uv.y-0.5)/imgH+0.5);
-  }
+  if(sa>uImageAspect){float imgW=uImageAspect/sa;return vec2((uv.x-0.5)/imgW+0.5,uv.y);}
+  else{float imgH=sa/uImageAspect;return vec2(uv.x,(uv.y-0.5)/imgH+0.5);}
 }
 
 float bleedFactor(vec2 imgUv){
   float dx=max(0.0,max(-imgUv.x,imgUv.x-1.0));
   float dy=max(0.0,max(-imgUv.y,imgUv.y-1.0));
-  float dist=length(vec2(dx,dy));
-  return exp(-dist*8.0)*0.45;
+  return exp(-length(vec2(dx,dy))*8.0)*0.45;
 }
 
 vec2 drift(vec2 uv){return uv+vec2(sin(uTime*0.07)*0.006,cos(uTime*0.05)*0.004);}
+
+#define PI 3.14159265
 
 void main(){
   vec2 imgUv=containUv(vUv);
   bool inImage=imgUv.x>=0.0&&imgUv.x<=1.0&&imgUv.y>=0.0&&imgUv.y<=1.0;
   float bleed=inImage?1.0:bleedFactor(imgUv);
-  vec2 driftedUv=clamp(drift(imgUv),0.001,0.999);
   vec2 imgUvC=clamp(imgUv,0.001,0.999);
+  vec2 dUv=clamp(drift(imgUv),0.001,0.999);
 
   if(uPhase<0.5){
-    // HOLDING
-    vec4 c=texture2D(uTex1,inImage?driftedUv:imgUvC)*bleed;
+    // HOLDING: ambient 효과
+    vec4 c=texture2D(uTex1,inImage?dUv:imgUvC)*bleed;
 
     if(bleed>0.01){
       if(uEffect<0.5){
-        // Rush hour: 도시 불빛 상승 (이미지 영역에만)
-        float mask=smoothstep(0.65,0.28,imgUv.y)*bleed;
-        for(int i=0;i<6;i++){
+        // Rush hour: 선명한 빛 스트림 상승
+        float mask=smoothstep(0.7,0.2,imgUv.y)*bleed;
+        for(int i=0;i<5;i++){
           float fi=float(i);
-          float xp=fract(fi*0.17+0.06),yp=fract(uTime*(0.08+fi*0.035)+fi*0.22);
-          float pt=exp(-abs(imgUv.x-xp)*60.0)*exp(-abs(imgUv.y-yp)*45.0);
-          c.rgb+=vec3(1.0,0.82,0.32)*pt*mask*0.3;
+          float xp=fract(fi*0.19+0.08);
+          float yp=fract(uTime*(0.15+fi*0.06)+fi*0.23);
+          float streak=exp(-abs(imgUv.x-xp)*50.0)*exp(-abs(imgUv.y-yp)*35.0);
+          c.rgb+=vec3(1.0,0.75,0.25)*streak*mask*0.55;
         }
+        // 크로마틱 시프트: 빨간 채널 미세 이동
+        float rShift=sin(uTime*0.9)*0.004;
+        c.r=texture2D(uTex1,clamp(dUv+vec2(rShift,0.0),0.001,0.999)).r*bleed;
       } else if(uEffect<1.5){
-        // Highway: 수평 streak
-        for(int i=0;i<4;i++){
+        // Highway: 강한 모션블러 streak + 플리커
+        float flicker=sin(uTime*11.0)*0.5+0.5;
+        for(int i=0;i<5;i++){
           float fi=float(i);
-          float xp=fract(uTime*(0.38+fi*0.16)+fi*0.28),yp=0.40+fi*0.08,len=0.20;
-          float s=smoothstep(xp-len,xp,imgUv.x)*smoothstep(xp+0.04,xp,imgUv.x)*exp(-abs(imgUv.y-yp)*30.0);
-          c.rgb+=vec3(1.0,0.42,0.08)*s*0.32*bleed;
+          float spd=0.55+fi*0.2;
+          float xp=fract(uTime*spd+fi*0.21);
+          float yp=0.38+fi*0.09;
+          float len=0.28;
+          float s=smoothstep(xp-len,xp,imgUv.x)*smoothstep(xp+0.05,xp,imgUv.x);
+          s*=exp(-abs(imgUv.y-yp)*22.0);
+          c.rgb+=vec3(1.0,0.38,0.06)*s*0.55*bleed*(0.7+flicker*0.3);
         }
+        // 채널 분리 글리치
+        float gTime=floor(uTime*4.0)/4.0;
+        float glitch=step(0.92,noise(vec2(gTime*7.3,imgUv.y*3.0)));
+        c.r=mix(c.r,texture2D(uTex1,clamp(dUv+vec2(0.008,0.0),0.001,0.999)).r*bleed,glitch*0.6);
+        c.b=mix(c.b,texture2D(uTex1,clamp(dUv-vec2(0.008,0.0),0.001,0.999)).b*bleed,glitch*0.6);
       } else {
-        // Rooftop: 하늘 pulse + 네온
-        float sky=smoothstep(0.55,0.0,imgUv.y)*bleed;
-        c.rgb+=vec3(0.06,0.01,0.18)*sky*(sin(uTime*1.1)*0.5+0.5)*0.10;
-        float neon=smoothstep(0.88,1.0,imgUv.y)*bleed;
-        c.rgb+=vec3(0.5,0.0,0.85)*neon*(sin(uTime*2.0+imgUv.x*9.0)*0.5+0.5)*0.22;
+        // Rooftop: 하늘 색온도 파동 + 네온 pulse
+        float wave=sin(uTime*0.6+imgUv.x*2.5)*0.5+0.5;
+        float sky=smoothstep(0.6,0.0,imgUv.y)*bleed;
+        c.rgb+=vec3(0.08,0.03,0.22)*sky*wave*0.28;
+        c.rgb+=vec3(0.0,0.04,0.12)*sky*(1.0-wave)*0.18;
+        float neon=smoothstep(0.86,1.0,imgUv.y)*bleed;
+        float np=sin(uTime*2.8+imgUv.x*12.0)*0.5+0.5;
+        c.rgb+=vec3(0.55,0.0,1.0)*neon*np*0.38;
+        // 별 같은 반짝임
+        float star=noise(imgUv*80.0+vec2(uTime*0.3));
+        star=step(0.97,star)*smoothstep(0.4,0.0,imgUv.y)*bleed;
+        c.rgb+=vec3(1.0,0.95,0.85)*star*0.8;
       }
     }
     gl_FragColor=c;
 
   } else {
-    // TRANSITIONING
-    vec2 d1=inImage?driftedUv:imgUvC;
-    vec4 c1=texture2D(uTex1,d1)*bleed;
-    vec4 c2=texture2D(uTex2,imgUvC)*bleed;
+    // TRANSITIONING: 이미지 픽셀 자체가 변형
 
     if(uTransition<0.5){
-      float n=noise(imgUv*3.5+vec2(uTime*0.07,0.0))*0.16;
-      float edgeW=0.22,nMax=0.16;
-      float waveY=(1.0+nMax+edgeW)-uProgress*(1.0+nMax+2.0*edgeW);
-      float blend=smoothstep(waveY,waveY+edgeW,imgUv.y+n);
-      float front=exp(-abs(imgUv.y+n-(waveY+edgeW*0.5))*10.0);
-      c1.rgb+=vec3(1.0,0.82,0.32)*front*(1.0-blend)*0.42*bleed;
-      gl_FragColor=mix(c1,c2,clamp(blend,0.0,1.0));
+      // Rush→Highway: 강한 수평 워프 — 차가 지나가듯 화면이 늘어지며 전환
+      float warpPeak=sin(uProgress*PI)*0.18;
+      float n=noise(vec2(imgUv.y*6.0, uTime*0.4));
+      float warp=warpPeak*(n*2.0-1.0);
+
+      vec2 uv1=clamp(imgUv+vec2(warp,sin(imgUv.y*PI)*warpPeak*0.04),0.001,0.999);
+      vec2 uv2=clamp(imgUv-vec2(warp,sin(imgUv.y*PI)*warpPeak*0.04),0.001,0.999);
+
+      vec4 c1=texture2D(uTex1,uv1)*bleed;
+      vec4 c2=texture2D(uTex2,uv2)*bleed;
+
+      // 워프가 심한 구간에서 두 이미지가 교차
+      float blend=clamp(uProgress+(n-0.5)*0.5,0.0,1.0);
+      // 픽셀 찢김 효과: 강한 밝기 플래시
+      float flash=exp(-abs(uProgress-0.5)*8.0)*warpPeak*6.0;
+      vec4 mixed=mix(c1,c2,blend);
+      mixed.rgb+=vec3(1.0,0.55,0.1)*flash;
+      // 크로마틱 aberration
+      float aberr=warpPeak*1.5;
+      mixed.r=mix(mixed.r,texture2D(uTex1,clamp(uv1+vec2(aberr*0.01,0.0),0.001,0.999)).r*bleed,1.0-blend);
+      mixed.b=mix(mixed.b,texture2D(uTex2,clamp(uv2-vec2(aberr*0.01,0.0),0.001,0.999)).b*bleed,blend);
+      gl_FragColor=mixed;
 
     } else if(uTransition<1.5){
-      float diag=imgUv.x*0.62+(1.0-imgUv.y)*0.38;
-      float n=noise(imgUv*4.0)*0.11;
-      float edgeW=0.22,nMax=0.11;
-      float thresh=uProgress*(1.0+nMax+2.0*edgeW)-(nMax+edgeW);
+      // Highway→Rooftop: 대각선 번-스윕 — 강렬한 빛이 화면을 태우며 다음 장면 열어냄
+      float diag=imgUv.x*0.55+(1.0-imgUv.y)*0.45;
+      float n=noise(imgUv*6.0)*0.08;
+      float edgeW=0.12;
+      float thresh=uProgress*(1.0+2.0*edgeW+0.08)-(edgeW+0.08);
       float blend=smoothstep(diag+n-edgeW,diag+n+edgeW,thresh);
-      float edge=exp(-abs(thresh-(diag+n))*7.0);
-      c1.rgb+=vec3(1.0,0.45,0.08)*edge*(1.0-blend)*0.52*bleed;
-      gl_FragColor=mix(c1,c2,clamp(blend,0.0,1.0));
+
+      // 번 엣지: 이미지가 과노출되며 녹아내림
+      float burnDist=abs(thresh-(diag+n));
+      float burnGlow=exp(-burnDist*10.0);
+      float burnIntensity=burnGlow*sin(uProgress*PI)*2.5;
+
+      // 픽셀 displacement: 번 경계 근처 이미지 뒤틀림
+      float dispStr=burnGlow*sin(uProgress*PI)*0.05;
+      vec2 disp=vec2(noise(imgUv*8.0+vec2(uTime))-0.5,noise(imgUv*8.0+vec2(2.3,uTime))-0.5)*dispStr;
+
+      vec4 c1=texture2D(uTex1,clamp(dUv+disp,0.001,0.999))*bleed;
+      vec4 c2=texture2D(uTex2,clamp(imgUvC-disp,0.001,0.999))*bleed;
+
+      vec4 mixed=mix(c1,c2,clamp(blend,0.0,1.0));
+      // 번 지점: 흰빛으로 과노출
+      mixed.rgb+=vec3(1.0,0.88,0.6)*burnIntensity*(1.0-bleed*0.3);
+      gl_FragColor=mixed;
 
     } else {
-      float n=fbm(imgUv*2.0+vec2(uTime*0.02));
-      float blend=smoothstep(n-0.15,n+0.15,uProgress);
-      float sky=smoothstep(0.55,0.0,imgUv.y)*bleed;
-      float dark=smoothstep(0.0,0.6,uProgress);
-      c1.rgb*=(1.0-sky*dark*0.52);
+      // Rooftop→Rush: 회전+수축으로 화면이 끌려들어가며 다음 이미지 출현
+      vec2 centered=imgUv-0.5;
+      float dist=length(centered);
+      float angle=atan(centered.y,centered.x);
+
+      float rotPeak=sin(uProgress*PI)*0.2;
+      float scalePeak=1.0+sin(uProgress*PI)*0.12;
+
+      vec2 uv1=clamp(vec2(cos(angle+rotPeak),sin(angle+rotPeak))*dist/scalePeak+0.5,0.001,0.999);
+      vec2 uv2=clamp(vec2(cos(angle-rotPeak),sin(angle-rotPeak))*dist*scalePeak+0.5,0.001,0.999);
+
+      float n=fbm(imgUv*2.2+vec2(uTime*0.03));
+      float blend=smoothstep(n-0.22,n+0.22,uProgress);
+
+      // 수축 시 중앙→엣지로 빠르게 어두워짐
+      float vignette=1.0-sin(uProgress*PI)*0.7*smoothstep(0.5,0.0,dist);
+
+      vec4 c1=texture2D(uTex1,uv1)*bleed*max(vignette,0.0);
+      vec4 c2=texture2D(uTex2,uv2)*bleed;
+
+      // 어두운 심연 → 새벽빛 출현
+      float emerge=sin(uProgress*PI)*0.15;
+      c2.rgb+=vec3(0.04,0.04,0.12)*emerge;
+
       gl_FragColor=mix(c1,c2,clamp(blend,0.0,1.0));
     }
   }
@@ -435,26 +495,17 @@ async function generateShareImage(){
   ctx.fillStyle='#000';
   ctx.fillRect(0,0,SHARE_W,SHARE_H);
 
-  // WebGL 이미지 로드 후 그리기
+  // WebGL 현재 프레임을 4:5 center crop으로 공유 캔버스에 그리기
+  // (WebGL 이미 B+C 적용된 상태 → 이중 변환 방지, 직접 crop)
   await new Promise((resolve, reject)=>{
     const img=new Image();
     img.onload=()=>{
-      // B+C 전략: contain + 블리드
-      const screenAspect=SHARE_W/SHARE_H;
-      let drawX,drawY,drawW,drawH;
-      if(screenAspect>IMAGE_ASPECT){
-        drawH=SHARE_H; drawW=SHARE_H*IMAGE_ASPECT;
-        drawX=(SHARE_W-drawW)/2; drawY=0;
-      } else {
-        drawW=SHARE_W; drawH=SHARE_W/IMAGE_ASPECT;
-        drawX=0; drawY=(SHARE_H-drawH)/2;
-      }
-      // 블리드 배경 (어두운 버전)
-      ctx.globalAlpha=0.35;
-      ctx.drawImage(img,0,0,SHARE_W,SHARE_H);
-      ctx.globalAlpha=1.0;
-      // 원본 비율 이미지
-      ctx.drawImage(img,drawX,drawY,drawW,drawH);
+      const glAR=canvas.width/canvas.height;
+      const shareAR=SHARE_W/SHARE_H;
+      let sx=0,sy=0,sw=canvas.width,sh=canvas.height;
+      if(glAR>shareAR){ sw=canvas.height*shareAR; sx=(canvas.width-sw)/2; }
+      else { sh=canvas.width/shareAR; sy=(canvas.height-sh)/2; }
+      ctx.drawImage(img,sx,sy,sw,sh,0,0,SHARE_W,SHARE_H);
       resolve();
     };
     img.onerror=()=>reject(new Error('canvas capture failed'));

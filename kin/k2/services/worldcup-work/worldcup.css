@@ -110,32 +110,12 @@
   min-height: 100dvh;
 }
 
-/* 라운드 헤더 */
-.wc-round-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  height: 53px;
-  padding: 0 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(8,8,6,.97);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255,229,0,.07);
-}
-.wc-round-label {
-  font-family: 'Syne', sans-serif;
-  font-weight: 800;
-  font-size: var(--t-base);
-  color: var(--kin);
-  letter-spacing: var(--ls-tight);
-}
+/* 진행 텍스트 */
 .wc-progress-text {
   font-size: var(--t-label);
   color: rgba(255,255,255,.35);
   letter-spacing: var(--ls-mono);
+  font-family: 'DM Mono', monospace;
 }
 
 /* 대진 컨테이너 */

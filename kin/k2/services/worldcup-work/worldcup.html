@@ -18,10 +18,13 @@
 <header id="header">
   <a class="h-back" href="/kin/k2/">← K2</a>
   <div class="h-name" id="h-title">작품 월드컵</div>
-  <div id="lang-toggle">
-    <span class="lt active" data-lang="ko">KO</span>
-    <span class="lt-sep"> / </span>
-    <span class="lt" data-lang="en">EN</span>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="wc-progress-text" id="wc-progress-text" style="display:none"></span>
+    <div id="lang-toggle">
+      <span class="lt active" data-lang="ko">KO</span>
+      <span class="lt-sep"> / </span>
+      <span class="lt" data-lang="en">EN</span>
+    </div>
   </div>
 </header>
 
@@ -52,12 +55,6 @@
 
   <!-- ── 대진 화면 ── -->
   <section id="wc-arena" style="display:none">
-
-    <!-- 고정 헤더 -->
-    <div class="wc-round-header">
-      <span class="wc-round-label" id="wc-round-label">16강</span>
-      <span class="wc-progress-text" id="wc-progress-text">1 / 15</span>
-    </div>
 
     <!-- 대진 영역 -->
     <div class="wc-match" id="wc-match">

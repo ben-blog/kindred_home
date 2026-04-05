@@ -155,6 +155,11 @@ function showSection(id) {
   ['wc-category', 'wc-arena', 'wc-result'].forEach(s => {
     $(s).style.display = s === id ? '' : 'none';
   });
+  // 대진 화면 아닐 때 헤더 복원
+  if (id !== 'wc-arena') {
+    $('h-title').textContent       = getLang() === 'en' ? 'Work Worldcup' : '작품 월드컵';
+    $('wc-progress-text').style.display = 'none';
+  }
 }
 
 // ══════════════════════════════════════════
@@ -242,9 +247,11 @@ async function renderMatch() {
   $('wc-title-b').textContent = isEn ? workB.title_en : workB.title_ko;
   $('wc-hook-b').textContent  = isEn ? workB.hook_en  : workB.hook_ko;
 
-  // 헤더
-  $('wc-round-label').textContent    = getRoundLabel(state.round);
-  $('wc-progress-text').textContent  = `${state.matchPlayed + 1} / ${state.totalMatches}`;
+  // 글로벌 헤더 업데이트
+  $('h-title').textContent = getRoundLabel(state.round);
+  const prog = $('wc-progress-text');
+  prog.textContent    = `${state.matchPlayed + 1} / ${state.totalMatches}`;
+  prog.style.display  = '';
 
   // 이미지 초기화
   const bgA   = $('wc-bg-a'),    bgB   = $('wc-bg-b');
@@ -575,6 +582,7 @@ function applyLang(l) {
 
   // 대진 중이면 갱신 (selecting 중 스킵)
   if (!state.selecting && state.roundMatches.length > 0 && state.currentMatch < state.roundMatches.length) {
+    $('h-title').textContent = getRoundLabel(state.round);
     renderMatch();
   }
 

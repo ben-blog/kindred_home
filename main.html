@@ -449,16 +449,17 @@ async function buildAllTargets() {
   kinTargets  = kS && kS.length>50 ? kS : buildGeomSilhouette(kinCX(),  top, h, HALF, false);
   dredTargets = dS && dS.length>50 ? dS : buildGeomSilhouette(dredCX(), top, h, HALF, true);
 }
+
+/* ── PARTICLES ── */
+const POOL = IS_TOUCH ? 1000 : 2000;
+let parts = [];
+
 (function() {
   const ki=document.getElementById('kin-char'), dr=document.getElementById('dred-char');
   let n=2; const done=()=>{ if(--n===0) buildAllTargets(); };
   ki.complete ? done() : ki.addEventListener('load', done, {once:true});
   dr.complete ? done() : dr.addEventListener('load', done, {once:true});
 })();
-
-/* ── PARTICLES ── */
-const POOL = IS_TOUCH ? 1000 : 2000;
-let parts = [];
 
 function makePart(i) {
   const side = i < POOL/2 ? 'kin' : 'dred';

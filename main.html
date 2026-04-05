@@ -213,7 +213,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 .ks-item:active{background:rgba(255,229,0,.04)}
 .ks-item-left{display:flex;flex-direction:column;gap:3px}
 .ks-item-tag{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,229,0,.35)}
-.ks-item-name{font-size:14px;letter-spacing:.01em;color:rgba(255,255,255,.85)}
+.ks-item-name{font-size:14px;letter-spacing:0;color:rgba(255,255,255,.85)}
 .ks-item-arrow{color:rgba(255,229,0,.35);font-size:13px;flex-shrink:0}
 .ks-item:active .ks-item-arrow{color:rgba(255,229,0,.8)}
 
@@ -1291,13 +1291,13 @@ function attachPCHoverHandlers() {
 
 /* ── Mobile: 시트 컨텐츠 빌드 ── */
 const KIN_SHEET_LINES = lang === 'ko' ? [
-  '시간 가는 줄 몰랐던 적 있어?',
-  '3년 뒤의 너, 궁금하지 않아?',
   '뭔가 보여줄게. 잠깐만.',
+  '오래 봤더니 보이는 게 생겼어.',
+  '한번 해봐. 별거 없어.',
 ] : [
-  'ever lost track of time?',
-  'curious about who you\'ll be in 3 years?',
   'let me show you something.',
+  'been watching. found some things.',
+  'just try it. won\'t take long.',
 ];
 let kinLineIdx = 0, sheetTypeTimer = null;
 

@@ -34,7 +34,9 @@
   <section id="wc-category" style="display:none">
     <div class="wc-kin-intro">
       <img class="wc-kin-avatar" id="wc-intro-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
+      <div class="wc-kin-label">KIN</div>
       <p class="wc-kin-line" id="wc-intro-line">이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.</p>
+      <p class="wc-kin-sub" id="wc-intro-sub">카테고리를 선택하면 16강 토너먼트가 시작돼.<br>1:1 대결에서 네 취향에 더 가까운 쪽을 골라.</p>
     </div>
     <div class="wc-category-cards">
       <div class="wc-cat-card" data-category="battle">
@@ -54,9 +56,15 @@
     <div class="wc-round-header">
       <span class="wc-round-label" id="wc-round-label">16강</span>
       <span class="wc-progress-text" id="wc-progress-text">1 / 15</span>
+      <button class="wc-path-toggle" id="wc-path-toggle">내 선택 ↓</button>
     </div>
 
-    <!-- KIN 배너 (시작 + 결승 직전) -->
+    <!-- 경로 패널 -->
+    <div class="wc-path-panel" id="wc-path-panel">
+      <div class="wc-path-list" id="wc-path-list"></div>
+    </div>
+
+    <!-- KIN 배너 -->
     <div class="wc-kin-banner" id="wc-kin-banner">
       <img src="/kin/k2/assets/kin_serious.webp" alt="KIN" id="wc-banner-avatar">
       <span class="wc-kin-banner-text" id="wc-banner-text"></span>
@@ -64,10 +72,12 @@
 
     <!-- 대진 -->
     <div class="wc-match" id="wc-match">
-      <!-- 왼쪽/위 -->
+
+      <!-- 왼쪽/위 카드 -->
       <div class="wc-work" id="wc-work-a" data-side="a">
-        <div class="wc-work-bg" id="wc-bg-a"></div>
-        <div class="wc-work-overlay"></div>
+        <div class="wc-work-img">
+          <div class="wc-work-bg" id="wc-bg-a"></div>
+        </div>
         <div class="wc-work-content">
           <div class="wc-work-title" id="wc-title-a"></div>
           <div class="wc-work-hook" id="wc-hook-a"></div>
@@ -79,36 +89,65 @@
         <span class="wc-vs-text">VS</span>
       </div>
 
-      <!-- 오른쪽/아래 -->
+      <!-- 오른쪽/아래 카드 -->
       <div class="wc-work" id="wc-work-b" data-side="b">
-        <div class="wc-work-bg" id="wc-bg-b"></div>
-        <div class="wc-work-overlay"></div>
+        <div class="wc-work-img">
+          <div class="wc-work-bg" id="wc-bg-b"></div>
+        </div>
         <div class="wc-work-content">
           <div class="wc-work-title" id="wc-title-b"></div>
           <div class="wc-work-hook" id="wc-hook-b"></div>
         </div>
       </div>
+
     </div>
 
   </section>
 
   <!-- ── 결과 화면 ── -->
   <section id="wc-result" style="display:none">
-    <div class="wc-result-eyebrow" id="wc-result-eyebrow">KIN의 판정</div>
+
+    <div class="wc-result-eyebrow" id="wc-result-eyebrow">네가 선택한 우승작</div>
     <div class="wc-result-title" id="wc-result-title"></div>
 
-    <!-- 우승작 카드 -->
+    <!-- 1위 카드 -->
     <div class="wc-winner-card">
       <div class="wc-winner-bg" id="wc-winner-bg"></div>
       <div class="wc-winner-overlay"></div>
-      <div class="wc-winner-content">
-        <div class="wc-winner-label" id="wc-winner-label">이번 월드컵 우승</div>
-        <div class="wc-winner-title" id="wc-winner-title"></div>
-      </div>
+    </div>
+    <div class="wc-winner-texts">
+      <p class="wc-winner-hook" id="wc-winner-hook"></p>
+      <p class="wc-winner-quote" id="wc-winner-quote"></p>
     </div>
 
-    <!-- TOP4 -->
-    <div class="wc-top4" id="wc-top4"></div>
+    <!-- 2위 / 3위 -->
+    <div class="wc-podium">
+
+      <div class="wc-podium-card" id="wc-second-card">
+        <div class="wc-podium-img-wrap">
+          <div class="wc-podium-bg" id="wc-second-bg"></div>
+        </div>
+        <div class="wc-podium-body">
+          <div class="wc-podium-rank" id="wc-second-label">🥈 준우승</div>
+          <div class="wc-podium-title" id="wc-second-title"></div>
+          <div class="wc-podium-hook" id="wc-second-hook"></div>
+          <div class="wc-podium-quote" id="wc-second-quote"></div>
+        </div>
+      </div>
+
+      <div class="wc-podium-card" id="wc-third-card">
+        <div class="wc-podium-img-wrap">
+          <div class="wc-podium-bg" id="wc-third-bg"></div>
+        </div>
+        <div class="wc-podium-body">
+          <div class="wc-podium-rank" id="wc-third-label">🥉 공동 3위</div>
+          <div class="wc-podium-title" id="wc-third-title"></div>
+          <div class="wc-podium-hook" id="wc-third-hook"></div>
+          <div class="wc-podium-quote" id="wc-third-quote"></div>
+        </div>
+      </div>
+
+    </div>
 
     <!-- KIN 독해 -->
     <div class="wc-observation">
@@ -123,6 +162,7 @@
       <button class="btn-primary" id="wc-btn-retry">다시 하기</button>
       <a class="btn-secondary" href="/kin/k2/">← 갤러리</a>
     </div>
+
   </section>
 
 </div>

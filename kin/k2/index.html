@@ -223,33 +223,35 @@ async function buildCoverMarquee() {
   const marquee = document.getElementById('cover-marquee');
   if (!track || !marquee) return;
 
-  const loaded = [];
   let started = false;
 
-  // 이미지 추가 함수
   function addImg(url, title) {
-    // 양쪽에 동시 추가 (무한 루프를 위해 2배)
-    for (let i = 0; i < 2; i++) {
-      const img = document.createElement('img');
-      img.className = 'cover-img';
-      img.src = url; img.alt = title; img.loading = 'eager';
-      track.appendChild(img);
-    }
-    loaded.push(url);
+    const img = document.createElement('img');
+    img.className = 'cover-img';
+    img.src = url; img.alt = title; img.loading = 'eager';
+    track.appendChild(img);
 
-    // 3개 이상 로딩되면 마퀴 바로 시작
-    if (!started && loaded.length >= 3) {
+    // 3개 이상 로딩되면 바로 표시
+    const count = track.querySelectorAll('img').length;
+    if (!started && count >= 3) {
       started = true;
       marquee.style.display = 'block';
     }
   }
 
-  // 병렬로 fetch — 완료되는 순서대로 추가
+  // 병렬 fetch — 완료 순서대로 추가
   await Promise.allSettled(
     COVER_MAL_IDS.map(({ id, title }) =>
       fetchAniListCover(id).then(url => { if (url) addImg(url, title); }).catch(() => {})
     )
   );
+
+  // 무한 스크롤을 위해 전체 복제
+  const imgs = Array.from(track.querySelectorAll('img'));
+  imgs.forEach(img => {
+    const clone = img.cloneNode(true);
+    track.appendChild(clone);
+  });
 }
 
 // ── 랜딩 상태 업데이트 ──

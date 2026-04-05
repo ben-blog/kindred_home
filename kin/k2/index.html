@@ -1342,18 +1342,44 @@ async function loadQuestions() {
     SLOTS.map(slot => getSlotCount(slot.format, slot.difficulty).catch(()=>0))
   );
 
-  // 2. offset 기반 랜덤 fetch 병렬 실행
-  const results = await Promise.all(
-    SLOTS.map((slot, i) => {
-      const total = counts[i];
-      if(total === 0) return Promise.resolve(null);
+  // 2. offset 기반 랜덤 fetch — source_work 중복 방지 포함
+  // author format은 source_work가 작가명이므로 중복 체크 제외
+  const seenWorks = new Set();
+  const MAX_RETRY = 4; // 슬롯당 최대 재시도 횟수
+
+  async function fetchSlot(slot, total) {
+    if(total === 0) return null;
+    for(let attempt = 0; attempt < MAX_RETRY; attempt++) {
       const offset = Math.floor(Math.random() * total);
-      return supaFetch(
+      const item = await supaFetch(
         `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&offset=${offset}&order=item_id.asc`,
         {headers:{Prefer:'return=representation'}}
       ).then(res => Array.isArray(res) ? res[0] : res).catch(()=>null);
-    })
-  );
+
+      if(!item) return null;
+
+      // author format은 source_work 중복 체크 제외
+      const work = item.source_work;
+      if(slot.format === 'author' || !work || !seenWorks.has(work)) {
+        if(work && slot.format !== 'author') seenWorks.add(work);
+        return item;
+      }
+      // 중복이면 재시도
+    }
+    // MAX_RETRY 초과 시 마지막 결과 그대로 반환 (없는 것보단 나음)
+    const offset = Math.floor(Math.random() * total);
+    return supaFetch(
+      `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&offset=${offset}&order=item_id.asc`,
+      {headers:{Prefer:'return=representation'}}
+    ).then(res => Array.isArray(res) ? res[0] : res).catch(()=>null);
+  }
+
+  // 슬롯을 순차 처리 (seenWorks 누적을 위해 병렬 불가)
+  const results = [];
+  for(let i = 0; i < SLOTS.length; i++) {
+    const item = await fetchSlot(SLOTS[i], counts[i]);
+    results.push(item);
+  }
 
   return results.filter(Boolean).map(item=>{
     const correctKo = item.choices[0];

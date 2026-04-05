@@ -253,27 +253,27 @@ body{
 /* 커버 마퀴 */
 .cover-marquee{
   position:relative;width:100%;overflow:hidden;
-  margin-top:auto;
-  mask-image:linear-gradient(to right,transparent 0%,black 12%,black 88%,transparent 100%);
-  -webkit-mask-image:linear-gradient(to right,transparent 0%,black 12%,black 88%,transparent 100%);
+  margin-top:32px; /* auto → 위로 올림 */
+  mask-image:linear-gradient(to right,transparent 0%,black 10%,black 90%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,black 10%,black 90%,transparent 100%);
 }
 .cover-marquee-track{
-  display:flex;gap:8px;width:max-content;
-  animation:cover-scroll 28s linear infinite;
+  display:flex;gap:0;width:max-content; /* gap:0 — 끊김 방지 */
+  animation:cover-scroll 16s linear infinite; /* 28s→16s 빠르게 */
 }
-.cover-marquee-track:hover{animation-play-state:paused}
 @keyframes cover-scroll{
   from{transform:translateX(0)}
   to{transform:translateX(-50%)}
 }
 .cover-img{
-  width:72px;height:100px;border-radius:6px;
+  width:112px;height:158px;border-radius:8px; /* 1.55배 크게 */
   object-fit:cover;flex-shrink:0;
-  opacity:.6;
+  opacity:.65;
+  margin-right:10px; /* gap 대신 margin으로 — -50% 정확히 맞춤 */
   transition:opacity .2s;
   border:1px solid rgba(255,255,255,.08);
 }
-.cover-img:hover{opacity:.9}
+.cover-img:hover{opacity:.95}
 /* 모바일에서 커버 마퀴 숨김 */
 @media(max-width:767px){.cover-marquee{display:none}}
 
@@ -1409,7 +1409,21 @@ async function buildCoverMarquee() {
     track.appendChild(img);
   });
 
-  marquee.style.display = 'block';
+  // 이미지 로드 후 애니 시작 — 로드 전 시작하면 max-content 계산 불안정
+  const imgs = track.querySelectorAll('img');
+  let loaded = 0;
+  const startAnim = () => {
+    loaded++;
+    if(loaded >= Math.min(imgs.length, 6)) { // 최소 6장 로드 시 시작
+      marquee.style.display = 'block';
+    }
+  };
+  imgs.forEach(img => {
+    if(img.complete) startAnim();
+    else { img.onload = startAnim; img.onerror = startAnim; }
+  });
+  // 3초 타임아웃 — 로드 안 돼도 표시
+  setTimeout(() => { marquee.style.display = 'block'; }, 3000);
 }
 
 // ═══════════════════════════════════════════

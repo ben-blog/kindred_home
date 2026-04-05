@@ -7,7 +7,7 @@
 <title>KIN의 만화퀴즈</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 *{-webkit-tap-highlight-color:transparent}
@@ -19,7 +19,7 @@ body{
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
-.landing-title,.result-score,.result-work-name,.h-name,.quiz-counter{
+.result-score,.result-work-name,.h-name,.quiz-counter{
   font-synthesis:none;font-optical-sizing:none;
   -webkit-font-smoothing:antialiased;
 }
@@ -108,136 +108,146 @@ body{
 .page.active{display:flex;flex-direction:column}
 
 /* ═══════════════════════════════
-   LANDING
+   LANDING V4
 ═══════════════════════════════ */
 #page-landing{
-  justify-content:flex-start;align-items:stretch;
-  text-align:left;gap:0;
-  padding-top:64px;overflow:hidden;background:transparent;
+  max-width:none;padding:0;
+  overflow:hidden;background:transparent;
+}
+.landing-eyebrow{display:none}
+#page-result .landing-eyebrow{
+  display:block;
+  font-size:var(--t-label);letter-spacing:var(--ls-wide);
+  text-transform:uppercase;color:rgba(255,229,0,.6);
+  margin-bottom:10px;
 }
 
-/* 만화 배경 */
-.manga-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+/* 배경 요소 */
+.manga-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
 .speedlines{
   position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:center;
-  opacity:.15;
+  object-fit:cover;opacity:.1;
   animation:sl-rotate 80s linear infinite;
 }
-@keyframes sl-rotate{
-  from{transform:rotate(0deg) scale(1.1)}
-  to{transform:rotate(360deg) scale(1.1)}
-}
+@keyframes sl-rotate{from{transform:rotate(0deg) scale(1.1)}to{transform:rotate(360deg) scale(1.1)}}
 .manga-gate{
   position:absolute;right:0;bottom:0;
-  width:min(72vw,700px);height:auto;max-height:98vh;
+  width:min(55vw,480px);height:auto;max-height:90vh;
   object-fit:contain;object-position:right bottom;
-  mask-image:linear-gradient(to top,transparent 0%,black 4%,black 100%);
-  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 4%,black 100%);
+  opacity:.35;
+  mask-image:linear-gradient(to top,transparent 0%,black 8%,black 70%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to top,transparent 0%,black 8%,black 70%,transparent 100%);
 }
 
-/* 아이브로 */
-.landing-eyebrow{
+/* 랜딩 레이아웃 */
+.landing-v4{
   position:relative;z-index:1;
-  font-size:var(--t-label);letter-spacing:var(--ls-wide);
-  text-transform:uppercase;color:rgba(255,229,0,.55);
-  margin-bottom:18px;
+  display:flex;flex-direction:column;
+  min-height:100dvh;
+  padding-top:60px;
 }
-#page-landing .landing-eyebrow{color:rgba(255,229,0,.55)}
-#page-result .landing-eyebrow{color:rgba(255,229,0,.6)}
+.landing-v4-kin{
+  padding:28px 24px 8px;
+  display:flex;flex-direction:column;
+}
+.landing-v4-modes{
+  flex:1;padding:16px 24px;
+  display:flex;flex-direction:column;gap:10px;
+  justify-content:flex-start;
+}
+.landing-v4-meta{
+  padding:12px 24px max(24px,env(safe-area-inset-bottom));
+  display:flex;gap:16px;
+}
 
-/* 히어로 */
-.landing-hero{position:relative;z-index:1;margin-bottom:20px;}
-.landing-title{
-  font-family:'Syne',sans-serif;font-weight:800;
-  font-size:clamp(36px,9.5vw,64px);
-  color:#fff;letter-spacing:var(--ls-tight);line-height:1.0;
-  text-wrap:balance;
-  margin-bottom:20px;
+/* PC */
+@media(min-width:768px){
+  .landing-v4{flex-direction:row;padding-top:0;}
+  .landing-v4-kin{
+    width:40%;min-height:100dvh;
+    padding:100px 40px 40px;
+    justify-content:center;
+    border-right:1px solid rgba(255,229,0,.07);
+  }
+  .landing-v4-modes{
+    width:60%;min-height:100dvh;
+    padding:100px 48px 40px;
+    justify-content:center;
+    gap:12px;
+  }
+  .landing-v4-meta{display:none}
+  .manga-gate{
+    width:min(38vw,360px);
+    opacity:.2;
+  }
 }
 
-/* 마퀴 — 단색, 조용하게 */
-.landing-marquee{
-  position:relative;z-index:1;
-  overflow:hidden;margin-top:4px;margin-bottom:0;
-  border-top:1px solid rgba(255,255,255,.07);
-  border-bottom:1px solid rgba(255,255,255,.07);
+/* KIN 말풍선 */
+.kin-bubble-landing{display:flex;gap:12px;align-items:flex-start;margin-bottom:20px;}
+.kin-avatar-landing{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;
+  object-fit:cover;
+  border:1.5px solid rgba(255,229,0,.3);
+  background:rgba(255,229,0,.05);
 }
-.landing-marquee-track{
-  display:flex;white-space:nowrap;
-  animation:mq-scroll 18s linear infinite;
+.kin-bubble-text{
+  background:rgba(255,229,0,.05);
+  border:1px solid rgba(255,229,0,.18);
+  border-left:2.5px solid rgba(255,229,0,.55);
+  border-radius:0 12px 12px 12px;
+  padding:12px 16px;
+  font-size:var(--t-sm);color:rgba(255,255,255,.88);line-height:1.7;
 }
-.landing-marquee-text{
+
+/* 모드 카드 */
+.mode-card{
+  border-radius:12px;padding:16px 18px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.mode-card-active{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,229,0,.32);
+}
+.mode-card-done{
+  background:rgba(74,222,128,.04);
+  border:1px solid rgba(74,222,128,.22);
+}
+.mode-card-locked{
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.07);
+  opacity:.48;
+}
+.mode-label{
   font-size:var(--t-label);letter-spacing:var(--ls-mono);
-  padding:9px 32px;flex-shrink:0;
-  color:rgba(255,255,255,.18);
+  text-transform:uppercase;margin-bottom:4px;
 }
-@keyframes mq-scroll{
-  from{transform:translateX(0)}
-  to{transform:translateX(-50%)}
-}
+.mode-title{font-size:var(--t-base);font-weight:700;margin-bottom:2px;}
+.mode-sub{font-size:var(--t-label);color:rgba(255,255,255,.32);}
 
-/* 장르 태그 — 정적, 애니 없음 */
-.genre-tags{
-  position:relative;z-index:1;
-  display:flex;flex-wrap:wrap;gap:7px;
-  margin-top:18px;margin-bottom:20px;
-}
-.gtag{
-  font-size:var(--t-label);letter-spacing:var(--ls-mono);text-transform:uppercase;
-  padding:5px 12px;border-radius:2px;
-}
-.gtag-work      {background:rgba(255,229,0,.12);  color:#FFE500; border:1px solid rgba(255,229,0,.22)}
-.gtag-character {background:rgba(96,165,250,.12); color:#93C5FD; border:1px solid rgba(96,165,250,.22)}
-.gtag-outlier   {background:rgba(196,181,253,.12);color:#C4B5FD; border:1px solid rgba(196,181,253,.22)}
-.gtag-author    {background:rgba(253,186,116,.12);color:#FDBA74; border:1px solid rgba(253,186,116,.22)}
-.gtag-relation  {background:rgba(52,211,153,.12); color:#6EE7B7; border:1px solid rgba(52,211,153,.22)}
-
-/* 타이틀 이미지 */
-.landing-title-img{
-  position:relative;z-index:1;
-  display:block;width:100%;max-width:520px;height:auto;
-  margin:0 auto 20px;
-}
-
-/* 하단 */
-.landing-foot{
-  position:relative;z-index:1;
-  display:flex;flex-direction:column;gap:12px;
-  margin-top:auto;padding-top:4px;
-}
-.today-count{font-size:var(--t-sm);font-weight:700;color:rgba(255,229,0,.75);letter-spacing:.06em}
-.landing-meta{display:flex;gap:16px;flex-wrap:wrap}
-.meta-item{font-size:var(--t-label);font-weight:700;letter-spacing:var(--ls-mono);color:rgba(255,255,255,.3);text-transform:uppercase}
-.meta-item span{color:rgba(255,255,255,.65);font-weight:800}
-
-/* 시작 버튼 */
+/* 모드 버튼 */
 .btn-start{
-  display:flex;align-items:center;justify-content:space-between;
-  width:100%;padding:20px 24px;
   background:var(--kin);color:#000;
   font-family:'DM Mono',monospace;
-  font-size:var(--t-base);letter-spacing:var(--ls-mono);text-transform:uppercase;font-weight:700;
-  cursor:pointer;border:none;
+  font-size:var(--t-label);letter-spacing:var(--ls-mono);font-weight:700;
+  text-transform:uppercase;border:none;cursor:pointer;
+  padding:10px 20px;border-radius:8px;flex-shrink:0;
   transition:opacity .15s,transform .15s;
-  position:relative;overflow:hidden;
-  border-radius:12px;
+  white-space:nowrap;
 }
-.btn-start::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
-  transform:translateX(-100%);transition:transform .5s ease;
+.btn-start:active{transform:scale(.97)}
+.btn-start-arrow{display:none}
+.btn-mode-locked{
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.25);
+  font-family:'DM Mono',monospace;
+  font-size:var(--t-label);letter-spacing:var(--ls-mono);font-weight:700;
+  text-transform:uppercase;border:none;cursor:default;
+  padding:10px 16px;border-radius:8px;flex-shrink:0;
+  white-space:nowrap;
 }
-.btn-start:active{transform:scale(.99)}
-.btn-start-text{font-weight:700}
-.btn-start-arrow{
-  font-size:20px;
-  animation:arrow-pulse 2s ease-in-out infinite;
-}
-@keyframes arrow-pulse{
-  0%,100%{transform:translateX(0)}
-  50%{transform:translateX(5px)}
-}
+
+/* 랜딩 메타 */
+.today-count{font-size:var(--t-label);color:rgba(255,229,0,.65);letter-spacing:.06em}
+.landing-meta-item{font-size:var(--t-label);color:rgba(255,255,255,.22);letter-spacing:var(--ls-mono);text-transform:uppercase}
 
 /* ── 퀴즈 배경 이미지 ── */
 #quiz-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
@@ -349,7 +359,6 @@ body{
   border-radius:10px;
 }
 @media(hover:hover){
-  .btn-start:hover::before{transform:translateX(100%)}
   .btn-start:hover{opacity:.88}
   .h-back:hover{color:var(--kin)}
   .choice-btn:hover:not(:disabled){
@@ -632,7 +641,7 @@ body{
   font-size:80px;color:#FFE500;letter-spacing:var(--ls-tight);line-height:1;
   font-synthesis:none;
 }
-.sc-score-denom{font-size:16px;color:rgba(255,255,255,.35);letter-spacing:.08em}
+.sc-score-denom{font-size:var(--t-base);color:rgba(255,255,255,.35);letter-spacing:.08em}
 .sc-bar-wrap{margin:10px 20px 0;height:3px;background:rgba(255,255,255,.1);border-radius:2px;}
 .sc-bar{height:100%;background:#FFE500;border-radius:2px}
 .sc-footer{padding:12px 20px 18px;font-size:var(--t-label);letter-spacing:var(--ls-wide);color:rgba(255,229,0,.35);}
@@ -658,7 +667,6 @@ body{
   }
   .quiz-question{margin-bottom:20px}
   .choice-btn{min-height:58px;padding:15px 16px}
-  .landing-title{line-height:1}
   .kin-reaction{margin-top:14px}
   .kin-rxn-avatar{width:48px;height:48px}
   .kin-rxn-bubble{font-size:var(--t-sm);padding:10px 14px}
@@ -668,7 +676,7 @@ body{
 @media(prefers-reduced-motion:reduce){
   #grain,.choice-btn,.quiz-question,#streak-glow,.streak-particle,
   .speedlines,.manga-gate,.btn-start-arrow,
-  .landing-marquee-track,#quiz-bg img{
+  #quiz-bg img{
     animation:none!important;transition:none!important
   }
 }
@@ -699,47 +707,67 @@ body{
 <!-- ══════ LANDING ══════ -->
 <div class="page active" id="page-landing">
 
-  <!-- 만화 배경 — 랜딩 페이지 안에만 -->
-  <div class="manga-bg" id="manga-bg" aria-hidden="true">
+  <!-- 배경 -->
+  <div class="manga-bg" aria-hidden="true">
     <img class="speedlines" src="./assets/speedlines.webp" alt="">
     <img class="manga-gate" id="manga-gate" src="./assets/manga_gate2.png" alt="">
   </div>
-  <div class="landing-eyebrow">KIN의 만화퀴즈 — 일본 만화 · 애니</div>
-  <div class="landing-hero">
-    <div class="landing-title">KIN과 함께하는<br>만화퀴즈</div>
-    <div class="landing-marquee">
-      <div class="landing-marquee-track">
-        <span class="landing-marquee-text">お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; </span>
-        <span class="landing-marquee-text" aria-hidden="true">お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; お前はもう解いている &nbsp;·&nbsp; </span>
+
+  <div class="landing-v4">
+
+    <!-- KIN 영역 -->
+    <div class="landing-v4-kin">
+      <div class="kin-bubble-landing">
+        <img class="kin-avatar-landing" id="landing-kin-avatar" src="./assets/kin_thinking1.webp" alt="KIN">
+        <div class="kin-bubble-text" id="landing-kin-bubble">넌 어떤 덕후야.</div>
       </div>
     </div>
-  </div>
 
-  <!-- 장르 태그 -->
-  <div class="genre-tags">
-    <span class="gtag gtag-work">설정</span>
-    <span class="gtag gtag-character">캐릭터</span>
-    <span class="gtag gtag-outlier">아닌것</span>
-    <span class="gtag gtag-author">작가</span>
-    <span class="gtag gtag-relation">관계</span>
-  </div>
+    <!-- 모드 카드 영역 -->
+    <div class="landing-v4-modes">
 
-  <!-- 타이틀 이미지 -->
-  <img class="landing-title-img" src="./assets/title_image.png" alt="">
+      <!-- 퀴즈 -->
+      <div class="mode-card mode-card-active" id="mode-quiz">
+        <div>
+          <div class="mode-label" id="mode-quiz-label" style="color:rgba(255,229,0,.6)">퀴즈</div>
+          <div class="mode-title" id="mode-quiz-title">10문제 · KIN 판정</div>
+          <div class="mode-sub" id="mode-quiz-sub">설정 · 캐릭터 · 관계 · 작가</div>
+        </div>
+        <button class="btn-start" id="btn-start">
+          <span class="btn-start-text">시작</span>
+          <span class="btn-start-arrow"></span>
+        </button>
+      </div>
 
-  <!-- 하단 -->
-  <div class="landing-foot">
-    <div id="today-count" class="today-count"></div>
-    <div class="landing-meta">
-      <div class="meta-item">총 <span id="txt-total-q">—</span>문제 풀</div>
-      <div class="meta-item">10문제</div>
-      <div class="meta-item">KIN 판정</div>
+      <!-- 캐릭터 월드컵 -->
+      <div class="mode-card mode-card-locked">
+        <div>
+          <div class="mode-label" style="color:rgba(255,255,255,.28)">캐릭터 월드컵</div>
+          <div class="mode-title" style="color:rgba(255,255,255,.45)">최애 캐릭터 가려내기</div>
+          <div class="mode-sub">1:1 대결 · 토너먼트</div>
+        </div>
+        <div class="btn-mode-locked">준비 중</div>
+      </div>
+
+      <!-- 작품 월드컵 -->
+      <div class="mode-card mode-card-locked">
+        <div>
+          <div class="mode-label" style="color:rgba(255,255,255,.28)">작품 월드컵</div>
+          <div class="mode-title" style="color:rgba(255,255,255,.45)">최애 작품 가려내기</div>
+          <div class="mode-sub">1:1 대결 · 토너먼트</div>
+        </div>
+        <div class="btn-mode-locked">준비 중</div>
+      </div>
+
     </div>
-    <button class="btn-start" id="btn-start">
-      <span class="btn-start-text">도전하기</span>
-      <span class="btn-start-arrow">→</span>
-    </button>
-    <div style="height:max(48px,env(safe-area-inset-bottom))"></div>
+
+    <!-- 메타 (모바일만) -->
+    <div class="landing-v4-meta">
+      <span class="today-count" id="today-count"></span>
+      <span class="landing-meta-item">총 <span id="txt-total-q">—</span>문제</span>
+      <span class="landing-meta-item">KIN 판정</span>
+    </div>
+
   </div>
 </div>
 
@@ -1720,6 +1748,9 @@ async function saveSession(pattern) {
     });
   } catch{}
 
+  // 퀴즈 완료 기록 (랜딩 상태 업데이트용)
+  localStorage.setItem('k2_quiz_done', '1');
+
   // KIN 에이전트 이벤트 (fire-and-forget)
   fetch(`${API_URL}/api/kin/event`,{
     method:'POST',
@@ -1947,28 +1978,51 @@ function applyLandingLang() {
   const lp = document.getElementById('page-landing');
   if(!lp) return;
   const qs = sel => lp.querySelector(sel);
-  if(lang==='en') {
-    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = "KIN's Manga Quiz — Japanese Manga · Anime";
-    if(qs('.landing-title'))       qs('.landing-title').innerHTML         = "Manga Quiz<br>with KIN";
-    if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = 'Manga · Anime Quiz';
-    if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = 'Take the quiz';
-    lp.querySelectorAll('.gtag').forEach((el,i)=>{
-      const labels=['setting','character','odd one','author','relation'];
-      el.textContent=labels[i]||el.textContent;
-    });
-    const mg = document.getElementById('manga-gate');
-    if(mg) mg.src = './assets/manga_gate1.png';
+  const isEn = lang === 'en';
+
+  // 버튼 텍스트
+  const startBtn = document.getElementById('btn-start');
+  if(startBtn) startBtn.querySelector('.btn-start-text').textContent = isEn ? 'Start' : '시작';
+
+  // 모드 레이블
+  const quizLabel = lp.querySelector('#mode-quiz-label');
+  const quizTitle = lp.querySelector('#mode-quiz-title');
+  const quizSub   = lp.querySelector('#mode-quiz-sub');
+  if(quizLabel) quizLabel.textContent = isEn ? 'Quiz' : '퀴즈';
+  if(quizTitle) quizTitle.textContent = isEn ? '10 questions · KIN judges' : '10문제 · KIN 판정';
+  if(quizSub)   quizSub.textContent   = isEn ? 'setting · character · relation · author' : '설정 · 캐릭터 · 관계 · 작가';
+
+  // KIN 버블 — 완료 여부에 따라
+  updateLandingState();
+
+  // manga-gate 이미지
+  const mg = document.getElementById('manga-gate');
+  if(mg) mg.src = isEn ? './assets/manga_gate1.png' : './assets/manga_gate2.png';
+}
+
+function updateLandingState() {
+  const quizDone  = !!localStorage.getItem('k2_quiz_done');
+  const bubble    = document.getElementById('landing-kin-bubble');
+  const modeQuiz  = document.getElementById('mode-quiz');
+  const avatar    = document.getElementById('landing-kin-avatar');
+  const isEn      = lang === 'en';
+
+  if(quizDone) {
+    if(bubble) bubble.textContent = isEn
+      ? "Quiz alone wasn't enough."
+      : "퀴즈만으론 다 못 읽었어.";
+    if(modeQuiz) {
+      modeQuiz.className = 'mode-card mode-card-done';
+      const label = modeQuiz.querySelector('.mode-label');
+      const btn   = modeQuiz.querySelector('.btn-start');
+      if(label) { label.textContent = isEn ? 'Quiz · Done' : '퀴즈 · 완료'; label.style.color='rgba(74,222,128,.7)'; }
+      if(btn)   { btn.textContent = isEn ? 'Again' : '다시'; }
+    }
+    if(avatar) avatar.src = KIN_IMGS.happy;
   } else {
-    if(qs('.landing-eyebrow'))     qs('.landing-eyebrow').textContent     = 'KIN의 만화퀴즈 — 일본 만화 · 애니';
-    if(qs('.landing-title'))       qs('.landing-title').innerHTML         = 'KIN과 함께하는<br>만화퀴즈';
-    if(qs('#landing-genre-label')) qs('#landing-genre-label').textContent = '일본 만화 · 애니 퀴즈';
-    if(qs('.btn-start-text'))      qs('.btn-start-text').textContent      = '도전하기';
-    lp.querySelectorAll('.gtag').forEach((el,i)=>{
-      const labels=['설정','캐릭터','아닌것','작가','관계'];
-      el.textContent=labels[i]||el.textContent;
-    });
-    const mg = document.getElementById('manga-gate');
-    if(mg) mg.src = './assets/manga_gate2.png';
+    if(bubble) bubble.textContent = isEn ? "What kind of fan are you." : "넌 어떤 덕후야.";
+    if(modeQuiz) modeQuiz.className = 'mode-card mode-card-active';
+    if(avatar) avatar.src = KIN_IMGS.thinking;
   }
 }
 (async()=>{

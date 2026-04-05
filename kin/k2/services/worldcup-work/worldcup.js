@@ -242,11 +242,12 @@ async function renderMatch() {
 
   // 이미지 초기화
   const bgA = $('wc-bg-a'), bgB = $('wc-bg-b');
-  const imgA = bgA.closest('.wc-work-img'), imgB = bgB.closest('.wc-work-img');
-  bgA.style.backgroundImage = '';
-  bgB.style.backgroundImage = '';
-  imgA.classList.remove('img-loaded');
-  imgB.classList.remove('img-loaded');
+  const imgA = bgA?.closest('.wc-work-img');
+  const imgB = bgB?.closest('.wc-work-img');
+  if (bgA) bgA.style.backgroundImage = '';
+  if (bgB) bgB.style.backgroundImage = '';
+  imgA?.classList.remove('img-loaded');
+  imgB?.classList.remove('img-loaded');
 
   // 카드/VS 초기 상태로 리셋
   const wa = $('wc-work-a'), wb = $('wc-work-b'), vs = $('wc-vs');
@@ -285,7 +286,7 @@ async function loadCoverAnimated(work, bgEl, imgWrap) {
     ? `url(${url})`
     : `url(/kin/k2/assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`;
   await sleep(80);
-  imgWrap.classList.add('img-loaded');
+  imgWrap?.classList.add('img-loaded');
 }
 
 // ── 선택 처리 ──

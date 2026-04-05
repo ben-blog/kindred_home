@@ -174,12 +174,18 @@ body{
     padding:100px 48px 40px;
     justify-content:center;
     gap:12px;
+    background:var(--bg); /* 오른쪽 패널 배경 명시적으로 덮기 */
+    position:relative;z-index:2;
   }
   .landing-v4-meta{display:none}
+  /* PC: manga-bg를 왼쪽 40%만 커버 */
+  .manga-bg{width:40%;right:auto;}
   .manga-gate{
-    width:min(38vw,360px);
-    opacity:.2;
+    width:min(75%,360px);
+    opacity:.25;
+    right:0;
   }
+  .speedlines{opacity:.08;}
 }
 
 /* KIN 말풍선 */
@@ -2020,6 +2026,28 @@ function applyLandingLang() {
 
   // KIN 버블 — 완료 여부에 따라
   updateLandingState();
+
+  // 월드컵 카드 텍스트
+  const lockedCards = lp.querySelectorAll('.mode-card-locked');
+  if(lockedCards[0]) {
+    const l = lockedCards[0];
+    l.querySelector('.mode-label').textContent = isEn ? 'Character Worldcup' : '캐릭터 월드컵';
+    l.querySelector('.mode-title').textContent = isEn ? 'Pick your favorite character' : '최애 캐릭터 가려내기';
+    l.querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
+  }
+  if(lockedCards[1]) {
+    const l = lockedCards[1];
+    l.querySelector('.mode-label').textContent = isEn ? 'Work Worldcup' : '작품 월드컵';
+    l.querySelector('.mode-title').textContent = isEn ? 'Pick your favorite work' : '최애 작품 가려내기';
+    l.querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
+  }
+  lp.querySelectorAll('.btn-mode-locked').forEach(btn => {
+    btn.textContent = isEn ? 'Coming soon' : '준비 중';
+  });
+
+  // 메타 아이템
+  const metaItems = lp.querySelectorAll('.landing-meta-item');
+  if(metaItems[1]) metaItems[1].textContent = isEn ? 'KIN judges' : 'KIN 판정';
 
   // manga-gate 이미지
   const mg = document.getElementById('manga-gate');

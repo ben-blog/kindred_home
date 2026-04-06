@@ -180,13 +180,15 @@ async function loadWorks(category) {
 // ══════════════════════════════════════════
 
 function selectWorks(works) {
-  const byTier = tier => shuffle(works.filter(w => w.popularity_tier === tier));
-  const S = byTier('S'), A = byTier('A'), B = byTier('B');
-  const sCount = S.length;
-  const remain = 16 - sCount;
-  const aCount = Math.min(A.length, Math.ceil(remain / 2));
-  const bCount = Math.min(B.length, remain - aCount);
-  return shuffle([...S.slice(0, sCount), ...A.slice(0, aCount), ...B.slice(0, bCount)]).slice(0, 16);
+  const S = shuffle(works.filter(w => w.popularity_tier === 'S'));
+  const A = shuffle(works.filter(w => w.popularity_tier === 'A'));
+  const B = shuffle(works.filter(w => w.popularity_tier === 'B'));
+
+  const picked = [...S];
+  picked.push(...A.slice(0, 16 - picked.length));
+  picked.push(...B.slice(0, 16 - picked.length));
+
+  return shuffle(picked).slice(0, 16);
 }
 
 function buildBracket(works) {

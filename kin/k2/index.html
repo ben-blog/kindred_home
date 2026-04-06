@@ -1925,12 +1925,14 @@ function selectAnswer(selected) {
   flashProgressDot(state.currentIndex, isCorrect);
 
   // 선택지 색상
+  const norm = s => s ? s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim() : '';
+  const correctNorm = norm(correct);
   let correctFound = false;
   DOM.qChoices.querySelectorAll('.choice-btn').forEach(btn=>{
     btn.disabled=true;
-    const c = btn.dataset.choice;
-    if(c === correct) { btn.classList.add('correct'); correctFound = true; }
-    else if(c === selected && !isCorrect) btn.classList.add('wrong');
+    const c = norm(btn.dataset.choice);
+    if(c === correctNorm) { btn.classList.add('correct'); correctFound = true; }
+    else if(c === norm(selected) && !isCorrect) btn.classList.add('wrong');
     else btn.classList.add('faded');
   });
   if(!correctFound) {
@@ -1938,15 +1940,16 @@ function selectAnswer(selected) {
     console.warn('correct:', JSON.stringify(correct), correct.split('').map(c=>c.charCodeAt(0)));
     DOM.qChoices.querySelectorAll('.choice-btn').forEach((btn,i)=>{
       const c = btn.dataset.choice;
-      console.warn(`choice[${i}]:`, JSON.stringify(c), c.split('').map(x=>x.charCodeAt(0)), '일치:', c===correct);
+      console.warn(`choice[${i}]:`, JSON.stringify(c), c.split('').map(x=>x.charCodeAt(0)), '일치:', norm(c)===correctNorm);
     });
   }
 
   // 오답 선택 시 정답 강조 + 뱃지
   if(!isCorrect) {
     setTimeout(()=>{
+      const norm2 = s => s ? s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim() : '';
       DOM.qChoices.querySelectorAll('.choice-btn').forEach(b=>{
-        if(b.dataset.choice === correct) {
+        if(norm2(b.dataset.choice) === norm2(correct)) {
           b.classList.add('attention');
           const badge = document.createElement('span');
           badge.className = 'answer-badge';

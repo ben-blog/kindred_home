@@ -162,7 +162,7 @@
   font-size:clamp(var(--t-base),4vw,var(--t-md));
   line-height:1.75;color:#fff;
   margin-bottom:24px;min-height:68px;
-  text-wrap:balance;z-index:2;
+  text-wrap:balance;word-break:keep-all;z-index:2;
 }
 .quiz-question.direction-recall{
   position:relative;padding:18px 20px;

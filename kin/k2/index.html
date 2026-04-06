@@ -849,7 +849,7 @@ body{
 
 <!-- HEADER -->
 <header id="header">
-  <a class="h-back" href="../index.html">← KIN</a>
+  <a class="h-back" href="/kin/">← KIN</a>
   <div class="h-name" id="h-title">난 어떤 덕후?</div>
   <div id="lang-toggle">
     <span class="lt active" data-lang="ko">KO</span>
@@ -997,7 +997,7 @@ body{
   <div class="result-btns">
     <button class="btn-primary"   id="btn-share">공유하기</button>
     <button class="btn-secondary" id="btn-retry">다시 하기</button>
-    <a      class="btn-secondary" href="../index.html" id="btn-gallery">← 갤러리</a>
+    <a      class="btn-secondary" href="/kin/" id="btn-gallery">← 갤러리</a>
   </div>
 </div>
 
@@ -2170,13 +2170,14 @@ async function showResult() {
       const item=state.questions.find(q=>q.item_id===a.item_id);
       if(!item) return;
       const qText = lang==='ko'?item.question:(item.question_en||item.question);
+      const ans   = lang==='ko'?(item.correctAnswerKo||a.correct_answer):(item.correctAnswerEn||a.correct_answer);
       const div=document.createElement('div');
       div.className='wrong-item';
       const qDiv=document.createElement('div');
       qDiv.textContent=qText.slice(0,55)+(qText.length>55?'…':'');
       const aDiv=document.createElement('div');
       aDiv.className='wrong-item-answer';
-      aDiv.textContent=`→ ${a.correct_answer}`;
+      aDiv.textContent=`→ ${ans}`;
       div.appendChild(qDiv);
       div.appendChild(aDiv);
       wl.appendChild(div);
@@ -2299,29 +2300,28 @@ async function generateShareImage() {
   if(scTitle) scTitle.textContent = lang==='en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
 
   // 작품 이미지 처리
-  // 커버 배경 (새 A 디자인)
-  const coverBg = document.getElementById('sc-cover-bg');
+  const coverBg  = document.getElementById('sc-cover-bg');
   const imgWrap  = document.getElementById('sc-work-img-wrap');
   const headerWork = document.getElementById('sc-header-work');
-  const malId    = state.topWork?.mal_id;
   const workName = state.topWork?.name || '';
 
-  headerWork.textContent = workName;
-  imgWrap.style.display  = 'none';
+  if(headerWork) headerWork.textContent = workName;
+  if(imgWrap) imgWrap.style.display = 'none';
 
   if(workName) {
     const cachedUrl = state.topWork?.cover_url;
+    const applyUrl = url => {
+      if(url) {
+        if(coverBg)  coverBg.style.backgroundImage = `url(${url})`;
+        if(imgWrap) { imgWrap.style.backgroundImage = `url(${url})`; imgWrap.style.display = 'block'; }
+      }
+    };
     if(cachedUrl) {
-      imgWrap.style.backgroundImage = `url(${cachedUrl})`;
-      imgWrap.style.display = 'block';
+      applyUrl(cachedUrl);
     } else {
       try {
         const rows = await supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`);
-        const coverUrl = rows?.[0]?.cover_url;
-        if(coverUrl) {
-          imgWrap.style.backgroundImage = `url(${coverUrl})`;
-          imgWrap.style.display = 'block';
-        }
+        applyUrl(rows?.[0]?.cover_url);
       } catch{}
     }
   }
@@ -2503,15 +2503,13 @@ function applyResultLang() {
       const item = state.questions.find(q=>q.item_id===a.item_id);
       if(!item) return;
       const qText = isEn ? (item.question_en||item.question) : item.question;
+      const ans   = isEn ? (item.correctAnswerEn||a.correct_answer) : (item.correctAnswerKo||a.correct_answer);
       const div = document.createElement('div');
       div.className = 'wrong-item';
       const qDiv = document.createElement('div');
       qDiv.textContent = qText.slice(0,55)+(qText.length>55?'…':'');
       const aDiv = document.createElement('div');
       aDiv.className = 'wrong-item-answer';
-      // 현재 lang에 맞는 정답 표시
-      const qItem = state.questions.find(q=>q.item_id===a.item_id);
-      const ans = isEn ? (qItem?.correctAnswerEn || a.correct_answer) : (qItem?.correctAnswerKo || a.correct_answer);
       aDiv.textContent = `→ ${ans}`;
       div.appendChild(qDiv); div.appendChild(aDiv);
       wl.appendChild(div);

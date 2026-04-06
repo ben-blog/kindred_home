@@ -646,8 +646,8 @@ async function generateBracketShareImage() {
 
   // 색상
   const COL = { bg: '#080806', yellow: '#FFE500', dim: 'rgba(255,255,255,.12)',
-                text: 'rgba(255,255,255,.85)', muted: 'rgba(255,255,255,.35)',
-                lineWin: '#FFE500', lineLose: 'rgba(255,255,255,.1)' };
+                text: 'rgba(255,255,255,.85)', muted: 'rgba(255,255,255,.4)',
+                lineWin: '#FFE500', lineLose: 'rgba(255,255,255,.18)' };
 
   // 배경
   ctx.fillStyle = COL.bg;
@@ -659,33 +659,75 @@ async function generateBracketShareImage() {
   ctx.textAlign = 'left';
   ctx.fillText((isEn ? 'MY BRACKET · KIN WORLDCUP' : '대진표 · KIN 월드컵').toUpperCase(), 32, 36);
 
-  // ── 연결선 그리기 ──
-  function drawLine(x1, y1, x2, y2, isPath) {
+  // ── 스포츠 대진표 직각 연결선 ──
+  // parent(px, pyBot) → 두 자식(c1x, c2x at cyTop) 사이 직각 브라켓 연결
+  function drawBracketConn(px, pyBot, c1x, c2x, cyTop, isPath1, isPath2) {
+    const midY = (pyBot + cyTop) / 2;
+    const winX  = isPath1 ? c1x : isPath2 ? c2x : null;
+
+    // 배경 수평 바 (dimmed)
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    const midY = (y1 + y2) / 2;
-    ctx.bezierCurveTo(x1, midY, x2, midY, x2, y2);
-    ctx.strokeStyle = isPath ? COL.lineWin : COL.lineLose;
-    ctx.lineWidth   = isPath ? 2.5 : 1;
+    ctx.moveTo(Math.min(c1x, c2x), midY);
+    ctx.lineTo(Math.max(c1x, c2x), midY);
+    ctx.strokeStyle = COL.lineLose;
+    ctx.lineWidth = 1;
     ctx.stroke();
+
+    // 부모 세로선 (아래로)
+    ctx.beginPath();
+    ctx.moveTo(px, pyBot);
+    ctx.lineTo(px, midY);
+    ctx.strokeStyle = winX !== null ? COL.lineWin : COL.lineLose;
+    ctx.lineWidth   = winX !== null ? 2.5 : 1;
+    ctx.stroke();
+
+    // 우승 경로 수평 강조
+    if (winX !== null) {
+      ctx.beginPath();
+      ctx.moveTo(winX, midY);
+      ctx.lineTo(px, midY);
+      ctx.strokeStyle = COL.lineWin;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    // 자식1 세로선 (위로)
+    ctx.beginPath();
+    ctx.moveTo(c1x, cyTop);
+    ctx.lineTo(c1x, midY);
+    ctx.strokeStyle = isPath1 ? COL.lineWin : COL.lineLose;
+    ctx.lineWidth   = isPath1 ? 2.5 : 1;
+    ctx.stroke();
+
+    // 자식2 세로선 (위로)
+    ctx.beginPath();
+    ctx.moveTo(c2x, cyTop);
+    ctx.lineTo(c2x, midY);
+    ctx.strokeStyle = isPath2 ? COL.lineWin : COL.lineLose;
+    ctx.lineWidth   = isPath2 ? 2.5 : 1;
+    ctx.stroke();
+
+    // 접합점 작은 원 (가독성)
+    [c1x, c2x].forEach(cx => {
+      ctx.beginPath();
+      ctx.arc(cx, midY, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = cx === winX ? COL.lineWin : 'rgba(255,255,255,.2)';
+      ctx.fill();
+    });
   }
 
-  // 결승 ↔ 4강 연결
-  drawLine(xR2, Y.final + 50, xR4[0], Y.sf - 36, wIdx4 === 0);
-  drawLine(xR2, Y.final + 50, xR4[1], Y.sf - 36, wIdx4 === 1);
+  // 결승 ↔ 4강
+  drawBracketConn(xR2, Y.final + 68, xR4[0], xR4[1], Y.sf - 46, wIdx4 === 0, wIdx4 === 1);
 
-  // 4강 ↔ 8강 연결
+  // 4강[0] ↔ 8강[0,1]
+  drawBracketConn(xR4[0], Y.sf + 46, xR8[0], xR8[1], Y.qf - 22, wIdx8 === 0, wIdx8 === 1);
+  // 4강[1] ↔ 8강[2,3]
+  drawBracketConn(xR4[1], Y.sf + 46, xR8[2], xR8[3], Y.qf - 22, wIdx8 === 2, wIdx8 === 3);
+
+  // 8강 ↔ 16강 (4개)
   [0,1,2,3].forEach(i => {
-    const sfIdx = Math.floor(i / 2);
-    const isPath = (i === wIdx8);
-    drawLine(xR8[i], Y.sf + 36, xR4[sfIdx], Y.qf - 10, isPath);
-  });
-
-  // 8강 ↔ 16강 연결
-  [0,1,2,3,4,5,6,7].forEach(i => {
-    const qfIdx = Math.floor(i / 2);
-    const isPath = (i === wIdx16);
-    drawLine(xR16[i], Y.qf + 10, xR8[qfIdx], Y.r16 - 10, isPath);
+    drawBracketConn(xR8[i], Y.qf + 20, xR16[i*2], xR16[i*2+1], Y.r16 - 16,
+      wIdx16 === i*2, wIdx16 === i*2+1);
   });
 
   // ── 원형 이미지 그리기 (결승/4강) ──

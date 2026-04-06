@@ -358,19 +358,115 @@ async function loadCoverCached(work, bgEl) {
 }
 
 function getWcObs(winner, isEn) {
-  const tier  = winner.popularity_tier;
-  const title = winner.title_ko;
+  const tier    = winner.popularity_tier;
+  const title   = isEn ? winner.title_en : winner.title_ko;
+  const titleKo = winner.title_ko;
+
+  // 히스토리에서 우승자 경로 추출
+  const path = state.history.filter(h => h.winner.id === winner.id);
+
+  // 결승 상대
+  const finalMatch = state.history.find(h => h.round === 2);
+  const finalist   = finalMatch
+    ? (isEn ? finalMatch.loser.title_en : finalMatch.loser.title_ko)
+    : null;
+
+  // S급 상대를 꺾은 횟수
+  const sKills = path.filter(h => h.loser.popularity_tier === 'S').length;
+
+  // 가장 높은 라운드 (16→8→4→2 순)
+  const roundsWon = path.map(h => h.round).sort((a, b) => a - b); // 2=결승, 16=16강
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
   if (isEn) {
-    const en = winner.title_en;
-    if (tier === 'S') return `You went with the classic. ${en} as your winner says you trust what's already been proven.`;
-    if (tier === 'A') return `Interesting. You passed on the obvious choices and landed on ${en}. That's a real preference, not just familiarity.`;
-    return `${en} winning this says something. You're not picking by reputation. You're picking by feel.`;
+    const lines = [];
+
+    // B: 결승 상대 언급
+    if (finalist) {
+      lines.push(pick([
+        `${title} beat ${finalist} in the final. That matchup alone says something about you.`,
+        `You chose ${title} over ${finalist} in the end. That's not a random call.`,
+      ]));
+    }
+
+    // C: S급 격파 횟수
+    if (sKills >= 2) {
+      lines.push(pick([
+        `Took down ${sKills} S-tier picks along the way. You weren't going with the crowd.`,
+        `${sKills} big names went down to ${title}. You knew what you wanted.`,
+      ]));
+    } else if (sKills === 1) {
+      lines.push(pick([
+        `Knocked out a heavy favorite somewhere in there. This wasn't a safe pick.`,
+      ]));
+    }
+
+    // tier 기반
+    if (tier === 'S') {
+      lines.push(pick([
+        `Classic choice. But the path you took to get here was yours alone.`,
+        `${title} is proven. What's interesting is everything you passed on the way.`,
+      ]));
+    } else if (tier === 'A') {
+      lines.push(pick([
+        `Not the obvious pick. That's a real preference showing.`,
+        `You had bigger names to choose from and still landed here. That means something.`,
+      ]));
+    } else {
+      lines.push(pick([
+        `${title} winning this isn't about reputation. You're picking by feel.`,
+        `This one doesn't win most brackets. Which makes it more interesting.`,
+      ]));
+    }
+
+    return lines.slice(0, 2).join(' ');
   }
-  const ga  = getJosa(title, '이/가');
-  const eul = getJosa(title, '을/를');
-  if (tier === 'S') return `${title}${eul} 골랐구나. 검증된 걸 고른 거야. 근데 그게 네 취향이랑 딱 맞는다는 거잖아.`;
-  if (tier === 'A') return `${title}까지 올라올 줄은 몰랐어. 유명한 것보다 네 결에 맞는 걸 고른 거야.`;
-  return `${title}${ga} 우승이라니. 인지도랑 상관없이 뭔가 다른 기준으로 고른 거야. 그 기준이 뭔지 나도 궁금하다.`;
+
+  // 한국어
+  const ga  = getJosa(titleKo, '이/가');
+  const eul = getJosa(titleKo, '을/를');
+  const lines = [];
+
+  // B: 결승 상대 언급
+  if (finalist) {
+    lines.push(pick([
+      `${finalist}를 제치고 ${title}${eul} 골랐구나. 그 선택이 네 취향을 말해줘.`,
+      `결승에서 ${finalist} 대신 ${title}. 쉬운 선택은 아니었을 텐데.`,
+    ]));
+  }
+
+  // C: S급 격파 횟수
+  if (sKills >= 2) {
+    lines.push(pick([
+      `오는 길에 S급을 ${sKills}개나 꺾었어. 그냥 유명한 걸 고른 게 아니야.`,
+      `${sKills}개 강팀을 넘어왔네. 네 기준이 뚜렷한 거야.`,
+    ]));
+  } else if (sKills === 1) {
+    lines.push(pick([
+      `오는 길에 만만찮은 상대를 하나 꺾었어. 안전한 선택이 아니었다는 거야.`,
+    ]));
+  }
+
+  // tier 기반
+  if (tier === 'S') {
+    lines.push(pick([
+      `${title}${eul} 골랐구나. 검증된 거 맞아. 근데 여기까지 오는 길이 더 흥미로워.`,
+      `결국 ${title}${ga} 남았네. 취향이랑 딱 맞는다는 거잖아.`,
+    ]));
+  } else if (tier === 'A') {
+    lines.push(pick([
+      `${title}까지 올라올 줄은 몰랐어. 유명한 것보다 네 결에 맞는 걸 고른 거야.`,
+      `더 유명한 것들 다 제치고 ${title}${ga} 남았어. 그게 진짜 취향이야.`,
+    ]));
+  } else {
+    lines.push(pick([
+      `${title}${ga} 우승이라니. 인지도랑 상관없이 다른 기준으로 고른 거야. 그 기준이 뭔지 나도 궁금해.`,
+      `${title}이 여기까지 온 거, 대부분 예상 못 했을 거야. 근데 네 선택은 일관됐어.`,
+    ]));
+  }
+
+  return lines.slice(0, 2).join(' ');
 }
 
 function renderResultContent(isEn) {

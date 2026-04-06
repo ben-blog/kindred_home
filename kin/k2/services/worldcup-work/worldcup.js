@@ -606,8 +606,7 @@ async function generateBracketShareImage() {
 
   // 커버 이미지 미리 로드
   const loadImg = async work => {
-    if (!work?.mal_id) return null;
-    const url = await fetchAniListCover(work.mal_id).catch(() => null);
+    const url = work?.cover_url || (work?.mal_id ? await fetchAniListCover(work.mal_id).catch(() => null) : null);
     if (!url) return null;
     return new Promise(res => {
       const img = new Image();
@@ -628,14 +627,14 @@ async function generateBracketShareImage() {
   }));
 
   // Canvas 설정
-  const W = 750, H = 660;
+  const W = 1200, H = 760;
   const canvas = document.createElement('canvas');
   canvas.width = W * 2; canvas.height = H * 2;
   const ctx = canvas.getContext('2d');
   ctx.scale(2, 2);
 
   // Y 레이어
-  const Y = { final: 110, sf: 240, qf: 358, r16: 460, footer: 620 };
+  const Y = { final: 130, sf: 290, qf: 430, r16: 560, footer: 720 };
   // X 위치 계산 (8개 슬롯 균등 분배)
   const slotW = W / 8;
   const xR16 = Array.from({length: 8}, (_, i) => slotW * (i + 0.5));
@@ -653,10 +652,10 @@ async function generateBracketShareImage() {
   ctx.fillRect(0, 0, W, H);
 
   // 헤더
-  ctx.font = '500 10px "DM Mono"';
+  ctx.font = '500 12px "DM Mono"';
   ctx.fillStyle = 'rgba(255,229,0,.5)';
   ctx.textAlign = 'left';
-  ctx.fillText((isEn ? 'MY BRACKET · KIN WORLDCUP' : '대진표 · KIN 월드컵').toUpperCase(), 24, 28);
+  ctx.fillText((isEn ? 'MY BRACKET · KIN WORLDCUP' : '대진표 · KIN 월드컵').toUpperCase(), 32, 36);
 
   // ── 연결선 그리기 ──
   function drawLine(x1, y1, x2, y2, isPath) {
@@ -714,93 +713,93 @@ async function generateBracketShareImage() {
 
   function drawName(work, x, y, isWinner) {
     const name = work ? (isEn ? work.title_en : work.title_ko) : '?';
-    ctx.font = `${isWinner ? '700' : '400'} 11px sans-serif`;
+    ctx.font = `${isWinner ? '700' : '400'} 13px sans-serif`;
     ctx.fillStyle = isWinner ? COL.yellow : COL.muted;
     ctx.textAlign = 'center';
     ctx.fillText(name.length > 8 ? name.slice(0, 7) + '…' : name, x, y);
   }
 
-  // 결승 (큰 원 r=46)
+  // 결승 (큰 원 r=64)
   if (r2[0]) {
-    await drawCircle(r2[0].winner, xR2 - 56, Y.final, 46, true);
-    drawName(r2[0].winner, xR2 - 56, Y.final + 62, true);
-    await drawCircle(r2[0].loser, xR2 + 56, Y.final, 36, false);
-    drawName(r2[0].loser, xR2 + 56, Y.final + 52, false);
+    await drawCircle(r2[0].winner, xR2 - 76, Y.final, 64, true);
+    drawName(r2[0].winner, xR2 - 76, Y.final + 84, true);
+    await drawCircle(r2[0].loser, xR2 + 76, Y.final, 48, false);
+    drawName(r2[0].loser, xR2 + 76, Y.final + 66, false);
     // 결승 레이블
-    ctx.font = '500 9px "DM Mono"';
+    ctx.font = '500 12px "DM Mono"';
     ctx.fillStyle = 'rgba(255,229,0,.4)';
     ctx.textAlign = 'center';
-    ctx.fillText(isEn ? 'FINAL' : '결승', xR2, Y.final - 56);
+    ctx.fillText(isEn ? 'FINAL' : '결승', xR2, Y.final - 76);
   }
 
-  // 4강 (중간 원 r=30)
+  // 4강 (중간 원 r=42)
   for (let i = 0; i < r4.length; i++) {
     const m = r4[i];
     const isWinPath = i === wIdx4;
-    await drawCircle(m.winner, xR4[i] - 36, Y.sf, 30, isWinPath);
-    drawName(m.winner, xR4[i] - 36, Y.sf + 44, isWinPath);
-    await drawCircle(m.loser, xR4[i] + 36, Y.sf, 22, false);
-    drawName(m.loser, xR4[i] + 36, Y.sf + 34, false);
+    await drawCircle(m.winner, xR4[i] - 50, Y.sf, 42, isWinPath);
+    drawName(m.winner, xR4[i] - 50, Y.sf + 58, isWinPath);
+    await drawCircle(m.loser, xR4[i] + 50, Y.sf, 30, false);
+    drawName(m.loser, xR4[i] + 50, Y.sf + 44, false);
   }
   // 4강 레이블
-  ctx.font = '500 9px "DM Mono"';
+  ctx.font = '500 12px "DM Mono"';
   ctx.fillStyle = 'rgba(255,229,0,.35)';
   ctx.textAlign = 'left';
-  ctx.fillText(isEn ? 'SEMI' : '4강', 24, Y.sf - 46);
+  ctx.fillText(isEn ? 'SEMI' : '4강', 32, Y.sf - 58);
 
   // 8강 텍스트
-  ctx.font = '500 9px "DM Mono"';
+  ctx.font = '500 12px "DM Mono"';
   ctx.fillStyle = 'rgba(255,229,0,.35)';
   ctx.textAlign = 'left';
-  ctx.fillText(isEn ? 'QTR' : '8강', 24, Y.qf - 14);
+  ctx.fillText(isEn ? 'QTR' : '8강', 32, Y.qf - 18);
 
   r8.forEach((m, i) => {
     const isPath = i === wIdx8;
     const wName = isEn ? m.winner.title_en : m.winner.title_ko;
     const lName = isEn ? m.loser.title_en  : m.loser.title_ko;
     const x = xR8[i];
-    ctx.font = `700 9px sans-serif`;
+    ctx.font = `700 12px sans-serif`;
     ctx.fillStyle = isPath ? COL.yellow : 'rgba(255,255,255,.55)';
     ctx.textAlign = 'center';
-    ctx.fillText((wName.length > 6 ? wName.slice(0,5)+'…' : wName), x, Y.qf);
-    ctx.font = '400 8px sans-serif';
+    ctx.fillText((wName.length > 7 ? wName.slice(0,6)+'…' : wName), x, Y.qf);
+    ctx.font = '400 11px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,.22)';
-    ctx.fillText((lName.length > 6 ? lName.slice(0,5)+'…' : lName), x, Y.qf + 13);
+    ctx.fillText((lName.length > 7 ? lName.slice(0,6)+'…' : lName), x, Y.qf + 16);
   });
 
   // 16강 텍스트
-  ctx.font = '500 9px "DM Mono"';
+  ctx.font = '500 12px "DM Mono"';
   ctx.fillStyle = 'rgba(255,229,0,.3)';
   ctx.textAlign = 'left';
-  ctx.fillText(isEn ? 'R16' : '16강', 24, Y.r16 - 10);
+  ctx.fillText(isEn ? 'R16' : '16강', 32, Y.r16 - 14);
 
   r16.forEach((m, i) => {
     const isPath = i === wIdx16;
     const wName = isEn ? m.winner.title_en : m.winner.title_ko;
     const lName = isEn ? m.loser.title_en  : m.loser.title_ko;
     const x = xR16[i];
-    ctx.font = `700 8px sans-serif`;
+    ctx.font = `700 11px sans-serif`;
     ctx.fillStyle = isPath ? COL.yellow : 'rgba(255,255,255,.45)';
     ctx.textAlign = 'center';
-    ctx.fillText((wName.length > 5 ? wName.slice(0,4)+'…' : wName), x, Y.r16);
-    ctx.font = '400 7px sans-serif';
+    ctx.fillText((wName.length > 6 ? wName.slice(0,5)+'…' : wName), x, Y.r16);
+    ctx.font = '400 10px sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,.2)';
-    ctx.fillText((lName.length > 5 ? lName.slice(0,4)+'…' : lName), x, Y.r16 + 12);
+    ctx.fillText((lName.length > 6 ? lName.slice(0,5)+'…' : lName), x, Y.r16 + 14);
   });
 
   // 구분선
   ctx.beginPath();
-  ctx.moveTo(24, Y.footer - 20);
-  ctx.lineTo(W - 24, Y.footer - 20);
+  ctx.moveTo(32, Y.footer - 24);
+  ctx.lineTo(W - 32, Y.footer - 24);
   ctx.strokeStyle = 'rgba(255,255,255,.06)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
   // URL 푸터
-  ctx.font = '400 9px "DM Mono"';
+  ctx.font = '400 11px "DM Mono"';
   ctx.fillStyle = 'rgba(255,255,255,.2)';
   ctx.textAlign = 'left';
-  ctx.fillText('kinxdred.com/kin/k2', 24, Y.footer);
+  ctx.fillText('kinxdred.com/kin/k2', 32, Y.footer);
 
   return new Promise(r => canvas.toBlob(r, 'image/png'));
 }

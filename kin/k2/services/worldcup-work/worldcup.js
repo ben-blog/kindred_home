@@ -716,12 +716,15 @@ function applyLang(l) {
   const isEn = l === 'en';
   $('h-title').textContent = isEn ? 'Work Worldcup' : '작품 월드컵';
 
-  $('wc-intro-line').innerHTML = isEn
-    ? "This isn't about picking the best manga.<br>It's about finding out where your taste actually lands."
-    : "이건 최고의 만화를 뽑는 게임이 아니야.<br>네 취향이 어디로 기우는지 보는 월드컵이야.";
-  $('wc-intro-sub').innerHTML = isEn
-    ? "Pick a category and the 16-team tournament begins.<br>In each matchup, choose whichever feels closer to your taste."
-    : "카테고리를 선택하면 16강 토너먼트가 시작돼.<br>1:1 대결에서 네 취향에 더 가까운 쪽을 골라.";
+  $('wc-bubble-1').textContent = isEn
+    ? "You've lived inside a manga before."
+    : "만화 안에서 살아본 적 있잖아.";
+  $('wc-bubble-2').innerHTML = isEn
+    ? "A series you keep coming back to for no reason,<br>a scene you can't explain but can't forget."
+    : "이유는 모르는데 자꾸 생각나는 작품 있고,<br>설명은 못 해도 자꾸 손이 가는 장면 있고.";
+  $('wc-bubble-3').innerHTML = isEn
+    ? "What you read tells me who you are.<br>Go ahead and find out."
+    : "어떤 만화 봤는지 보면<br>어떤 사람인지 보여.<br>한번 확인해봐.";
   $('cat-battle-title').textContent   = isEn ? 'Battle & Growth'                  : '소년 배틀·성장';
   $('cat-battle-sub').textContent     = isEn ? 'Action, rivalry, and the will to grow' : '성장, 전투, 우정이 강한 작품들';
   $('cat-thriller-title').textContent = isEn ? 'Psychological Drama'              : '심리·드라마';

@@ -487,6 +487,10 @@ body{
 }
 .choice-btn.stagger{opacity:0;animation:stagger-in .25s ease forwards;}
 @keyframes stagger-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+/* stagger 애니메이션 교체 시 opacity:0 잔류 방지 — correct/wrong/faded 명시 override */
+.choice-btn.stagger.correct,
+.choice-btn.stagger.wrong{opacity:1;}
+.choice-btn.stagger.faded{opacity:.18;}
 
 /* KIN 반응 */
 .kin-reaction{

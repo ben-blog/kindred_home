@@ -426,12 +426,14 @@ function getWcObs(winner, isEn) {
   // 한국어
   const ga  = getJosa(titleKo, '이/가');
   const eul = getJosa(titleKo, '을/를');
+  const ga  = getJosa(titleKo, '이/가');
+  const finalistEul = finalist ? getJosa(finalist, '을/를') : '를';
   const lines = [];
 
   // B: 결승 상대 언급
   if (finalist) {
     lines.push(pick([
-      `${finalist}를 제치고 ${title}${eul} 골랐구나. 그 선택이 네 취향을 말해줘.`,
+      `${finalist}${finalistEul} 제치고 ${title}${eul} 골랐구나. 그 선택이 네 취향을 말해줘.`,
       `결승에서 ${finalist} 대신 ${title}. 쉬운 선택은 아니었을 텐데.`,
     ]));
   }
@@ -462,7 +464,7 @@ function getWcObs(winner, isEn) {
   } else {
     lines.push(pick([
       `${title}${ga} 우승이라니. 인지도랑 상관없이 다른 기준으로 고른 거야. 그 기준이 뭔지 나도 궁금해.`,
-      `${title}이 여기까지 온 거, 대부분 예상 못 했을 거야. 근데 네 선택은 일관됐어.`,
+      `${title}${ga} 여기까지 온 거, 대부분 예상 못 했을 거야. 근데 네 선택은 일관됐어.`,
     ]));
   }
 

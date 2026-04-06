@@ -446,6 +446,26 @@ async function showResult(winner) {
 
 let shareBlob = null, shareBlobUrl = null;
 
+// html2canvas가 object-fit:cover를 무시하므로 canvas로 직접 crop
+async function cropImageToDataUrl(url, targetW, targetH) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW; canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(targetW / img.naturalWidth, targetH / img.naturalHeight);
+      const sw = img.naturalWidth * scale;
+      const sh = img.naturalHeight * scale;
+      ctx.drawImage(img, (targetW - sw) / 2, (targetH - sh) / 2, sw, sh);
+      resolve(canvas.toDataURL('image/jpeg', 0.92));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 async function generateResultShareImage() {
   if (!window.html2canvas) throw new Error('no html2canvas');
   const winner = state.resultWinner;
@@ -458,10 +478,10 @@ async function generateResultShareImage() {
   const imgEl = $('sc-main-img');
   const coverUrl = winner.cover_url || (winner.mal_id ? await fetchAniListCover(winner.mal_id).catch(() => null) : null);
   if (coverUrl) {
-    await new Promise(r => {
-      imgEl.onload = r; imgEl.onerror = r;
-      imgEl.src = coverUrl;
-    });
+    const dataUrl = await cropImageToDataUrl(coverUrl, 375, 220);
+    if (dataUrl) {
+      await new Promise(r => { imgEl.onload = r; imgEl.onerror = r; imgEl.src = dataUrl; });
+    }
   }
 
   const canvas = await html2canvas($('sc-main'), {

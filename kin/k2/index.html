@@ -1840,6 +1840,7 @@ function renderQuestion() {
   const q = state.questions[state.currentIndex];
   if(!q) return;
   state.answered = false;
+  swipeReady = false;
 
   const diff = q.difficulty;
   setDiffOverlay(diff);
@@ -1901,6 +1902,8 @@ function renderQuestion() {
 function selectAnswer(selected) {
   if(state.answered) return;
   state.answered=true;
+  swipeReady = false;
+  setTimeout(() => { swipeReady = true; }, 500);
 
   const q = state.questions[state.currentIndex];
   const correct = lang==='ko' ? q.correctAnswerKo : (q.correctAnswerEn||q.correctAnswerKo);
@@ -1986,16 +1989,17 @@ function goNext() {
 // ═══════════════════════════════════════════
 // 스와이프로 다음 (모바일)
 // ═══════════════════════════════════════════
-let touchStartY=0, touchStartX=0; // #12: X좌표 추가
+let touchStartY=0, touchStartX=0;
+let swipeReady = false; // 답 선택 직후 스와이프 방지
 document.addEventListener('touchstart', e=>{
   touchStartY=e.touches[0].clientY;
-  touchStartX=e.touches[0].clientX; // #12
+  touchStartX=e.touches[0].clientX;
 },{passive:true});
 document.addEventListener('touchend', e=>{
-  if(state.phase!=='quiz' || !state.answered) return;
+  if(state.phase!=='quiz' || !state.answered || !swipeReady) return;
   const dy = e.changedTouches[0].clientY - touchStartY;
-  const dx = e.changedTouches[0].clientX - touchStartX; // #12
-  if(dy < -60 && Math.abs(dx) < 40) goNext(); // #12: 수직 스와이프만 허용
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(dy < -60 && Math.abs(dx) < 40) goNext();
 },{passive:true});
 
 

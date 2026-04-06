@@ -2110,12 +2110,15 @@ async function showResult() {
     document.getElementById('result-work-name').textContent = displayName;
     document.getElementById('result-work-sub').textContent =
       t(`${wData.total}문제 중 ${wData.correct}개 정답`, `${wData.correct} / ${wData.total} correct`);
-    // AniList로 커버 fetch (CORS 안전)
-    if(wData.mal_id) {
-      fetchAniListCover(wData.mal_id).then(url => {
-        if(url) document.getElementById('result-work-bg').style.backgroundImage=`url(${url})`;
-      }).catch(()=>{});
-    }
+    // worldcup_works.cover_url 우선, 없으면 bg fallback
+    const _wBgEl = document.getElementById('result-work-bg');
+    const _wFallback = () => { _wBgEl.style.backgroundImage=`url(/kin/k2/assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`; };
+    supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`)
+      .then(rows => {
+        const url = rows?.[0]?.cover_url;
+        if(url) _wBgEl.style.backgroundImage=`url(${url})`;
+        else _wFallback();
+      }).catch(_wFallback);
   } else {
     // topWork 없을 때 — 세션 작품 중 mal_id 있는 것 랜덤 선택
     state.topWork = null;
@@ -2133,19 +2136,26 @@ async function showResult() {
       document.getElementById('result-work-name').textContent = fbDisplayName;
       document.getElementById('result-work-sub').textContent = t('이번 세션 등장 작품', 'appeared this session');
       document.getElementById('result-work-label').textContent = t('이번 세션 작품', 'this session');
-      fetchAniListCover(fbData.mal_id).then(url => {
-        if(url) document.getElementById('result-work-bg').style.backgroundImage=`url(${url})`;
-      }).catch(()=>{});
+      const _fbBgEl = document.getElementById('result-work-bg');
+      const _fbFallback = () => { _fbBgEl.style.backgroundImage=`url(/kin/k2/assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`; };
+      supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(fbName)}&select=cover_url&limit=1`)
+        .then(rows => {
+          const url = rows?.[0]?.cover_url;
+          if(url) _fbBgEl.style.backgroundImage=`url(${url})`;
+          else _fbFallback();
+        }).catch(_fbFallback);
     } else {
       // mal_id도 없으면 bg 이미지 fallback
       document.getElementById('result-work-card').style.display='none';
       document.getElementById('result-kin-card').style.display='block';
       const bgIdx = Math.floor(Math.random() * 10) + 1;
-      document.getElementById('result-kin-bg').style.backgroundImage = `url(./assets/bg/bg${bgIdx}.png)`;
+      document.getElementById('result-kin-bg').style.backgroundImage = `url(/kin/k2/assets/bg/bg${bgIdx}.png)`;
     }
   }
 
-  document.getElementById('result-obs-avatar').src = KIN_IMGS[obsMood];
+  const _obsAvatar = document.getElementById('result-obs-avatar');
+  _obsAvatar.onerror = () => { _obsAvatar.src = KIN_IMGS.happy; };
+  _obsAvatar.src = KIN_IMGS[obsMood] || KIN_IMGS.happy;
 
   // 틀린 문제
   const wrong = state.answers.filter(a=>!a.is_correct);
@@ -2297,9 +2307,10 @@ async function generateShareImage() {
   headerWork.textContent = workName;
   imgWrap.style.display  = 'none';
 
-  if(malId) {
+  if(workName) {
     try {
-      const coverUrl = await fetchAniListCover(malId);
+      const rows = await supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`);
+      const coverUrl = rows?.[0]?.cover_url;
       if(coverUrl) {
         imgWrap.style.backgroundImage = `url(${coverUrl})`;
         imgWrap.style.display = 'block';

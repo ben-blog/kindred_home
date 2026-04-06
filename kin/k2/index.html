@@ -529,7 +529,8 @@ body{
   cursor:pointer;transition:all .2s;
   opacity:0;pointer-events:none;border-radius:10px;
 }
-.btn-next.show{opacity:1;pointer-events:all}
+.btn-next.show{opacity:1;}
+.btn-next.interactive{pointer-events:all;}
 
 /* ═══════════════════════════════
    RESULT
@@ -1889,6 +1890,7 @@ function renderQuestion() {
       btn.style.animationDelay=(idx*0.08)+'s';
     }
     btn.textContent=choice;
+    btn.dataset.choice=choice;
     btn.addEventListener('click',()=>selectAnswer(choice));
     DOM.qChoices.appendChild(btn);
   });
@@ -1899,7 +1901,7 @@ function renderQuestion() {
   DOM.kinReaction.classList.remove('show');
 
   // 다음 버튼
-  DOM.btnNext.classList.remove('show');
+  DOM.btnNext.classList.remove('show', 'interactive');
   DOM.btnNext.textContent = t('다음 →','Next →');
 }
 
@@ -1923,22 +1925,25 @@ function selectAnswer(selected) {
   flashProgressDot(state.currentIndex, isCorrect);
 
   // 선택지 색상
-  document.querySelectorAll('.choice-btn').forEach(btn=>{
+  DOM.qChoices.querySelectorAll('.choice-btn').forEach(btn=>{
     btn.disabled=true;
-    if(btn.textContent===correct) btn.classList.add('correct');
-    else if(btn.textContent===selected&&!isCorrect) btn.classList.add('wrong');
+    const c = btn.dataset.choice;
+    if(c === correct) btn.classList.add('correct');
+    else if(c === selected && !isCorrect) btn.classList.add('wrong');
     else btn.classList.add('faded');
   });
 
   // 오답 선택 시 정답 강조 + 뱃지
   if(!isCorrect) {
     setTimeout(()=>{
-      DOM.qChoices.querySelectorAll('.choice-btn.correct').forEach(b=>{
-        b.classList.add('attention');
-        const badge = document.createElement('span');
-        badge.className = 'answer-badge';
-        badge.textContent = t('정답','answer');
-        b.appendChild(badge);
+      DOM.qChoices.querySelectorAll('.choice-btn').forEach(b=>{
+        if(b.dataset.choice === correct) {
+          b.classList.add('attention');
+          const badge = document.createElement('span');
+          badge.className = 'answer-badge';
+          badge.textContent = t('정답','answer');
+          b.appendChild(badge);
+        }
       });
     }, 200);
   }
@@ -1972,10 +1977,12 @@ function selectAnswer(selected) {
   DOM.kinAvatar.src = getKinRxnImg(isCorrect, q.difficulty, isStreakReaction);
   typeText(DOM.kinBubble, rxnText, 25);
 
-  // 다음 버튼
+  // 다음 버튼 — opacity와 pointer-events 분리
   const isLast = state.currentIndex===state.questions.length-1;
   DOM.btnNext.textContent = isLast ? t('결과 보기 →','See Result →') : t('다음 →','Next →');
+  DOM.btnNext.classList.remove('interactive');
   setTimeout(()=>DOM.btnNext.classList.add('show'), 350);
+  setTimeout(()=>DOM.btnNext.classList.add('interactive'), 650); // 정답 표시 완료 후 활성화
 }
 
 // ═══════════════════════════════════════════
@@ -1984,8 +1991,9 @@ function selectAnswer(selected) {
 DOM.btnNext.addEventListener('click', goNext);
 let _lastGoNextTime = 0;
 function goNext() {
+  if (!state.answered || state.phase !== 'quiz') return;
   const now = Date.now();
-  if (now - _lastGoNextTime < 400) return; // Ghost Tap 방지
+  if (now - _lastGoNextTime < 400) return;
   _lastGoNextTime = now;
   state.currentIndex++;
   if(state.currentIndex < state.questions.length) {

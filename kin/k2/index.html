@@ -172,9 +172,7 @@ body{
   border:1.5px solid rgba(255,229,0,.3);
   background:rgba(255,229,0,.05);
 }
-.kin-bubble-indent {
-  padding-left: 56px; /* 아바타(44px) + gap(12px) */
-}
+.kin-bubble-text{
   background:rgba(255,229,0,.05);
   border:1px solid rgba(255,229,0,.18);
   border-left:2.5px solid rgba(255,229,0,.55);
@@ -869,12 +867,8 @@ body{
         <img class="kin-avatar-landing" id="landing-kin-avatar" src="./assets/kin_thinking1.webp" alt="KIN">
         <div class="kin-bubble-text" id="landing-kin-bubble">넌 어떤 덕후야.</div>
       </div>
-      <div class="kin-bubble-landing kin-bubble-indent">
-        <div class="kin-bubble-text" id="landing-bubble-2">이유는 모르는데 자꾸 생각나는 작품 있고,<br>설명은 못 해도 자꾸 손이 가는 장면 있고.</div>
-      </div>
-      <div class="kin-bubble-landing kin-bubble-indent">
-        <div class="kin-bubble-text" id="landing-bubble-3">어떤 만화 봤는지 보면<br>어떤 사람인지 보여.<br>한번 확인해봐.</div>
-      </div>
+      <div class="kin-bubble-text" id="landing-bubble-2" style="margin-left:56px;margin-bottom:20px;">이유는 모르는데 자꾸 생각나는 작품 있고,<br>설명은 못 해도 자꾸 손이 가는 장면 있고.</div>
+      <div class="kin-bubble-text" id="landing-bubble-3" style="margin-left:56px;margin-bottom:20px;">어떤 만화 봤는지 보면<br>어떤 사람인지 보여.<br>한번 확인해봐.</div>
       <!-- 커버 마퀴 (PC only) -->
       <div class="cover-marquee" id="cover-marquee" style="display:none">
         <div class="cover-marquee-track" id="cover-marquee-track"></div>
@@ -907,13 +901,13 @@ body{
       </div>
 
       <!-- 작품 월드컵 -->
-      <div class="mode-card mode-card-locked">
+      <div class="mode-card mode-card-active" id="mode-work">
         <div>
-          <div class="mode-label" style="color:rgba(255,255,255,.28)">작품 월드컵</div>
-          <div class="mode-title" style="color:rgba(255,255,255,.45)">최애 작품 가려내기</div>
-          <div class="mode-sub">1:1 대결 · 토너먼트</div>
+          <div class="mode-label" id="mode-work-label" style="color:rgba(255,229,0,.6)">작품 월드컵</div>
+          <div class="mode-title" id="mode-work-title">최애 작품 가려내기</div>
+          <div class="mode-sub" id="mode-work-sub">1:1 대결 · 16강 토너먼트</div>
         </div>
-        <div class="btn-mode-locked">준비 중</div>
+        <a href="/kin/k2/worldcup/work" class="btn-start" style="text-decoration:none;">시작</a>
       </div>
 
     </div>
@@ -2514,15 +2508,17 @@ function applyLandingLang() {
     l.querySelector('.mode-title').textContent = isEn ? 'Pick your favorite character' : '최애 캐릭터 가려내기';
     l.querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
   }
-  if(lockedCards[1]) {
-    const l = lockedCards[1];
-    l.querySelector('.mode-label').textContent = isEn ? 'Work Worldcup' : '작품 월드컵';
-    l.querySelector('.mode-title').textContent = isEn ? 'Pick your favorite work' : '최애 작품 가려내기';
-    l.querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
-  }
   lp.querySelectorAll('.btn-mode-locked').forEach(btn => {
     btn.textContent = isEn ? 'Coming soon' : '준비 중';
   });
+
+  // 작품 월드컵 카드 텍스트
+  const workLabel = document.getElementById('mode-work-label');
+  const workTitle = document.getElementById('mode-work-title');
+  const workSub   = document.getElementById('mode-work-sub');
+  if(workLabel) workLabel.textContent = isEn ? 'Work Worldcup'          : '작품 월드컵';
+  if(workTitle) workTitle.textContent = isEn ? 'Pick your favorite work' : '최애 작품 가려내기';
+  if(workSub)   workSub.textContent   = isEn ? '1:1 · 16-team tournament' : '1:1 대결 · 16강 토너먼트';
 
   // 메타 아이템
   const metaItems = lp.querySelectorAll('.landing-meta-item');

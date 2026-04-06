@@ -2477,7 +2477,10 @@ function applyLandingLang() {
 
   // 버튼 텍스트
   const startBtn = document.getElementById('btn-start');
-  if(startBtn) startBtn.querySelector('.btn-start-text').textContent = isEn ? 'Start' : '시작';
+  if(startBtn) {
+    const t = startBtn.querySelector('.btn-start-text');
+    if(t) t.textContent = isEn ? 'Start' : '시작';
+  }
   // 헤더 타이틀 (랜딩에서도 명시적 업데이트)
   const hTitleL = document.getElementById('h-title');
   if(hTitleL) hTitleL.textContent = isEn ? "What kind of fan?" : '난 어떤 덕후?';

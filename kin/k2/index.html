@@ -1822,14 +1822,20 @@ function getKinRxnImg(isCorrect, difficulty, isStreak) {
 // ═══════════════════════════════════════════
 // 타이핑 이펙트
 // ═══════════════════════════════════════════
+let _typeTextTimer = null;
 function typeText(el, text, speed=28) {
+  if (_typeTextTimer) { clearTimeout(_typeTextTimer); _typeTextTimer = null; }
   el.textContent='';
-  // 말풍선 구조: 부모 .kin-reaction에 show 클래스
   const parent = el.closest('.kin-reaction');
   if(parent) parent.classList.add('show');
   else el.classList.add('show');
   let i=0;
-  const tick=()=>{ if(i<text.length){el.textContent+=text[i++];setTimeout(tick,speed);} };
+  const tick=()=>{
+    if(i<text.length){
+      el.textContent+=text[i++];
+      _typeTextTimer = setTimeout(tick,speed);
+    }
+  };
   tick();
 }
 
@@ -1839,6 +1845,7 @@ function typeText(el, text, speed=28) {
 function renderQuestion() {
   const q = state.questions[state.currentIndex];
   if(!q) return;
+  if (_typeTextTimer) { clearTimeout(_typeTextTimer); _typeTextTimer = null; }
   state.answered = false;
   swipeReady = false;
 
@@ -1975,7 +1982,11 @@ function selectAnswer(selected) {
 // 다음 문제
 // ═══════════════════════════════════════════
 DOM.btnNext.addEventListener('click', goNext);
+let _lastGoNextTime = 0;
 function goNext() {
+  const now = Date.now();
+  if (now - _lastGoNextTime < 400) return; // Ghost Tap 방지
+  _lastGoNextTime = now;
   state.currentIndex++;
   if(state.currentIndex < state.questions.length) {
     renderProgress(); renderQuestion();

@@ -222,7 +222,8 @@ function randomBg() {
 }
 
 async function loadCoverAnimated(work, bgEl, imgWrap) {
-  const url = work.mal_id ? await fetchAniListCover(work.mal_id).catch(() => null) : null;
+  let url = work.cover_url || null;
+  if (!url && work.mal_id) url = await fetchAniListCover(work.mal_id).catch(() => null);
   bgEl.style.backgroundImage = url ? `url(${url})` : randomBg();
   await sleep(80);
   imgWrap?.classList.add('img-loaded');
@@ -338,6 +339,11 @@ async function selectWork(winnerWork, loserWork) {
 const resultCoverCache = new Map();
 
 async function loadCoverCached(work, bgEl) {
+  // cover_url이 있으면 바로 사용
+  if (work.cover_url) {
+    bgEl.style.backgroundImage = `url(${work.cover_url})`;
+    return;
+  }
   if (!work.mal_id) { bgEl.style.backgroundImage = randomBg(); return; }
   if (resultCoverCache.has(work.mal_id)) {
     bgEl.style.backgroundImage = `url(${resultCoverCache.get(work.mal_id)})`;
@@ -450,14 +456,12 @@ async function generateResultShareImage() {
   $('sc-main-obs').textContent     = getWcObs(winner, isEn);
 
   const imgEl = $('sc-main-img');
-  if (winner.mal_id) {
-    const url = await fetchAniListCover(winner.mal_id).catch(() => null);
-    if (url) {
-      await new Promise(r => {
-        imgEl.onload = r; imgEl.onerror = r;
-        imgEl.src = url;
-      });
-    }
+  const coverUrl = winner.cover_url || (winner.mal_id ? await fetchAniListCover(winner.mal_id).catch(() => null) : null);
+  if (coverUrl) {
+    await new Promise(r => {
+      imgEl.onload = r; imgEl.onerror = r;
+      imgEl.src = coverUrl;
+    });
   }
 
   const canvas = await html2canvas($('sc-main'), {

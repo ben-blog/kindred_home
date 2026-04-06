@@ -426,7 +426,6 @@ function getWcObs(winner, isEn) {
   // 한국어
   const ga  = getJosa(titleKo, '이/가');
   const eul = getJosa(titleKo, '을/를');
-  const ga  = getJosa(titleKo, '이/가');
   const finalistEul = finalist ? getJosa(finalist, '을/를') : '를';
   const lines = [];
 

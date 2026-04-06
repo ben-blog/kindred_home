@@ -4,7 +4,7 @@
 import {
   getLang, setLang, t,
   KIN_IMGS,
-  fetchAniListCover, loadImgCORS,
+  supaFetch, loadImgCORS,
   getLabel, getObs, getReplayHint,
 } from '../../lib/core.js';
 import { initLangToggle, hideLoading } from '../../lib/ui.js';
@@ -46,20 +46,21 @@ function animateScore(target) {
   requestAnimationFrame(tick);
 }
 
-// ── 작품 배경 설정 (AniList + fallback) ──
-function setWorkBg(malId, bgId) {
+// ── 작품 배경 설정 (worldcup_works.cover_url 우선, fallback bg) ──
+const _bgFallback = () => `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
+let _cachedCoverUrl = null; // 공유카드 재사용용
+
+async function setWorkBgByName(workName, bgId) {
   const bg = $(bgId);
   if (!bg) return;
-  if (malId) {
-    fetchAniListCover(malId).then(url => {
-      bg.style.backgroundImage = url
-        ? `url(${url})`
-        : `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
-    }).catch(() => {
-      bg.style.backgroundImage = `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
-    });
-  } else {
-    bg.style.backgroundImage = `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
+  try {
+    const rows = await supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`);
+    const url = rows?.[0]?.cover_url;
+    bg.style.backgroundImage = url ? `url(${url})` : _bgFallback();
+    _cachedCoverUrl = url || null;
+  } catch {
+    bg.style.backgroundImage = _bgFallback();
+    _cachedCoverUrl = null;
   }
 }
 
@@ -95,14 +96,14 @@ function renderResult() {
     $('result-work-sub').textContent = isEn
       ? `${topWork.correct} / ${topWork.total} correct`
       : `${topWork.total}문제 중 ${topWork.correct}개 정답`;
-    setWorkBg(topWork.mal_id, 'result-work-bg');
+    setWorkBgByName(topWork.name, 'result-work-bg');
   } else {
-    // topWork 없으면 세션 작품 중 mal_id 있는 것 랜덤
+    // topWork 없으면 세션 작품 중 cover_url 매칭 가능한 것 랜덤
     const fallback = workScore
-      ? Object.entries(workScore).filter(([, v]) => v.mal_id).sort(() => Math.random() - .5)[0]
+      ? Object.entries(workScore).sort(() => Math.random() - .5)[0]
       : null;
     if (fallback) {
-      const [fbName, fbData] = fallback;
+      const [fbName] = fallback;
       $('result-work-card').style.display = 'block';
       $('result-kin-card').style.display = 'none';
       const fbDisplayName = isEn
@@ -110,12 +111,13 @@ function renderResult() {
         : fbName;
       $('result-work-name').textContent = fbDisplayName;
       $('result-work-sub').textContent = isEn ? 'appeared this session' : '이번 세션 등장 작품';
-      document.querySelector('.result-work-label').textContent = isEn ? 'this session' : '이번 세션 작품';
-      setWorkBg(fbData.mal_id, 'result-work-bg');
+      const wLabel = $('result-work-label');
+      if (wLabel) wLabel.textContent = isEn ? 'this session' : '이번 세션 작품';
+      setWorkBgByName(fbName, 'result-work-bg');
     } else {
       $('result-work-card').style.display = 'none';
       $('result-kin-card').style.display = 'block';
-      $('result-kin-bg').style.backgroundImage = `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
+      $('result-kin-bg').style.backgroundImage = _bgFallback();
     }
   }
 
@@ -188,7 +190,7 @@ function applyResultLang(l) {
       : `${topWork.total}문제 중 ${topWork.correct}개 정답`;
   }
   // work-label
-  const workLabel = document.querySelector('.result-work-label');
+  const workLabel = document.getElementById('result-work-label');
   if (workLabel) {
     workLabel.textContent = topWork
       ? (isEn ? 'You know this one' : '가장 잘 아는 작품')
@@ -221,14 +223,14 @@ async function generateShareImage() {
   const scTitle = $('sc-header-title');
   if (scTitle) scTitle.textContent = getLang() === 'en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
 
-  // 커버 배경
+  // 커버 배경 (캐시 재사용, 없으면 재조회)
   const coverBg = $('sc-cover-bg');
   if (coverBg) coverBg.style.backgroundImage = '';
-  if (topWork?.mal_id) {
-    try {
-      const coverUrl = await fetchAniListCover(topWork.mal_id);
-      if (coverUrl && coverBg) coverBg.style.backgroundImage = `url(${coverUrl})`;
-    } catch {}
+  if (topWork?.name) {
+    const coverUrl = _cachedCoverUrl || await supaFetch(
+      `worldcup_works?title_ko=eq.${encodeURIComponent(topWork.name)}&select=cover_url&limit=1`
+    ).then(r => r?.[0]?.cover_url).catch(() => null);
+    if (coverUrl && coverBg) coverBg.style.backgroundImage = `url(${coverUrl})`;
   }
 
   await loadImgCORS($('sc-kin-face'), KIN_IMGS[mood] || KIN_IMGS.thinking).catch(() => {});

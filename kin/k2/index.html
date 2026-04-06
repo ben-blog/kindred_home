@@ -869,7 +869,7 @@ body{
     <!-- KIN 영역 -->
     <div class="landing-v4-kin">
       <div class="kin-bubble-landing">
-        <img class="kin-avatar-landing" id="landing-kin-avatar" src="./assets/kin_thinking1.webp" alt="KIN">
+        <img class="kin-avatar-landing" id="landing-kin-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
         <div class="kin-bubble-text" id="landing-kin-bubble">넌 어떤 덕후야.</div>
       </div>
       <div class="kin-bubble-text" id="landing-bubble-2" style="margin-left:56px;margin-bottom:20px;">이유는 모르는데 자꾸 생각나는 작품 있고,<br>설명은 못 해도 자꾸 손이 가는 장면 있고.</div>
@@ -1043,15 +1043,16 @@ body{
 // CONFIG
 // ═══════════════════════════════════════════
 const SUPA_URL = 'https://lmfyspozcmyefgrkgxch.supabase.co';
+const DEBUG = false; // 운영 배포 시 false
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
 const API_URL  = 'https://kin-agent-production.up.railway.app';
 
 const KIN_IMGS = {
-  excited:  './assets/kin_excited.webp',
-  happy:    './assets/kin_happy.webp',
-  thinking: './assets/kin_thinking1.webp',
-  serious:  './assets/kin_serious.webp',
-  sad:      './assets/kin_sad.webp',
+  excited:  '/kin/k2/assets/kin_excited.webp',
+  happy:    '/kin/k2/assets/kin_happy.webp',
+  thinking: '/kin/k2/assets/kin_thinking1.webp',
+  serious:  '/kin/k2/assets/kin_serious.webp',
+  sad:      '/kin/k2/assets/kin_sad.webp',
 };
 
 // ── DOM 캐시 (정적 요소 — 매 문제마다 getElementById 반복 제거) ──
@@ -1427,10 +1428,10 @@ function getObs(pattern) {
 // 퀴즈 배경 이미지 (랜덤, 연속 중복 방지)
 // ═══════════════════════════════════════════
 const BG_IMAGES = [
-  './assets/bg/bg1.png','./assets/bg/bg2.png','./assets/bg/bg3.png',
-  './assets/bg/bg4.png','./assets/bg/bg5.png','./assets/bg/bg6.png',
-  './assets/bg/bg7.png','./assets/bg/bg8.png','./assets/bg/bg9.png',
-  './assets/bg/bg10.png',
+  '/kin/k2/assets/bg/bg1.png','/kin/k2/assets/bg/bg2.png','/kin/k2/assets/bg/bg3.png',
+  '/kin/k2/assets/bg/bg4.png','/kin/k2/assets/bg/bg5.png','/kin/k2/assets/bg/bg6.png',
+  '/kin/k2/assets/bg/bg7.png','/kin/k2/assets/bg/bg8.png','/kin/k2/assets/bg/bg9.png',
+  '/kin/k2/assets/bg/bg10.png',
 ];
 let _lastBgIdx = -1;
 function getRandomBg() {
@@ -1544,8 +1545,6 @@ const COVER_MAL_IDS = [
   {id:40748, title:'주술회전'}, {id:44511, title:'체인소맨'},
   {id:223, title:'드래곤볼'},   {id:170, title:'슬램덩크'},
 ];
-
-// fetchCoverUrl → fetchAniListCover 재사용 (중복 제거)
 
 async function buildCoverMarquee() {
   const track = document.getElementById('cover-marquee-track');
@@ -1710,7 +1709,7 @@ function initProgressTrack() {
   runner.className = 'kin-runner';
   runner.id = 'kin-runner';
   runner.style.left = '0%';
-  runner.innerHTML = '<img class="kin-icon" id="kin-icon" src="./assets/kin_thinking1.webp" alt="KIN"><div class="kin-shadow"></div>';
+  runner.innerHTML = '<img class="kin-icon" id="kin-icon" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN"><div class="kin-shadow"></div>';
   wrap.appendChild(runner);
 }
 
@@ -1824,6 +1823,9 @@ function getKinRxnImg(isCorrect, difficulty, isStreak) {
   }
 }
 
+// ── 텍스트 정규화 (공백 변형 제거) — 전역 선언
+const norm = s => s ? s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim() : '';
+
 // ═══════════════════════════════════════════
 // 타이핑 이펙트
 // ═══════════════════════════════════════════
@@ -1929,7 +1931,6 @@ function selectAnswer(selected) {
   flashProgressDot(state.currentIndex, isCorrect);
 
   // 선택지 색상
-  const norm = s => s ? s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim() : '';
   const correctNorm = norm(correct);
   let correctFound = false;
   DOM.qChoices.querySelectorAll('.choice-btn').forEach(btn=>{
@@ -1939,7 +1940,7 @@ function selectAnswer(selected) {
     else if(c === norm(selected) && !isCorrect) btn.classList.add('wrong');
     else btn.classList.add('faded');
   });
-  if(!correctFound) {
+  if(!correctFound && DEBUG) {
     console.warn('[K2] 정답 버튼 미발견!');
     console.warn('correct:', JSON.stringify(correct), correct.split('').map(c=>c.charCodeAt(0)));
     DOM.qChoices.querySelectorAll('.choice-btn').forEach((btn,i)=>{
@@ -1951,9 +1952,8 @@ function selectAnswer(selected) {
   // 오답 선택 시 정답 강조 + 뱃지
   if(!isCorrect) {
     setTimeout(()=>{
-      const norm2 = s => s ? s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim() : '';
       DOM.qChoices.querySelectorAll('.choice-btn').forEach(b=>{
-        if(norm2(b.dataset.choice) === norm2(correct)) {
+        if(norm(b.dataset.choice) === norm(correct)) {
           b.classList.add('attention');
           const badge = document.createElement('span');
           badge.className = 'answer-badge';
@@ -2116,8 +2116,10 @@ async function showResult() {
     supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`)
       .then(rows => {
         const url = rows?.[0]?.cover_url;
-        if(url) _wBgEl.style.backgroundImage=`url(${url})`;
-        else _wFallback();
+        if(url) {
+          _wBgEl.style.backgroundImage=`url(${url})`;
+          state.topWork.cover_url = url; // 공유카드에서 재사용
+        } else _wFallback();
       }).catch(_wFallback);
   } else {
     // topWork 없을 때 — 세션 작품 중 mal_id 있는 것 랜덤 선택
@@ -2308,14 +2310,20 @@ async function generateShareImage() {
   imgWrap.style.display  = 'none';
 
   if(workName) {
-    try {
-      const rows = await supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`);
-      const coverUrl = rows?.[0]?.cover_url;
-      if(coverUrl) {
-        imgWrap.style.backgroundImage = `url(${coverUrl})`;
-        imgWrap.style.display = 'block';
-      }
-    } catch{}
+    const cachedUrl = state.topWork?.cover_url;
+    if(cachedUrl) {
+      imgWrap.style.backgroundImage = `url(${cachedUrl})`;
+      imgWrap.style.display = 'block';
+    } else {
+      try {
+        const rows = await supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`);
+        const coverUrl = rows?.[0]?.cover_url;
+        if(coverUrl) {
+          imgWrap.style.backgroundImage = `url(${coverUrl})`;
+          imgWrap.style.display = 'block';
+        }
+      } catch{}
+    }
   }
 
   // KIN 얼굴 이미지 로드 대기
@@ -2466,7 +2474,7 @@ function applyResultLang() {
   if(el('btn-share'))         el('btn-share').textContent         = isEn ? 'Share'            : '공유하기';
   if(el('btn-retry'))         el('btn-retry').textContent         = isEn ? 'Try Again'        : '다시 하기';
   if(el('btn-gallery'))       el('btn-gallery').textContent       = isEn ? '← Gallery'        : '← 갤러리';
-  const workLabel = document.querySelector('.result-work-label');
+  const workLabel = document.getElementById('result-work-label');
   if(workLabel) workLabel.textContent = isEn ? 'You know this one' : '가장 잘 아는 작품';
   // work-sub 재계산
   const sub = el('result-work-sub');

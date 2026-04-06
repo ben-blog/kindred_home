@@ -1925,13 +1925,22 @@ function selectAnswer(selected) {
   flashProgressDot(state.currentIndex, isCorrect);
 
   // 선택지 색상
+  let correctFound = false;
   DOM.qChoices.querySelectorAll('.choice-btn').forEach(btn=>{
     btn.disabled=true;
     const c = btn.dataset.choice;
-    if(c === correct) btn.classList.add('correct');
+    if(c === correct) { btn.classList.add('correct'); correctFound = true; }
     else if(c === selected && !isCorrect) btn.classList.add('wrong');
     else btn.classList.add('faded');
   });
+  if(!correctFound) {
+    console.warn('[K2] 정답 버튼 미발견!');
+    console.warn('correct:', JSON.stringify(correct), correct.split('').map(c=>c.charCodeAt(0)));
+    DOM.qChoices.querySelectorAll('.choice-btn').forEach((btn,i)=>{
+      const c = btn.dataset.choice;
+      console.warn(`choice[${i}]:`, JSON.stringify(c), c.split('').map(x=>x.charCodeAt(0)), '일치:', c===correct);
+    });
+  }
 
   // 오답 선택 시 정답 강조 + 뱃지
   if(!isCorrect) {

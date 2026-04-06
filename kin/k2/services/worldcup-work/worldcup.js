@@ -720,19 +720,10 @@ function applyLang(l) {
   const isEn = l === 'en';
   $('h-title').textContent = isEn ? 'Work Worldcup' : '작품 월드컵';
 
-  $('wc-bubble-1').textContent = isEn
-    ? "You've lived inside a manga before."
-    : "만화 안에서 살아본 적 있잖아.";
-  $('wc-bubble-2').innerHTML = isEn
-    ? "A series you keep coming back to for no reason,<br>a scene you can't explain but can't forget."
-    : "이유는 모르는데 자꾸 생각나는 작품 있고,<br>설명은 못 해도 자꾸 손이 가는 장면 있고.";
-  $('wc-bubble-3').innerHTML = isEn
-    ? "What you read tells me who you are.<br>Go ahead and find out."
-    : "어떤 만화 봤는지 보면<br>어떤 사람인지 보여.<br>한번 확인해봐.";
-  $('cat-battle-title').textContent   = isEn ? 'Battle & Growth'                  : '소년 배틀·성장';
+  $('cat-battle-title').textContent   = isEn ? 'Battle & Growth'                      : '소년 배틀·성장';
   $('cat-battle-sub').textContent     = isEn ? 'Action, rivalry, and the will to grow' : '성장, 전투, 우정이 강한 작품들';
-  $('cat-thriller-title').textContent = isEn ? 'Psychological Drama'              : '심리·드라마';
-  $('cat-thriller-sub').textContent   = isEn ? 'Dark, tense, and hard to shake off'   : '압박감과 해석 욕구가 남는 작품들';
+  $('cat-thriller-title').textContent = isEn ? 'Psychological Drama'                   : '심리·드라마';
+  $('cat-thriller-sub').textContent   = isEn ? 'Dark, tense, and hard to shake off'    : '압박감과 해석 욕구가 남는 작품들';
 
   // 대진 중이면 갱신 (selecting 중 스킵)
   if (!state.selecting && state.roundMatches.length > 0 && state.currentMatch < state.roundMatches.length) {

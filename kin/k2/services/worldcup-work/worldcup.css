@@ -121,14 +121,14 @@
 /* 대진 컨테이너 */
 .wc-match {
   flex: 1;
-  padding-top: 53px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100dvh;
-  padding-bottom: max(32px, env(safe-area-inset-bottom));
-  gap: 20px;
+  height: calc(100dvh - 53px);
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  gap: 0;
+  box-sizing: border-box;
 }
 @media(min-width: 768px) {
   .wc-match {
@@ -136,7 +136,9 @@
     grid-template-columns: 40fr 20fr 40fr;
     align-items: center;
     justify-items: center;
-    padding: 80px 6vw 48px;
+    height: auto;
+    min-height: calc(100dvh - 53px);
+    padding: 32px 6vw 48px;
     gap: 0;
   }
 }
@@ -147,8 +149,6 @@
   overflow: hidden;
   cursor: pointer;
   position: relative;
-  width: min(320px, 88vw);
-  height: clamp(300px, 50vh, 460px);
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 24px rgba(0,0,0,.4);
@@ -158,11 +158,17 @@
     opacity .35s ease;
   opacity: 0;
   transform: translateY(16px);
+  /* 모바일: 헤더(53px) + VS(48px) + 패딩(24px) 제외하고 반씩 */
+  width: min(340px, 92vw);
+  height: calc((100dvh - 53px - 48px - 24px) / 2);
+  max-height: 340px;
+  min-height: 180px;
 }
 @media(min-width: 768px) {
   .wc-work {
     width: min(380px, 34vw);
     height: clamp(360px, 58vh, 540px);
+    transform: translateY(16px);
   }
   #wc-work-a { transform: translateX(-24px); }
   #wc-work-b { transform: translateX(24px); }
@@ -190,11 +196,6 @@
 }
 .wc-work.wc-exit-left  { opacity: 0 !important; transform: translateX(-40px) !important; }
 .wc-work.wc-exit-right { opacity: 0 !important; transform: translateX(40px)  !important; }
-
-@media(max-width: 767px) {
-  .wc-work.wc-exit-left  { transform: translateY(-28px) scale(.97) !important; }
-  .wc-work.wc-exit-right { transform: translateY(28px)  scale(.97) !important; }
-}
 
 /* 카드 이미지 */
 .wc-work-img {
@@ -251,13 +252,15 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  padding: 8px 0;
+  height: 48px;
   opacity: 0;
   transition: opacity .4s ease, transform .4s ease;
   transform: scale(0.7);
 }
 .wc-vs.entered { opacity: 1; transform: scale(1); }
-@media(min-width: 768px) { .wc-vs { padding: 0; } }
+@media(min-width: 768px) {
+  .wc-vs { height: auto; padding: 0; }
+}
 .wc-vs-text {
   font-family: 'Syne', sans-serif;
   font-weight: 800;

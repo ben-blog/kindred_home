@@ -781,22 +781,6 @@ $('wc-work-b').addEventListener('click', () => {
   selectWork(workB, workA);
 });
 
-// 모바일 스와이프 (위=A선택, 아래=B선택)
-let touchStartY = 0, touchStartX = 0;
-document.addEventListener('touchstart', e => {
-  touchStartY = e.touches[0].clientY;
-  touchStartX = e.touches[0].clientX;
-}, { passive: true });
-document.addEventListener('touchend', e => {
-  if (state.selecting || !state.roundMatches[state.currentMatch]) return;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  if (Math.abs(dy) < 55 || Math.abs(dx) > Math.abs(dy)) return;
-  const [workA, workB] = state.roundMatches[state.currentMatch];
-  if (dy < 0) selectWork(workA, workB);
-  else        selectWork(workB, workA);
-}, { passive: true });
-
 // 공유 버튼
 $('wc-btn-share').addEventListener('click',   () => openShareModal(generateResultShareImage));
 $('wc-btn-bracket').addEventListener('click', () => openShareModal(generateBracketShareImage));

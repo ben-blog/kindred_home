@@ -132,23 +132,89 @@ body{
   padding-top:60px;
 }
 
-/* ── KIN 컴팩트 스트립 ── */
-.landing-kin-strip{
-  padding:16px 24px 8px;
-  display:flex;align-items:center;gap:12px;
+/* ── 스태프 POP 카드 ── */
+.staff-pop{
+  margin:12px 20px 4px;
+  position:relative;
+  display:inline-flex;align-items:flex-start;gap:10px;
+  background:rgba(255,243,200,.06);
+  border:1px solid rgba(255,229,0,.18);
+  border-radius:3px;
+  padding:12px 16px 12px 14px;
+  transform:rotate(-1.2deg);
+  max-width:360px;
 }
-.kin-avatar-landing{
-  width:36px;height:36px;border-radius:50%;flex-shrink:0;
+/* 테이프 장식 */
+.staff-pop::before{
+  content:'';position:absolute;top:-6px;left:24px;
+  width:48px;height:12px;
+  background:rgba(255,229,0,.18);
+  border-radius:1px;
+  transform:rotate(2deg);
+}
+.staff-pop-avatar{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
   object-fit:cover;
   border:1.5px solid rgba(255,229,0,.3);
   background:rgba(255,229,0,.05);
 }
-.kin-strip-bubble{
-  background:rgba(255,229,0,.05);
-  border:1px solid rgba(255,229,0,.15);
-  border-radius:0 10px 10px 10px;
-  padding:8px 14px;
-  font-size:var(--t-sm);color:rgba(255,255,255,.82);line-height:1.6;
+.staff-pop-body{display:flex;flex-direction:column;gap:2px}
+.staff-pop-label{
+  font-size:8px;letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,229,0,.5);font-family:'DM Mono',monospace;
+}
+.staff-pop-text{
+  font-size:var(--t-sm);color:rgba(255,255,255,.85);
+  line-height:1.6;word-break:keep-all;
+}
+
+/* ── 페이지 스크린톤 텍스처 ── */
+.landing-v5::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  opacity:.018;
+  background-image:radial-gradient(circle,rgba(255,255,255,.8) .5px,transparent .5px);
+  background-size:4px 4px;
+}
+
+/* ── 히어로 카드 코너 태그 ── */
+.hero-card-corner{
+  position:absolute;top:14px;right:14px;z-index:3;
+  font-size:10px;letter-spacing:.12em;
+  font-family:'DM Mono',monospace;
+  padding:3px 8px;border-radius:3px;
+  transform:rotate(2deg);
+  font-weight:700;
+}
+.hero-card--quiz .hero-card-corner{
+  background:rgba(0,212,255,.12);color:rgba(0,212,255,.7);
+  border:1px solid rgba(0,212,255,.2);
+}
+.hero-card--char .hero-card-corner{
+  background:rgba(255,59,92,.12);color:rgba(255,59,92,.7);
+  border:1px solid rgba(255,59,92,.2);
+}
+.hero-card--work .hero-card-corner{
+  background:rgba(255,229,0,.12);color:rgba(255,229,0,.7);
+  border:1px solid rgba(255,229,0,.2);
+}
+
+/* ── 카드 hover 말풍선 ── */
+.hero-card-sfx{
+  position:absolute;top:16px;left:18px;z-index:4;
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:18px;letter-spacing:-.02em;
+  color:#fff;
+  opacity:0;transform:scale(.5) rotate(-8deg);
+  transition:opacity .2s ease, transform .25s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+  text-shadow:0 2px 8px rgba(0,0,0,.6);
+  /* 말풍선 배경 */
+  background:rgba(0,0,0,.55);
+  padding:6px 14px;border-radius:20px;
+  border:2px solid rgba(255,255,255,.25);
+}
+.hero-card:hover .hero-card-sfx{
+  opacity:1;transform:scale(1) rotate(-2deg);
 }
 
 /* ── 히어로 카드 그리드 ── */
@@ -267,7 +333,7 @@ body{
 /* ── PC 3열 그리드 ── */
 @media(min-width:768px){
   .landing-v5{padding-top:70px}
-  .landing-kin-strip{padding:20px 40px 12px;justify-content:center}
+  .staff-pop{margin:16px 40px 8px}
   .hero-grid{
     flex-direction:row;flex-wrap:nowrap;
     padding:16px 32px 32px;
@@ -280,6 +346,7 @@ body{
   }
   .hero-card-title{font-size:28px}
   .hero-card-desc{font-size:14px}
+  .hero-card-sfx{font-size:22px}
   .landing-v5-meta{justify-content:center;padding-top:0}
 }
 @media(min-width:1100px){
@@ -288,30 +355,6 @@ body{
   .hero-card-title{font-size:32px}
 }
 
-/* 커버 마퀴 (히어로 카드 아래 슬라이드) */
-.cover-marquee{
-  position:relative;width:100%;overflow:hidden;
-  margin-top:0;
-  mask-image:linear-gradient(to right,transparent 0%,black 10%,black 90%,transparent 100%);
-  -webkit-mask-image:linear-gradient(to right,transparent 0%,black 10%,black 90%,transparent 100%);
-}
-.cover-marquee-track{
-  display:flex;gap:0;width:max-content;
-  animation:cover-scroll 16s linear infinite;
-}
-@keyframes cover-scroll{
-  from{transform:translateX(0)}
-  to{transform:translateX(-50%)}
-}
-.cover-img{
-  width:80px;height:112px;border-radius:6px;
-  object-fit:cover;flex-shrink:0;
-  opacity:.45;
-  margin-right:8px;
-  transition:opacity .2s;
-  border:1px solid rgba(255,255,255,.06);
-}
-.cover-img:hover{opacity:.8}
 
 
 /* ── 퀴즈 배경 이미지 ── */
@@ -837,13 +880,12 @@ body{
 /* 모바일: manga-gate 숨김 / 마퀴 크기 조정 */
 @media(max-width:767px){
   
-  .cover-img{width:64px;height:90px;border-radius:5px;margin-right:6px}
 }
 
 /* ── reduced motion ── */
 @media(prefers-reduced-motion:reduce){
   #grain,.choice-btn,.quiz-question,#streak-glow,.streak-particle,
-  .cover-marquee-track,.kin-icon,.kin-shadow,#quiz-bg img{
+  .kin-icon,.kin-shadow,#quiz-bg img{
     animation:none!important;transition:none!important
   }
 }
@@ -924,10 +966,13 @@ body{
 
   <div class="landing-v5">
 
-    <!-- KIN 컴팩트 스트립 -->
-    <div class="landing-kin-strip">
-      <img class="kin-avatar-landing" id="landing-kin-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
-      <div class="kin-strip-bubble" id="landing-kin-bubble">어떤 만화 봤는지 보면 어떤 사람인지 보여.</div>
+    <!-- 스태프 POP 카드 -->
+    <div class="staff-pop" id="staff-pop">
+      <img class="staff-pop-avatar" id="landing-kin-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
+      <div class="staff-pop-body">
+        <span class="staff-pop-label">staff pick</span>
+        <div class="staff-pop-text" id="staff-pop-text">이번 주 추천: 캐릭터 월드컵. 네 취향이 보여.</div>
+      </div>
     </div>
 
     <!-- 히어로 카드 그리드 -->
@@ -937,6 +982,8 @@ body{
       <div class="hero-card hero-card--quiz" id="mode-quiz">
         <div class="hero-card-bg" style="background-image:url('/kin/k2/assets/manga_quiz.webp')"></div>
         <div class="hero-card-overlay"></div>
+        <span class="hero-card-corner" id="quiz-corner">두뇌전</span>
+        <span class="hero-card-sfx" id="quiz-sfx">뭘 알고 뭘 모르나?</span>
         <div class="hero-card-content">
           <span class="hero-card-badge" id="mode-quiz-label">퀴즈</span>
           <div class="hero-card-title" id="mode-quiz-title">10문제 · KIN 판정</div>
@@ -952,6 +999,8 @@ body{
       <a class="hero-card hero-card--char" id="mode-char" href="/kin/k2/worldcup/character" style="text-decoration:none">
         <div class="hero-card-bg" style="background-image:url('/kin/k2/assets/bg/bg3.png')"></div>
         <div class="hero-card-overlay"></div>
+        <span class="hero-card-corner" id="char-corner">열혈</span>
+        <span class="hero-card-sfx" id="char-sfx">누가 최애야!</span>
         <div class="hero-card-content">
           <span class="hero-card-badge" id="mode-char-label">캐릭터 월드컵</span>
           <div class="hero-card-title" id="mode-char-title">최애 캐릭터를 가려내라</div>
@@ -967,6 +1016,8 @@ body{
       <a class="hero-card hero-card--work" id="mode-work" href="/kin/k2/worldcup/work" style="text-decoration:none">
         <div class="hero-card-bg" style="background-image:url('/kin/k2/assets/bg/bg8.png')"></div>
         <div class="hero-card-overlay"></div>
+        <span class="hero-card-corner" id="work-corner">취향저격</span>
+        <span class="hero-card-sfx" id="work-sfx">진짜 명작은 하나!</span>
         <div class="hero-card-content">
           <span class="hero-card-badge" id="mode-work-label">작품 월드컵</span>
           <div class="hero-card-title" id="mode-work-title">최애 작품을 골라라</div>
@@ -978,11 +1029,6 @@ body{
         </div>
       </a>
 
-    </div>
-
-    <!-- 커버 마퀴 -->
-    <div class="cover-marquee" id="cover-marquee" style="display:none">
-      <div class="cover-marquee-track" id="cover-marquee-track"></div>
     </div>
 
     <!-- 메타 -->
@@ -1602,58 +1648,6 @@ async function loadTotalCount() {
   } catch{}
 }
 
-// ═══════════════════════════════════════════
-// 커버 마퀴 — AniList에서 작품 커버 fetch
-// ═══════════════════════════════════════════
-const COVER_MAL_IDS = [
-  {id:21, title:'원피스'},      {id:20, title:'나루토'},
-  {id:16498, title:'진격의 거인'}, {id:38000, title:'귀멸의 칼날'},
-  {id:11061, title:'헌터×헌터'}, {id:5114, title:'강철의 연금술사'},
-  {id:1535, title:'데스노트'},   {id:33, title:'베르세르크'},
-  {id:40748, title:'주술회전'}, {id:44511, title:'체인소맨'},
-  {id:223, title:'드래곤볼'},   {id:170, title:'슬램덩크'},
-];
-
-async function buildCoverMarquee() {
-  const track = document.getElementById('cover-marquee-track');
-  const marquee = document.getElementById('cover-marquee');
-  if(!track || !marquee) return;
-
-  const urls = [];
-  for(const {id, title} of COVER_MAL_IDS) {
-    const url = await fetchAniListCover(id);
-    if(url) urls.push({url, title});
-  }
-
-  if(urls.length === 0) return;
-
-  // 마퀴 효과를 위해 2배 복제
-  const items = [...urls, ...urls];
-  items.forEach(({url, title}) => {
-    const img = document.createElement('img');
-    img.className = 'cover-img';
-    img.src = url;
-    img.alt = title;
-    img.loading = 'lazy';
-    track.appendChild(img);
-  });
-
-  // 이미지 로드 후 애니 시작 — 로드 전 시작하면 max-content 계산 불안정
-  const imgs = track.querySelectorAll('img');
-  let loaded = 0;
-  const startAnim = () => {
-    loaded++;
-    if(loaded >= Math.min(imgs.length, 6)) { // 최소 6장 로드 시 시작
-      marquee.style.display = 'block';
-    }
-  };
-  imgs.forEach(img => {
-    if(img.complete) startAnim();
-    else { img.onload = startAnim; img.onerror = startAnim; }
-  });
-  // 3초 타임아웃 — 로드 안 돼도 표시
-  setTimeout(() => { marquee.style.display = 'block'; }, 3000);
-}
 
 // ═══════════════════════════════════════════
 // 문제 로드 (슬롯별 count 배치 → offset 랜덤 병렬 fetch)
@@ -2337,25 +2331,6 @@ async function saveSession(pattern) {
   }).catch(()=>{});
 }
 
-// ═══════════════════════════════════════════
-// AniList 커버 이미지
-// ═══════════════════════════════════════════
-async function fetchAniListCover(malId) {
-  const query = `query($id:Int,$t:MediaType){Media(idMal:$id,type:$t){coverImage{large}}}`;
-  for (const type of ['ANIME','MANGA']) {
-    try {
-      const res = await fetch('https://graphql.anilist.co', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({query, variables:{id:malId, t:type}}),
-      });
-      const url = (await res.json())?.data?.Media?.coverImage?.large;
-      if(url) return url;
-    } catch{}
-  }
-  return null;
-}
-
 function loadImgCORS(img, src) {
   return new Promise((resolve, reject) => {
     const t = setTimeout(reject, 4000); // #13: 6s→4s
@@ -2610,6 +2585,34 @@ function applyResultLang() {
   }
 }
 // ═══════════════════════════════════════════
+// 스태프 POP 멘트 (랜덤)
+// ═══════════════════════════════════════════
+const STAFF_POP_KO = [
+  '이번 주 추천: 캐릭터 월드컵. 네 취향이 보여.',
+  '퀴즈 한 판 어때. 10문제면 충분해.',
+  '작품 월드컵 해봐. 결국 하나만 남거든.',
+  '만화 좀 읽었으면 퀴즈부터. 안 읽었으면 월드컵부터.',
+  '최애 캐릭터, 말로 하지 말고 골라봐.',
+  '네가 고른 캐릭터가 너를 말해줘.',
+];
+const STAFF_POP_EN = [
+  'This week\'s pick: Character Worldcup. Your taste will show.',
+  'How about a quiz? 10 questions is all it takes.',
+  'Try Work Worldcup. Only one survives.',
+  'Read manga? Start with the quiz. Didn\'t? Try worldcup.',
+  'Don\'t just say who\'s your fave — pick one.',
+  'The characters you pick say everything.',
+];
+
+function initStaffPop() {
+  const el = document.getElementById('staff-pop-text');
+  if(!el) return;
+  const isEn = lang === 'en';
+  const pool = isEn ? STAFF_POP_EN : STAFF_POP_KO;
+  el.textContent = pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ═══════════════════════════════════════════
 // 랜딩 텍스트 언어 적용
 // ═══════════════════════════════════════════
 function applyLandingLang() {
@@ -2627,14 +2630,16 @@ function applyLandingLang() {
   const hTitleL = document.getElementById('h-title');
   if(hTitleL) hTitleL.textContent = isEn ? "What kind of fan?" : '난 어떤 덕후?';
 
-  // KIN 버블 — 완료 여부에 따라
+  // 스태프 POP
+  initStaffPop();
+
+  // 상태 (퀴즈 완료 여부)
   updateLandingState();
 
   // 퀴즈 카드
   const quizLabel = document.getElementById('mode-quiz-label');
   const quizTitle = document.getElementById('mode-quiz-title');
   const quizDesc  = document.getElementById('mode-quiz-desc');
-  const quizSub   = document.getElementById('mode-quiz-sub');
   if(quizLabel) quizLabel.textContent = isEn ? 'Quiz' : '퀴즈';
   if(quizTitle) quizTitle.textContent = isEn ? '10 Questions · KIN Judges' : '10문제 · KIN 판정';
   if(quizDesc)  quizDesc.textContent  = isEn ? 'Setting, character, relation, author — KIN judges what you know and what you don\'t.' : '설정, 캐릭터, 관계, 작가 — 네가 뭘 알고 뭘 모르는지 KIN이 판정한다.';
@@ -2664,6 +2669,22 @@ function applyLandingLang() {
     b.textContent = isEn ? 'Start' : '시작';
   });
 
+  // 코너 태그
+  const qc = document.getElementById('quiz-corner');
+  const cc = document.getElementById('char-corner');
+  const wc = document.getElementById('work-corner');
+  if(qc) qc.textContent = isEn ? 'BRAIN' : '두뇌전';
+  if(cc) cc.textContent = isEn ? 'HEAT'  : '열혈';
+  if(wc) wc.textContent = isEn ? 'TASTE' : '취향저격';
+
+  // 말풍선 SFX
+  const qs = document.getElementById('quiz-sfx');
+  const cs = document.getElementById('char-sfx');
+  const ws = document.getElementById('work-sfx');
+  if(qs) qs.textContent = isEn ? 'What do you know?' : '뭘 알고 뭘 모르나?';
+  if(cs) cs.textContent = isEn ? 'Who\'s your fave?!' : '누가 최애야!';
+  if(ws) ws.textContent = isEn ? 'Only one survives!' : '진짜 명작은 하나!';
+
   // 메타
   const metaItems = lp.querySelectorAll('.landing-meta-item');
   if(metaItems[0]) metaItems[0].textContent = isEn ? 'KIN judges' : 'KIN 판정';
@@ -2686,15 +2707,16 @@ function applyLandingLang() {
 
 function updateLandingState() {
   const quizDone  = !!localStorage.getItem('k2_quiz_done');
-  const bubble    = document.getElementById('landing-kin-bubble');
+  const pop       = document.getElementById('staff-pop-text');
   const modeQuiz  = document.getElementById('mode-quiz');
   const avatar    = document.getElementById('landing-kin-avatar');
   const isEn      = lang === 'en';
 
   if(quizDone) {
-    if(bubble) bubble.textContent = isEn
-      ? "Quiz done. Now try the rest."
-      : "퀴즈만으론 다 못 읽었어. 월드컵도 해봐.";
+    // 퀴즈 완료 시 POP 멘트 고정
+    if(pop) pop.textContent = isEn
+      ? "Quiz done. Now try Character Worldcup."
+      : "퀴즈 끝났으면 캐릭터 월드컵 해봐.";
     if(modeQuiz) {
       modeQuiz.classList.add('hero-card--done');
       const label = modeQuiz.querySelector('.hero-card-badge');
@@ -2704,7 +2726,6 @@ function updateLandingState() {
     }
     if(avatar) avatar.src = KIN_IMGS.happy;
   } else {
-    if(bubble) bubble.textContent = isEn ? "What you read tells me who you are." : "어떤 만화 봤는지 보면 어떤 사람인지 보여.";
     if(modeQuiz) modeQuiz.classList.remove('hero-card--done');
     if(avatar) avatar.src = KIN_IMGS.thinking;
   }
@@ -2714,7 +2735,6 @@ function updateLandingState() {
   applyLandingLang();
   const $loading=document.getElementById('loading');
   await Promise.all([loadTotalCount(), loadTodayCount()]);
-  buildCoverMarquee(); // fire-and-forget — 실패해도 무관
   $loading.style.opacity='0';
   setTimeout(()=>{ $loading.style.display='none'; },400);
 })();

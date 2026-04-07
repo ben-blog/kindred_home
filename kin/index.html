@@ -31,7 +31,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 #header{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 24px;
   display:flex;justify-content:space-between;align-items:center;
   background:linear-gradient(rgba(8,8,6,.9),transparent)}
-.h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--kin);cursor:pointer;transition:opacity 0.2s}.h-name:hover{opacity:0.6}
+.h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--kin)}
 .h-back{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.45);text-transform:uppercase;cursor:pointer;transition:color .2s}
 .h-back:hover{color:var(--kin)}
 
@@ -73,12 +73,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 .thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
 
-/* ── PARALLAX INNER ── */
-.parallax-inner{
-  position:absolute;inset:0;
-  will-change:transform;
-}
-.parallax-inner img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+/* ── THUMB IMAGE ── */
+.thumb img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
 .thumb-label{
   position:absolute;bottom:0;left:0;right:0;
   padding:20px 10px 8px;
@@ -293,7 +289,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <div id="cur"></div>
 
 <div id="header">
-  <div class="h-name" onclick="window.location.href='https://kin-ui-six.vercel.app'">KIN</div>
+  <div class="h-name">KIN</div>
   <div id="lang-toggle">
     <span class="lt" id="lt-ko">KO</span>
     <span class="lt-sep">·</span>
@@ -420,25 +416,17 @@ async function fetchTags(itemId) {
 /* ── GALLERY ── */
 const $gallery = document.getElementById('gallery');
 
-function getCols() {
-  return window.innerWidth <= 680 ? 2 : 5;
-}
-
 function renderGallery() {
   $gallery.innerHTML = '';
-  const cols = getCols(); // 렌더 시 1회만 계산
   items.forEach((item, i) => {
     const t = document.createElement('div');
     const title  = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
     t.className = 'thumb' + (hasAct ? ' has-action' : '');
-    t.dataset.col = i % cols;
     t.innerHTML = `
-      <div class="parallax-inner">
         <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
         <div class="thumb-label">${title}</div>
-        ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}
-      </div>`;
+        ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}`;
     t.addEventListener('click', () => openViewer(i));
     if (!IS_TOUCH) {
       t.addEventListener('mouseenter', () => $cur.classList.add('big'));
@@ -633,45 +621,6 @@ $back.addEventListener('click', () => {
   $backOverlay.style.opacity = '1';
   setTimeout(() => { window.location.href = '../main.html'; }, 400);
 });
-
-/* ── PARALLAX ── */
-if (!IS_TOUCH) {
-  const COL_DEPTHS = [1.0, 0.55, 0, 0.55, 1.0];
-  const MAX_X = 10;
-  const MAX_Y = 5;
-  const LERP  = 0.06;
-
-  let mx = 0, my = 0;
-  let cx = 0, cy = 0;
-  let parallaxEls = []; // 캐시
-
-  function cacheParallaxEls() {
-    parallaxEls = Array.from(document.querySelectorAll('.thumb[data-col] .parallax-inner'));
-  }
-
-  document.addEventListener('mousemove', e => {
-    mx = (e.clientX / window.innerWidth  - 0.5) * 2;
-    my = (e.clientY / window.innerHeight - 0.5) * 2;
-  });
-
-  (function parallaxTick() {
-    if (!$viewer.classList.contains('open')) {
-      cx += (mx - cx) * LERP;
-      cy += (my - cy) * LERP;
-      parallaxEls.forEach(inner => {
-        const col = parseInt(inner.parentElement.dataset.col);
-        const depth = COL_DEPTHS[col] ?? 0;
-        const tx = cx * depth * MAX_X;
-        const ty = cy * depth * MAX_Y;
-        inner.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`;
-      });
-    }
-    requestAnimationFrame(parallaxTick);
-  })();
-
-  // renderGallery 후 캐시 갱신을 위해 MutationObserver 사용
-  new MutationObserver(cacheParallaxEls).observe($gallery, { childList: true, subtree: false });
-}
 
 /* ── RESIZE ── */
 let resizeTimer = null;

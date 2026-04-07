@@ -27,6 +27,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     radial-gradient(ellipse 55% 55% at 20% 80%,rgba(140,100,0,.10),transparent),
     radial-gradient(ellipse 45% 45% at 80% 20%,rgba(255,200,0,.05),transparent)}
 
+/* ── 스크린톤 도트 텍스처 (만화가게 분위기) ── */
+body::after{
+  content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
+  background-image:radial-gradient(circle,.6px,.6px,rgba(255,229,0,.045) 1px,transparent 1px);
+  background-size:12px 12px;
+  opacity:.6;
+}
+
 /* ── HEADER ── */
 #header{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 24px;
   display:flex;justify-content:space-between;align-items:center;
@@ -66,22 +74,71 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   filter:brightness(1.18);
   z-index:10;
 }
+/* 만화 칸(コマ) 잉크 테두리 */
 .thumb::after{
   content:'';position:absolute;inset:0;
-  box-shadow:inset 0 0 0 1px rgba(255,229,0,.12);
-  pointer-events:none;z-index:3;transition:box-shadow .3s;
+  border:2px solid rgba(255,229,0,.10);
+  pointer-events:none;z-index:3;
+  transition:border .25s ease, box-shadow .25s ease;
 }
-.thumb:hover::after{box-shadow:inset 0 0 0 1.5px rgba(255,229,0,.6)}
+.thumb:hover::after{
+  border:2.5px solid rgba(255,229,0,.75);
+  box-shadow:inset 0 0 0 1px rgba(255,229,0,.25);
+}
 
 /* ── THUMB IMAGE ── */
 .thumb img{width:100%;height:auto;display:block;pointer-events:none}
+
+/* 말풍선 라벨 — hover 시 나타남 */
 .thumb-label{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:20px 10px 8px;
-  background:linear-gradient(transparent,rgba(0,0,0,.72));
-  font-size:7px;letter-spacing:.18em;
-  color:rgba(255,229,0,.5);text-transform:lowercase;
-  pointer-events:none;z-index:2;
+  position:absolute;bottom:10px;left:8px;
+  max-width:calc(100% - 16px);
+  padding:5px 10px;
+  background:rgba(255,255,255,.92);
+  color:#111;
+  font-size:8px;letter-spacing:.08em;
+  line-height:1.4;
+  border-radius:6px;
+  pointer-events:none;z-index:6;
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity .22s ease,transform .22s ease;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+/* 말풍선 꼬리 */
+.thumb-label::after{
+  content:'';position:absolute;bottom:-5px;left:14px;
+  width:0;height:0;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-top:6px solid rgba(255,255,255,.92);
+}
+.thumb:hover .thumb-label{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* ── NEW 스티커 (만화가게 신작 표시) ── */
+.thumb-new{
+  position:absolute;top:0;left:0;z-index:7;
+  width:52px;height:52px;
+  overflow:hidden;
+  pointer-events:none;
+}
+.thumb-new::before{
+  content:'NEW';
+  position:absolute;top:8px;left:-14px;
+  width:72px;
+  padding:2px 0;
+  background:#E53E3E;
+  color:#fff;
+  font-family:'Syne',sans-serif;
+  font-weight:800;
+  font-size:7px;
+  letter-spacing:.18em;
+  text-align:center;
+  transform:rotate(-45deg);
+  box-shadow:0 1px 4px rgba(0,0,0,.4);
 }
 
 /* action glow on thumbnail */
@@ -441,12 +498,17 @@ async function fetchTags(itemId) {
 /* ── GALLERY ── */
 const $gallery = document.getElementById('gallery');
 
+// NEW 스티커: 최신 2개 아이템 (order_num 기준 마지막 2개)
+const NEW_COUNT = 2;
+
 function renderGallery() {
   $gallery.innerHTML = '';
+  const newStart = Math.max(0, items.length - NEW_COUNT);
   items.forEach((item, i) => {
     const t = document.createElement('div');
     const title  = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
+    const isNew  = i >= newStart;
     const actHtml = hasAct
       ? (item.actions[lang] || [])
           .map(a => `<a class="thumb-action-link" href="${a.url || '#'}" target="_blank" rel="noopener noreferrer">${a.label}</a>`)
@@ -456,6 +518,7 @@ function renderGallery() {
     t.innerHTML = `
         <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="${i < 8 ? 'eager' : 'lazy'}">
         <div class="thumb-label">${title}</div>
+        ${isNew ? '<div class="thumb-new"></div>' : ''}
         ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}
         ${hasAct ? `<div class="thumb-action-overlay">${actHtml}</div>` : ''}`;
     t.addEventListener('click', () => openViewer(i));

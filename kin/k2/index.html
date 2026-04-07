@@ -899,13 +899,13 @@ body{
       </div>
 
       <!-- 캐릭터 월드컵 -->
-      <div class="mode-card mode-card-locked">
+      <div class="mode-card mode-card-active" id="mode-char">
         <div>
-          <div class="mode-label" style="color:rgba(255,255,255,.28)">캐릭터 월드컵</div>
-          <div class="mode-title" style="color:rgba(255,255,255,.45)">최애 캐릭터 가려내기</div>
-          <div class="mode-sub">1:1 대결 · 토너먼트</div>
+          <div class="mode-label" id="mode-char-label" style="color:rgba(255,229,0,.6)">캐릭터 월드컵</div>
+          <div class="mode-title" id="mode-char-title">최애 캐릭터 가려내기</div>
+          <div class="mode-sub" id="mode-char-sub">1:1 대결 · 16강 토너먼트</div>
         </div>
-        <div class="btn-mode-locked">준비 중</div>
+        <a href="/kin/k2/worldcup/character" class="btn-start" style="text-decoration:none;">시작</a>
       </div>
 
       <!-- 작품 월드컵 -->
@@ -2584,17 +2584,13 @@ function applyLandingLang() {
     ? "What you read tells me who you are.<br>Go ahead and find out."
     : "어떤 만화 봤는지 보면<br>어떤 사람인지 보여.<br>한번 확인해봐.";
 
-  // 월드컵 카드 텍스트
-  const lockedCards = lp.querySelectorAll('.mode-card-locked');
-  if(lockedCards[0]) {
-    const l = lockedCards[0];
-    l.querySelector('.mode-label').textContent = isEn ? 'Character Worldcup' : '캐릭터 월드컵';
-    l.querySelector('.mode-title').textContent = isEn ? 'Pick your favorite character' : '최애 캐릭터 가려내기';
-    l.querySelector('.mode-sub').textContent   = isEn ? '1:1 · tournament' : '1:1 대결 · 토너먼트';
-  }
-  lp.querySelectorAll('.btn-mode-locked').forEach(btn => {
-    btn.textContent = isEn ? 'Coming soon' : '준비 중';
-  });
+  // 캐릭터 월드컵 카드 텍스트
+  const charLabel = document.getElementById('mode-char-label');
+  const charTitle = document.getElementById('mode-char-title');
+  const charSub   = document.getElementById('mode-char-sub');
+  if(charLabel) charLabel.textContent = isEn ? 'Character Worldcup'          : '캐릭터 월드컵';
+  if(charTitle) charTitle.textContent = isEn ? 'Pick your favorite character' : '최애 캐릭터 가려내기';
+  if(charSub)   charSub.textContent   = isEn ? '1:1 · 16-team tournament'    : '1:1 대결 · 16강 토너먼트';
 
   // 작품 월드컵 카드 텍스트
   const workLabel = document.getElementById('mode-work-label');

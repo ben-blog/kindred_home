@@ -1,4 +1,6 @@
 {
+  "buildCommand": null,
+  "outputDirectory": ".",
   "rewrites": [
     { "source": "/kin/k2/quiz",               "destination": "/kin/k2/services/quiz/quiz.html" },
     { "source": "/kin/k2/result",              "destination": "/kin/k2/services/result/result.html" },

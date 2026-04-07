@@ -133,6 +133,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
     white-space:nowrap;
   }
   .vm-item-kin{color:rgba(255,232,0,.72)}
+  .vm-char-kindred{background:linear-gradient(90deg,rgba(255,232,0,.85),rgba(91,79,207,.85));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .vm-item-kindred{background:linear-gradient(90deg,rgba(255,232,0,.72),rgba(91,79,207,.72));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
   .vm-item-dred{color:rgba(91,79,207,.72);text-align:right}
   .vm-item:hover{opacity:1!important}
   .vm-item.vm-dimmed{opacity:.15!important}
@@ -162,6 +164,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   .card-kin-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em;color:#FFE800;margin-bottom:6px;line-height:1.3}
   .card-kin-desc{font-size:10px;letter-spacing:.04em;line-height:1.6;color:rgba(255,255,255,.38);margin-bottom:10px}
   .card-kin-cta{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,232,0,.45)}
+
+  .h-card-kindred{
+    left:calc(3vw + 140px);
+    transform:translateY(-50%) translateX(-16px);
+    transition:opacity .55s ease,transform .65s cubic-bezier(.16,1,.3,1);
+  }
+  .h-card-kindred.on{opacity:1;transform:translateY(-50%) translateX(0)}
+  .card-kindred-inner{
+    background:rgba(8,6,10,.94);
+    border:1px solid;border-image:linear-gradient(135deg,rgba(255,229,0,.25),rgba(91,79,207,.25)) 1;
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    padding:16px 20px;min-width:200px;max-width:260px;
+  }
+  .card-kindred-tag{font-size:7px;letter-spacing:.28em;text-transform:uppercase;background:linear-gradient(90deg,rgba(255,232,0,.5),rgba(91,79,207,.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+  .card-kindred-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em;background:linear-gradient(90deg,#FFE800,#5B4FCF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;line-height:1.3}
+  .card-kindred-desc{font-size:10px;letter-spacing:.04em;line-height:1.6;color:rgba(255,255,255,.38);margin-bottom:10px}
+  .card-kindred-cta{font-size:8px;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(90deg,rgba(255,232,0,.45),rgba(91,79,207,.45));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
   .card-dred-inner{
     background:rgba(4,3,16,.94);border:1px solid rgba(91,79,207,.20);
@@ -213,6 +232,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 .ks-item:active{background:rgba(255,229,0,.04)}
 .ks-item-left{display:flex;flex-direction:column;gap:3px}
 .ks-item-tag{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,229,0,.35)}
+.ks-item-tag-kindred{background:linear-gradient(90deg,rgba(255,229,0,.5),rgba(91,79,207,.5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .ks-item-name{font-size:14px;letter-spacing:0;color:rgba(255,255,255,.85)}
 .ks-item-arrow{color:rgba(255,229,0,.35);font-size:13px;flex-shrink:0}
 .ks-item:active .ks-item-arrow{color:rgba(255,229,0,.8)}
@@ -1151,7 +1171,7 @@ if (!IS_TOUCH) {
 const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
 const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
 
-let mainActions = { kin: [], dred: [] };
+let mainActions = { kin: [], kindred: [], dred: [] };
 
 async function fetchMainActions() {
   try {
@@ -1161,8 +1181,9 @@ async function fetchMainActions() {
     );
     if (!res.ok) return;
     const data = await res.json();
-    mainActions.kin  = data.filter(d => d.character === 'kin');
-    mainActions.dred = data.filter(d => d.character === 'dred');
+    mainActions.kin     = data.filter(d => d.character === 'kin');
+    mainActions.kindred = data.filter(d => d.character === 'kindred');
+    mainActions.dred    = data.filter(d => d.character === 'dred');
     buildPC();
     buildMobile();
   } catch(e) { console.warn('[main] fetchMainActions:', e); }
@@ -1185,6 +1206,18 @@ function buildPC() {
       <div class="vm-item vm-item-kin" data-card="hc-kin-${i}" data-url="${a.url}"
         style="opacity:${i===0?.65:.48}">${a.label}</div>`;
   });
+  // KINDRED 항목 — KIN 메뉴 하단에 추가 (KIN과 DRED 사이 위치)
+  if (mainActions.kindred.length > 0) {
+    kmHTML += `<div class="vm-line" style="margin:8px 0 4px"></div>
+      <span class="vm-char vm-char-kindred">KINDRED</span>`;
+    mainActions.kindred.forEach((item, i) => {
+      const a = item.actions?.[lang]?.[0];
+      if (!a) return;
+      kmHTML += `<div class="vm-line"></div>
+        <div class="vm-item vm-item-kindred" data-card="hc-kindred-${i}" data-url="${a.url}"
+          style="opacity:.55">${a.label}</div>`;
+    });
+  }
   $km.innerHTML = kmHTML;
 
   // DRED 메뉴 — KIN과 동일한 목록 구조. 이름만 표시 (설명 없음).
@@ -1210,6 +1243,22 @@ function buildPC() {
       <div class="card-kin-name">${a.title || a.label}</div>
       ${a.desc ? `<div class="card-kin-desc">${a.desc}</div>` : ''}
       <div class="card-kin-cta">${lang==='ko'?'열어보기':'explore'} →</div>
+    </div>`;
+    $cr.appendChild(div);
+  });
+
+  // KINDRED 카드 — KIN쪽 위치에 듀얼 스타일
+  mainActions.kindred.forEach((item, i) => {
+    const a = item.actions?.[lang]?.[0];
+    if (!a) return;
+    const div = document.createElement('div');
+    div.className = 'h-card h-card-kindred';
+    div.id = `hc-kindred-${i}`;
+    div.innerHTML = `<div class="card-kindred-inner">
+      <div class="card-kindred-tag">KINDRED</div>
+      <div class="card-kindred-name">${a.title || a.label}</div>
+      ${a.desc ? `<div class="card-kindred-desc">${a.desc}</div>` : ''}
+      <div class="card-kindred-cta">${lang==='ko'?'시작하기':'start'} →</div>
     </div>`;
     $cr.appendChild(div);
   });
@@ -1323,6 +1372,30 @@ function buildMobile() {
     }, {passive:true});
     $ki.appendChild(div);
   });
+
+  // KINDRED 항목 — KIN 시트에 추가 (KIN과 DRED 사이)
+  if (mainActions.kindred.length > 0) {
+    const sep = document.createElement('div');
+    sep.className = 'kin-sheet-divider';
+    sep.style.margin = '8px 26px';
+    $ki.appendChild(sep);
+
+    mainActions.kindred.forEach(item => {
+      const a = item.actions?.[lang]?.[0];
+      if (!a) return;
+      const div = document.createElement('div');
+      div.className = 'ks-item ks-item-kindred';
+      div.innerHTML = `<div class="ks-item-left">
+        <span class="ks-item-tag ks-item-tag-kindred">KINDRED</span>
+        <span class="ks-item-name">${a.label}</span>
+      </div><span class="ks-item-arrow">→</span>`;
+      div.addEventListener('touchend', e => {
+        e.stopPropagation(); closeSheet();
+        setTimeout(() => navTo(a.url), 320);
+      }, {passive:true});
+      $ki.appendChild(div);
+    });
+  }
 
   mainActions.dred.forEach(item => {
     const a = item.actions?.[lang]?.[0];

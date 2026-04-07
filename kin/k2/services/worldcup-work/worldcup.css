@@ -496,6 +496,9 @@
   width: 100%;
   position: relative;
 }
+.wc-share-modal--bracket .wc-share-modal-box {
+  max-width: 860px;
+}
 .wc-share-modal-close {
   position: absolute;
   top: 12px;

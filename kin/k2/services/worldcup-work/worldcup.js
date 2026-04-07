@@ -913,13 +913,14 @@ async function generateBracketShareImage() {
   return new Promise((r) => canvas.toBlob(r, 'image/png'));
 }
 
-async function openShareModal(generateFn) {
+async function openShareModal(generateFn, type = 'card') {
   const modal = $('wc-share-modal');
   const loading = $('wc-share-loading');
   const imgEl = $('wc-share-img');
   const btns = $('wc-share-btns');
 
-  modal.classList.add('open');
+  modal.classList.remove('wc-share-modal--card', 'wc-share-modal--bracket');
+  modal.classList.add('open', `wc-share-modal--${type}`);
   loading.style.display = 'block';
   imgEl.style.display = 'none';
   btns.style.display = 'none';
@@ -1018,8 +1019,10 @@ $('wc-work-b').addEventListener('click', () => {
 });
 
 // 공유 버튼
-$('wc-btn-share').addEventListener('click', () => openShareModal(generateResultShareImage));
-$('wc-btn-bracket').addEventListener('click', () => openShareModal(generateBracketShareImage));
+$('wc-btn-share').addEventListener('click', () => openShareModal(generateResultShareImage, 'card'));
+$('wc-btn-bracket').addEventListener('click', () =>
+  openShareModal(generateBracketShareImage, 'bracket')
+);
 
 $('wc-share-modal-close').addEventListener('click', () =>
   $('wc-share-modal').classList.remove('open')

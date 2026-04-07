@@ -986,7 +986,7 @@ body{
         <span class="hero-card-sfx" id="quiz-sfx">뭘 알고 뭘 모르나?</span>
         <div class="hero-card-content">
           <span class="hero-card-badge" id="mode-quiz-label">퀴즈</span>
-          <div class="hero-card-title" id="mode-quiz-title">10문제 · KIN 판정</div>
+          <div class="hero-card-title" id="mode-quiz-title">10문제면 다 보여</div>
           <div class="hero-card-desc" id="mode-quiz-desc">설정, 캐릭터, 관계, 작가 — 네가 뭘 알고 뭘 모르는지 KIN이 판정한다.</div>
           <div class="hero-card-meta">
             <span class="hero-card-stat" id="mode-quiz-sub"><span id="txt-total-q">—</span>문제 · 4지선다</span>
@@ -1034,7 +1034,7 @@ body{
     <!-- 메타 -->
     <div class="landing-v5-meta">
       <span class="today-count" id="today-count"></span>
-      <span class="landing-meta-item">KIN 판정</span>
+      <span class="landing-meta-item">알면 덕후</span>
     </div>
 
   </div>
@@ -2641,7 +2641,7 @@ function applyLandingLang() {
   const quizTitle = document.getElementById('mode-quiz-title');
   const quizDesc  = document.getElementById('mode-quiz-desc');
   if(quizLabel) quizLabel.textContent = isEn ? 'Quiz' : '퀴즈';
-  if(quizTitle) quizTitle.textContent = isEn ? '10 Questions · KIN Judges' : '10문제 · KIN 판정';
+  if(quizTitle) quizTitle.textContent = isEn ? '10 Questions. That\'s All It Takes.' : '10문제면 다 보여';
   if(quizDesc)  quizDesc.textContent  = isEn ? 'Setting, character, relation, author — KIN judges what you know and what you don\'t.' : '설정, 캐릭터, 관계, 작가 — 네가 뭘 알고 뭘 모르는지 KIN이 판정한다.';
 
   // 캐릭터 월드컵 카드
@@ -2687,7 +2687,7 @@ function applyLandingLang() {
 
   // 메타
   const metaItems = lp.querySelectorAll('.landing-meta-item');
-  if(metaItems[0]) metaItems[0].textContent = isEn ? 'KIN judges' : 'KIN 판정';
+  if(metaItems[0]) metaItems[0].textContent = isEn ? 'Weeb test' : '알면 덕후';
 
   // 헤더
   const hName = document.querySelector('.h-name');

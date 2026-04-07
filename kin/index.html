@@ -32,12 +32,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   display:flex;justify-content:space-between;align-items:center;
   background:linear-gradient(rgba(8,8,6,.9),transparent)}
 .h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--kin)}
-.h-back{font-size:8px;letter-spacing:.28em;color:rgba(255,255,255,.45);text-transform:uppercase;cursor:pointer;transition:color .2s}
-.h-back:hover{color:var(--kin)}
+.h-back{font-size:10px;letter-spacing:.22em;color:rgba(255,255,255,.55);text-transform:uppercase;cursor:pointer;transition:color .3s,text-shadow .3s;padding:8px 4px}
+.h-back:hover{color:var(--kin);text-shadow:0 0 12px rgba(255,229,0,.3)}
+.h-cross{font-size:10px;letter-spacing:.22em;color:rgba(91,79,207,.55);text-transform:uppercase;cursor:pointer;transition:color .3s,text-shadow .3s}
+.h-cross:hover{color:rgba(91,79,207,.85);text-shadow:0 0 12px rgba(91,79,207,.3)}
 
 /* ── LANG TOGGLE ── */
 #lang-toggle{display:flex;align-items:center;font-size:8px;letter-spacing:.2em;}
-.lt{padding:4px 8px;cursor:pointer;color:rgba(255,255,255,.42);transition:color .2s;user-select:none;}
+.lt{padding:4px 8px;cursor:pointer;color:rgba(255,255,255,.50);transition:color .3s;user-select:none;}
 .lt.active{color:var(--kin);}
 .lt-sep{color:rgba(255,255,255,.25)}
 
@@ -227,11 +229,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 }
 
 #detail-close{
-  display:inline-block;font-size:9px;letter-spacing:.28em;
-  color:rgba(255,255,255,.40);text-transform:uppercase;cursor:pointer;
-  transition:color .2s;margin-top:18px;
+  display:inline-block;font-size:11px;letter-spacing:.22em;
+  color:rgba(255,255,255,.50);text-transform:uppercase;cursor:pointer;
+  transition:color .3s,text-shadow .3s;margin-top:18px;padding:8px 4px;
 }
-#detail-close:hover{color:var(--kin)}
+#detail-close:hover{color:var(--kin);text-shadow:0 0 12px rgba(255,229,0,.3)}
 
 /* ── LIKE BUTTON ── */
 #detail-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:18px;}
@@ -252,9 +254,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
   display:flex;gap:24px;z-index:5;
 }
-.dn{font-size:10px;letter-spacing:.28em;color:rgba(255,255,255,.40);
-  cursor:pointer;transition:color .2s;padding:10px;user-select:none}
-.dn:hover{color:var(--kin)}
+.dn{font-size:13px;letter-spacing:.22em;color:rgba(255,255,255,.50);
+  cursor:pointer;transition:color .3s,text-shadow .3s;padding:12px;user-select:none}
+.dn:hover{color:var(--kin);text-shadow:0 0 12px rgba(255,229,0,.3)}
 #detail-counter{font-size:9px;letter-spacing:.22em;color:rgba(255,255,255,.35);display:flex;align-items:center}
 
 @media(max-width:680px){
@@ -293,7 +295,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     <span class="lt-sep">·</span>
     <span class="lt" id="lt-en">EN</span>
   </div>
-  <div class="h-back">← back</div>
+  <div class="h-back" id="nav-back">← back</div>
+  <div class="h-cross" id="nav-dred">DRED →</div>
 </div>
 
 <div id="gallery"></div>
@@ -360,7 +363,7 @@ function reportToKin(event_type, payload = {}) {
 
 /* ── STATE ── */
 const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
-let lang = navigator.language.startsWith('ko') ? 'ko' : 'en';
+let lang = localStorage.getItem('kxd_lang') || (navigator.language.startsWith('ko') ? 'ko' : 'en');
 let items = [];
 let current = -1;
 let galleryInited = false;
@@ -382,6 +385,7 @@ const $ltEn = document.getElementById('lt-en');
 
 function setLang(l) {
   lang = l;
+  localStorage.setItem('kxd_lang', l);
   $ltKo.classList.toggle('active', l === 'ko');
   $ltEn.classList.toggle('active', l === 'en');
   if (items.length) renderGallery();
@@ -506,6 +510,7 @@ async function openViewer(i) {
   void $sfx.offsetWidth;
   $sfx.classList.add('slam');
   $viewer.style.display = 'block';
+  history.pushState({ viewer: true, index: i }, '');
   _savedScrollY = window.scrollY;
   document.body.style.position = 'fixed';
   document.body.style.top = `-${_savedScrollY}px`;
@@ -514,7 +519,7 @@ async function openViewer(i) {
   await fillDetail(i);
 }
 
-function closeViewer() {
+function _closeViewerUI() {
   $viewer.classList.remove('open');
   document.body.style.position = '';
   document.body.style.top = '';
@@ -522,6 +527,18 @@ function closeViewer() {
   window.scrollTo(0, _savedScrollY);
   setTimeout(() => { $viewer.style.display = 'none'; current = -1; }, 500);
 }
+
+function closeViewer() {
+  if (history.state?.viewer) {
+    history.back();
+  } else {
+    _closeViewerUI();
+  }
+}
+
+window.addEventListener('popstate', () => {
+  if (current >= 0) _closeViewerUI();
+});
 
 function nav(dir) {
   if (current < 0) return;
@@ -617,7 +634,7 @@ document.addEventListener('touchend', e => {
 });
 
 /* ── BACK ── */
-const $back = document.querySelector('.h-back');
+const $back = document.getElementById('nav-back');
 const $backOverlay = document.createElement('div');
 Object.assign($backOverlay.style, {
   position:'fixed',inset:'0',background:'#000',opacity:'0',
@@ -628,6 +645,11 @@ $back.addEventListener('click', () => {
   $backOverlay.style.pointerEvents = 'all';
   $backOverlay.style.opacity = '1';
   setTimeout(() => { window.location.href = '../main.html'; }, 400);
+});
+document.getElementById('nav-dred').addEventListener('click', () => {
+  $backOverlay.style.pointerEvents = 'all';
+  $backOverlay.style.opacity = '1';
+  setTimeout(() => { window.location.href = '../../dred/'; }, 400);
 });
 
 /* ── RESIZE ── */

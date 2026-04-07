@@ -41,9 +41,15 @@
     .meta-top.visible { opacity:1; pointer-events:auto; }
     .meta-top span, .meta-top a {
       font-family:'DM Mono',monospace; font-size:11px; font-weight:300;
-      color:var(--text-ui); letter-spacing:0.08em; text-decoration:none;
+      color:#555; letter-spacing:0.08em; text-decoration:none;
     }
-    .meta-top a:hover { color:#666; }
+    .meta-top a:hover { color:#999; }
+    .d14-nav-link {
+      font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 300;
+      color: #555; letter-spacing: 0.08em; text-decoration: none;
+      transition: color 0.2s;
+    }
+    .d14-nav-link:hover { color: #999; }
 
     .content {
       position:fixed; left:2rem;
@@ -88,13 +94,13 @@
       bottom:max(1.8rem, env(safe-area-inset-bottom) + 0.8rem);
       right:2rem;
       font-family:'DM Mono',monospace; font-size:11px; font-weight:300;
-      color:var(--text-ui); letter-spacing:0.1em;
+      color:#555; letter-spacing:0.1em;
       background:none; border:none; cursor:pointer;
       opacity:0; transition:opacity 0.6s ease, color 0.2s;
       pointer-events:none; z-index:15; min-width:2rem; text-align:right;
     }
     .share-btn.visible { opacity:1; pointer-events:auto; }
-    .share-btn:hover { color:#888; }
+    .share-btn:hover { color:#999; }
     .share-btn:disabled { opacity:0.4; cursor:default; }
   </style>
 </head>
@@ -106,7 +112,8 @@
 
 <div class="meta-top" id="metaTop">
   <span>D14 · hour</span>
-  <a href="/">kinxdred.com</a>
+  <a href="../" class="d14-nav-link">gallery</a>
+  <a href="../../main.html">← back</a>
 </div>
 
 <div class="content">
@@ -140,7 +147,7 @@ const TRANSITION_DURATION = 2000;  // 전환 시간 — 사이클 ≈ 24s
 const SHARE_W = 1080, SHARE_H = 1350;
 
 // ── D14 로직 ───────────────────────────────────────────
-const lang    = navigator.language?.startsWith('ko') ? 'ko' : 'en';
+const lang    = localStorage.getItem('kxd_lang') || (navigator.language?.startsWith('ko') ? 'ko' : 'en');
 const now     = new Date();
 const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;

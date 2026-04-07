@@ -159,8 +159,15 @@
     .lang-btn {
       background: none; border: none; padding: 0.28rem 0.6rem;
       font-family: var(--font-mono); font-size: 0.58rem;
-      letter-spacing: 0.1em; color: #2a2a2a; transition: all 0.15s;
+      letter-spacing: 0.1em; color: #3a3a3a; transition: all 0.15s;
     }
+    .d2-back {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em;
+      color: rgba(237,237,237,.50); text-transform: uppercase;
+      text-decoration: none; transition: color 0.3s, text-shadow 0.3s;
+      padding: 8px 4px;
+    }
+    .d2-back:hover { color: var(--purple); text-shadow: 0 0 12px rgba(91,79,207,.3); }
     .lang-btn.active { background: var(--purple); color: var(--white); }
 
     /* Screens */
@@ -194,7 +201,7 @@
     .random-btn {
       background: none; border: none;
       font-family: var(--font-mono); font-size: 0.6rem;
-      color: #1e1e1e; letter-spacing: 0.08em;
+      color: #333; letter-spacing: 0.08em;
       transition: color 0.2s; padding: 0.4rem 0;
       -webkit-tap-highlight-color: transparent;
     }
@@ -252,9 +259,9 @@
     }
     .action-btn {
       background: none; border: none;
-      font-family: var(--font-mono); font-size: 0.6rem;
+      font-family: var(--font-mono); font-size: 0.65rem;
       letter-spacing: 0.12em; text-transform: uppercase;
-      color: #282828; transition: color 0.15s; padding: 0;
+      color: #3a3a3a; transition: color 0.15s; padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
     .action-btn:hover { color: var(--white); }
@@ -429,6 +436,7 @@
         <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">KO</button>
         <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
       </div>
+      <a href="../../main.html" class="d2-back">← back</a>
     </div>
 
     <div class="screen visible" id="screen-select">
@@ -451,6 +459,7 @@
         <div class="spotify-wrap" id="spotifyWrap"></div>
       </div>
       <div class="result-actions">
+        <a href="../" class="action-btn" style="text-decoration:none;">← gallery</a>
         <button class="action-btn" onclick="resetToSelect()" id="btnAgain"></button>
         <button class="action-btn primary" onclick="openShare()" id="btnShare"></button>
       </div>
@@ -501,7 +510,7 @@ const STATE2_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/p
 const OVERLAY_DURATION = 700; /* ms — keep in sync with --overlay-dur in CSS */
 
 /* ─── STATE ─── */
-let currentLang = 'ko';
+let currentLang = localStorage.getItem('kxd_lang') || 'ko';
 let selectedTags = [];
 let currentTags  = []; /* 공유 카드용 — API 호출 시점의 태그 스냅샷 */
 let currentResult = null;
@@ -665,6 +674,7 @@ function resetImages() {
 /* ─── LANG ─── */
 function setLang(lang) {
   currentLang = lang;
+  localStorage.setItem('kxd_lang', lang);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   renderKeywords();
   updateCopy();
@@ -1107,6 +1117,8 @@ function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 /* ─── INIT ─── */
 renderKeywords();
 updateCopy();
+/* 초기 언어 버튼 상태 설정 */
+document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
 startAmbient();
 </script>
 </body>

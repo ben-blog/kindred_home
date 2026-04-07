@@ -13,6 +13,80 @@ const ROUND_NAMES = {
   en: { 16: 'Round of 16', 8: 'Quarter-final', 4: 'Semi-final', 2: 'Final' },
 };
 
+// MBTI 매핑 테이블
+const MBTI_MAP = {
+  // E/I: 외향 vs 내향 — tone + archetype 기반
+  E: {
+    tone: ['playful', 'bright', 'warm'],
+    archetype: ['wild_card', 'berserker', 'rebel', 'fighter', 'trickster'],
+  },
+  I: {
+    tone: ['cool', 'dark', 'melancholy', 'mysterious'],
+    archetype: ['stoic', 'mastermind', 'sage', 'seeker'],
+  },
+  // S/N: 감각 vs 직관 — trait 기반
+  S: { trait: ['loyalty', 'instinct', 'willpower', 'empathy'] },
+  N: { trait: ['intellect', 'chaos', 'freedom', 'obsession'] },
+  // T/F: 사고 vs 감정 — trait + archetype
+  T: {
+    trait: ['pride', 'intellect', 'chaos'],
+    archetype: ['mastermind', 'genius', 'stoic', 'trickster'],
+  },
+  F: {
+    trait: ['empathy', 'sacrifice', 'loyalty'],
+    archetype: ['guardian', 'healer', 'underdog', 'seeker'],
+  },
+  // J/P: 판단 vs 인식 — archetype 기반
+  J: {
+    archetype: ['guardian', 'leader', 'stoic', 'sage'],
+    trait: ['loyalty', 'willpower', 'sacrifice'],
+  },
+  P: {
+    archetype: ['wild_card', 'rebel', 'trickster', 'berserker'],
+    trait: ['instinct', 'freedom', 'chaos'],
+  },
+};
+
+// MBTI 유형별 한마디
+const MBTI_COMMENT = {
+  ko: {
+    INTJ: '전략적인 캐릭터에 끌리는 설계자. 네가 고른 캐릭터들은 다 자기만의 계획이 있었어.',
+    INTP: '조용히 세상을 분석하는 캐릭터를 좋아하는구나. 머릿속이 복잡한 캐릭터일수록 끌리지?',
+    ENTJ: '카리스마 있는 리더형 캐릭터를 골랐네. 약한 모습보다 강한 결단이 좋은 거야.',
+    ENTP: '예측 불가능하고 재치 있는 캐릭터를 좋아해. 틀을 깨는 캐릭터가 네 취향이야.',
+    INFJ: '조용하지만 깊은 신념을 가진 캐릭터에 끌리는 거야. 겉으로 안 보여도 속은 뜨거운 사람들.',
+    INFP: '이상을 쫓는 캐릭터에 약하구나. 순수한 마음을 지키려는 캐릭터일수록 마음이 가지?',
+    ENFJ: '사람을 이끄는 따뜻한 캐릭터를 골랐어. 혼자 강한 것보다 함께 강한 쪽이 좋은 거지.',
+    ENFP: '에너지 넘치고 자유로운 캐릭터를 좋아하네. 규칙보다 감정을 따르는 캐릭터가 네 픽이야.',
+    ISTJ: '묵묵히 자기 길을 가는 캐릭터를 골랐어. 화려함보다 신뢰감에 끌리는 타입이야.',
+    ISFJ: '지키려는 마음이 강한 캐릭터에 끌리네. 누군가를 위해 싸우는 모습에 약한 거지.',
+    ESTJ: '강인한 의지로 팀을 이끄는 캐릭터를 좋아해. 결단력 있는 캐릭터가 멋있는 거야.',
+    ESFJ: '동료를 챙기는 따뜻한 캐릭터에 끌리는구나. 혼자보다 함께일 때 빛나는 사람들.',
+    ISTP: '과묵하지만 실력으로 보여주는 캐릭터를 골랐네. 말보다 행동이 강한 타입에 끌리지.',
+    ISFP: '감성적이지만 조용히 자기 길을 가는 캐릭터를 좋아해. 자유로운 영혼에 끌리는 거야.',
+    ESTP: '전투 본능과 행동력이 강한 캐릭터를 골랐어. 생각보다 몸이 먼저 움직이는 타입이 좋은 거지.',
+    ESFP: '밝고 에너지 넘치는 캐릭터를 좋아하네. 분위기 메이커에 끌리는 타입이야.',
+  },
+  en: {
+    INTJ: 'You pick strategists. Your characters all had a plan of their own.',
+    INTP: "You like quiet analyzers. The more complex their mind, the more you're drawn in.",
+    ENTJ: 'Charismatic leaders caught your eye. You respect decisive strength.',
+    ENTP: 'Unpredictable, witty characters are your thing. Rule-breakers speak to you.',
+    INFJ: "You're drawn to quiet conviction. Calm exterior, burning interior.",
+    INFP: "You're weak for idealists. The purer the heart, the harder it hits.",
+    ENFJ: "Warm leaders who unite others. Stronger together — that's your vibe.",
+    ENFP: 'Free spirits with overflowing energy. You pick heart over rules.',
+    ISTJ: 'Steady, reliable characters. You value trust over flash.',
+    ISFJ: 'Protectors who fight for others. Self-sacrifice gets you every time.',
+    ESTJ: 'Strong-willed leaders who take charge. Decisiveness is what you respect.',
+    ESFJ: 'Warm team players. Characters who shine with others, not alone.',
+    ISTP: "Quiet but deadly. Actions over words — that's what draws you in.",
+    ISFP: 'Sensitive free spirits on their own path. You appreciate quiet freedom.',
+    ESTP: 'Combat instinct and action. Characters who move before they think.',
+    ESFP: "Bright, energetic mood-makers. You're drawn to the life of the party.",
+  },
+};
+
 // archetype별 KIN 코멘트 소재
 const ARCHETYPE_FLAVOR = {
   ko: {
@@ -170,6 +244,33 @@ async function fetchCharImage(char) {
 // 상태
 // ══════════════════════════════════════════
 
+const CATEGORIES = {
+  all: {
+    ko: '전체',
+    en: 'All',
+    desc_ko: '210명 전체에서 16명 랜덤',
+    desc_en: '16 random from all 210',
+  },
+  protagonist: {
+    ko: '주인공',
+    en: 'Protagonist',
+    desc_ko: '주인공 86명 중 16명',
+    desc_en: '16 from 86 protagonists',
+  },
+  rival: {
+    ko: '라이벌 & 악역',
+    en: 'Rival & Villain',
+    desc_ko: '라이벌·악역 78명 중 16명',
+    desc_en: '16 from 78 rivals',
+  },
+  female: {
+    ko: '여캐',
+    en: 'Female',
+    desc_ko: '여성 캐릭터 46명 중 16명',
+    desc_en: '16 from 46 female chars',
+  },
+};
+
 const state = {
   characters: [],
   roundMatches: [],
@@ -183,6 +284,7 @@ const state = {
   resultWinner: null,
   history: [],
   selecting: false,
+  category: 'all',
 };
 
 // ══════════════════════════════════════════
@@ -294,13 +396,27 @@ async function renderMatch() {
   const isEn = getLang() === 'en';
 
   // 텍스트
+  const lang = isEn ? 'en' : 'ko';
   $('wc-name-a').textContent = isEn ? charA.name_en : charA.name_ko;
   $('wc-work-a').textContent = isEn ? charA.work_en : charA.work_ko;
   $('wc-tag-a').textContent = isEn ? charA.tagline_en : charA.tagline_ko;
+  // 속성 힌트
+  const hintA = $('wc-hint-a');
+  if (hintA) {
+    const a1 = ARCHETYPE_LABEL[lang][charA.archetype] || '';
+    const a2 = TRAIT_LABEL[lang][charA.trait] || '';
+    hintA.textContent = [a1, a2].filter(Boolean).join(' · ');
+  }
 
   $('wc-name-b').textContent = isEn ? charB.name_en : charB.name_ko;
   $('wc-work-b').textContent = isEn ? charB.work_en : charB.work_ko;
   $('wc-tag-b').textContent = isEn ? charB.tagline_en : charB.tagline_ko;
+  const hintB = $('wc-hint-b');
+  if (hintB) {
+    const b1 = ARCHETYPE_LABEL[lang][charB.archetype] || '';
+    const b2 = TRAIT_LABEL[lang][charB.trait] || '';
+    hintB.textContent = [b1, b2].filter(Boolean).join(' · ');
+  }
 
   // 글로벌 헤더
   $('h-title').textContent = getRoundLabel(state.round);
@@ -435,13 +551,116 @@ function analyzeTop4Tags() {
     traitCount: topTrait ? topTrait[1] : 0,
     tone: topTone ? topTone[0] : null,
     toneCount: topTone ? topTone[1] : 0,
+    allArchetypes: archetypes,
+    allTraits: traits,
+    allTones: tones,
   };
 }
+
+// MBTI 계산 — Top 4 캐릭터의 태그를 종합
+function calcMBTI() {
+  const top4 = state.top4.slice(0, 4);
+  const scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+
+  top4.forEach((c) => {
+    // E/I
+    if (MBTI_MAP.E.tone.includes(c.tone)) scores.E++;
+    if (MBTI_MAP.I.tone.includes(c.tone)) scores.I++;
+    if (MBTI_MAP.E.archetype.includes(c.archetype)) scores.E++;
+    if (MBTI_MAP.I.archetype.includes(c.archetype)) scores.I++;
+    // S/N
+    if (MBTI_MAP.S.trait.includes(c.trait)) scores.S++;
+    if (MBTI_MAP.N.trait.includes(c.trait)) scores.N++;
+    // T/F
+    if (MBTI_MAP.T.trait.includes(c.trait)) scores.T++;
+    if (MBTI_MAP.T.archetype.includes(c.archetype)) scores.T++;
+    if (MBTI_MAP.F.trait.includes(c.trait)) scores.F++;
+    if (MBTI_MAP.F.archetype.includes(c.archetype)) scores.F++;
+    // J/P
+    if (MBTI_MAP.J.archetype.includes(c.archetype)) scores.J++;
+    if (MBTI_MAP.J.trait.includes(c.trait)) scores.J++;
+    if (MBTI_MAP.P.archetype.includes(c.archetype)) scores.P++;
+    if (MBTI_MAP.P.trait.includes(c.trait)) scores.P++;
+  });
+
+  const type =
+    (scores.E >= scores.I ? 'E' : 'I') +
+    (scores.S >= scores.N ? 'S' : 'N') +
+    (scores.T >= scores.F ? 'T' : 'F') +
+    (scores.J >= scores.P ? 'J' : 'P');
+
+  return { type, scores };
+}
+
+// archetype 한글 라벨
+const ARCHETYPE_LABEL = {
+  ko: {
+    guardian: '수호자',
+    genius: '천재',
+    mastermind: '전략가',
+    rebel: '반항아',
+    stoic: '과묵',
+    berserker: '광전사',
+    underdog: '약체 성장',
+    leader: '리더',
+    wild_card: '변수',
+    trickster: '트릭스터',
+    seeker: '탐구자',
+    healer: '치유자',
+    sage: '현자',
+    fighter: '전사',
+  },
+  en: {
+    guardian: 'Guardian',
+    genius: 'Genius',
+    mastermind: 'Mastermind',
+    rebel: 'Rebel',
+    stoic: 'Stoic',
+    berserker: 'Berserker',
+    underdog: 'Underdog',
+    leader: 'Leader',
+    wild_card: 'Wild Card',
+    trickster: 'Trickster',
+    seeker: 'Seeker',
+    healer: 'Healer',
+    sage: 'Sage',
+    fighter: 'Fighter',
+  },
+};
+
+const TRAIT_LABEL = {
+  ko: {
+    willpower: '의지',
+    pride: '자존심',
+    loyalty: '충성',
+    obsession: '집착',
+    intellect: '지성',
+    instinct: '본능',
+    sacrifice: '희생',
+    empathy: '공감',
+    chaos: '혼돈',
+    freedom: '자유',
+  },
+  en: {
+    willpower: 'Willpower',
+    pride: 'Pride',
+    loyalty: 'Loyalty',
+    obsession: 'Obsession',
+    intellect: 'Intellect',
+    instinct: 'Instinct',
+    sacrifice: 'Sacrifice',
+    empathy: 'Empathy',
+    chaos: 'Chaos',
+    freedom: 'Freedom',
+  },
+};
 
 function getWcObs(winner, isEn) {
   const name = isEn ? winner.name_en : winner.name_ko;
   const tier = winner.popularity_tier;
   const tags = analyzeTop4Tags();
+  const mbti = calcMBTI();
+  const top4 = state.top4.slice(0, 4);
 
   // 결승 상대
   const finalMatch = state.history.find((h) => h.round === 2);
@@ -450,6 +669,9 @@ function getWcObs(winner, isEn) {
   // S급 상대를 꺾은 횟수
   const path = state.history.filter((h) => h.winner.id === winner.id);
   const sKills = path.filter((h) => h.loser.popularity_tier === 'S').length;
+
+  // Top4 작품 다양성 체크
+  const uniqueWorks = new Set(top4.map((c) => c.work_ko)).size;
 
   const lines = [];
 
@@ -466,36 +688,40 @@ function getWcObs(winner, isEn) {
 
     // S급 격파
     if (sKills >= 2) {
-      lines.push(`Took down ${sKills} S-tier picks. You knew what you wanted.`);
+      lines.push(`Took down ${sKills} S-tier picks on the way.`);
     }
 
-    // 태그 패턴 분석
+    // 태그 패턴 — 우선순위: trait > archetype > tone
     if (tags.traitCount >= 2) {
       lines.push(TRAIT_FLAVOR.en[tags.trait] || '');
     } else if (tags.archetypeCount >= 2) {
       lines.push(ARCHETYPE_FLAVOR.en[tags.archetype] || '');
     }
 
-    // tone 패턴
-    if (tags.toneCount >= 3) {
+    if (tags.toneCount >= 2) {
       lines.push(TONE_FLAVOR.en[tags.tone] || '');
     }
 
-    // tier 기반 마무리
-    if (lines.length < 2) {
-      if (tier === 'S') {
-        lines.push(`Classic pick. But the path here was uniquely yours.`);
-      } else if (tier === 'A') {
-        lines.push(`Not the obvious choice. That's a real preference showing.`);
-      } else {
-        lines.push(`${name} winning this isn't about popularity. You're picking by feel.`);
-      }
+    // 작품 다양성 코멘트
+    if (uniqueWorks === 4 && lines.length < 3) {
+      lines.push('All from different worlds. You pick characters, not series.');
     }
 
-    return lines.filter(Boolean).slice(0, 3).join(' ');
+    // tier 마무리
+    if (lines.length < 2) {
+      if (tier === 'S') lines.push('Classic pick. But the path here was uniquely yours.');
+      else if (tier === 'A')
+        lines.push("Not the obvious choice. That's a real preference showing.");
+      else lines.push("This isn't about popularity. You're picking by feel.");
+    }
+
+    // MBTI 한마디
+    lines.push(MBTI_COMMENT.en[mbti.type] || '');
+
+    return lines.filter(Boolean).slice(0, 4).join(' ');
   }
 
-  // 한국어
+  // ── 한국어 ──
   const ga = getJosa(name, '이/가');
   const eul = getJosa(name, '을/를');
 
@@ -512,33 +738,36 @@ function getWcObs(winner, isEn) {
 
   // S급 격파
   if (sKills >= 2) {
-    lines.push(`오는 길에 S급을 ${sKills}명이나 꺾었어. 그냥 유명한 걸 고른 게 아니야.`);
+    lines.push(`오는 길에 S급을 ${sKills}명이나 꺾었어.`);
   }
 
-  // 태그 패턴
+  // 태그 패턴 — 트레이트 우선
   if (tags.traitCount >= 2) {
     lines.push(TRAIT_FLAVOR.ko[tags.trait] || '');
   } else if (tags.archetypeCount >= 2) {
     lines.push(ARCHETYPE_FLAVOR.ko[tags.archetype] || '');
   }
 
-  // tone 패턴
-  if (tags.toneCount >= 3) {
+  if (tags.toneCount >= 2) {
     lines.push(TONE_FLAVOR.ko[tags.tone] || '');
+  }
+
+  // 작품 다양성
+  if (uniqueWorks === 4 && lines.length < 3) {
+    lines.push('전부 다른 작품에서 골랐네. 작품이 아니라 캐릭터를 보는 거야.');
   }
 
   // tier 마무리
   if (lines.length < 2) {
-    if (tier === 'S') {
-      lines.push(`${name}${eul} 골랐구나. 여기까지 오는 길이 더 흥미로워.`);
-    } else if (tier === 'A') {
-      lines.push(`더 유명한 캐릭터들 다 제치고 ${name}${ga} 남았어. 그게 진짜 취향이야.`);
-    } else {
-      lines.push(`${name}${ga} 우승이라니. 인지도랑 상관없이 네 기준으로 고른 거야.`);
-    }
+    if (tier === 'S') lines.push(`여기까지 오는 길이 더 흥미로워.`);
+    else if (tier === 'A') lines.push(`더 유명한 캐릭터들 다 제치고 ${name}${ga} 남았어.`);
+    else lines.push(`${name}${ga} 우승이라니. 인지도랑 상관없이 네 기준으로 고른 거야.`);
   }
 
-  return lines.filter(Boolean).slice(0, 3).join(' ');
+  // MBTI 한마디
+  lines.push(MBTI_COMMENT.ko[mbti.type] || '');
+
+  return lines.filter(Boolean).slice(0, 4).join(' ');
 }
 
 function renderResultContent(isEn) {
@@ -564,6 +793,43 @@ function renderResultContent(isEn) {
 
   $('wc-obs-text').textContent = getWcObs(winner, isEn);
   $('wc-obs-avatar').src = KIN_IMGS.happy;
+
+  // 태그 시각화
+  const tags = analyzeTop4Tags();
+  const lang = isEn ? 'en' : 'ko';
+  const tagBadges = $('wc-tag-badges');
+  if (tagBadges) {
+    const badges = [];
+    if (winner.archetype) badges.push(ARCHETYPE_LABEL[lang][winner.archetype] || winner.archetype);
+    if (winner.trait) badges.push(TRAIT_LABEL[lang][winner.trait] || winner.trait);
+    if (winner.tone) badges.push(winner.tone);
+    tagBadges.innerHTML = badges.map((b) => `<span class="wc-badge">${b}</span>`).join('');
+  }
+
+  // MBTI 표시
+  const mbti = calcMBTI();
+  const mbtiEl = $('wc-mbti');
+  if (mbtiEl) {
+    mbtiEl.querySelector('.wc-mbti-type').textContent = mbti.type;
+    mbtiEl.querySelector('.wc-mbti-desc').textContent = isEn
+      ? `Your character taste says ${mbti.type}`
+      : `너의 캐릭터 취향은 ${mbti.type}`;
+    mbtiEl.style.display = '';
+  }
+
+  // Top4 태그 요약
+  const profileEl = $('wc-taste-profile');
+  if (profileEl) {
+    const pTags = [];
+    if (tags.traitCount >= 2) pTags.push(TRAIT_LABEL[lang][tags.trait]);
+    if (tags.archetypeCount >= 2) pTags.push(ARCHETYPE_LABEL[lang][tags.archetype]);
+    if (tags.toneCount >= 2) pTags.push(tags.tone);
+    profileEl.innerHTML =
+      pTags.length > 0
+        ? `<span class="wc-profile-label">${isEn ? 'Your Top 4 Pattern' : 'Top 4 패턴'}</span>` +
+          pTags.map((t) => `<span class="wc-badge wc-badge-pattern">${t}</span>`).join('')
+        : '';
+  }
 
   $('wc-btn-retry').textContent = isEn ? 'Try Again' : '다시 하기';
   $('wc-btn-share').textContent = isEn ? 'Share Card' : '카드 공유';
@@ -609,7 +875,7 @@ async function showResult(winner) {
       winner_id: winner.id,
       winner: winner.name_ko,
       top4: state.top4.slice(0, 4).map((c) => c.name_ko),
-      top4_tags: tags,
+      top4_tags: { ...tags, mbti: calcMBTI().type, category: state.category },
       lang: getLang(),
     }),
   }).catch(() => {});
@@ -670,6 +936,7 @@ async function generateResultShareImage() {
     : '내 픽 · KIN 캐릭터 월드컵';
   $('sc-main-title').textContent = isEn ? winner.name_en : winner.name_ko;
   $('sc-main-work').textContent = isEn ? winner.work_en : winner.work_ko;
+  $('sc-main-mbti').textContent = calcMBTI().type;
   $('sc-main-obs').textContent = getWcObs(winner, isEn);
 
   const imgEl = $('sc-main-img');
@@ -983,9 +1250,12 @@ function applyLang(l) {
   const isEn = l === 'en';
   $('h-title').textContent = isEn ? 'Character Worldcup' : '캐릭터 월드컵';
 
-  $('wc-start-desc').innerHTML = isEn
-    ? '16 characters are randomly drawn from a pool of 225.<br>The last one standing is your character.'
-    : '225명의 캐릭터 중 16명이 랜덤으로 뽑혀 대결합니다.<br>마지막에 남는 한 명이 당신의 캐릭터입니다.';
+  // 카테고리 버튼 텍스트 업데이트
+  document.querySelectorAll('.wc-cat-btn').forEach((btn) => {
+    const cat = CATEGORIES[btn.dataset.cat];
+    if (cat) btn.textContent = isEn ? cat.en : cat.ko;
+  });
+  updateStartDesc();
   $('wc-btn-start').textContent = isEn ? 'Start' : '시작하기';
 
   if (
@@ -1004,12 +1274,34 @@ function applyLang(l) {
 // 이벤트 리스너
 // ══════════════════════════════════════════
 
+// 카테고리 선택
+function initCategoryButtons() {
+  document.querySelectorAll('.wc-cat-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.wc-cat-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.category = btn.dataset.cat;
+      updateStartDesc();
+    });
+  });
+}
+
+function updateStartDesc() {
+  const isEn = getLang() === 'en';
+  const cat = CATEGORIES[state.category];
+  $('wc-start-desc').textContent = isEn ? cat.desc_en : cat.desc_ko;
+}
+
 // 시작 버튼
 $('wc-btn-start').addEventListener('click', async () => {
   showSection('wc-arena');
 
   try {
-    const allChars = await loadCharacters();
+    let allChars = await loadCharacters();
+    // 카테고리 필터
+    if (state.category !== 'all') {
+      allChars = allChars.filter((c) => c.category === state.category);
+    }
     const selected = selectCharacters(allChars);
     if (selected.length < 16) throw new Error('not enough characters');
 
@@ -1122,6 +1414,7 @@ $('wc-btn-retry').addEventListener('click', () => {
 // ══════════════════════════════════════════
 
 initLangToggle(applyLang);
+initCategoryButtons();
 
 (async () => {
   $('wc-loading').style.display = 'none';

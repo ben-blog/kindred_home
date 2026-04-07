@@ -537,3 +537,119 @@
     display: none;
   }
 }
+
+/* ══════════════════════════
+   카테고리 선택 (시작 화면)
+══════════════════════════ */
+.wc-cat-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 440px;
+}
+.wc-cat-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 229, 0, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.wc-cat-btn:hover {
+  border-color: rgba(255, 229, 0, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+}
+.wc-cat-btn.active {
+  border-color: rgba(255, 229, 0, 0.6);
+  background: rgba(255, 229, 0, 0.1);
+  color: #ffe500;
+  font-weight: 600;
+}
+
+/* ══════════════════════════
+   매치 화면: 속성 힌트
+══════════════════════════ */
+.wc-char-hint {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 229, 0, 0.4);
+  font-family: 'DM Mono', monospace;
+  margin-top: 2px;
+}
+
+/* ══════════════════════════
+   결과: 태그 배지
+══════════════════════════ */
+.wc-tag-badges {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.wc-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 229, 0, 0.25);
+  background: rgba(255, 229, 0, 0.06);
+  color: rgba(255, 229, 0, 0.7);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-family: 'DM Mono', monospace;
+}
+.wc-badge-pattern {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ══════════════════════════
+   결과: MBTI
+══════════════════════════ */
+.wc-mbti {
+  text-align: center;
+  margin: 20px 0 8px;
+  padding: 20px 24px;
+  border: 1px solid rgba(255, 229, 0, 0.15);
+  border-radius: 14px;
+  background: rgba(255, 229, 0, 0.03);
+}
+.wc-mbti-type {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 36px;
+  letter-spacing: 6px;
+  color: #ffe500;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.wc-mbti-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* ══════════════════════════
+   결과: 취향 프로필
+══════════════════════════ */
+.wc-taste-profile {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.wc-profile-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  font-family: 'DM Mono', monospace;
+  margin-right: 4px;
+}

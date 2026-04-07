@@ -44,9 +44,14 @@
             id="wc-intro-avatar"
           />
         </div>
+        <div class="wc-cat-selector">
+          <button class="wc-cat-btn active" data-cat="all">전체</button>
+          <button class="wc-cat-btn" data-cat="protagonist">주인공</button>
+          <button class="wc-cat-btn" data-cat="rival">라이벌 & 악역</button>
+          <button class="wc-cat-btn" data-cat="female">여캐</button>
+        </div>
         <div class="wc-start-desc" id="wc-start-desc">
-          225명의 캐릭터 중 16명이 랜덤으로 뽑혀 대결합니다.<br />
-          마지막에 남는 한 명이 당신의 캐릭터입니다.
+          210명 전체에서 16명 랜덤
         </div>
         <button class="btn-primary wc-start-btn" id="wc-btn-start">시작하기</button>
       </section>
@@ -62,6 +67,7 @@
             <div class="wc-char-info">
               <div class="wc-char-work" id="wc-work-a"></div>
               <div class="wc-char-name" id="wc-name-a"></div>
+              <div class="wc-char-hint" id="wc-hint-a"></div>
               <div class="wc-char-tagline" id="wc-tag-a"></div>
             </div>
           </div>
@@ -78,6 +84,7 @@
             <div class="wc-char-info">
               <div class="wc-char-work" id="wc-work-b"></div>
               <div class="wc-char-name" id="wc-name-b"></div>
+              <div class="wc-char-hint" id="wc-hint-b"></div>
               <div class="wc-char-tagline" id="wc-tag-b"></div>
             </div>
           </div>
@@ -90,6 +97,9 @@
         <div class="wc-result-title" id="wc-result-title"></div>
         <div class="wc-result-work" id="wc-result-work"></div>
 
+        <!-- 태그 배지 -->
+        <div class="wc-tag-badges" id="wc-tag-badges"></div>
+
         <!-- 1위 카드 -->
         <div class="wc-winner-card">
           <div class="wc-winner-bg" id="wc-winner-bg"></div>
@@ -98,6 +108,15 @@
         <div class="wc-winner-texts">
           <p class="wc-winner-tagline" id="wc-winner-tagline"></p>
         </div>
+
+        <!-- MBTI -->
+        <div class="wc-mbti" id="wc-mbti" style="display: none">
+          <div class="wc-mbti-type"></div>
+          <div class="wc-mbti-desc"></div>
+        </div>
+
+        <!-- Top4 취향 패턴 -->
+        <div class="wc-taste-profile" id="wc-taste-profile"></div>
 
         <!-- 2위 수평 -->
         <div class="wc-second-row" id="wc-second-card">
@@ -227,6 +246,18 @@
             color: rgba(255, 255, 255, 0.4);
             margin-bottom: 12px;
             font-family: 'DM Mono', monospace;
+          "
+        ></div>
+        <div
+          id="sc-main-mbti"
+          style="
+            display: inline-block;
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffe500;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            font-family: 'Syne', sans-serif;
           "
         ></div>
         <div

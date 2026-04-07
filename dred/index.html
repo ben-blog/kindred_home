@@ -145,6 +145,21 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 }
 @keyframes badgeBlink{0%,100%{opacity:1}50%{opacity:0}}
 
+/* ── FRAME ACTION LINK (hover overlay 안에 표시) ── */
+.frame-action-link{
+  font-size:7px;letter-spacing:.18em;text-transform:uppercase;
+  padding:6px 10px;background:var(--dred);color:#fff;
+  text-decoration:none;display:inline-block;
+  font-family:'DM Mono',monospace;font-weight:400;
+  transition:background .2s,color .2s;
+  pointer-events:all;
+}
+.frame-action-link:hover{background:transparent;color:var(--dred);box-shadow:inset 0 0 0 1px var(--dred)}
+/* 모바일: overlay 항상 보이게 (낮은 opacity로) */
+@media(pointer:coarse){
+  .frame.has-action .frame-overlay{opacity:.8;pointer-events:all}
+}
+
 /* action section in detail */
 #detail-action-section{
   margin-top:20px;
@@ -507,11 +522,17 @@ function renderStrip() {
     const title  = item[`title_${lang}`] || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
 
+    const actHtml = hasAct
+      ? (item.actions[lang] || [])
+          .map(a => `<a class="frame-action-link" href="${a.url || '#'}" target="_blank" rel="noopener noreferrer">${a.label}</a>`)
+          .join('')
+      : '';
     fr.className = 'frame' + (hasAct ? ' has-action' : '');
     fr.innerHTML = `
       <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
       <div class="frame-overlay">
         <div class="frame-caption">${title}</div>
+        ${hasAct ? actHtml : ''}
       </div>
       ${hasAct ? '<div class="frame-action-badge">action</div>' : ''}`;
 
@@ -530,6 +551,11 @@ function renderStrip() {
       if (dragMoved) return;
       openDetail(i).catch(err => console.error('[DRED] openDetail error:', err));
     });
+    if (hasAct) {
+      fr.querySelectorAll('.frame-action-link').forEach(link => {
+        link.addEventListener('click', e => e.stopPropagation());
+      });
+    }
 
     $strip.appendChild(fr);
     frameEls.push(fr);

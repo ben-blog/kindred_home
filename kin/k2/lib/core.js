@@ -259,16 +259,22 @@ const KIN_REACTIONS = {
     '어, 계속 맞히네. 이거 진짜야?',
     '이거 진짜야? 혹시 전에 다 해봤어?',
     '오. 계속 오네. 멈추지 말고.',
+    '슬슬 분위기 나는데. 이대로 가봐.',
+    '연속이네. 운인지 실력인지 봐야 알겠어.',
   ],
   streak_5: [
     '이거 진짜 아는 거야? 찍는 거 아니지?',
     '멈추지 않네. 솔직히 좀 무서워지기 시작했어.',
     '좀 무서운데. 어디까지 가는 거야.',
+    '이 페이스 실화야? 꺾일 줄 알았는데.',
+    '아직도 맞히고 있어. 나 좀 긴장되기 시작했어.',
   ],
   streak_7: [
     '...인정하기 싫은데. 인정해야 할 것 같아.',
     '이 정도면 단골이야. 그냥 여기 살아.',
     '어, 진짜로? 이건 나도 예상 못 했어.',
+    '할 말을 잃었어. 진심으로.',
+    '이건 좀 전설인데. 기록해둘게.',
   ],
 };
 
@@ -361,16 +367,22 @@ const KIN_REACTIONS_EN = {
     'Oh, you keep getting them. Is this real?',
     'Is this real? Did you do this before?',
     "Oh. Keep going. Don't stop now.",
+    'Starting to feel it. Keep this up.',
+    "Back to back. Luck or skill, we'll see.",
   ],
   streak_5: [
     "Do you actually know this? You're not guessing, right?",
     "You're not stopping. Honestly starting to get a little scary.",
     'Getting a bit scary. How far does this go.',
+    "This pace is real? Thought you'd slip by now.",
+    "Still going. I'm getting nervous, honestly.",
   ],
   streak_7: [
     "...I don't want to admit it. But I have to.",
     "You're a regular. You might as well just live here.",
     "Oh, for real? Even I didn't see this coming.",
+    "I'm speechless. Genuinely.",
+    "This is kind of legendary. I'm saving this.",
   ],
 };
 
@@ -551,9 +563,10 @@ const OBS = {
   },
 };
 
-export function getObs(pattern) {
+export function getObs(pattern, idx) {
   const pool = OBS[getLang()][pattern] || OBS[getLang()].random;
-  return pool[Math.floor(Math.random() * pool.length)];
+  const i = idx !== undefined && idx < pool.length ? idx : Math.floor(Math.random() * pool.length);
+  return { text: pool[i], idx: i };
 }
 
 export const REPLAY_HINTS = {

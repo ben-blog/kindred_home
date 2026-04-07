@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<link rel="icon" type="image/svg+xml" href="./k2_favicon.svg">
+<link rel="icon" type="image/svg+xml" href="/kin/k2/k2_favicon.svg">
 <title>난 어떤 덕후? — KIN의 만화·애니</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -91,6 +91,8 @@ body{
   cursor:pointer;transition:color .2s;text-decoration:none;
   padding:12px 4px;min-height:44px;display:flex;align-items:center;
 }
+.h-cross{font-size:var(--t-label);letter-spacing:var(--ls-mono);color:rgba(255,229,0,.55);text-transform:uppercase;cursor:pointer;transition:color .3s;text-decoration:none;padding:12px 4px;min-height:44px;display:flex;align-items:center}
+.h-cross:hover{color:var(--kin)}
 #lang-toggle{display:flex;align-items:center;font-size:var(--t-label);letter-spacing:var(--ls-mono)}
 .lt{padding:10px 12px;cursor:pointer;color:rgba(255,255,255,.45);transition:color .2s;user-select:none;border-radius:3px;min-height:44px;display:flex;align-items:center;}
 .lt.active{color:var(--kin)}
@@ -849,12 +851,13 @@ body{
 
 <!-- HEADER -->
 <header id="header">
-  <a class="h-back" href="/kin/">← KIN</a>
+  <a class="h-back" href="../../main.html">← KIN</a>
   <div class="h-name" id="h-title">난 어떤 덕후?</div>
   <div id="lang-toggle">
     <span class="lt active" data-lang="ko">KO</span>
     <span class="lt-sep"> / </span>
     <span class="lt" data-lang="en">EN</span>
+    <a href="../" class="h-cross" id="nav-gallery">gallery</a>
   </div>
 </header>
 
@@ -1207,9 +1210,9 @@ const KIN_REACTIONS = {
     "뭐, 그건 패스. 이 정도는 모르는 게 정상이야.",
     "어려운 거 틀린 거니까 괜찮아. 쉬운 거 틀린 것보다 훨씬 나아.",
   ],
-  streak_3:["어, 계속 맞히네. 이거 진짜야?","이거 진짜야? 혹시 전에 다 해봤어?","오. 계속 오네. 멈추지 말고."],
-  streak_5:["이거 진짜 아는 거야? 찍는 거 아니지?","멈추지 않네. 솔직히 좀 무서워지기 시작했어.","좀 무서운데. 어디까지 가는 거야."],
-  streak_7:["...인정하기 싫은데. 인정해야 할 것 같아.","이 정도면 단골이야. 그냥 여기 살아.","어, 진짜로? 이건 나도 예상 못 했어."],
+  streak_3:["어, 계속 맞히네. 이거 진짜야?","이거 진짜야? 혹시 전에 다 해봤어?","오. 계속 오네. 멈추지 말고.","슬슬 분위기 나는데. 이대로 가봐.","연속이네. 운인지 실력인지 봐야 알겠어."],
+  streak_5:["이거 진짜 아는 거야? 찍는 거 아니지?","멈추지 않네. 솔직히 좀 무서워지기 시작했어.","좀 무서운데. 어디까지 가는 거야.","이 페이스 실화야? 꺾일 줄 알았는데.","아직도 맞히고 있어. 나 좀 긴장되기 시작했어."],
+  streak_7:["...인정하기 싫은데. 인정해야 할 것 같아.","이 정도면 단골이야. 그냥 여기 살아.","어, 진짜로? 이건 나도 예상 못 했어.","할 말을 잃었어. 진심으로.","이건 좀 전설인데. 기록해둘게."],
 };
 
 const KIN_REACTIONS_EN = {
@@ -1297,9 +1300,9 @@ const KIN_REACTIONS_EN = {
     "Pass on that one. Not knowing this is completely normal.",
     "It's hard, so it's fine. Missing an easy one is worse. Way worse.",
   ],
-  streak_3:["Oh, you keep getting them. Is this real?","Is this real? Did you do this before?","Oh. Keep going. Don't stop now."],
-  streak_5:["Do you actually know this? You're not guessing, right?","You're not stopping. Honestly starting to get a little scary.","Getting a bit scary. How far does this go."],
-  streak_7:["...I don't want to admit it. But I have to.","You're a regular. You might as well just live here.","Oh, for real? Even I didn't see this coming."],
+  streak_3:["Oh, you keep getting them. Is this real?","Is this real? Did you do this before?","Oh. Keep going. Don't stop now.","Starting to feel it. Keep this up.","Back to back. Luck or skill, we'll see."],
+  streak_5:["Do you actually know this? You're not guessing, right?","You're not stopping. Honestly starting to get a little scary.","Getting a bit scary. How far does this go.","This pace is real? Thought you'd slip by now.","Still going. I'm getting nervous, honestly."],
+  streak_7:["...I don't want to admit it. But I have to.","You're a regular. You might as well just live here.","Oh, for real? Even I didn't see this coming.","I'm speechless. Genuinely.","This is kind of legendary. I'm saving this."],
 };
 
 const pickRxn = key => {
@@ -1419,9 +1422,10 @@ function detectPattern(answers) {
   return best?best[0]:'random';
 }
 
-function getObs(pattern) {
+function getObs(pattern, idx) {
   const pool = OBS[lang][pattern]||OBS[lang].random;
-  return pool[Math.floor(Math.random()*pool.length)];
+  const i = (idx !== undefined && idx < pool.length) ? idx : Math.floor(Math.random()*pool.length);
+  return { text: pool[i], idx: i };
 }
 
 // ═══════════════════════════════════════════
@@ -2037,6 +2041,24 @@ document.addEventListener('touchend', e=>{
   if(dy < -60 && Math.abs(dx) < 40) goNext();
 },{passive:true});
 
+// ═══════════════════════════════════════════
+// PC 키보드 네비게이션
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  if(state.phase!=='quiz') return;
+  // 1~4: 선택지 선택
+  const num = parseInt(e.key);
+  if(num>=1 && num<=4 && !state.answered) {
+    const btns = DOM.qChoices.querySelectorAll('.choice-btn');
+    if(btns[num-1]) btns[num-1].click();
+    return;
+  }
+  // Enter / Space: 다음 문제
+  if((e.key==='Enter' || e.key===' ') && state.answered) {
+    e.preventDefault();
+    goNext();
+  }
+});
 
 // ═══════════════════════════════════════════
 // 점수 카운트업 애니
@@ -2072,7 +2094,9 @@ async function showResult() {
 
   // 패턴 + 관찰 멘트 — state에 캐시 (공유 시 재사용)
   state.resultPattern = detectPattern(state.answers);
-  state.resultObs     = getObs(state.resultPattern);
+  const obsResult     = getObs(state.resultPattern);
+  state.resultObs     = obsResult.text;
+  state.resultObsIdx  = obsResult.idx;
   document.getElementById('result-observation-text').textContent = state.resultObs;
   // 판정 레이블
   const labelEl = document.getElementById('result-label');
@@ -2286,7 +2310,7 @@ let shareBlobUrl = null; // createObjectURL 재사용 (메모리 누수 방지)
 
 async function generateShareImage() {
   if (!window.html2canvas) throw new Error('html2canvas not loaded'); // #1: guard
-  const obs  = state.resultObs || getObs(state.resultPattern || 'random');
+  const obs  = state.resultObs || getObs(state.resultPattern || 'random', state.resultObsIdx).text;
   const mood = state.resultMood || 'thinking';
 
   // KIN 얼굴 + 말풍선 + 점수
@@ -2359,7 +2383,7 @@ document.getElementById('btn-share').addEventListener('click', async () => {
   } catch {
     modal.classList.remove('open');
     // fallback: 텍스트 복사
-    const obs = state.resultObs || getObs(state.resultPattern || 'random');
+    const obs = state.resultObs || getObs(state.resultPattern || 'random', state.resultObsIdx).text;
     const text = t(
       `KIN의 만화퀴즈 ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`,
       `KIN's Manga Quiz ${state.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
@@ -2412,6 +2436,9 @@ document.getElementById('btn-share-native').addEventListener('click', async () =
 // 모달 닫기
 document.getElementById('share-modal-close').addEventListener('click', () => {
   document.getElementById('share-modal').classList.remove('open');
+  // 메모리 정리
+  if(shareBlobUrl) { URL.revokeObjectURL(shareBlobUrl); shareBlobUrl = null; }
+  shareBlob = null;
 });
 
 // ═══════════════════════════════════════════
@@ -2441,7 +2468,7 @@ async function startQuiz() {
 
   try {
     state.questions = await loadQuestions();
-    if(state.questions.length < 5) throw new Error('not enough');
+    if(state.questions.length < 10) throw new Error('not enough');
   } catch {
     showError(t('문제를 불러오지 못했어.','Could not load questions.'));
     unlockLang(); showPage('page-landing'); quizLoading = false; return;
@@ -2489,10 +2516,11 @@ function applyResultLang() {
       ? (state.answers.find(a=>a.source_work===state.topWork.name)?.source_work_en || state.topWork.name)
       : state.topWork.name;
   }
-  // obs text 언어 전환
+  // obs text 언어 전환 — 같은 인덱스로 대응 멘트 유지
   const obsText = el('result-observation-text');
   if(obsText && state.resultPattern) {
-    state.resultObs = getObs(state.resultPattern);
+    const obsResult = getObs(state.resultPattern, state.resultObsIdx);
+    state.resultObs = obsResult.text;
     obsText.textContent = state.resultObs;
   }
   // 틀린 문제 목록 재렌더

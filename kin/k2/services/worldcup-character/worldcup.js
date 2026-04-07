@@ -891,10 +891,19 @@ let shareBlob = null,
 // 외부 CDN 이미지를 CORS 우회하여 blob URL로 변환
 async function fetchImageAsBlob(url) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) return null;
     const blob = await res.blob();
     return URL.createObjectURL(blob);
   } catch {
+    // CORS 실패 시 no-cors + img 태그 fallback
+    try {
+      const res = await fetch(url, { mode: 'no-cors' });
+      const blob = await res.blob();
+      if (blob.size > 0) return URL.createObjectURL(blob);
+    } catch {
+      /* ignore */
+    }
     return null;
   }
 }
@@ -926,6 +935,11 @@ async function cropImageToDataUrl(url, targetW, targetH) {
   });
 }
 
+// 게임 중 캐시된 이미지 URL 우선 사용, 없으면 API 재호출
+async function getCachedCharImage(char) {
+  return imgCache.get(char.id) || (await fetchCharImage(char).catch(() => null));
+}
+
 async function generateResultShareImage() {
   if (!window.html2canvas) throw new Error('no html2canvas');
   const winner = state.resultWinner;
@@ -940,7 +954,7 @@ async function generateResultShareImage() {
   $('sc-main-obs').textContent = getWcObs(winner, isEn);
 
   const imgEl = $('sc-main-img');
-  const coverUrl = await fetchCharImage(winner).catch(() => null);
+  const coverUrl = await getCachedCharImage(winner);
   if (coverUrl) {
     const dataUrl = await cropImageToDataUrl(coverUrl, 375, 280);
     if (dataUrl) {
@@ -975,9 +989,9 @@ async function generateBracketShareImage() {
   const wIdx8 = r8.findIndex((h) => h.winner.id === winner.id);
   const wIdx4 = r4.findIndex((h) => h.winner.id === winner.id);
 
-  // 커버 이미지 미리 로드 (CORS 우회)
+  // 커버 이미지 미리 로드 (캐시 우선 → CORS 우회)
   const loadImg = async (char) => {
-    const url = await fetchCharImage(char).catch(() => null);
+    const url = await getCachedCharImage(char);
     if (!url) return null;
     const blobUrl = await fetchImageAsBlob(url);
     if (!blobUrl) return null;

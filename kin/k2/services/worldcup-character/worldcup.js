@@ -889,21 +889,28 @@ let shareBlob = null,
   shareBlobUrl = null;
 
 // 외부 CDN 이미지를 CORS 우회하여 blob URL로 변환
+// 1차: 프록시 경유 (/api/img-proxy), 2차: 직접 fetch
 async function fetchImageAsBlob(url) {
+  // AniList CDN이면 프록시 경유
+  if (url && url.includes('s4.anilist.co')) {
+    try {
+      const proxyUrl = `/api/img-proxy?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      if (res.ok) {
+        const blob = await res.blob();
+        return URL.createObjectURL(blob);
+      }
+    } catch {
+      /* 프록시 실패 시 직접 시도 */
+    }
+  }
+  // 직접 fetch (프록시 없거나 비-AniList URL)
   try {
     const res = await fetch(url, { mode: 'cors' });
     if (!res.ok) return null;
     const blob = await res.blob();
     return URL.createObjectURL(blob);
   } catch {
-    // CORS 실패 시 no-cors + img 태그 fallback
-    try {
-      const res = await fetch(url, { mode: 'no-cors' });
-      const blob = await res.blob();
-      if (blob.size > 0) return URL.createObjectURL(blob);
-    } catch {
-      /* ignore */
-    }
     return null;
   }
 }

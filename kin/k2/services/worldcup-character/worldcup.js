@@ -622,10 +622,24 @@ async function showResult(winner) {
 let shareBlob = null,
   shareBlobUrl = null;
 
+// 외부 CDN 이미지를 CORS 우회하여 blob URL로 변환
+async function fetchImageAsBlob(url) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  } catch {
+    return null;
+  }
+}
+
 async function cropImageToDataUrl(url, targetW, targetH) {
+  // CORS 우회: blob URL로 변환 후 로드
+  const blobUrl = await fetchImageAsBlob(url);
+  if (!blobUrl) return null;
+
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = targetW;
@@ -635,10 +649,14 @@ async function cropImageToDataUrl(url, targetW, targetH) {
       const sw = img.naturalWidth * scale;
       const sh = img.naturalHeight * scale;
       ctx.drawImage(img, (targetW - sw) / 2, (targetH - sh) / 2, sw, sh);
+      URL.revokeObjectURL(blobUrl);
       resolve(canvas.toDataURL('image/jpeg', 0.92));
     };
-    img.onerror = () => resolve(null);
-    img.src = url;
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl);
+      resolve(null);
+    };
+    img.src = blobUrl;
   });
 }
 
@@ -690,16 +708,23 @@ async function generateBracketShareImage() {
   const wIdx8 = r8.findIndex((h) => h.winner.id === winner.id);
   const wIdx4 = r4.findIndex((h) => h.winner.id === winner.id);
 
-  // 커버 이미지 미리 로드
+  // 커버 이미지 미리 로드 (CORS 우회)
   const loadImg = async (char) => {
     const url = await fetchCharImage(char).catch(() => null);
     if (!url) return null;
+    const blobUrl = await fetchImageAsBlob(url);
+    if (!blobUrl) return null;
     return new Promise((res) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => res(img);
-      img.onerror = () => res(null);
-      img.src = url;
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl);
+        res(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        res(null);
+      };
+      img.src = blobUrl;
     });
   };
 

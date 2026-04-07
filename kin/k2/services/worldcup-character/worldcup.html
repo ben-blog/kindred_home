@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/kin/k2/k2_favicon.svg" />
+    <title>캐릭터 월드컵 — KIN의 만화·애니</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/kin/k2/lib/design-tokens.css" />
+    <link rel="stylesheet" href="/kin/k2/lib/common.css" />
+    <link rel="stylesheet" href="/kin/k2/services/worldcup-character/worldcup.css" />
+  </head>
+  <body>
+    <!-- 공통 헤더 -->
+    <header id="header">
+      <a class="h-back" href="/kin/k2/">← K2</a>
+      <div class="h-name" id="h-title">캐릭터 월드컵</div>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span class="wc-progress-text" id="wc-progress-text" style="display: none"></span>
+        <div id="lang-toggle">
+          <span class="lt active" data-lang="ko">KO</span>
+          <span class="lt-sep"> / </span>
+          <span class="lt" data-lang="en">EN</span>
+        </div>
+      </div>
+    </header>
+
+    <div id="wc-loading">loading</div>
+    <div id="error-msg"></div>
+
+    <div class="wc-page">
+      <!-- ── 시작 화면 ── -->
+      <section id="wc-start" style="display: none">
+        <div class="wc-intro">
+          <img
+            class="wc-intro-avatar"
+            src="/kin/k2/assets/kin_thinking1.webp"
+            alt="KIN"
+            id="wc-intro-avatar"
+          />
+        </div>
+        <div class="wc-start-desc" id="wc-start-desc">
+          225명의 캐릭터 중 16명이 랜덤으로 뽑혀 대결합니다.<br />
+          마지막에 남는 한 명이 당신의 캐릭터입니다.
+        </div>
+        <button class="btn-primary wc-start-btn" id="wc-btn-start">시작하기</button>
+      </section>
+
+      <!-- ── 대진 화면 ── -->
+      <section id="wc-arena" style="display: none">
+        <div class="wc-match" id="wc-match">
+          <div class="wc-char" id="wc-char-a">
+            <div class="wc-char-img">
+              <div class="wc-char-bg" id="wc-bg-a"></div>
+              <div class="wc-char-gradient"></div>
+            </div>
+            <div class="wc-char-info">
+              <div class="wc-char-work" id="wc-work-a"></div>
+              <div class="wc-char-name" id="wc-name-a"></div>
+              <div class="wc-char-tagline" id="wc-tag-a"></div>
+            </div>
+          </div>
+
+          <div class="wc-vs" id="wc-vs">
+            <span class="wc-vs-text">VS</span>
+          </div>
+
+          <div class="wc-char" id="wc-char-b">
+            <div class="wc-char-img">
+              <div class="wc-char-bg" id="wc-bg-b"></div>
+              <div class="wc-char-gradient"></div>
+            </div>
+            <div class="wc-char-info">
+              <div class="wc-char-work" id="wc-work-b"></div>
+              <div class="wc-char-name" id="wc-name-b"></div>
+              <div class="wc-char-tagline" id="wc-tag-b"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 결과 화면 ── -->
+      <section id="wc-result" style="display: none">
+        <div class="wc-result-eyebrow" id="wc-result-eyebrow">네가 선택한 캐릭터</div>
+        <div class="wc-result-title" id="wc-result-title"></div>
+        <div class="wc-result-work" id="wc-result-work"></div>
+
+        <!-- 1위 카드 -->
+        <div class="wc-winner-card">
+          <div class="wc-winner-bg" id="wc-winner-bg"></div>
+          <div class="wc-winner-overlay"></div>
+        </div>
+        <div class="wc-winner-texts">
+          <p class="wc-winner-tagline" id="wc-winner-tagline"></p>
+        </div>
+
+        <!-- 2위 수평 -->
+        <div class="wc-second-row" id="wc-second-card">
+          <div class="wc-second-img">
+            <div class="wc-second-bg" id="wc-second-bg"></div>
+          </div>
+          <div class="wc-second-body">
+            <div class="wc-second-rank" id="wc-second-label">🥈 준우승</div>
+            <div class="wc-second-name" id="wc-second-name"></div>
+            <div class="wc-second-work" id="wc-second-work"></div>
+            <div class="wc-second-tagline" id="wc-second-tagline"></div>
+          </div>
+        </div>
+
+        <!-- KIN 분석 -->
+        <div class="wc-observation">
+          <img class="wc-obs-avatar" id="wc-obs-avatar" src="" alt="KIN" />
+          <div>
+            <div class="wc-obs-label">KIN</div>
+            <div class="wc-obs-text" id="wc-obs-text"></div>
+          </div>
+        </div>
+
+        <div class="wc-result-btns">
+          <button class="btn-primary" id="wc-btn-retry">다시 하기</button>
+          <button class="btn-secondary" id="wc-btn-share">카드 공유</button>
+          <button class="btn-secondary" id="wc-btn-bracket">대진표</button>
+          <a class="btn-secondary" href="/kin/k2/">← 갤러리</a>
+        </div>
+      </section>
+    </div>
+
+    <!-- 공유 모달 -->
+    <div class="wc-share-modal" id="wc-share-modal">
+      <div class="wc-share-modal-box">
+        <button class="wc-share-modal-close" id="wc-share-modal-close">✕</button>
+        <div
+          id="wc-share-loading"
+          style="
+            display: none;
+            color: rgba(255, 229, 0, 0.5);
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            text-align: center;
+            padding: 32px 0;
+          "
+        >
+          생성 중...
+        </div>
+        <img
+          id="wc-share-img"
+          style="display: none; max-width: 100%; border-radius: 8px"
+          alt=""
+          crossorigin="anonymous"
+        />
+        <div id="wc-share-btns" style="display: none; gap: 8px; margin-top: 12px">
+          <button class="btn-primary" id="wc-btn-share-save">저장</button>
+          <button class="btn-secondary" id="wc-btn-share-native">공유</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카드 공유 off-screen -->
+    <div
+      id="sc-main"
+      style="
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 375px;
+        background: #080806;
+        font-family: 'Syne', sans-serif;
+        overflow: hidden;
+      "
+    >
+      <div
+        style="position: relative; width: 100%; height: 280px; overflow: hidden; background: #111"
+      >
+        <img
+          id="sc-main-img"
+          src=""
+          crossorigin="anonymous"
+          style="
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+            display: block;
+          "
+          alt=""
+        />
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(8, 8, 6, 0) 20%, rgba(8, 8, 6, 0.9) 100%);
+          "
+        ></div>
+      </div>
+      <div style="padding: 18px 24px 28px">
+        <div
+          id="sc-main-eyebrow"
+          style="
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: rgba(255, 229, 0, 0.55);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-family: 'DM Mono', monospace;
+          "
+        ></div>
+        <div
+          id="sc-main-title"
+          style="
+            font-size: 34px;
+            font-weight: 800;
+            color: #ffe500;
+            line-height: 1.1;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+          "
+        ></div>
+        <div
+          id="sc-main-work"
+          style="
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 12px;
+            font-family: 'DM Mono', monospace;
+          "
+        ></div>
+        <div
+          id="sc-main-obs"
+          style="
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.75;
+            margin-bottom: 20px;
+            font-family: 'DM Mono', monospace;
+          "
+        ></div>
+        <div
+          style="
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.22);
+            font-family: 'DM Mono', monospace;
+          "
+        >
+          kinxdred.com/kin/k2
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="module" src="/kin/k2/services/worldcup-character/worldcup.js"></script>
+  </body>
+</html>

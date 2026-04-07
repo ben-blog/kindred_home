@@ -1,11 +1,11 @@
 :root {
-  --kin: #FFE500;
+  --kin: #ffe500;
   --bg: #080806;
   --t-label: 11px;
   --t-sm: 13px;
   --t-base: 15px;
   --t-md: 17px;
-  --ls-tight: -.03em;
-  --ls-mono: .15em;
-  --ls-wide: .22em;
+  --ls-tight: -0.03em;
+  --ls-mono: 0.15em;
+  --ls-wide: 0.22em;
 }

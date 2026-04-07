@@ -2,10 +2,15 @@
 // result.js — 결과 페이지
 // ═══════════════════════════════════════════
 import {
-  getLang, setLang, t,
+  getLang,
+  setLang,
+  t,
   KIN_IMGS,
-  supaFetch, loadImgCORS,
-  getLabel, getObs, getReplayHint,
+  supaFetch,
+  loadImgCORS,
+  getLabel,
+  getObs,
+  getReplayHint,
 } from '../../lib/core.js';
 import { initLangToggle, hideLoading } from '../../lib/ui.js';
 
@@ -24,7 +29,7 @@ if (data.lang && data.lang !== getLang()) setLang(data.lang);
 initLangToggle(applyResultLang);
 
 // ── DOM 참조 ──
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
 // ── 점수 카운트업 ──
 function animateScore(target) {
@@ -32,7 +37,7 @@ function animateScore(target) {
   if (!el) return;
   const duration = 400 + target * 70;
   const start = performance.now();
-  const tick = now => {
+  const tick = (now) => {
     const p = Math.min((now - start) / duration, 1);
     const ease = 1 - Math.pow(1 - p, 3);
     el.textContent = Math.round(ease * target);
@@ -54,7 +59,9 @@ async function setWorkBgByName(workName, bgId) {
   const bg = $(bgId);
   if (!bg) return;
   try {
-    const rows = await supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`);
+    const rows = await supaFetch(
+      `worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`
+    );
     const url = rows?.[0]?.cover_url;
     bg.style.backgroundImage = url ? `url(${url})` : _bgFallback();
     _cachedCoverUrl = url || null;
@@ -66,9 +73,9 @@ async function setWorkBgByName(workName, bgId) {
 
 // ── 결과 렌더 ──
 function renderResult() {
-  const lang       = getLang();
-  const isEn       = lang === 'en';
-  const { score, answers, questions, resultPattern, resultObs, topWork, resultMood, workScore } = data;
+  const lang = getLang();
+  const isEn = lang === 'en';
+  const { score, answers, resultPattern, resultObs, topWork, resultMood, workScore } = data;
 
   // 점수
   $('result-score').textContent = '0';
@@ -81,7 +88,9 @@ function renderResult() {
   // KIN 아바타
   const obsAvatar = $('result-obs-avatar');
   if (obsAvatar) {
-    obsAvatar.onerror = () => { obsAvatar.src = KIN_IMGS.happy; };
+    obsAvatar.onerror = () => {
+      obsAvatar.src = KIN_IMGS.happy;
+    };
     obsAvatar.src = KIN_IMGS[resultMood] || KIN_IMGS.happy;
   }
 
@@ -90,7 +99,7 @@ function renderResult() {
     $('result-work-card').style.display = 'block';
     $('result-kin-card').style.display = 'none';
     const displayName = isEn
-      ? (answers.find(a => a.source_work === topWork.name)?.source_work_en || topWork.name)
+      ? answers.find((a) => a.source_work === topWork.name)?.source_work_en || topWork.name
       : topWork.name;
     $('result-work-name').textContent = displayName;
     $('result-work-sub').textContent = isEn
@@ -100,14 +109,14 @@ function renderResult() {
   } else {
     // topWork 없으면 세션 작품 중 cover_url 매칭 가능한 것 랜덤
     const fallback = workScore
-      ? Object.entries(workScore).sort(() => Math.random() - .5)[0]
+      ? Object.entries(workScore).sort(() => Math.random() - 0.5)[0]
       : null;
     if (fallback) {
       const [fbName] = fallback;
       $('result-work-card').style.display = 'block';
       $('result-kin-card').style.display = 'none';
       const fbDisplayName = isEn
-        ? (answers.find(a => a.source_work === fbName)?.source_work_en || fbName)
+        ? answers.find((a) => a.source_work === fbName)?.source_work_en || fbName
         : fbName;
       $('result-work-name').textContent = fbDisplayName;
       $('result-work-sub').textContent = isEn ? 'appeared this session' : '이번 세션 등장 작품';
@@ -134,22 +143,29 @@ function renderResult() {
 
 function renderWrongList(isEn) {
   const { answers, questions } = data;
-  const wrong = answers.filter(a => !a.is_correct);
+  const wrong = answers.filter((a) => !a.is_correct);
   const ws = $('result-wrong-section');
   const wl = $('result-wrong-list');
   if (!ws || !wl) return;
   wl.innerHTML = '';
   if (wrong.length > 0) {
     ws.style.display = 'block';
-    wrong.forEach(a => {
-      const item = questions.find(q => q.item_id === a.item_id);
+    wrong.forEach((a) => {
+      const item = questions.find((q) => q.item_id === a.item_id);
       if (!item) return;
-      const qText = isEn ? (item.question_en || item.question) : item.question;
-      const ans   = isEn ? (item.correctAnswerEn || a.correct_answer) : (item.correctAnswerKo || a.correct_answer);
-      const div   = document.createElement('div'); div.className = 'wrong-item';
-      const qDiv  = document.createElement('div'); qDiv.textContent = qText.slice(0, 55) + (qText.length > 55 ? '…' : '');
-      const aDiv  = document.createElement('div'); aDiv.className = 'wrong-item-answer'; aDiv.textContent = `→ ${ans}`;
-      div.appendChild(qDiv); div.appendChild(aDiv);
+      const qText = isEn ? item.question_en || item.question : item.question;
+      const ans = isEn
+        ? item.correctAnswerEn || a.correct_answer
+        : item.correctAnswerKo || a.correct_answer;
+      const div = document.createElement('div');
+      div.className = 'wrong-item';
+      const qDiv = document.createElement('div');
+      qDiv.textContent = qText.slice(0, 55) + (qText.length > 55 ? '…' : '');
+      const aDiv = document.createElement('div');
+      aDiv.className = 'wrong-item-answer';
+      aDiv.textContent = `→ ${ans}`;
+      div.appendChild(qDiv);
+      div.appendChild(aDiv);
       wl.appendChild(div);
     });
   } else {
@@ -160,15 +176,15 @@ function renderWrongList(isEn) {
 function applyStaticLang(isEn) {
   if ($('result-eyebrow')) $('result-eyebrow').textContent = isEn ? "KIN's Verdict" : 'KIN의 판정';
   if ($('result-wrong-label')) $('result-wrong-label').textContent = isEn ? 'Missed' : '틀린 문제';
-  if ($('btn-share'))   $('btn-share').textContent   = isEn ? 'Share'     : '공유하기';
-  if ($('btn-retry'))   $('btn-retry').textContent   = isEn ? 'Try Again' : '다시 하기';
+  if ($('btn-share')) $('btn-share').textContent = isEn ? 'Share' : '공유하기';
+  if ($('btn-retry')) $('btn-retry').textContent = isEn ? 'Try Again' : '다시 하기';
   if ($('btn-gallery')) $('btn-gallery').textContent = isEn ? '← Gallery' : '← 갤러리';
 }
 
 // ── lang 전환 ──
 function applyResultLang(l) {
   const isEn = l === 'en';
-  const { answers, questions, resultPattern, topWork, workScore } = data;
+  const { answers, resultPattern, topWork } = data;
 
   // 레이블
   if ($('result-label') && resultPattern) $('result-label').textContent = getLabel(resultPattern);
@@ -179,7 +195,7 @@ function applyResultLang(l) {
   const workNameEl = $('result-work-name');
   if (workNameEl && topWork) {
     workNameEl.textContent = isEn
-      ? (answers.find(a => a.source_work === topWork.name)?.source_work_en || topWork.name)
+      ? answers.find((a) => a.source_work === topWork.name)?.source_work_en || topWork.name
       : topWork.name;
   }
   // work-sub
@@ -193,8 +209,12 @@ function applyResultLang(l) {
   const workLabel = document.getElementById('result-work-label');
   if (workLabel) {
     workLabel.textContent = topWork
-      ? (isEn ? 'You know this one' : '가장 잘 아는 작품')
-      : (isEn ? 'this session'      : '이번 세션 작품');
+      ? isEn
+        ? 'You know this one'
+        : '가장 잘 아는 작품'
+      : isEn
+        ? 'this session'
+        : '이번 세션 작품';
   }
   // 틀린 문제
   renderWrongList(isEn);
@@ -206,12 +226,13 @@ function applyResultLang(l) {
 }
 
 // ── 공유 카드 생성 ──
-let shareBlob = null, shareBlobUrl = null;
+let shareBlob = null,
+  shareBlobUrl = null;
 
 async function generateShareImage() {
   if (!window.html2canvas) throw new Error('html2canvas not loaded');
   const { score, resultObs, resultPattern, resultMood, topWork } = data;
-  const obs  = resultObs || getObs(resultPattern || 'random');
+  const obs = resultObs || getObs(resultPattern || 'random');
   const mood = resultMood || 'thinking';
 
   $('sc-kin-face').src = KIN_IMGS[mood] || KIN_IMGS.thinking;
@@ -221,51 +242,62 @@ async function generateShareImage() {
   const scLabel = $('sc-label');
   if (scLabel && resultPattern) scLabel.textContent = getLabel(resultPattern);
   const scTitle = $('sc-header-title');
-  if (scTitle) scTitle.textContent = getLang() === 'en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
+  if (scTitle)
+    scTitle.textContent =
+      getLang() === 'en' ? "What kind of fan? — KIN's Verdict" : '난 어떤 덕후? — KIN의 판정';
 
   // 커버 배경 (캐시 재사용, 없으면 재조회)
   const coverBg = $('sc-cover-bg');
   if (coverBg) coverBg.style.backgroundImage = '';
   if (topWork?.name) {
-    const coverUrl = _cachedCoverUrl || await supaFetch(
-      `worldcup_works?title_ko=eq.${encodeURIComponent(topWork.name)}&select=cover_url&limit=1`
-    ).then(r => r?.[0]?.cover_url).catch(() => null);
+    const coverUrl =
+      _cachedCoverUrl ||
+      (await supaFetch(
+        `worldcup_works?title_ko=eq.${encodeURIComponent(topWork.name)}&select=cover_url&limit=1`
+      )
+        .then((r) => r?.[0]?.cover_url)
+        .catch(() => null));
     if (coverUrl && coverBg) coverBg.style.backgroundImage = `url(${coverUrl})`;
   }
 
   await loadImgCORS($('sc-kin-face'), KIN_IMGS[mood] || KIN_IMGS.thinking).catch(() => {});
 
   const canvas = await html2canvas($('share-card'), {
-    backgroundColor: '#080806', scale: 2, useCORS: true, logging: false,
+    backgroundColor: '#080806',
+    scale: 2,
+    useCORS: true,
+    logging: false,
   });
-  return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
 // 공유 버튼
 $('btn-share').addEventListener('click', async () => {
-  const modal   = $('share-modal');
+  const modal = $('share-modal');
   const loading = $('share-modal-loading');
-  const imgEl   = $('share-modal-img');
-  const btns    = $('share-modal-btns');
+  const imgEl = $('share-modal-img');
+  const btns = $('share-modal-btns');
   modal.classList.add('open');
   loading.style.display = 'block';
   imgEl.style.display = 'none';
-  btns.style.display  = 'none';
+  btns.style.display = 'none';
   try {
     shareBlob = await generateShareImage();
     if (shareBlobUrl) URL.revokeObjectURL(shareBlobUrl);
     shareBlobUrl = URL.createObjectURL(shareBlob);
     imgEl.src = shareBlobUrl;
     imgEl.style.display = 'block';
-    btns.style.display  = 'flex';
+    btns.style.display = 'flex';
   } catch {
     modal.classList.remove('open');
-    const obs  = data.resultObs || getObs(data.resultPattern || 'random');
+    const obs = data.resultObs || getObs(data.resultPattern || 'random');
     const text = t(
       `KIN의 만화퀴즈 ${data.score}/10\n"${obs}"\nkinxdred.com/kin/k2`,
       `KIN's Manga Quiz ${data.score}/10\n"${obs}"\nkinxdred.com/kin/k2`
     );
-    try { await navigator.clipboard.writeText(text); } catch {}
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {}
   } finally {
     loading.style.display = 'none';
   }
@@ -279,21 +311,29 @@ $('btn-share-save').addEventListener('click', async () => {
     try {
       const file = new File([shareBlob], 'kin-quiz.png', { type: 'image/png' });
       await navigator.share({ files: [file], title: t('KIN의 판정', "KIN's Verdict") });
-    } catch { window.open(shareBlobUrl, '_blank'); }
+    } catch {
+      window.open(shareBlobUrl, '_blank');
+    }
   } else {
     const a = document.createElement('a');
-    a.href = shareBlobUrl; a.download = `kin-quiz-${data.score}.png`; a.click();
+    a.href = shareBlobUrl;
+    a.download = `kin-quiz-${data.score}.png`;
+    a.click();
   }
 });
 
 // 공유하기 (네이티브)
 $('btn-share-native').addEventListener('click', async () => {
   if (!shareBlob) return;
-  const file  = new File([shareBlob], 'kin-quiz.png', { type: 'image/png' });
+  const file = new File([shareBlob], 'kin-quiz.png', { type: 'image/png' });
   const title = t('KIN의 만화퀴즈', "KIN's Manga Quiz");
   try {
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title, text: `${data.score}/10 — kinxdred.com/kin/k2` });
+      await navigator.share({
+        files: [file],
+        title,
+        text: `${data.score}/10 — kinxdred.com/kin/k2`,
+      });
     } else {
       await navigator.share({ title, url: 'https://kinxdred.com/kin/k2' });
     }

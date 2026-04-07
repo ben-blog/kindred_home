@@ -2,44 +2,55 @@
 // quiz.js — 퀴즈 서비스
 // ═══════════════════════════════════════════
 import {
-  getLang, t,
-  KIN_IMGS, API_URL,
-  SLOTS, FORMAT_LABELS,
-  supaFetch, supaCount, genUUID,
+  getLang,
+  t,
+  KIN_IMGS,
+  API_URL,
+  SLOTS,
+  FORMAT_LABELS,
+  supaFetch,
+  supaCount,
+  genUUID,
   getRandomBg,
-  getRxn, getStreakRxn,
-  detectPattern, getObs,
+  getRxn,
+  getStreakRxn,
+  detectPattern,
+  getObs,
 } from '../../lib/core.js';
 import { initLangToggle, lockLang, unlockLang, showError, hideLoading } from '../../lib/ui.js';
 
 // ── 텍스트 정규화 (공백 변형 전부 제거) ──
 // DB 데이터 생성 도구마다 \u00A0, \u200B, \n, \t 등 다를 수 있음
-const norm = s => s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim();
+const norm = (s) => s.replace(/[\s\u00A0\u200B\u3000\uFEFF]+/g, ' ').trim();
 
 // ── DOM 캐시 ──
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 const DOM = {
-  diffOverlay:  $('diff-overlay'),
-  streakGlow:   $('streak-glow'),
-  quizBgImg:    $('quiz-bg-img'),
+  diffOverlay: $('diff-overlay'),
+  streakGlow: $('streak-glow'),
+  quizBgImg: $('quiz-bg-img'),
   quizProgress: $('quiz-progress'),
-  qBadge:       $('q-format-badge'),
-  qDiffDots:    $('q-diff-dots'),
-  qCounter:     $('q-counter'),
-  qQuestion:    $('q-question'),
-  qChoices:     $('q-choices'),
-  kinReaction:  $('kin-reaction'),
-  kinBubble:    $('kin-rxn-bubble'),
-  kinAvatar:    $('kin-rxn-avatar'),
-  btnNext:      $('btn-next'),
-  swipeHint:    $('swipe-hint'),
+  qBadge: $('q-format-badge'),
+  qDiffDots: $('q-diff-dots'),
+  qCounter: $('q-counter'),
+  qQuestion: $('q-question'),
+  qChoices: $('q-choices'),
+  kinReaction: $('kin-reaction'),
+  kinBubble: $('kin-rxn-bubble'),
+  kinAvatar: $('kin-rxn-avatar'),
+  btnNext: $('btn-next'),
+  swipeHint: $('swipe-hint'),
 };
 
 // ── 상태 ──
 const state = {
-  questions: [], currentIndex: 0,
-  answers: [], score: 0, streak: 0,
-  sessionKey: genUUID(), answered: false,
+  questions: [],
+  currentIndex: 0,
+  answers: [],
+  score: 0,
+  streak: 0,
+  sessionKey: genUUID(),
+  answered: false,
 };
 
 // ── 언어 초기화 ──
@@ -50,9 +61,9 @@ function applyQuizLang(l) {
   const q = state.questions[state.currentIndex];
   if (!q) return;
   DOM.qBadge.textContent = (l === 'ko' ? FORMAT_LABELS.ko : FORMAT_LABELS.en)[q.format] || q.format;
-  DOM.qQuestion.textContent = l === 'ko' ? q.question : (q.question_en || q.question);
+  DOM.qQuestion.textContent = l === 'ko' ? q.question : q.question_en || q.question;
   // 선택지 갱신
-  const choices = l === 'ko' ? q.displayChoicesKo : (q.displayChoicesEn || q.displayChoicesKo);
+  const choices = l === 'ko' ? q.displayChoicesKo : q.displayChoicesEn || q.displayChoicesKo;
   DOM.qChoices.querySelectorAll('.choice-btn').forEach((btn, i) => {
     if (choices[i]) btn.textContent = choices[i].trim();
   });
@@ -68,13 +79,15 @@ function applyQuizLang(l) {
 
 // ── Supabase: 슬롯 카운트 ──
 async function getSlotCount(format, difficulty) {
-  return supaCount(`quiz_items?format=eq.${format}&difficulty=eq.${difficulty}&is_active=eq.true&select=item_id`);
+  return supaCount(
+    `quiz_items?format=eq.${format}&difficulty=eq.${difficulty}&is_active=eq.true&select=item_id`
+  );
 }
 
 // ── 문제 로드 ──
 async function loadQuestions() {
   const counts = await Promise.all(
-    SLOTS.map(slot => getSlotCount(slot.format, slot.difficulty).catch(() => 0))
+    SLOTS.map((slot) => getSlotCount(slot.format, slot.difficulty).catch(() => 0))
   );
   const seenWorks = new Set();
   const MAX_RETRY = 4;
@@ -86,7 +99,9 @@ async function loadQuestions() {
       const item = await supaFetch(
         `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&offset=${offset}&order=item_id.asc`,
         { headers: { Prefer: 'return=representation' } }
-      ).then(res => Array.isArray(res) ? res[0] : res).catch(() => null);
+      )
+        .then((res) => (Array.isArray(res) ? res[0] : res))
+        .catch(() => null);
 
       if (!item) return null;
       const work = item.source_work;
@@ -99,7 +114,9 @@ async function loadQuestions() {
     return supaFetch(
       `quiz_items?format=eq.${slot.format}&difficulty=eq.${slot.difficulty}&is_active=eq.true&limit=1&offset=${offset}&order=item_id.asc`,
       { headers: { Prefer: 'return=representation' } }
-    ).then(res => Array.isArray(res) ? res[0] : res).catch(() => null);
+    )
+      .then((res) => (Array.isArray(res) ? res[0] : res))
+      .catch(() => null);
   }
 
   const results = [];
@@ -107,12 +124,24 @@ async function loadQuestions() {
     results.push(await fetchSlot(SLOTS[i], counts[i]));
   }
 
-  return results.filter(Boolean).map(item => {
+  return results.filter(Boolean).map((item) => {
     const correctKo = norm(item.choices[0]);
-    const correctEn = item.choices_en?.[0] ? norm(item.choices_en[0]) : (item.answer_en ? norm(item.answer_en) : null);
-    const shuffledKo = [...item.choices].map(norm).sort(() => Math.random() - .5);
-    const shuffledEn = item.choices_en ? [...item.choices_en].map(norm).sort(() => Math.random() - .5) : null;
-    return { ...item, displayChoicesKo: shuffledKo, displayChoicesEn: shuffledEn, correctAnswerKo: correctKo, correctAnswerEn: correctEn };
+    const correctEn = item.choices_en?.[0]
+      ? norm(item.choices_en[0])
+      : item.answer_en
+        ? norm(item.answer_en)
+        : null;
+    const shuffledKo = [...item.choices].map(norm).sort(() => Math.random() - 0.5);
+    const shuffledEn = item.choices_en
+      ? [...item.choices_en].map(norm).sort(() => Math.random() - 0.5)
+      : null;
+    return {
+      ...item,
+      displayChoicesKo: shuffledKo,
+      displayChoicesEn: shuffledEn,
+      correctAnswerKo: correctKo,
+      correctAnswerEn: correctEn,
+    };
   });
 }
 
@@ -121,15 +150,21 @@ function initProgressTrack() {
   const wrap = DOM.quizProgress;
   wrap.innerHTML = '';
   const bg = document.createElement('div');
-  bg.className = 'prog-track-bg'; bg.id = 'prog-track-bg';
+  bg.className = 'prog-track-bg';
+  bg.id = 'prog-track-bg';
   const segWrap = document.createElement('div');
   segWrap.id = 'prog-segs';
-  segWrap.style.cssText = 'position:absolute;inset:0;border-radius:3px;overflow:hidden;display:flex;';
+  segWrap.style.cssText =
+    'position:absolute;inset:0;border-radius:3px;overflow:hidden;display:flex;';
   bg.appendChild(segWrap);
   wrap.appendChild(bg);
   const divWrap = document.createElement('div');
   divWrap.className = 'prog-dividers';
-  SLOTS.forEach(() => { const d = document.createElement('div'); d.className = 'prog-div'; divWrap.appendChild(d); });
+  SLOTS.forEach(() => {
+    const d = document.createElement('div');
+    d.className = 'prog-div';
+    divWrap.appendChild(d);
+  });
   bg.appendChild(divWrap);
   SLOTS.forEach((slot, i) => {
     const pct = ((i + 1) / SLOTS.length) * 100;
@@ -140,7 +175,9 @@ function initProgressTrack() {
     bg.appendChild(m);
   });
   const runner = document.createElement('div');
-  runner.className = 'kin-runner'; runner.id = 'kin-runner'; runner.style.left = '0%';
+  runner.className = 'kin-runner';
+  runner.id = 'kin-runner';
+  runner.style.left = '0%';
   runner.innerHTML = `<img class="kin-icon" id="kin-icon" src="${KIN_IMGS.thinking}" alt="KIN"><div class="kin-shadow"></div>`;
   wrap.appendChild(runner);
 }
@@ -155,11 +192,11 @@ function renderProgress() {
     const slot = SLOTS[i];
     const seg = document.createElement('div');
     seg.className = 'prog-seg ' + (ans?.is_correct ? `done-${slot.difficulty}` : 'done-wrong');
-    seg.style.width = (100 / SLOTS.length) + '%';
+    seg.style.width = 100 / SLOTS.length + '%';
     segWrap.appendChild(seg);
   }
   const runner = document.getElementById('kin-runner');
-  if (runner) runner.style.left = (state.currentIndex / SLOTS.length * 100) + '%';
+  if (runner) runner.style.left = (state.currentIndex / SLOTS.length) * 100 + '%';
   SLOTS.forEach((_, i) => {
     const m = document.getElementById(`prog-marker-${i}`);
     if (m) m.style.opacity = i < state.currentIndex ? '0' : '0.5';
@@ -168,14 +205,16 @@ function renderProgress() {
 
 function flashProgressDot(index, isCorrect) {
   const runner = document.getElementById('kin-runner');
-  const icon   = document.getElementById('kin-icon');
+  const icon = document.getElementById('kin-icon');
   if (!runner) return;
   runner.classList.remove('jump', 'stumble');
   void runner.offsetWidth;
   runner.classList.add(isCorrect ? 'jump' : 'stumble');
   if (icon) {
     icon.src = isCorrect ? KIN_IMGS.happy : KIN_IMGS.sad;
-    setTimeout(() => { if (icon) icon.src = KIN_IMGS.thinking; }, 600);
+    setTimeout(() => {
+      if (icon) icon.src = KIN_IMGS.thinking;
+    }, 600);
   }
   setTimeout(() => runner.classList.remove('jump', 'stumble'), 500);
 }
@@ -187,30 +226,48 @@ function setDiffOverlay(difficulty) {
 }
 
 // ── 퀴즈 배경 ──
-function setQuizBg() { DOM.quizBgImg.src = getRandomBg(); }
+function setQuizBg() {
+  DOM.quizBgImg.src = getRandomBg();
+}
 
 // ── 연속 정답 이펙트 ──
 function updateStreakEffect(streak) {
   clearStreakEffect();
-  if (streak >= 7)      { DOM.streakGlow.classList.add('s7'); spawnParticles(7); flashScreen(); }
-  else if (streak >= 5) { DOM.streakGlow.classList.add('s5'); spawnParticles(4); }
-  else if (streak >= 3) { DOM.streakGlow.classList.add('s3'); }
+  if (streak >= 7) {
+    DOM.streakGlow.classList.add('s7');
+    spawnParticles(7);
+    flashScreen();
+  } else if (streak >= 5) {
+    DOM.streakGlow.classList.add('s5');
+    spawnParticles(4);
+  } else if (streak >= 3) {
+    DOM.streakGlow.classList.add('s3');
+  }
 }
-function clearStreakEffect() { DOM.streakGlow.classList.remove('s3', 's5', 's7'); }
+function clearStreakEffect() {
+  DOM.streakGlow.classList.remove('s3', 's5', 's7');
+}
 function spawnParticles(n) {
   for (let i = 0; i < n; i++) {
     const p = document.createElement('div');
     p.className = 'streak-particle';
-    p.style.left = (10 + Math.random() * 80) + '%';
-    p.style.setProperty('--r', (Math.random() * 30 - 15) + 'deg');
-    p.style.animationDelay = (Math.random() * 0.2) + 's';
+    p.style.left = 10 + Math.random() * 80 + '%';
+    p.style.setProperty('--r', Math.random() * 30 - 15 + 'deg');
+    p.style.animationDelay = Math.random() * 0.2 + 's';
     document.body.appendChild(p);
     setTimeout(() => p.remove(), 1000);
   }
 }
 function flashScreen() {
   const fl = document.createElement('div');
-  Object.assign(fl.style, { position: 'fixed', inset: '0', zIndex: '95', background: 'rgba(255,229,0,.08)', pointerEvents: 'none', animation: 'flash-fade .4s ease forwards' });
+  Object.assign(fl.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '95',
+    background: 'rgba(255,229,0,.08)',
+    pointerEvents: 'none',
+    animation: 'flash-fade .4s ease forwards',
+  });
   document.body.appendChild(fl);
   setTimeout(() => fl.remove(), 500);
 }
@@ -218,8 +275,17 @@ function flashScreen() {
 // ── KIN 반응 이미지 ──
 function getKinRxnImg(isCorrect, difficulty, isStreak) {
   if (isStreak) return KIN_IMGS.excited;
-  if (isCorrect) return difficulty === 'hard' ? KIN_IMGS.excited : difficulty === 'mid' ? KIN_IMGS.happy : KIN_IMGS.thinking;
-  return difficulty === 'easy' ? KIN_IMGS.sad : difficulty === 'mid' ? KIN_IMGS.serious : KIN_IMGS.thinking;
+  if (isCorrect)
+    return difficulty === 'hard'
+      ? KIN_IMGS.excited
+      : difficulty === 'mid'
+        ? KIN_IMGS.happy
+        : KIN_IMGS.thinking;
+  return difficulty === 'easy'
+    ? KIN_IMGS.sad
+    : difficulty === 'mid'
+      ? KIN_IMGS.serious
+      : KIN_IMGS.thinking;
 }
 
 // ── 타이핑 이펙트 ──
@@ -229,7 +295,12 @@ function typeText(el, text, speed = 28) {
   if (parent) parent.classList.add('show');
   else el.classList.add('show');
   let i = 0;
-  const tick = () => { if (i < text.length) { el.textContent += text[i++]; setTimeout(tick, speed); } };
+  const tick = () => {
+    if (i < text.length) {
+      el.textContent += text[i++];
+      setTimeout(tick, speed);
+    }
+  };
   tick();
 }
 
@@ -250,14 +321,16 @@ function renderQuestion() {
   setQuizBg();
 
   DOM.qBadge.className = `format-badge ${q.format}`;
-  DOM.qBadge.textContent = (lang === 'ko' ? FORMAT_LABELS.ko : FORMAT_LABELS.en)[q.format] || q.format;
+  DOM.qBadge.textContent =
+    (lang === 'ko' ? FORMAT_LABELS.ko : FORMAT_LABELS.en)[q.format] || q.format;
 
   const levels = { easy: 1, mid: 2, hard: 3 };
   if (DOM.qDiffDots.children.length === 0) {
     for (let i = 0; i < 3; i++) DOM.qDiffDots.appendChild(document.createElement('div'));
   }
   const dotKids = DOM.qDiffDots.children;
-  for (let i = 0; i < 3; i++) dotKids[i].className = 'diff-dot' + (i < levels[diff] ? ` on-${diff}` : '');
+  for (let i = 0; i < 3; i++)
+    dotKids[i].className = 'diff-dot' + (i < levels[diff] ? ` on-${diff}` : '');
 
   DOM.qCounter.innerHTML = `<span style="color:rgba(255,255,255,.85)">${state.currentIndex + 1}</span><span style="font-size:.55em;letter-spacing:.02em;color:rgba(255,255,255,.35);margin-left:2px"> / ${state.questions.length}</span>`;
 
@@ -266,16 +339,19 @@ function renderQuestion() {
   else if (q.direction === 'explain') DOM.qQuestion.classList.add('direction-explain');
   DOM.qQuestion.classList.add(`diff-${diff}`);
   const enterClass = diff === 'easy' ? 'enter-fade' : diff === 'mid' ? 'enter-up' : 'enter-side';
-  DOM.qQuestion.textContent = lang === 'ko' ? q.question : (q.question_en || q.question);
+  DOM.qQuestion.textContent = lang === 'ko' ? q.question : q.question_en || q.question;
   void DOM.qQuestion.offsetWidth;
   DOM.qQuestion.classList.add(enterClass);
 
   DOM.qChoices.innerHTML = '';
-  const choices = lang === 'ko' ? q.displayChoicesKo : (q.displayChoicesEn || q.displayChoicesKo);
+  const choices = lang === 'ko' ? q.displayChoicesKo : q.displayChoicesEn || q.displayChoicesKo;
   choices.forEach((choice, idx) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
-    if (diff === 'hard') { btn.classList.add('stagger'); btn.style.animationDelay = (idx * 0.08) + 's'; }
+    if (diff === 'hard') {
+      btn.classList.add('stagger');
+      btn.style.animationDelay = idx * 0.08 + 's';
+    }
     btn.textContent = choice;
     btn.addEventListener('click', () => selectAnswer(choice));
     DOM.qChoices.appendChild(btn);
@@ -293,16 +369,21 @@ function selectAnswer(selected) {
   if (state.answered) return;
   state.answered = true;
   const q = state.questions[state.currentIndex];
-  const correct = getLang() === 'ko' ? q.correctAnswerKo : (q.correctAnswerEn || q.correctAnswerKo);
+  const correct = getLang() === 'ko' ? q.correctAnswerKo : q.correctAnswerEn || q.correctAnswerKo;
   const isCorrect = selected === correct;
 
-  if (isCorrect) { state.score++; state.streak++; }
-  else { state.streak = 0; clearStreakEffect(); }
+  if (isCorrect) {
+    state.score++;
+    state.streak++;
+  } else {
+    state.streak = 0;
+    clearStreakEffect();
+  }
 
   haptic(isCorrect ? 'correct' : 'wrong');
   flashProgressDot(state.currentIndex, isCorrect);
 
-  document.querySelectorAll('.choice-btn').forEach(btn => {
+  document.querySelectorAll('.choice-btn').forEach((btn) => {
     btn.disabled = true;
     if (btn.textContent === correct) btn.classList.add('correct');
     else if (btn.textContent === selected && !isCorrect) btn.classList.add('wrong');
@@ -311,7 +392,7 @@ function selectAnswer(selected) {
 
   if (!isCorrect) {
     setTimeout(() => {
-      DOM.qChoices.querySelectorAll('.choice-btn.correct').forEach(b => {
+      DOM.qChoices.querySelectorAll('.choice-btn.correct').forEach((b) => {
         b.classList.add('attention');
         const badge = document.createElement('span');
         badge.className = 'answer-badge';
@@ -327,14 +408,23 @@ function selectAnswer(selected) {
   DOM.swipeHint.classList.add('show');
 
   state.answers.push({
-    item_id: q.item_id, format: q.format, difficulty: q.difficulty,
-    source_work: q.source_work, source_work_en: q.source_work_en,
-    is_correct: isCorrect, selected, correct_answer: correct,
+    item_id: q.item_id,
+    format: q.format,
+    difficulty: q.difficulty,
+    source_work: q.source_work,
+    source_work_en: q.source_work_en,
+    is_correct: isCorrect,
+    selected,
+    correct_answer: correct,
   });
 
   let rxnText;
-  if (isCorrect && state.streak >= 3) { updateStreakEffect(state.streak); rxnText = getStreakRxn(state.streak); }
-  else { rxnText = getRxn(isCorrect, q.difficulty); }
+  if (isCorrect && state.streak >= 3) {
+    updateStreakEffect(state.streak);
+    rxnText = getStreakRxn(state.streak);
+  } else {
+    rxnText = getRxn(isCorrect, q.difficulty);
+  }
 
   const isStreakReaction = isCorrect && state.streak >= 3;
   DOM.kinAvatar.src = getKinRxnImg(isCorrect, q.difficulty, isStreakReaction);
@@ -349,7 +439,8 @@ function selectAnswer(selected) {
 function goNext() {
   state.currentIndex++;
   if (state.currentIndex < state.questions.length) {
-    renderProgress(); renderQuestion();
+    renderProgress();
+    renderQuestion();
   } else {
     clearStreakEffect();
     setDiffOverlay('easy');
@@ -359,38 +450,59 @@ function goNext() {
 DOM.btnNext.addEventListener('click', goNext);
 
 // ── 스와이프 (모바일) ──
-let touchStartY = 0, touchStartX = 0;
-document.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; touchStartX = e.touches[0].clientX; }, { passive: true });
-document.addEventListener('touchend', e => {
-  if (!state.answered) return;
-  const dy = e.changedTouches[0].clientY - touchStartY;
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  if (dy < -60 && Math.abs(dx) < 40) goNext();
-}, { passive: true });
+let touchStartY = 0,
+  touchStartX = 0;
+document.addEventListener(
+  'touchstart',
+  (e) => {
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+  },
+  { passive: true }
+);
+document.addEventListener(
+  'touchend',
+  (e) => {
+    if (!state.answered) return;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (dy < -60 && Math.abs(dx) < 40) goNext();
+  },
+  { passive: true }
+);
 
 // ── 퀴즈 완료 → 결과로 이동 ──
 async function finishQuiz() {
   lockLang();
   // 결과 계산
   const pattern = detectPattern(state.answers);
-  const obs     = getObs(pattern);
-  const obsMood = state.score >= 9 ? 'excited' : state.score >= 7 ? 'happy' : state.score >= 5 ? 'thinking' : state.score >= 3 ? 'serious' : 'sad';
+  const obs = getObs(pattern);
+  const obsMood =
+    state.score >= 9
+      ? 'excited'
+      : state.score >= 7
+        ? 'happy'
+        : state.score >= 5
+          ? 'thinking'
+          : state.score >= 3
+            ? 'serious'
+            : 'sad';
 
   // 가장 잘 아는 작품 계산
   const workScore = {};
-  state.answers.forEach(a => {
+  state.answers.forEach((a) => {
     const w = a.source_work || '?';
     if (!workScore[w]) workScore[w] = { total: 0, correct: 0, mal_id: null };
     workScore[w].total++;
     if (a.is_correct) workScore[w].correct++;
-    const q = state.questions.find(q => q.item_id === a.item_id);
+    const q = state.questions.find((q) => q.item_id === a.item_id);
     if (q?.mal_id) workScore[w].mal_id = q.mal_id;
   });
 
   const topEntry = Object.entries(workScore)
     .filter(([, v]) => v.total >= 2)
     .sort(([, a], [, b]) => {
-      const rd = (b.correct / b.total) - (a.correct / a.total);
+      const rd = b.correct / b.total - a.correct / a.total;
       return rd !== 0 ? rd : b.total - a.total;
     })[0];
 
@@ -401,26 +513,29 @@ async function finishQuiz() {
   }
 
   // localStorage에 결과 저장
-  localStorage.setItem('k2_quiz_result', JSON.stringify({
-    score: state.score,
-    answers: state.answers,
-    questions: state.questions.map(q => ({
-      item_id: q.item_id,
-      question: q.question,
-      question_en: q.question_en,
-      correctAnswerKo: q.correctAnswerKo,
-      correctAnswerEn: q.correctAnswerEn,
-      source_work: q.source_work,
-      source_work_en: q.source_work_en,
-      mal_id: q.mal_id,
-    })),
-    resultPattern: pattern,
-    resultObs: obs,
-    topWork,
-    resultMood: obsMood,
-    workScore,
-    lang: getLang(),
-  }));
+  localStorage.setItem(
+    'k2_quiz_result',
+    JSON.stringify({
+      score: state.score,
+      answers: state.answers,
+      questions: state.questions.map((q) => ({
+        item_id: q.item_id,
+        question: q.question,
+        question_en: q.question_en,
+        correctAnswerKo: q.correctAnswerKo,
+        correctAnswerEn: q.correctAnswerEn,
+        source_work: q.source_work,
+        source_work_en: q.source_work_en,
+        mal_id: q.mal_id,
+      })),
+      resultPattern: pattern,
+      resultObs: obs,
+      topWork,
+      resultMood: obsMood,
+      workScore,
+      lang: getLang(),
+    })
+  );
   localStorage.setItem('k2_quiz_done', '1');
 
   // KIN 에이전트 이벤트 (fire-and-forget)
@@ -428,21 +543,35 @@ async function finishQuiz() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      service: 'k2_manga', event_type: 'quiz_completed',
+      service: 'k2_manga',
+      event_type: 'quiz_completed',
       payload: { count: 1, lang: getLang(), result_pattern: pattern },
     }),
   }).catch(() => {});
 
   // Supabase 세션 저장 (fire-and-forget)
-  const diffMix = state.answers.reduce((acc, a) => { acc[a.difficulty] = (acc[a.difficulty] || 0) + 1; return acc; }, { easy: 0, mid: 0, hard: 0 });
+  const diffMix = state.answers.reduce(
+    (acc, a) => {
+      acc[a.difficulty] = (acc[a.difficulty] || 0) + 1;
+      return acc;
+    },
+    { easy: 0, mid: 0, hard: 0 }
+  );
   supaFetch('quiz_sessions', {
     method: 'POST',
     body: JSON.stringify({
-      session_key: state.sessionKey, score: state.score, total: 10,
-      result_type: pattern, lang: getLang(),
-      answers: state.answers, difficulty_mix: diffMix,
+      session_key: state.sessionKey,
+      score: state.score,
+      total: 10,
+      result_type: pattern,
+      lang: getLang(),
+      answers: state.answers,
+      difficulty_mix: diffMix,
       format_mix: Object.fromEntries(
-        ['work', 'character', 'outlier', 'author', 'relation'].map(f => [f, state.answers.filter(a => a.format === f).length])
+        ['work', 'character', 'outlier', 'author', 'relation'].map((f) => [
+          f,
+          state.answers.filter((a) => a.format === f).length,
+        ])
       ),
     }),
   }).catch(() => {});
@@ -471,7 +600,11 @@ async function startQuiz() {
   }
 
   quizLoading = false;
-  state.currentIndex = 0; state.answers = []; state.score = 0; state.streak = 0; state.answered = false;
+  state.currentIndex = 0;
+  state.answers = [];
+  state.score = 0;
+  state.streak = 0;
+  state.answered = false;
   clearStreakEffect();
   setDiffOverlay('easy');
   DOM.quizProgress.innerHTML = '';

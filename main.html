@@ -59,8 +59,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 }
 @media(max-width:700px){
   .sl{display:none}
-  .tk,.td{font-size:clamp(40px,13vw,72px)}
-  .tx{font-size:clamp(28px,9vw,52px)}
+  .tk,.td{font-size:clamp(32px,10vw,56px)}
+  .tx{font-size:clamp(36px,12vw,64px);padding:0 4px}
+  .t-row{padding:0 12px}
   .bn{font-size:8px}
 }
 
@@ -335,7 +336,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 <div id="title"><div class="t-row"><span class="tk">KIN</span><span class="tx">×</span><span class="td">DRED</span></div></div>
 <div id="bot">
   <span class="bn bn-k">Watches first.<br>Speaks later.</span>
-  <div class="sc"><div class="scb"></div><span class="sct">explore</span></div>
+  <!-- explore/coming soon 텍스트 제거 -->
+  <!-- <div class="sc"><div class="scb"></div><span class="sct">explore</span></div> -->
   <span class="bn bn-d">Changes the room<br>without moving.</span>
 </div>
 <script>
@@ -971,18 +973,7 @@ initParts();
 
 requestAnimationFrame(frame);
 
-/* ── EXPLORE TEXT CYCLE ── */
-const $sct = document.querySelector('.sct');
-const SCT_TEXTS = ['explore', 'coming soon'];
-let sctIdx = 0;
-setInterval(() => {
-  $sct.style.opacity = '0';
-  setTimeout(() => {
-    sctIdx = (sctIdx + 1) % SCT_TEXTS.length;
-    $sct.textContent = SCT_TEXTS[sctIdx];
-    $sct.style.opacity = '1';
-  }, 600);
-}, 3000);
+/* ── EXPLORE TEXT (비활성화) ── */
 
 /* ══════════════════════════════════════════════════
    KIN BUBBLE SYSTEM

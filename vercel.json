@@ -7,6 +7,7 @@
     { "source": "/kin/k2/worldcup/work",       "destination": "/kin/k2/services/worldcup-work/worldcup.html" },
     { "source": "/kin/k2/worldcup/character",  "destination": "/kin/k2/services/worldcup-character/worldcup.html" },
     { "source": "/mood-camera",               "destination": "https://mirrored-five.vercel.app/mood-camera" },
-    { "source": "/mood-camera/:path*",        "destination": "https://mirrored-five.vercel.app/mood-camera/:path*" }
+    { "source": "/mood-camera/:path*",        "destination": "https://mirrored-five.vercel.app/mood-camera/:path*" },
+    { "source": "/_next/:path*",              "destination": "https://mirrored-five.vercel.app/_next/:path*" }
   ]
 }

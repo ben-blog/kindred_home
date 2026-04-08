@@ -40,8 +40,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   animation:txPulse 3.5s ease-in-out infinite;
   cursor:pointer;pointer-events:all;position:relative;z-index:50;
+  display:inline-block;transform-origin:center center;
   filter:drop-shadow(0 0 12px rgba(255,229,0,.15)) drop-shadow(0 0 12px rgba(91,79,207,.15))}
-@keyframes txPulse{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes txPulse{0%,100%{background-position:0% 50%;transform:scale(.92)}50%{background-position:100% 50%;transform:scale(1.12)}}
 .td{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(44px,8.5vw,116px);
   color:#5B4FCF;letter-spacing:-.02em}
 #bot{position:fixed;bottom:0;left:0;right:0;padding:0 6vw 26px;z-index:40;
@@ -59,8 +60,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 }
 @media(max-width:700px){
   .sl{display:none}
-  .tk,.td{font-size:clamp(32px,10vw,56px)}
-  .tx{font-size:clamp(36px,12vw,64px);padding:0 4px}
+  .tk,.td{font-size:clamp(28px,9vw,48px)}
+  .tx{font-size:clamp(26px,8.5vw,44px);padding:0 4px}
   .t-row{padding:0 12px}
   .bn{font-size:8px}
 }

@@ -853,9 +853,12 @@ async function showResult(winner) {
       payload: {
         winner: winner.name_ko,
         winner_work: winner.work_ko,
-        top4: state.top4.slice(0, 4).map((c) => c.name_ko),
+        winner_trait: winner.trait || null,
+        winner_archetype: winner.archetype || null,
+        top4: state.top4.slice(0, 4).map((c) => `${c.name_ko}(${c.work_ko})`),
         winner_tier: winner.popularity_tier,
         tags,
+        category: state.category,
         lang: getLang(),
       },
     }),

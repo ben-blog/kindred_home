@@ -547,8 +547,10 @@ async function showResult(winner) {
       payload: {
         category: state.category,
         winner: winner.title_ko,
+        winner_author: winner.author || null,
         top4: state.top4.slice(0, 4).map((w) => w.title_ko),
         winner_tier: winner.popularity_tier,
+        total_rounds: state.rounds?.length || 0,
         lang: getLang(),
       },
     }),

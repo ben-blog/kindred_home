@@ -389,6 +389,16 @@ const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
 const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
 const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/dred/`;
 
+/* ── DRED REPORTER ── */
+const DRED_API = 'https://dred-agent-production.up.railway.app/api/dred/event';
+function reportToDred(event_type, payload = {}) {
+  fetch(DRED_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service: 'gallery', event_type, payload }),
+  }).catch(() => {}); // 갤러리 동작에 영향 없음
+}
+
 /* ── STATE ── */
 const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
 let lang = localStorage.getItem('kxd_lang') || (navigator.language.startsWith('ko') ? 'ko' : 'en');
@@ -840,6 +850,14 @@ async function openDetail(i) {
   try {
     await fillDetail(i);
     $panel.classList.add('open');
+    // DRED 에이전트에 이미지 열람 이벤트 전송
+    const _item = items[i];
+    if (_item) reportToDred('image_viewed', {
+      item_id: _item.item_id,
+      title: _item[`title_${lang}`] || _item.title_ko,
+      style: _item.style,
+      lang,
+    });
   } catch (err) {
     console.error('[DRED] openDetail failed:', err);
     detailOpen = false;
@@ -935,6 +953,14 @@ document.getElementById('like-btn').addEventListener('click', async () => {
     setLiked(itemId, true);
     updateLikeUI(itemId, curCount + 1);
     callLikeRpc('increment_like', itemId).catch(() => {}); /* FIX: catch RPC failures */
+    // DRED 에이전트에 좋아요 이벤트 전송 (salience 0.7 — 능동적 반응)
+    const _item = items[currentIdx];
+    if (_item) reportToDred('image_liked', {
+      item_id: itemId,
+      title: _item[`title_${lang}`] || _item.title_ko,
+      style: _item.style,
+      lang,
+    });
   }
 });
 
@@ -998,6 +1024,8 @@ fetchItems()
     offset = 0; isSnapping = false; physVel = 0; // start clean at frame 0
     $loading.style.opacity = '0';
     setTimeout(() => { $loading.style.display = 'none'; }, 400);
+    // DRED 에이전트에 갤러리 방문 이벤트 전송
+    reportToDred('gallery_visit', { item_count: data.length, lang });
   })
   .catch(() => {
     $loading.querySelector('span').textContent = 'error';

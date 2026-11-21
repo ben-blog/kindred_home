@@ -48,14 +48,14 @@
       "ko": [{
         "label": "무드 카메라",
         "title": "Mood Camera",
-        "desc": "KIN과 DRED 밖의 카메라. 별도 사이트로 연다.",
-        "url": "https://mirrored-five.vercel.app/mood-camera"
+        "desc": "이 사이트의 /mood-camera.",
+        "url": "/mood-camera"
       }],
       "en": [{
         "label": "mood camera",
         "title": "Mood Camera",
-        "desc": "Opens the camera on its own site.",
-        "url": "https://mirrored-five.vercel.app/mood-camera"
+        "desc": "The camera on this site, at /mood-camera.",
+        "url": "/mood-camera"
       }]
     }
   },

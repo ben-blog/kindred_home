@@ -10,6 +10,7 @@ import {
   SUPA_KEY,
   fetchAniListCover,
   genUUID,
+  asset,
 } from '../../lib/core.js';
 import { initLangToggle, showError } from '../../lib/ui.js';
 
@@ -228,7 +229,7 @@ function buildBracket(works) {
 // ══════════════════════════════════════════
 
 function randomBg() {
-  return `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
+  return `url(${asset(`/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png`)})`;
 }
 
 async function loadCoverAnimated(work, bgEl, imgWrap) {
@@ -537,11 +538,8 @@ async function showResult(winner) {
   state.resultWinner = winner;
   renderResultContent(getLang() === 'en');
 
-  // KIN 에이전트 이벤트 (fire-and-forget)
-  fetch(`${API_URL}/api/kin/event`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  // KIN 에이전트 이벤트 (kinxdred.com 에서만 전송)
+  window.reportEvent?.(`${API_URL}/api/kin/event`, {
       service: 'k2_manga',
       event_type: 'worldcup_completed',
       payload: {
@@ -553,8 +551,7 @@ async function showResult(winner) {
         total_rounds: state.rounds?.length || 0,
         lang: getLang(),
       },
-    }),
-  }).catch(() => {});
+  });
 
   // Supabase 세션 저장 (fire-and-forget)
   fetch(`${SUPA_URL}/rest/v1/worldcup_sessions`, {

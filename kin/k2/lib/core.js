@@ -8,26 +8,34 @@ export const SUPA_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
 export const API_URL = 'https://kin-agent-production.up.railway.app';
 
-// 절대 경로 사용 — Vercel rewrite 환경에서 상대경로 오동작 방지
+/* Site-root paths. js/site-base.js sets SITE_BASE on GitHub Pages project sites. */
+export function asset(path) {
+  if (typeof path !== 'string' || path.charAt(0) !== '/' || path.charAt(1) === '/') return path;
+  const base = (typeof window !== 'undefined' && window.SITE_BASE) || '';
+  return base + path;
+}
+
+const root = (path) => asset(path);
+
 export const KIN_IMGS = {
-  excited: '/kin/k2/assets/kin_excited.webp',
-  happy: '/kin/k2/assets/kin_happy.webp',
-  thinking: '/kin/k2/assets/kin_thinking1.webp',
-  serious: '/kin/k2/assets/kin_serious.webp',
-  sad: '/kin/k2/assets/kin_sad.webp',
+  excited: root('/kin/k2/assets/kin_excited.webp'),
+  happy: root('/kin/k2/assets/kin_happy.webp'),
+  thinking: root('/kin/k2/assets/kin_thinking1.webp'),
+  serious: root('/kin/k2/assets/kin_serious.webp'),
+  sad: root('/kin/k2/assets/kin_sad.webp'),
 };
 
 export const BG_IMAGES = [
-  '/kin/k2/assets/bg/bg1.png',
-  '/kin/k2/assets/bg/bg2.png',
-  '/kin/k2/assets/bg/bg3.png',
-  '/kin/k2/assets/bg/bg4.png',
-  '/kin/k2/assets/bg/bg5.png',
-  '/kin/k2/assets/bg/bg6.png',
-  '/kin/k2/assets/bg/bg7.png',
-  '/kin/k2/assets/bg/bg8.png',
-  '/kin/k2/assets/bg/bg9.png',
-  '/kin/k2/assets/bg/bg10.png',
+  root('/kin/k2/assets/bg/bg1.png'),
+  root('/kin/k2/assets/bg/bg2.png'),
+  root('/kin/k2/assets/bg/bg3.png'),
+  root('/kin/k2/assets/bg/bg4.png'),
+  root('/kin/k2/assets/bg/bg5.png'),
+  root('/kin/k2/assets/bg/bg6.png'),
+  root('/kin/k2/assets/bg/bg7.png'),
+  root('/kin/k2/assets/bg/bg8.png'),
+  root('/kin/k2/assets/bg/bg9.png'),
+  root('/kin/k2/assets/bg/bg10.png'),
 ];
 
 export const COVER_MAL_IDS = [

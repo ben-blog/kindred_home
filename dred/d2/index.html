@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>D2 — DRED</title>
-  <link rel="icon" type="image/svg+xml" href="/dred/d2/dred_favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="dred_favicon.svg">
+  <script src="../../js/site-base.js"></script>
+  <script src="../../js/d2.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Gowun+Batang:wght@400;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
@@ -404,10 +406,10 @@
   <!-- LEFT: DRED -->
   <div class="dred-space">
     <div class="dred-img-layer" id="dredImg1">
-      <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state1.webp" alt="">
+      <img src="../../assets/gallery/dred_d2_state1.webp" alt="">
     </div>
     <div class="dred-img-layer" id="dredImg2">
-      <img src="https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp"
+      <img src="../../assets/gallery/dred_d2_state2.webp"
            crossorigin="anonymous" alt="">
     </div>
     <div class="dred-img-gradient"></div>
@@ -459,7 +461,7 @@
         <div class="spotify-wrap" id="spotifyWrap"></div>
       </div>
       <div class="result-actions">
-        <a href="/dred/" class="action-btn" style="text-decoration:none;">← gallery</a>
+        <a href="../" class="action-btn" style="text-decoration:none;">← gallery</a>
         <button class="action-btn" onclick="resetToSelect()" id="btnAgain"></button>
         <button class="action-btn primary" onclick="openShare()" id="btnShare"></button>
       </div>
@@ -505,8 +507,8 @@ const DRED_QUOTES = {
   en: ['already knew.','watching.','so.','your pick.','you already know.',"doesn't matter."]
 };
 const BIG_TEXTS = ['.','..','D','R','E','D','..'];
-const API_URL   = 'https://d2-api-production.up.railway.app/api/d2/now';
-const STATE2_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred/dred_d2_state2.webp';
+const STATE2_URL = '../../assets/gallery/dred_d2_state2.webp';
+const DRED_API = 'https://dred-agent-production.up.railway.app/api/dred/event';
 const OVERLAY_DURATION = 700; /* ms — keep in sync with --overlay-dur in CSS */
 
 /* ─── STATE ─── */
@@ -833,17 +835,25 @@ async function callAPI(tags, isRandom) {
   currentTags = isRandom ? [] : [...selectedTags];
 
   const overlayPromise = startOverlay();
-  const apiPromise = fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tags, is_random: isRandom, lang: currentLang })
-  }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); });
+  const apiPromise = loadD2Tracks().then(tracks => d2Recommend(tracks, tags, currentLang, isRandom));
 
   try {
     const [, data] = await Promise.all([overlayPromise, apiPromise]);
     currentResult = data;
     revealState2();
     showResult(data);
+    reportEvent(DRED_API, {
+      service: 'd2',
+      event_type: 'line_generated',
+      payload: {
+        keywords: tags,
+        song_title: data.track.title,
+        artist: data.track.artist,
+        dred_line: data.dred_line,
+        lang: currentLang,
+        is_random: isRandom,
+      },
+    });
   } catch (err) {
     console.error('D2 API error:', err);
     /* Reverse overlay and restore select screen */
@@ -1120,6 +1130,7 @@ updateCopy();
 /* 초기 언어 버튼 상태 설정 */
 document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
 startAmbient();
+loadD2Tracks().catch(() => {});
 </script>
 </body>
 </html>

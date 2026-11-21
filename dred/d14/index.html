@@ -112,7 +112,7 @@
 
 <div class="meta-top" id="metaTop">
   <span>D14 · hour</span>
-  <a href="/dred/" class="d14-nav-link">gallery</a>
+  <a href="../" class="d14-nav-link">gallery</a>
   <a href="../../main.html">← back</a>
 </div>
 
@@ -128,15 +128,16 @@
 <button class="share-btn" id="shareBtn"></button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../../js/site-base.js"></script>
+<script src="../../js/d14.js"></script>
 <script>
 // ── 설정 ───────────────────────────────────────────────
-const API_BASE = 'https://d2-api-production.up.railway.app';
-const CDN = 'https://aurbgjnbfatcqgovwagp.supabase.co/storage/v1/object/public/assets/dred';
+const DRED_API = 'https://dred-agent-production.up.railway.app/api/dred/event';
 
 const IMAGE_CONFIG = [
-  { url:`${CDN}/dred_d1-2_rush_hour.webp`,   effect:0.0, transition:0.0 },
-  { url:`${CDN}/dred_g4_highway_wall.webp`,   effect:1.0, transition:1.0 },
-  { url:`${CDN}/dred_rooftop_sunset_v1.webp`, effect:2.0, transition:2.0 },
+  { url: asset('/assets/gallery/dred_d1-2_rush_hour.webp'), effect:0.0, transition:0.0 },
+  { url: asset('/assets/gallery/dred_g4_highway_wall.webp'), effect:1.0, transition:1.0 },
+  { url: asset('/assets/gallery/dred_rooftop_sunset_v1.webp'), effect:2.0, transition:2.0 },
 ];
 
 const IMAGE_ASPECT        = 0.75;
@@ -168,29 +169,31 @@ const visitorId=getVisitorId();
 const visitKey=`d14_visits_${dateStr}`;
 const visitNum=parseInt(localStorage.getItem(visitKey)||'0')+1;
 localStorage.setItem(visitKey,String(visitNum));
-const cacheKey=`d14_${visitorId}_${dateStr}_${period}`;
-const getCached=()=>localStorage.getItem(cacheKey);
-const setCache=msg=>localStorage.setItem(cacheKey,msg);
 
 const FALLBACK={
   ko:["아무것도 끝나지 않은 채로 새벽이 왔어.","오늘이 어제처럼 될 것 같은 기분.","지금 뭔가 미루고 있어.","밥 먹는 동안 피하고 있는 게 있어.","가장 느린 빛이 드는 시간이야.","오늘 만난 사람들이 아직 몸에 남아있어.","오늘이 이미 정해진 것 같은 기분."],
   en:["Dawn arrived and nothing ended.","Already feels like yesterday.","Something being put off right now.","Avoiding something over lunch.","The slowest light of the day.","The people from today still linger.","The day already feels decided."]
 };
 
-async function fetchMessage(){
-  const cached=getCached(); if(cached)return cached;
+function fetchMessage(){
   try{
-    const params=new URLSearchParams({lang,hour:now.getHours(),day:now.getDay(),month:now.getMonth()+1,isWeekend:(now.getDay()===0||now.getDay()===6),visitCount:visitNum});
-    const ctrl=new AbortController();
-    const timer=setTimeout(()=>ctrl.abort(),8000);
-    const res=await fetch(`${API_BASE}/api/d14/now?${params}`,{signal:ctrl.signal});
-    clearTimeout(timer);
-    if(!res.ok)throw new Error();
-    const data=await res.json();
-    const msg=(data.message||'').replace(/\\n/g,'\n')||FALLBACK[lang][period];
-    setCache(msg);return msg;
+    const data=d14Message(now, lang);
+    reportEvent(DRED_API, {
+      service:'d14',
+      event_type:'message_generated',
+      payload:{
+        hour:now.getHours(),
+        day:now.getDay(),
+        period_name:D14_PERIOD[data.lang][data.period],
+        lang:data.lang,
+        moon:data.moon,
+        season:data.season,
+        message:data.message,
+      },
+    });
+    return data.message || FALLBACK[lang][period];
   }catch{
-    const msg=FALLBACK[lang][period];setCache(msg);return msg;
+    return FALLBACK[lang][period];
   }
 }
 

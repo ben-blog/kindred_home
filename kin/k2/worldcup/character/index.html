@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>KIN worldcup</title>
+<script>
+(function () {
+  var host = location.hostname || '';
+  var base = '';
+  if (host.endsWith('.github.io')) {
+    var first = location.pathname.split('/').filter(Boolean)[0];
+    if (first === 'kindred_home') base = '/kindred_home';
+  }
+  location.replace(base + '/kin/k2/services/worldcup-character/worldcup.html' + location.search + location.hash);
+})();
+</script>

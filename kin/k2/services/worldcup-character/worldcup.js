@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════
 // worldcup.js — 캐릭터 월드컵
 // ═══════════════════════════════════════════
-import { getLang, t, KIN_IMGS, API_URL, SUPA_URL, SUPA_KEY, genUUID } from '../../lib/core.js';
+import { getLang, t, KIN_IMGS, API_URL, SUPA_URL, SUPA_KEY, genUUID, asset } from '../../lib/core.js';
 import { initLangToggle, showError } from '../../lib/ui.js';
 
 // ══════════════════════════════════════════
@@ -373,7 +373,7 @@ function buildBracket(chars) {
 const imgCache = new Map();
 
 function randomBg() {
-  return `url(/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png)`;
+  return `url(${asset(`/kin/k2/assets/bg/bg${Math.floor(Math.random() * 10) + 1}.png`)})`;
 }
 
 async function loadCharImgAnimated(char, bgEl, imgWrap) {
@@ -843,11 +843,8 @@ async function showResult(winner) {
 
   const tags = analyzeTop4Tags();
 
-  // KIN 에이전트 이벤트
-  fetch(`${API_URL}/api/kin/event`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  // KIN 에이전트 이벤트 (kinxdred.com 에서만 전송)
+  window.reportEvent?.(`${API_URL}/api/kin/event`, {
       service: 'k2_manga',
       event_type: 'char_worldcup_completed',
       payload: {
@@ -863,8 +860,7 @@ async function showResult(winner) {
         category: state.category,
         lang: getLang(),
       },
-    }),
-  }).catch(() => {});
+  });
 
   // Supabase 세션 저장
   fetch(`${SUPA_URL}/rest/v1/worldcup_char_sessions`, {
@@ -893,23 +889,9 @@ async function showResult(winner) {
 let shareBlob = null,
   shareBlobUrl = null;
 
-// 외부 CDN 이미지를 CORS 우회하여 blob URL로 변환
-// 1차: 프록시 경유 (/api/img-proxy), 2차: 직접 fetch
+// AniList CDN allows cross-origin reads, so the image is fetched directly.
 async function fetchImageAsBlob(url) {
-  // AniList CDN이면 프록시 경유
-  if (url && url.includes('s4.anilist.co')) {
-    try {
-      const proxyUrl = `/api/img-proxy?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
-      if (res.ok) {
-        const blob = await res.blob();
-        return URL.createObjectURL(blob);
-      }
-    } catch {
-      /* 프록시 실패 시 직접 시도 */
-    }
-  }
-  // 직접 fetch (프록시 없거나 비-AniList URL)
+  if (!url) return null;
   try {
     const res = await fetch(url, { mode: 'cors' });
     if (!res.ok) return null;

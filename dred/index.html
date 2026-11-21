@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <title>DRED — Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -383,20 +383,15 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   <div class="dn" id="dn-next">→</div>
 </div>
 
+<script src="../js/site-base.js"></script>
+<script src="../js/gallery.js"></script>
 <script>
 /* ── CONFIG ── */
-const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
-const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
-const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/dred/`;
 
 /* ── DRED REPORTER ── */
 const DRED_API = 'https://dred-agent-production.up.railway.app/api/dred/event';
 function reportToDred(event_type, payload = {}) {
-  fetch(DRED_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ service: 'gallery', event_type, payload }),
-  }).catch(() => {}); // 갤러리 동작에 영향 없음
+  reportEvent(DRED_API, { service: 'gallery', event_type, payload });
 }
 
 /* ── STATE ── */
@@ -495,22 +490,9 @@ setLang(lang);
 
 /* ── FETCH ── */
 async function fetchItems() {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gallery_items?character=eq.dred&is_active=eq.true&order=order_num.asc`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-  );
+  const res = await fetch('../data/kindred_gallery_dred.json');
   if (!res.ok) throw new Error('fetch failed');
-  return res.json();
-}
-
-async function fetchTags(itemId) {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gallery_item_tags?item_id=eq.${itemId}&select=tags(name_ko,name_en)`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.map(d => d.tags).filter(Boolean);
+  return flattenGallery(await res.json());
 }
 
 /* ── STRIP ── */
@@ -533,13 +515,11 @@ function renderStrip() {
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
 
     const actHtml = hasAct
-      ? (item.actions[lang] || [])
-          .map(a => `<a class="frame-action-link" href="${a.url || '#'}" target="_blank" rel="noopener noreferrer">${a.label}</a>`)
-          .join('')
+      ? (item.actions[lang] || []).map(a => actionLinkHtml(a, 'frame-action-link')).join('')
       : '';
     fr.className = 'frame' + (hasAct ? ' has-action' : '');
     fr.innerHTML = `
-      <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="lazy">
+      <img src="${gallerySrc(item.filename)}" alt="${title}" loading="lazy">
       <div class="frame-overlay">
         <div class="frame-caption">${title}</div>
         ${hasAct ? actHtml : ''}
@@ -793,7 +773,7 @@ async function fillDetail(i) {
   document.getElementById('detail-counter').textContent   = `${String(i+1).padStart(2,'0')} / ${items.length}`;
 
   const $img = document.getElementById('detail-img-el');
-  $img.src = `${IMG_BASE}${item.filename}`;
+  $img.src = gallerySrc(item.filename);
   $img.alt = item[`title_${t}`] || '';
 
   const $actSection = document.getElementById('detail-action-section');
@@ -805,9 +785,11 @@ async function fillDetail(i) {
       const btn = document.createElement('a');
       btn.className = 'action-btn';
       btn.textContent = a.label;
-      btn.href = a.url || '#';
-      btn.target = '_blank';
-      btn.rel = 'noopener noreferrer'; /* FIX: security — external link */
+      btn.href = resolveLink(a.url);
+      if (isExternalLink(a.url)) {
+        btn.target = '_blank';
+        btn.rel = 'noopener noreferrer';
+      }
       $acts.appendChild(btn);
     });
     $actSection.style.display = 'block';
@@ -821,14 +803,12 @@ async function fillDetail(i) {
 
   const $tags = document.getElementById('detail-tags');
   $tags.innerHTML = '';
-  fetchTags(item.id).then(tags => {
-    tags.forEach(tag => {
-      const span = document.createElement('span');
-      span.className = 'tag';
-      span.textContent = tag[`name_${t}`] || tag.name_ko;
-      $tags.appendChild(span);
-    });
-  }).catch(() => {}); /* FIX: catch tag fetch failures silently */
+  (item.tags || []).forEach(tag => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.textContent = tag[`name_${t}`] || tag.name_ko || '';
+    if (span.textContent) $tags.appendChild(span);
+  });
 }
 
 /* FIX: openDetail had no error boundary.
@@ -905,25 +885,11 @@ function setLiked(itemId, val) {
 }
 
 async function fetchLikeCount(itemId) {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gallery_likes?item_id=eq.${itemId}&select=count`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-  );
-  if (!res.ok) return 0;
-  const data = await res.json();
-  return data[0]?.count || 0;
+  return localLikeCount(itemId);
 }
 
 async function callLikeRpc(fn, itemId) {
-  await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPA_KEY,
-      Authorization: `Bearer ${SUPA_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ p_item_id: itemId }),
-  });
+  localAdjustLike(itemId, fn === 'increment_like' ? 1 : -1);
 }
 
 function updateLikeUI(itemId, count) {

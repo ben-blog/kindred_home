@@ -1,0 +1,102 @@
+[
+  {
+    "item_id": "k2",
+    "character": "kin",
+    "title_ko": "K2",
+    "title_en": "K2",
+    "actions": {
+      "ko": [{
+        "label": "퀴즈 · 월드컵",
+        "title": "K2",
+        "desc": "10문제, 그리고 캐릭터랑 작품 월드컵.",
+        "url": "/kin/k2/"
+      }],
+      "en": [{
+        "label": "quiz · worldcup",
+        "title": "K2",
+        "desc": "Ten questions, then the character and work worldcups.",
+        "url": "/kin/k2/"
+      }]
+    }
+  },
+  {
+    "item_id": "kin_c3_sketchbook_floor",
+    "character": "kin",
+    "title_ko": "3년 후의 나",
+    "title_en": "Next 3 Years",
+    "actions": {
+      "ko": [{
+        "label": "3년 후의 나 계산해보기",
+        "title": "3년 후의 나",
+        "desc": "스케치북에 적혀 있던 그 주소.",
+        "url": "https://mirrored-five.vercel.app/"
+      }],
+      "en": [{
+        "label": "see your next 3 years",
+        "title": "Next 3 Years",
+        "desc": "The address that was on the sketchbook page.",
+        "url": "https://mirrored-five.vercel.app/"
+      }]
+    }
+  },
+  {
+    "item_id": "mood-camera",
+    "character": "kindred",
+    "title_ko": "Mood Camera",
+    "title_en": "Mood Camera",
+    "actions": {
+      "ko": [{
+        "label": "무드 카메라",
+        "title": "Mood Camera",
+        "desc": "KIN과 DRED 밖의 카메라. 별도 사이트로 연다.",
+        "url": "https://mirrored-five.vercel.app/mood-camera"
+      }],
+      "en": [{
+        "label": "mood camera",
+        "title": "Mood Camera",
+        "desc": "Opens the camera on its own site.",
+        "url": "https://mirrored-five.vercel.app/mood-camera"
+      }]
+    }
+  },
+  {
+    "item_id": "d2",
+    "character": "dred",
+    "title_ko": "D2",
+    "title_en": "D2",
+    "actions": {
+      "ko": [{
+        "label": "선곡",
+        "title": "D2",
+        "desc": "키워드 두 개. 곡은 여기서 고른다.",
+        "url": "/dred/d2/"
+      }],
+      "en": [{
+        "label": "a track",
+        "title": "D2",
+        "desc": "Two keywords. The track is picked here.",
+        "url": "/dred/d2/"
+      }]
+    }
+  },
+  {
+    "item_id": "d14",
+    "character": "dred",
+    "title_ko": "D14",
+    "title_en": "D14",
+    "actions": {
+      "ko": [{
+        "label": "이 시간",
+        "title": "D14",
+        "desc": "시각, 달, 계절. 한 문장.",
+        "url": "/dred/d14/"
+      }],
+      "en": [{
+        "label": "this hour",
+        "title": "D14",
+        "desc": "Hour, moon, season. One sentence.",
+        "url": "/dred/d14/"
+      }]
+    }
+  }
+]

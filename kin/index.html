@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <title>KIN — Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -424,21 +424,16 @@ body::after{
   </div>
 </div>
 
+<script src="../js/site-base.js"></script>
+<script src="../js/gallery.js"></script>
 <script>
 /* ── CONFIG ── */
-const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
-const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
-const IMG_BASE = `${SUPA_URL}/storage/v1/object/public/assets/kin/`;
 const SFXS = ['HA!','HEY','WOW','!!!','HMM','YO','haha','...','?!','zzz','YES'];
 
 /* ── KIN REPORTER ── */
 const KIN_API = 'https://kin-agent-production.up.railway.app/api/kin/event';
 function reportToKin(event_type, payload = {}) {
-  fetch(KIN_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ service: 'gallery', event_type, payload, timestamp: new Date().toISOString() }),
-  }).catch(() => {}); // 갤러리 동작에 영향 없음
+  reportEvent(KIN_API, { service: 'gallery', event_type, payload, timestamp: new Date().toISOString() });
 }
 
 /* ── STATE ── */
@@ -477,22 +472,9 @@ setLang(lang);
 
 /* ── FETCH ── */
 async function fetchItems() {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gallery_items?character=eq.kin&is_active=eq.true&order=order_num.asc`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-  );
+  const res = await fetch('../data/kindred_gallery_kin.json');
   if (!res.ok) throw new Error('fetch failed');
-  return res.json();
-}
-
-async function fetchTags(itemId) {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gallery_item_tags?item_id=eq.${itemId}&select=tags(name_ko,name_en)`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.map(d => d.tags).filter(Boolean);
+  return flattenGallery(await res.json());
 }
 
 /* ── GALLERY ── */
@@ -510,13 +492,11 @@ function renderGallery() {
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
     const isNew  = i >= newStart;
     const actHtml = hasAct
-      ? (item.actions[lang] || [])
-          .map(a => `<a class="thumb-action-link" href="${a.url || '#'}" target="_blank" rel="noopener noreferrer">${a.label}</a>`)
-          .join('')
+      ? (item.actions[lang] || []).map(a => actionLinkHtml(a, 'thumb-action-link')).join('')
       : '';
     t.className = 'thumb' + (hasAct ? ' has-action' : '');
     t.innerHTML = `
-        <img src="${IMG_BASE}${item.filename}" alt="${title}" loading="${i < 8 ? 'eager' : 'lazy'}">
+        <img src="${gallerySrc(item.filename)}" alt="${title}" loading="${i < 8 ? 'eager' : 'lazy'}">
         <div class="thumb-label">${title}</div>
         ${isNew ? '<div class="thumb-new"></div>' : ''}
         ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}
@@ -558,7 +538,7 @@ async function fillDetail(i) {
   document.getElementById('detail-counter').textContent   = `${String(i+1).padStart(2,'0')} / ${items.length}`;
 
   const $img = document.getElementById('detail-img-el');
-  $img.src = `${IMG_BASE}${item.filename}`;
+  $img.src = gallerySrc(item.filename);
   $img.alt = item[`title_${t}`] || '';
 
   const $actSection = document.getElementById('detail-action-section');
@@ -570,9 +550,11 @@ async function fillDetail(i) {
       const btn = document.createElement('a');
       btn.className = 'action-btn';
       btn.textContent = a.label;
-      btn.href = a.url || '#';
-      btn.target = '_blank';
-      btn.rel = 'noopener noreferrer';
+      btn.href = resolveLink(a.url);
+      if (isExternalLink(a.url)) {
+        btn.target = '_blank';
+        btn.rel = 'noopener noreferrer';
+      }
       $acts.appendChild(btn);
     });
     $actSection.style.display = 'block';
@@ -586,13 +568,11 @@ async function fillDetail(i) {
 
   const $tags = document.getElementById('detail-tags');
   $tags.innerHTML = '';
-  fetchTags(item.id).then(tags => {
-    tags.forEach(tag => {
-      const span = document.createElement('span');
-      span.className = 'tag';
-      span.textContent = tag[`name_${t}`] || tag.name_ko;
-      $tags.appendChild(span);
-    });
+  (item.tags || []).forEach(tag => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.textContent = tag[`name_${t}`] || tag.name_ko || '';
+    if (span.textContent) $tags.appendChild(span);
   });
 }
 
@@ -659,25 +639,11 @@ function setLiked(itemId, val) {
 }
 
 async function fetchLikeCount(itemId) {
-  const res = await fetch(
-    `${SUPA_URL}/rest/v1/gallery_likes?item_id=eq.${itemId}&select=count`,
-    { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-  );
-  if (!res.ok) return 0;
-  const data = await res.json();
-  return data[0]?.count || 0;
+  return localLikeCount(itemId);
 }
 
 async function callLikeRpc(fn, itemId) {
-  await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPA_KEY,
-      Authorization: `Bearer ${SUPA_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ p_item_id: itemId }),
-  });
+  localAdjustLike(itemId, fn === 'increment_like' ? 1 : -1);
 }
 
 function updateLikeUI(itemId, count) {
@@ -746,7 +712,7 @@ $back.addEventListener('click', () => {
 document.getElementById('nav-dred').addEventListener('click', () => {
   $backOverlay.style.pointerEvents = 'all';
   $backOverlay.style.opacity = '1';
-  setTimeout(() => { window.location.href = '../../dred/'; }, 400);
+  setTimeout(() => { window.location.href = '../dred/'; }, 400);
 });
 
 /* ── RESIZE ── */

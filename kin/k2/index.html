@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<link rel="icon" type="image/svg+xml" href="/kin/k2/k2_favicon.svg">
+<link rel="icon" type="image/svg+xml" href="k2_favicon.svg">
+<script src="../../js/site-base.js"></script>
 <title>난 어떤 덕후? — KIN의 만화·애니</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -968,7 +969,7 @@ body{
 
     <!-- 스태프 POP 카드 -->
     <div class="staff-pop" id="staff-pop">
-      <img class="staff-pop-avatar" id="landing-kin-avatar" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN">
+      <img class="staff-pop-avatar" id="landing-kin-avatar" src="assets/kin_thinking1.webp" alt="KIN">
       <div class="staff-pop-body">
         <span class="staff-pop-label">staff pick</span>
         <div class="staff-pop-text" id="staff-pop-text">이번 주 추천: 캐릭터 월드컵. 네 취향이 보여.</div>
@@ -980,7 +981,7 @@ body{
 
       <!-- 퀴즈 -->
       <div class="hero-card hero-card--quiz" id="mode-quiz">
-        <div class="hero-card-bg" style="background-image:url('/kin/k2/assets/meme_quiz.webp')"></div>
+        <div class="hero-card-bg" style="background-image:url('assets/meme_quiz.webp')"></div>
         <div class="hero-card-overlay"></div>
         <span class="hero-card-corner" id="quiz-corner">두뇌전</span>
         <span class="hero-card-sfx" id="quiz-sfx">뭘 알고 뭘 모르나?</span>
@@ -996,8 +997,8 @@ body{
       </div>
 
       <!-- 캐릭터 월드컵 -->
-      <a class="hero-card hero-card--char" id="mode-char" href="/kin/k2/worldcup/character" style="text-decoration:none">
-        <div class="hero-card-bg" style="background-image:url('/kin/k2/assets/meme_char.webp')"></div>
+      <a class="hero-card hero-card--char" id="mode-char" href="services/worldcup-character/worldcup.html" style="text-decoration:none">
+        <div class="hero-card-bg" style="background-image:url('assets/meme_char.webp')"></div>
         <div class="hero-card-overlay"></div>
         <span class="hero-card-corner" id="char-corner">열혈</span>
         <span class="hero-card-sfx" id="char-sfx">누가 최애야!</span>
@@ -1013,8 +1014,8 @@ body{
       </a>
 
       <!-- 작품 월드컵 -->
-      <a class="hero-card hero-card--work" id="mode-work" href="/kin/k2/worldcup/work" style="text-decoration:none">
-        <div class="hero-card-bg" style="background-image:url('/kin/k2/assets/meme_work.webp')"></div>
+      <a class="hero-card hero-card--work" id="mode-work" href="services/worldcup-work/worldcup.html" style="text-decoration:none">
+        <div class="hero-card-bg" style="background-image:url('assets/meme_work.webp')"></div>
         <div class="hero-card-overlay"></div>
         <span class="hero-card-corner" id="work-corner">취향저격</span>
         <span class="hero-card-sfx" id="work-sfx">진짜 명작은 하나!</span>
@@ -1110,7 +1111,7 @@ body{
   <div class="result-btns">
     <button class="btn-primary"   id="btn-share">공유하기</button>
     <button class="btn-secondary" id="btn-retry">다시 하기</button>
-    <a      class="btn-secondary" href="/kin/" id="btn-gallery">← 갤러리</a>
+    <a      class="btn-secondary" href="../" id="btn-gallery">← 갤러리</a>
   </div>
 </div>
 
@@ -1161,11 +1162,11 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const API_URL  = 'https://kin-agent-production.up.railway.app';
 
 const KIN_IMGS = {
-  excited:  '/kin/k2/assets/kin_excited.webp',
-  happy:    '/kin/k2/assets/kin_happy.webp',
-  thinking: '/kin/k2/assets/kin_thinking1.webp',
-  serious:  '/kin/k2/assets/kin_serious.webp',
-  sad:      '/kin/k2/assets/kin_sad.webp',
+  excited:  'assets/kin_excited.webp',
+  happy:    'assets/kin_happy.webp',
+  thinking: 'assets/kin_thinking1.webp',
+  serious:  'assets/kin_serious.webp',
+  sad:      'assets/kin_sad.webp',
 };
 
 // ── DOM 캐시 (정적 요소 — 매 문제마다 getElementById 반복 제거) ──
@@ -1542,10 +1543,10 @@ function getObs(pattern, idx) {
 // 퀴즈 배경 이미지 (랜덤, 연속 중복 방지)
 // ═══════════════════════════════════════════
 const BG_IMAGES = [
-  '/kin/k2/assets/bg/bg1.png','/kin/k2/assets/bg/bg2.png','/kin/k2/assets/bg/bg3.png',
-  '/kin/k2/assets/bg/bg4.png','/kin/k2/assets/bg/bg5.png','/kin/k2/assets/bg/bg6.png',
-  '/kin/k2/assets/bg/bg7.png','/kin/k2/assets/bg/bg8.png','/kin/k2/assets/bg/bg9.png',
-  '/kin/k2/assets/bg/bg10.png',
+  'assets/bg/bg1.png','assets/bg/bg2.png','assets/bg/bg3.png',
+  'assets/bg/bg4.png','assets/bg/bg5.png','assets/bg/bg6.png',
+  'assets/bg/bg7.png','assets/bg/bg8.png','assets/bg/bg9.png',
+  'assets/bg/bg10.png',
 ];
 let _lastBgIdx = -1;
 function getRandomBg() {
@@ -1631,13 +1632,8 @@ async function supaCount(path) {
 // 오늘 플레이어 수 × 10
 // ═══════════════════════════════════════════
 async function loadTodayCount() {
-  try {
-    const today = new Date().toISOString().slice(0,10);
-    const count = await supaCount(`quiz_sessions?created_at=gte.${today}T00:00:00&select=id`);
-    const display = (count*10).toLocaleString();
-    const el = document.getElementById('today-count');
-    if(el && count>0) el.textContent = t(`오늘 ${display}명이 도전했어.`, `${display} people played today.`);
-  } catch{}
+  // quiz_sessions has no timestamp column. The old created_at filter
+  // answers 400, and the today line stays blank.
 }
 
 async function loadTotalCount() {
@@ -1771,7 +1767,7 @@ function initProgressTrack() {
   runner.className = 'kin-runner';
   runner.id = 'kin-runner';
   runner.style.left = '0%';
-  runner.innerHTML = '<img class="kin-icon" id="kin-icon" src="/kin/k2/assets/kin_thinking1.webp" alt="KIN"><div class="kin-shadow"></div>';
+  runner.innerHTML = '<img class="kin-icon" id="kin-icon" src="assets/kin_thinking1.webp" alt="KIN"><div class="kin-shadow"></div>';
   wrap.appendChild(runner);
 }
 
@@ -2194,7 +2190,7 @@ async function showResult() {
       t(`${wData.total}문제 중 ${wData.correct}개 정답`, `${wData.correct} / ${wData.total} correct`);
     // worldcup_works.cover_url 우선, 없으면 bg fallback
     const _wBgEl = document.getElementById('result-work-bg');
-    const _wFallback = () => { _wBgEl.style.backgroundImage=`url(/kin/k2/assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`; };
+    const _wFallback = () => { _wBgEl.style.backgroundImage=`url(assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`; };
     supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(workName)}&select=cover_url&limit=1`)
       .then(rows => {
         const url = rows?.[0]?.cover_url;
@@ -2221,7 +2217,7 @@ async function showResult() {
       document.getElementById('result-work-sub').textContent = t('이번 세션 등장 작품', 'appeared this session');
       document.getElementById('result-work-label').textContent = t('이번 세션 작품', 'this session');
       const _fbBgEl = document.getElementById('result-work-bg');
-      const _fbFallback = () => { _fbBgEl.style.backgroundImage=`url(/kin/k2/assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`; };
+      const _fbFallback = () => { _fbBgEl.style.backgroundImage=`url(assets/bg/bg${Math.floor(Math.random()*10)+1}.png)`; };
       supaFetch(`worldcup_works?title_ko=eq.${encodeURIComponent(fbName)}&select=cover_url&limit=1`)
         .then(rows => {
           const url = rows?.[0]?.cover_url;
@@ -2233,7 +2229,7 @@ async function showResult() {
       document.getElementById('result-work-card').style.display='none';
       document.getElementById('result-kin-card').style.display='block';
       const bgIdx = Math.floor(Math.random() * 10) + 1;
-      document.getElementById('result-kin-bg').style.backgroundImage = `url(/kin/k2/assets/bg/bg${bgIdx}.png)`;
+      document.getElementById('result-kin-bg').style.backgroundImage = `url(assets/bg/bg${bgIdx}.png)`;
     }
   }
 
@@ -2319,16 +2315,12 @@ async function saveSession(pattern) {
   // 퀴즈 완료 기록 (랜딩 상태 업데이트용)
   localStorage.setItem('k2_quiz_done', '1');
 
-  // KIN 에이전트 이벤트 (fire-and-forget)
-  fetch(`${API_URL}/api/kin/event`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      service:'k2_manga',
-      event_type:'quiz_completed',
-      payload:{ count:1, lang, result_pattern:pattern },
-    }),
-  }).catch(()=>{});
+  // KIN 에이전트 이벤트 (kinxdred.com 에서만 전송)
+  reportEvent(`${API_URL}/api/kin/event`, {
+    service:'k2_manga',
+    event_type:'quiz_completed',
+    payload:{ count:1, lang, result_pattern:pattern },
+  });
 }
 
 function loadImgCORS(img, src) {

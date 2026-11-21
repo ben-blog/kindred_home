@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<script src="js/site-base.js"></script>
 <title>KIN × DRED</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
@@ -1208,17 +1209,11 @@ if (!IS_TOUCH) {
 /* ══════════════════════════════════════════════════
    SERVICE ACTIONS — fetch + PC/Mobile UI
 ══════════════════════════════════════════════════ */
-const SUPA_URL = 'https://aurbgjnbfatcqgovwagp.supabase.co';
-const SUPA_KEY = 'sb_publishable_Eg-9eLFO2wAe0NiJBJWqcA_t8MSg1t_';
-
 let mainActions = { kin: [], kindred: [], dred: [] };
 
 async function fetchMainActions() {
   try {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/gallery_items?show_on_main=eq.true&is_active=eq.true&order=order_num.asc&select=item_id,character,title_ko,title_en,actions`,
-      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` } }
-    );
+    const res = await fetch('data/main-actions.json');
     if (!res.ok) return;
     const data = await res.json();
     mainActions.kin     = data.filter(d => d.character === 'kin');
@@ -1507,6 +1502,7 @@ if (IS_TOUCH) {
 const $navOverlay = document.getElementById('nav-overlay');
 
 function navTo(href) {
+  if (href && href.charAt(0) === '/' && href.charAt(1) !== '/' && window.asset) href = asset(href);
   $navOverlay.style.pointerEvents = 'all';
   $navOverlay.style.opacity = '1';
   setTimeout(() => { window.location.href = href; }, 450);

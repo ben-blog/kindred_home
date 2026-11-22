@@ -27,9 +27,9 @@ npm run dev
 | --- | --- |
 | `public/data/kindred_gallery_kin.json` | 활성 KIN 23. 스키마 v2.1에 `show_on_main`, `like_count`, 태그 추가 |
 | `public/data/kindred_gallery_dred.json` | 활성 DRED 28. 같은 스키마 |
-| `public/data/main-actions.json` | `show_on_main=true` 16장. 메인 메뉴는 그 중 링크가 있는 카드만 그린다. 남은 링크는 GAZE와 D14 |
+| `public/data/main-actions.json` | `show_on_main=true` 15장. 메인 메뉴는 그 중 링크가 있는 카드만 그린다. 남은 링크는 D14 |
 
-본문 순서는 DB `order_num`, 같으면 `id`다. 항목 1–23의 태그는 `gallery_item_tags`, 그 다음 항목은 `gallery_items.tags`다. 활성인데 파일이 없는 카드는 `kindred_mood_camera`뿐이고 `/mood-camera`로 간다.
+본문 순서는 DB `order_num`, 같으면 `id`다. 항목 1–23의 태그는 `gallery_item_tags`, 그 다음 항목은 `gallery_items.tags`다. 갤러리와 메인 메뉴에는 GAZE 링크가 없다. `/mood-camera` 프록시는 그대로다.
 
 좋아요의 기준 숫자는 `gallery_likes`다. 이 브라우저에서 누르면 `localStorage`의 `kxd_liked`가 그 위에 1을 더한다.
 

@@ -370,22 +370,7 @@
         "kin_perspective": "look at those eyes lol. like there's something to say but they're not saying it. when DRED looks back there's always a reason. never does it for nothing",
         "dred_perspective": "i only look back when there's something to verify."
       },
-      "actions": {
-        "ko": [
-          {
-            "type": "link",
-            "label": "Gaze",
-            "url": "/mood-camera"
-          }
-        ],
-        "en": [
-          {
-            "type": "link",
-            "label": "Gaze",
-            "url": "/mood-camera"
-          }
-        ]
-      }
+      "actions": {}
     },
     {
       "id": "dred_g3_music",

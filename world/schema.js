@@ -405,6 +405,8 @@ export const workSchema = z
     url: z.string().regex(/^\//),
     external: z.boolean(),
     scope: z.enum(['character', 'shared']),
+    /** `false` keeps the work and its page, and leaves it off character pages and `/works`. */
+    listed: z.boolean().default(true),
     characters: z.array(slugSchema).default([]),
   })
   .superRefine((work, ctx) => {

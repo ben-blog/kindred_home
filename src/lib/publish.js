@@ -9,10 +9,15 @@ export function compareEntries(a, b) {
   return a.data.slug.localeCompare(b.data.slug);
 }
 
-/** Shared works belong to every public character. Others match `characters`. */
+/** Public works that belong on `/works` and on character pages. */
+export function isListedWork(work) {
+  return isPublicStatus(work.data.status) && work.data.listed !== false;
+}
+
+/** Shared works belong to every public character. Others match `characters`. Unlisted works stay out of both. */
 export function worksForCharacter(slug, works) {
   return works.filter((work) => {
-    if (!isPublicStatus(work.data.status)) return false;
+    if (!isListedWork(work)) return false;
     if (work.data.scope === 'shared') return true;
     return work.data.characters.includes(slug);
   });

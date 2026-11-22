@@ -115,7 +115,7 @@ Set the character, its entity, and its works to `"status": "archived"`. Keep the
 `src/content/works/<slug>.json` and `src/content/entities/<slug>.json` with `"kind": "work"`.
 
 - `scope: "character"` lists the cast in `characters`. Each listed character's `works` array must include this slug.
-- `scope: "shared"` has `"characters": []` and appears on every public character. GAZE is shared.
+- `scope: "shared"` has `"characters": []` and appears on every public character. `listed: false` keeps the work file and `/works/<slug>`, and leaves it off character pages and `/works`. GAZE is shared and unlisted. Its live page stays `/mood-camera`.
 - `external: false` means `url` is a file under `public/` (`/kin`, `/dred/d14`).
 - `external: true` means `url` is a rewrite (`/mood-camera`). Do not add a `public/` page at that path. A file there would hide the rewrite.
 

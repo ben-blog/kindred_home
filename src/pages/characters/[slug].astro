@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { text } from '../../lib/locale.js';
 import { compareEntries, isPublicStatus, worksForCharacter } from '../../lib/publish.js';
 
 export async function getStaticPaths() {
@@ -29,16 +30,15 @@ const hub = data.aliases[0];
 const notes = new Map(data.relationships.map((item) => [item.with, item.note]));
 ---
 
-<Base title={`${data.name.en} — kinxdred`} description={data.profile.bio.en} accent={data.identity.color}>
+<Base title={`${text(data.name)} — kinxdred`} description={text(data.profile.bio)} accent={data.identity.color}>
   <p class="eyebrow">
     {data.status === 'archived' ? <span class="status-archived">archived</span> : data.status}
     {data.agent ? ` · ${data.agent.service}` : ''}
   </p>
-  <h1>{data.name.en}</h1>
-  <p>{data.profile.tagline.ko} / {data.profile.tagline.en}</p>
+  <h1>{text(data.name)}</h1>
+  <p>{text(data.profile.tagline)}</p>
   <p class="swatch"><i></i> {data.identity.color}</p>
-  <p>{data.profile.bio.ko}</p>
-  <p>{data.profile.bio.en}</p>
+  <p>{text(data.profile.bio)}</p>
   {hub ? <a class="primary" href={hub}>Open {hub}</a> : null}
 
   <h2>Works</h2>
@@ -47,7 +47,7 @@ const notes = new Map(data.relationships.map((item) => [item.with, item.note]));
       relatedWorks.map((work) => (
         <li>
           <a href={work.data.url}>
-            <span>{work.data.title.en}</span>
+            <span>{text(work.data.title)}</span>
             <span class="meta">{work.data.url}</span>
           </a>
         </li>
@@ -65,8 +65,8 @@ const notes = new Map(data.relationships.map((item) => [item.with, item.note]));
             <span>
               {names.get(other) ?? other}
               <span class="note"> · {relation.data.kinds.join(' · ')}</span>
-              {(notes.get(other) ?? relation.data.note) ? (
-                <span class="note"> — {notes.get(other) ?? relation.data.note}</span>
+              {text(notes.get(other) ?? relation.data.note) ? (
+                <span class="note"> — {text(notes.get(other) ?? relation.data.note)}</span>
               ) : null}
             </span>
             {relation.data.kinds.includes('썸') && typeof relation.data.tension === 'number' ? (

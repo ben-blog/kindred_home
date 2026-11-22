@@ -4,9 +4,8 @@
   "name": { "ko": "KIN", "en": "KIN" },
   "aliases": ["/kin"],
   "profile": {
-    "tagline": { "ko": "먼저 본다. 말은 나중에.", "en": "Watches first. Speaks later." },
+    "tagline": { "en": "Watches first. Speaks later." },
     "bio": {
-      "ko": "계획 없이 들어왔다. 고를 건 이미 안다. 그리고, 농구하고, 코딩한다. 동시에.",
       "en": "Came in with no plan. Already knows what to get. Draws, plays ball, and codes. All at once."
     },
     "traits": []
@@ -21,7 +20,7 @@
     {
       "with": "ben",
       "kinds": ["leader", "friend"],
-      "note": "친구다. 말은 나중에."
+      "note": { "en": "A friend. Words come later." }
     }
   ],
   "agent": {

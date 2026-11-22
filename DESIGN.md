@@ -186,7 +186,7 @@ A character page is a function of `src/content/characters/<slug>.json` and the r
 | --- | --- |
 | Accent, `--accent` | `identity.color` |
 | Hero blob | `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) |
-| Name | `name.ko`, `name.en` |
+| Name | `name`, a language map. Pages read it with `text()` from `src/lib/locale.js`. |
 | Intro | `profile.tagline`, `profile.bio` |
 | Bond line | `relationships[].note`, `relationships[].kinds`. A `썸` bond also has numeric `tension`. |
 
@@ -198,7 +198,7 @@ The hub URLs (`/kin`, `/dred`, `/dred/d14`) stay the live hubs. They are `aliase
 
 Intro and description copy sounds like the character. The sources are the lines already on the site: the captions in `public/main.html` (`.bn-k`, `.bn-d`), the character's own `kin_perspective` / `dred_perspective` in `public/data/kindred_gallery_kin.json` and `public/data/kindred_gallery_dred.json`, and the hub copy. Do not invent a backstory, a product sentence, or a route announcement (`The live page is /kin`).
 
-Write both `ko` and `en` when the schema has both. Keep it short.
+Write `en`. Other locale keys are optional and stay hidden until that code is listed in `src/config/site.js`. See `AGENTS.md`. Keep it short.
 
 DRED's bond with Ben includes `썸` in `kinds` and a numeric `tension`. That is mutual romantic interest, and they are not a couple. The prose does not announce it. The data carries it. KIN's bond is `leader` and `friend` only.
 
@@ -227,7 +227,7 @@ Do:
 - Ease new motion with `cubic-bezier(.16,1,.3,1)`.
 - Honor `prefers-reduced-motion: reduce` with a still frame and no looping motion.
 - Hide a custom cursor on `pointer: coarse`.
-- Write copy from the character's existing lines. Keep Korean and English where the schema has both.
+- Write copy from the character's existing lines, in `en`. Add another locale only by the steps in `AGENTS.md`.
 - Put before/after screenshots in the PR, as below.
 
 Don't:

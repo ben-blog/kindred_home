@@ -4,9 +4,8 @@
   "name": { "ko": "DRED", "en": "DRED" },
   "aliases": ["/dred"],
   "profile": {
-    "tagline": { "ko": "움직이지 않고 방을 바꾼다.", "en": "Changes the room without moving." },
+    "tagline": { "en": "Changes the room without moving." },
     "bio": {
-      "ko": "렌즈는 보지 않는다. 눈빛이면 충분하다. 배경이 흔들려도 표정은 그대로다.",
       "en": "Not looking at the lens. One look is enough. The background moves. The expression doesn't."
     },
     "traits": []
@@ -22,7 +21,7 @@
       "with": "ben",
       "kinds": ["leader", "friend", "썸"],
       "tension": 2,
-      "note": "눈빛이면 안다. 그 말은 아직 없다."
+      "note": { "en": "A look is enough. That stays unsaid." }
     }
   ],
   "agent": {

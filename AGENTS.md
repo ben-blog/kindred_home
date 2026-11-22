@@ -38,6 +38,8 @@ Run `npm run check` before opening a PR. `vercel.json` redirects and the `/mood-
 ```
 public/                 live HTML, CSS, JS, gallery JSON, images. Served as-is.
 src/content/            canon. One JSON file per entry. The file name is the id.
+src/config/site.js      default locale and the enabled locale list
+src/lib/locale.js       text(field) for pages. Do not read .en or .ko in a page.
 src/pages/              new Astro pages, /api/health, and /api/event
 src/layouts/Base.astro  shell for the new pages
 src/styles/site.css     tokens and styles for the new pages only
@@ -60,6 +62,24 @@ Live URLs that must keep their current behavior:
 `/kin` and `/dred` stay the existing hubs. They are recorded as `aliases` on the character. They are not redirects to `/characters/[slug]`. New pages live beside them: `/characters`, `/characters/[slug]`, `/works`, `/works/[slug]`, `/c/[slug]`.
 
 There is one world, `kinxdred`. Adding a second file under `src/content/world/` fails validation on purpose.
+
+## Language
+
+Copy fields are language maps. `en` is required. Any other locale key is optional (`ko`, `ja`, `zh-hant`). A missing `en` fails validation. The site speaks one language at a time. The setting is `src/config/site.js`:
+
+```js
+export const site = { defaultLocale: 'en', locales: ['en'] };
+```
+
+Pages call `text(field)` from `src/lib/locale.js`. They do not read `.en` or `.ko`. `text` uses `defaultLocale`. A requested locale is used only when it is listed in `locales` and the field has that key. Otherwise it returns `en`. There is no language switch and no locale route in this phase.
+
+To add a language later:
+
+1. Write the new key on the fields that should change (`"ko": "..."` next to `"en"`). Fields you skip stay English.
+2. Add that code to `locales` in `src/config/site.js`. Until it is listed, `text` keeps returning `en`.
+3. Pass the locale into `text(field, locale)` from the future switch. Do not add the switch, or a `/ko/` route, until that task says so.
+
+`defaultLocale` must be one of `locales`, and `locales` must include `en`.
 
 ## Character
 
@@ -118,15 +138,17 @@ Set the work and its entity to `archived`. Leave `url` working.
 {
   "slug": "spring",
   "status": "draft",
-  "title": { "ko": "...", "en": "..." },
-  "summary": { "ko": "...", "en": "..." },
+  "title": { "en": "..." },
+  "summary": { "en": "..." },
   "characters": ["kin"],
   "start": "2026-03-01",
   "end": "2026-03-31",
   "utmCampaign": "spring",
-  "cta": { "label": { "ko": "...", "en": "..." }, "href": "/" }
+  "cta": { "label": { "en": "..." }, "href": "/" }
 }
 ```
+
+`en` is required on each of those fields. Another locale key is optional. See Language.
 
 Set `status` to `active` to publish `/c/<slug>`. `end` must be on or after `start`. Retire by setting `archived` (the URL stays) or `draft` (the URL is not built).
 

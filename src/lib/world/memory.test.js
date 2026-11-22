@@ -58,8 +58,17 @@ const map = {
       y: 1,
       z: 0,
       prompt: 'hidden',
+      url: 'https://example.com/bus',
     },
-    { id: 'b', kind: 'album_moment', label: 'x'.repeat(200), x: 3, y: 0, z: 0 },
+    {
+      id: 'b',
+      kind: 'album_moment',
+      label: 'x'.repeat(200),
+      x: 3,
+      y: 0,
+      z: 0,
+      url: 'javascript:alert(1)',
+    },
     { id: 'r', kind: 'reflection', label: 'not on the sphere', x: 1, y: 0, z: 0 },
   ],
 };
@@ -92,7 +101,10 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
   assert.equal(parsed.basisFingerprint, 'abc123def456');
   assert.equal(parsed.points[0].kind, 'experience');
   assert.equal(parsed.points[0].y, 1);
+  assert.equal(parsed.points[0].url, 'https://example.com/bus');
+  assert.equal(parsed.points[0].createdAt, '2026-11-22T00:00:00.000Z');
   assert.equal(parsed.points[1].kind, 'album_moment');
+  assert.equal(parsed.points[1].url, undefined);
   assert.equal(parsed.points[1].label.length, 80);
   assert.equal(parsed.points.some((point) => point.kind === 'reflection'), false);
   assert.equal(parsed.nextCursor, null);
@@ -123,6 +135,44 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
   ]);
   assert.equal(parseTrace({ stage: 'saved', ids: ['a'] }), null);
   assert.equal(parseTrace({ stage: 'other' }), null);
+
+  const searched = parseTrace({
+    stage: 'web_search',
+    query: ' subculture\nzines <script>alert(1)</script> ',
+    secret: 'hidden',
+    results: [
+      { title: '<b>A stack of zines</b>', url: 'https://example.com/zines', html: '<img src=x>' },
+      { title: 'skip', url: 'javascript:alert(1)' },
+      { title: 'notes', url: 'http://notes.example/a' },
+      { title: 'creds', url: 'https://user:pass@example.com/secret' },
+      { title: '', url: 'https://example.com/plain' },
+      { title: 'four', url: 'https://example.com/four' },
+      { title: 'five', url: 'https://example.com/five' },
+      { title: 'sixth', url: 'https://example.com/sixth' },
+      { title: 'space', url: 'https://example.com/a b' },
+    ],
+  });
+  assert.equal(searched.stage, 'web_search');
+  assert.equal(searched.query, 'subculture zines <script>alert(1)</script>');
+  assert.equal(searched.results.length, 5);
+  assert.deepEqual(searched.results[0], {
+    title: '<b>A stack of zines</b>',
+    url: 'https://example.com/zines',
+  });
+  assert.deepEqual(searched.results[1], { title: 'notes', url: 'http://notes.example/a' });
+  assert.deepEqual(searched.results[2], {
+    title: 'https://example.com/plain',
+    url: 'https://example.com/plain',
+  });
+  assert.equal(JSON.stringify(searched).includes('secret'), false);
+  assert.equal(JSON.stringify(searched).includes('javascript'), false);
+  assert.equal(JSON.stringify(searched).includes('sixth'), false);
+  assert.equal(JSON.stringify(searched).includes('<img'), false);
+  assert.equal(parseTrace({ stage: 'web_search', query: '   ', results: [] }), null);
+  assert.equal(
+    parseTrace({ stage: 'web_search', query: 'zines' }).results.length,
+    0
+  );
 });
 
 test('memory fails closed without a session, a route, or agent config', async () => {

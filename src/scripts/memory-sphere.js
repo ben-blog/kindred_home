@@ -2,6 +2,7 @@
  * Lazy memory sphere. The call page owns the data; this file only draws it.
  * Layout and accent come from the character, not from a name.
  */
+import { safeHttpUrl } from '../lib/safe-url.js';
 export async function mountSphere(root, call, options) {
   const reduced = options.reduced === true;
   let THREE;
@@ -149,12 +150,24 @@ export async function mountSphere(root, call, options) {
   }
 
   function showLabel(record) {
+    label.replaceChildren();
     if (!record) {
       label.hidden = true;
       return;
     }
     label.hidden = false;
-    label.textContent = record.label || record.kind;
+    const name = document.createElement('span');
+    name.textContent = record.label || record.kind;
+    label.append(name);
+    const href = safeHttpUrl(record.url);
+    if (!href) return;
+    const link = document.createElement('a');
+    link.className = 'call-memory-link';
+    link.href = href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = href;
+    label.append(link);
   }
 
   renderer.domElement.addEventListener('pointermove', (event) => {
@@ -165,8 +178,13 @@ export async function mountSphere(root, call, options) {
     showLabel(record);
     call?.dispatchEvent(new CustomEvent('memory-hover', { detail: { id: record?.id || '' } }));
   });
-  renderer.domElement.addEventListener('pointerleave', () => {
+  renderer.domElement.addEventListener('pointerleave', (event) => {
     pointer.set(2, 2);
+    if (label.contains(event.relatedTarget)) return;
+    if (!focusId) showLabel(null);
+  });
+  label.addEventListener('pointerleave', (event) => {
+    if (renderer.domElement.contains(event.relatedTarget)) return;
     if (!focusId) showLabel(null);
   });
   renderer.domElement.addEventListener('click', () => {

@@ -49,6 +49,8 @@ const copy = {
   thinking: text({ en: 'thinking' }),
   received: text({ en: 'message received' }),
   retrieved: text({ en: 'retrieved' }),
+  webSearch: text({ en: 'web search' }),
+  webSearchLabel: text({ en: 'Web search for the next message' }),
   world: text({ en: 'world' }),
   emotion: text({ en: 'emotion' }),
   reply: text({ en: 'reply' }),
@@ -104,7 +106,18 @@ const copy = {
       <form class="call-form" id="call-form">
         <label class="call-label" for="call-input">{copy.say}</label>
         <textarea id="call-input" name="message" rows="2" maxlength="2000" required></textarea>
-        <button class="call-send" type="submit">{copy.send}</button>
+        <div class="call-actions">
+          <button
+            type="button"
+            class="call-search"
+            id="call-search"
+            aria-pressed="false"
+            aria-label={copy.webSearchLabel}
+          >
+            {copy.webSearch}
+          </button>
+          <button class="call-send" type="submit">{copy.send}</button>
+        </div>
       </form>
       <p class="call-status" id="call-status" aria-live="polite"></p>
     </section>
@@ -202,10 +215,13 @@ const copy = {
           turn.reply.body.textContent = reply;
           log.scrollTop = log.scrollHeight;
         } else if (data.type === 'trace' && data.stage === 'retrieved') {
+          turn.retrievedSeen = true;
           fillRetrieved(turn.retrieved, data.items || []);
           document.querySelector('.call')?.dispatchEvent(
             new CustomEvent('memory-trace', { detail: data })
           );
+        } else if (data.type === 'trace' && data.stage === 'web_search') {
+          addWebSearch(turn, data);
         } else if (data.type === 'done') {
           if (typeof data.expression === 'string') expression = data.expression;
           if (data.world && typeof data.world === 'object') world = data.world;
@@ -226,14 +242,45 @@ const copy = {
     return { reply, expression, world };
   }
 
-  function step(number, label, value) {
+  function step(label, value) {
     const row = document.createElement('p');
     const title = document.createElement('span');
-    title.textContent = `${number} ${label}`;
+    title.dataset.label = label;
+    title.textContent = label;
     const body = document.createElement('span');
     body.textContent = value;
     row.append(title, body);
     return { row, body };
+  }
+
+  function renumber(article) {
+    let index = 0;
+    for (const row of article.querySelectorAll('p')) {
+      const title = row.firstElementChild;
+      if (!title || !title.dataset.label) continue;
+      index += 1;
+      title.textContent = `${index} ${title.dataset.label}`;
+    }
+  }
+
+  function safeHttpUrl(value) {
+    if (typeof value !== 'string') return '';
+    const text = value.trim();
+    if (!text || text.length > 300) return '';
+    for (let index = 0; index < text.length; index += 1) {
+      const code = text.charCodeAt(index);
+      if (code <= 32 || code === 127) return '';
+    }
+    let url;
+    try {
+      url = new URL(text);
+    } catch {
+      return '';
+    }
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+    if (url.username || url.password) return '';
+    if (url.href.length > 300) return '';
+    return url.href;
   }
 
   function fillRetrieved(slot, items) {
@@ -266,6 +313,39 @@ const copy = {
       list.append(chip);
     }
     slot.body.append(list);
+  }
+
+  function fillWebSearch(slot, data) {
+    slot.body.replaceChildren();
+    const query = document.createElement('span');
+    query.className = 'call-query';
+    query.textContent = typeof data.query === 'string' && data.query ? data.query : copy.none;
+    slot.body.append(query);
+    const results = Array.isArray(data.results) ? data.results.slice(0, 5) : [];
+    const list = document.createElement('span');
+    list.className = 'call-retrieved';
+    for (const item of results) {
+      const href = safeHttpUrl(item && item.url);
+      const title = item && typeof item.title === 'string' ? item.title : '';
+      if (!href) continue;
+      const link = document.createElement('a');
+      link.className = 'call-source';
+      link.href = href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = title || href;
+      list.append(link);
+    }
+    if (list.childNodes.length) slot.body.append(list);
+  }
+
+  function addWebSearch(turn, data) {
+    const slot = step(copy.webSearch, '');
+    fillWebSearch(slot, data);
+    if (!turn.retrievedSeen) turn.traces.insertBefore(slot.row, turn.retrieved.row);
+    else turn.traces.append(slot.row);
+    renumber(turn.article);
+    document.querySelector('#call-think').scrollTop = document.querySelector('#call-think').scrollHeight;
   }
 
   function armSaved(slot) {
@@ -368,23 +448,30 @@ const copy = {
     document.querySelector('#call-empty')?.remove();
     line(copy.you, value, true);
     const body = line(name, '', false);
+    const traces = document.createElement('div');
+    traces.className = 'call-traces';
     const turn = {
-      retrieved: step('2', copy.retrieved, copy.none),
-      world: step('3', copy.world, copy.none),
-      emotion: step('4', copy.emotion, copy.none),
-      reply: step('5', copy.reply, ''),
-      saved: step('6', copy.saved, copy.none),
+      traces,
+      retrievedSeen: false,
+      retrieved: step(copy.retrieved, copy.none),
+      world: step(copy.world, copy.none),
+      emotion: step(copy.emotion, copy.none),
+      reply: step(copy.reply, ''),
+      saved: step(copy.saved, copy.none),
     };
+    traces.append(turn.retrieved.row);
     const article = document.createElement('article');
     article.className = 'call-turn';
+    turn.article = article;
     article.append(
-      step('1', copy.received, value).row,
-      turn.retrieved.row,
+      step(copy.received, value).row,
+      traces,
       turn.world.row,
       turn.emotion.row,
       turn.reply.row,
       turn.saved.row
     );
+    renumber(article);
     const think = document.querySelector('#call-think');
     think.append(article);
     think.scrollTop = think.scrollHeight;
@@ -393,6 +480,9 @@ const copy = {
       const payload = { messages: messages.slice(-24) };
       if (sessionId) payload.sessionId = sessionId;
       if (plan) payload.plan = plan;
+      const searchToggle = document.querySelector('#call-search');
+      if (searchToggle?.getAttribute('aria-pressed') === 'true') payload.forceWebSearch = true;
+      setSearch(false);
       const response = await fetch(`/api/world/chat/${slug}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
@@ -469,6 +559,16 @@ const copy = {
   }
 
   connect();
+
+  const searchToggle = document.querySelector('#call-search');
+  function setSearch(on) {
+    if (!searchToggle) return;
+    searchToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    searchToggle.classList.toggle('is-on', on);
+  }
+  searchToggle?.addEventListener('click', () => {
+    setSearch(searchToggle.getAttribute('aria-pressed') !== 'true');
+  });
 
   document.querySelector('#call-think-toggle')?.addEventListener('click', () => {
     const panel = document.querySelector('#call-think');

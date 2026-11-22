@@ -94,6 +94,7 @@ async function dispatch(request, options) {
   if (parsed.sessionId) payload.sessionId = parsed.sessionId;
   if (route.chatUser) payload.userId = route.chatUser;
   if (parsed.plan) payload.currentPlan = parsed.plan;
+  if (parsed.forceWebSearch) payload.forceWebSearch = true;
 
   const fetchImpl = options.fetch ?? globalThis.fetch;
   const vitals = await readVitals(options, config, canon, slug, fetchImpl);
@@ -163,7 +164,7 @@ function normalizeChat(body) {
   const keys = Object.keys(body);
   if (
     !keys.includes('messages') ||
-    keys.some((key) => !['messages', 'sessionId', 'plan'].includes(key))
+    keys.some((key) => !['messages', 'sessionId', 'plan', 'forceWebSearch'].includes(key))
   ) {
     return null;
   }
@@ -185,6 +186,11 @@ function normalizeChat(body) {
     messages.push({ role: message.role, content });
   }
   if (messages[messages.length - 1].role !== 'user') return null;
+  let forceWebSearch = false;
+  if (body.forceWebSearch != null) {
+    if (typeof body.forceWebSearch !== 'boolean') return null;
+    forceWebSearch = body.forceWebSearch;
+  }
   let sessionId = '';
   if (body.sessionId != null) {
     if (typeof body.sessionId !== 'string' || !SESSION.test(body.sessionId)) return null;
@@ -202,7 +208,7 @@ function normalizeChat(body) {
     if (encoded.length > MAX_PLAN) return null;
     plan = JSON.parse(encoded);
   }
-  return { messages, sessionId, plan };
+  return { messages, sessionId, plan, forceWebSearch };
 }
 
 async function readVitals(options, config, canon, slug, fetchImpl) {

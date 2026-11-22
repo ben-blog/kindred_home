@@ -1,7 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
+import BoardLayout from '../../components/character/BoardLayout.astro';
+import SheetLayout from '../../components/character/SheetLayout.astro';
+import VoidLayout from '../../components/character/VoidLayout.astro';
 import Base from '../../layouts/Base.astro';
-import CharacterMark from '../../components/CharacterMark.astro';
+import { characterSurface } from '../../lib/character-layout.js';
 import { text } from '../../lib/locale.js';
 import { compareEntries, isPublicStatus, worksForCharacter } from '../../lib/publish.js';
 
@@ -15,100 +18,75 @@ export async function getStaticPaths() {
     }));
 }
 
+const layouts = {
+  board: BoardLayout,
+  void: VoidLayout,
+  sheet: SheetLayout,
+};
+
 const { entry } = Astro.props;
 const data = entry.data;
-const [works, relations, entities] = await Promise.all([
+const surface = characterSurface(data);
+const Layout = layouts[surface.layout] ?? SheetLayout;
+const [works, relations, entities, characters] = await Promise.all([
   getCollection('works'),
   getCollection('relations'),
   getCollection('entities'),
+  getCollection('characters'),
 ]);
 const names = new Map(entities.map((item) => [item.data.slug, item.data.name]));
-const relatedWorks = worksForCharacter(data.slug, works).sort(compareEntries);
-const bonds = relations
-  .filter((relation) => relation.data.from === data.slug || relation.data.to === data.slug)
-  .sort((a, b) => a.data.id.localeCompare(b.data.id));
-const hub = data.aliases[0];
 const notes = new Map(data.relationships.map((item) => [item.with, item.note]));
+const page = {
+  name: text(data.name),
+  tagline: text(data.profile.tagline),
+  bio: text(data.profile.bio),
+  color: surface.accent,
+  ground: surface.ground,
+  ink: surface.ink,
+  status: data.status,
+  agent: data.agent?.service ?? '',
+  hub: data.aliases[0] || '',
+  mark: data.identity.mark ?? null,
+  works: worksForCharacter(data.slug, works)
+    .sort(compareEntries)
+    .map((work) => ({
+      title: text(work.data.title),
+      url: work.data.url,
+    })),
+  bonds: relations
+    .filter((relation) => relation.data.from === data.slug || relation.data.to === data.slug)
+    .sort((a, b) => a.data.id.localeCompare(b.data.id))
+    .map((relation) => {
+      const other = relation.data.from === data.slug ? relation.data.to : relation.data.from;
+      const note = notes.get(other) ?? relation.data.note;
+      return {
+        name: names.get(other) ?? other,
+        kinds: relation.data.kinds.join(' · '),
+        note: text(note),
+        tension:
+          relation.data.kinds.includes('썸') && typeof relation.data.tension === 'number'
+            ? relation.data.tension
+            : null,
+      };
+    }),
+  others: characters
+    .filter((item) => isPublicStatus(item.data.status) && item.data.slug !== data.slug)
+    .sort(compareEntries)
+    .map((item) => ({
+      name: text(item.data.name),
+      href: `/characters/${item.data.slug}/`,
+      color: item.data.identity.color,
+    })),
+};
 ---
 
-<Base title={`${text(data.name)} — kinxdred`} description={text(data.profile.bio)} accent={data.identity.color}>
-  <header class="character-hero">
-    <p class="eyebrow">
-      {data.status === 'archived' ? <span class="status-archived">archived</span> : data.status}
-      {data.agent ? ` · ${data.agent.service}` : ''}
-    </p>
-    <div class="hero-name">
-      <CharacterMark mark={data.identity.mark} />
-      <h1>{text(data.name)}</h1>
-    </div>
-    <p>{text(data.profile.tagline)}</p>
-  </header>
-  <p class="swatch"><i></i> {data.identity.color}</p>
-  <p>{text(data.profile.bio)}</p>
-  {hub ? <a class="primary" href={hub}>Open {hub}</a> : null}
-
-  <h2>Works</h2>
-  <ul class="links">
-    {
-      relatedWorks.map((work) => (
-        <li>
-          <a href={work.data.url}>
-            <span>{text(work.data.title)}</span>
-            <span class="meta">{work.data.url}</span>
-          </a>
-        </li>
-      ))
-    }
-  </ul>
-
-  <h2>Relationships</h2>
-  <ul class="bonds">
-    {
-      bonds.map((relation) => {
-        const other = relation.data.from === data.slug ? relation.data.to : relation.data.from;
-        return (
-          <li class="card">
-            <span>
-              {names.get(other) ?? other}
-              <span class="note"> · {relation.data.kinds.join(' · ')}</span>
-              {text(notes.get(other) ?? relation.data.note) ? (
-                <span class="note"> — {text(notes.get(other) ?? relation.data.note)}</span>
-              ) : null}
-            </span>
-            {relation.data.kinds.includes('썸') && typeof relation.data.tension === 'number' ? (
-              <span class="meta">tension {relation.data.tension}</span>
-            ) : null}
-          </li>
-        );
-      })
-    }
-  </ul>
+<Base
+  title={`${page.name} — kinxdred`}
+  description={page.bio}
+  accent={page.color}
+  ground={page.ground}
+  ink={page.ink}
+  frame="character"
+>
+  <Layout page={page} />
 </Base>
-
-<style>
-  .character-hero {
-    container-type: inline-size;
-    --mark-size: clamp(11rem, 47cqi, 21rem);
-  }
-
-  .hero-name {
-    position: relative;
-    isolation: isolate;
-    display: grid;
-    align-items: center;
-    width: fit-content;
-    max-width: 100%;
-    min-height: calc(var(--mark-size) * .72);
-  }
-
-  .hero-name h1 {
-    position: relative;
-    margin: 0;
-    overflow-wrap: anywhere;
-    font-size: clamp(44px, 8.5vw, 116px);
-    letter-spacing: -.02em;
-    paint-order: stroke fill;
-    -webkit-text-stroke: .035em var(--black);
-    pointer-events: none;
-  }
-</style>

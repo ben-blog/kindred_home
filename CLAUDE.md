@@ -72,7 +72,7 @@ D14는 `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`를 �
 - 지금 페이지의 상대 경로를 유지한다. 공용 스크립트의 이미지 경로는 `asset('/assets/...')`
 - 새 페이지의 색·글꼴은 `src/styles/site.css`에 두되, 값은 `DESIGN.md`를 따른다. 캐릭터 색은 character 파일의 `identity.color`에서 `--accent`로 들어간다. 코드에 KIN, DRED 이름이나 인원수를 박지 않는다
 - 글꼴과 팔레트의 기준은 `DESIGN.md`다. 제목은 Syne, UI는 DM Mono. D14만 Cormorant Garamond와 Share Tech Mono를 쓴다
-- 시각 조정은 `src/styles`, `src/layouts`, `src/pages`의 마크업, `identity.mark`까지. `public/`과 `world/step.js`는 그 작업에 포함하지 않는다
+- 시각 조정은 `src/styles`, `src/layouts`, `src/pages`의 마크업, `layout`, `identity.ground`, `identity.mark`까지. `public/`과 `world/step.js`는 그 작업에 포함하지 않는다
 
 ## 환경변수
 

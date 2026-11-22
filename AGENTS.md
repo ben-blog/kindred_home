@@ -87,7 +87,7 @@ To add a language later:
 
 Every character has a relation to the leader entity (`ben`, kind `leader`) whose kinds include `leader` and `friend`. That relation is concept only. DRED's relation also includes `썸` (mutual romantic interest, not a couple) and a numeric `tension`. The character file's `relationships` array must match the relation file.
 
-Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) is the hero blob mark. Nothing draws it yet. Tuning those numbers is safe. The rest of the visual system — type, grain, frost, motion, and what not to borrow — is `DESIGN.md`.
+Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `layout` is `board`, `void`, or `sheet`. `sheet` is the default when the field is omitted. `identity.ground` is optional; a missing ground uses that layout's ground. `identity.mark.type` is `gaze` on a board and `room` on a void. A sheet has no mark. `identity.mark.easing` is the follow curve. The page does not branch on character names. The visual system — type, grain, the two layouts, motion, and what not to borrow — is `DESIGN.md`.
 
 `initial` is the v0 starting snapshot (`mood`, `energy`, `xp`, `level`). `level` must be `1 + floor(xp / xpPerLevel)`.
 
@@ -237,7 +237,7 @@ Safe to edit while watching the page:
 
 - `src/styles/site.css`
 - markup and layout in `src/layouts` and `src/pages` (except `src/pages/api`)
-- `identity.mark` and profile copy in character JSON
+- `layout`, `identity.ground`, `identity.mark`, and profile copy in character JSON
 - a new component under `src/components`
 
 When the first interactive island is needed, add a small UI library such as Preact and use `client:visible` or `client:idle`. Keep three.js off the character pages. D14 already loads r128. Do not upgrade it in a visual pass.

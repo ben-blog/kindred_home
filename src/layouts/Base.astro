@@ -1,12 +1,17 @@
 ---
 import '../styles/site.css';
 
-const { title, description, accent = '' } = Astro.props;
-const accentStyle = /^#[0-9A-Fa-f]{6}$/.test(accent) ? `--accent:${accent}` : '';
+const { title, description, accent = '', ground = '', ink = '', frame = 'site' } = Astro.props;
+const parts = [];
+if (/^#[0-9A-Fa-f]{6}$/.test(accent)) parts.push(`--accent:${accent}`);
+if (/^#[0-9A-Fa-f]{6}$/.test(ground)) parts.push(`--ground:${ground}`);
+if (ink === '#080806' || ink === 'rgba(255,255,255,.92)') parts.push(`--ink:${ink}`);
+const style = parts.join(';');
+const character = frame === 'character';
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class={character ? 'frame-character' : undefined} style={character ? style : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -20,16 +25,24 @@ const accentStyle = /^#[0-9A-Fa-f]{6}$/.test(accent) ? `--accent:${accent}` : ''
       rel="stylesheet"
     />
   </head>
-  <body style={accentStyle}>
-    <header class="top">
-      <a href="/">kinxdred</a>
-      <nav>
-        <a href="/characters">characters</a>
-        <a href="/works">works</a>
-      </nav>
-    </header>
-    <main>
-      <slot />
-    </main>
+  <body style={character ? undefined : style}>
+    {
+      character ? (
+        <slot />
+      ) : (
+        <>
+          <header class="top">
+            <a href="/">kinxdred</a>
+            <nav>
+              <a href="/characters">characters</a>
+              <a href="/works">works</a>
+            </nav>
+          </header>
+          <main>
+            <slot />
+          </main>
+        </>
+      )
+    }
   </body>
 </html>

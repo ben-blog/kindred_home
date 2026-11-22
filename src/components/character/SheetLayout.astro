@@ -1,0 +1,236 @@
+---
+import Grain from './Grain.astro';
+
+const { page } = Astro.props;
+const status = [page.status, page.agent].filter(Boolean).join(' · ');
+---
+
+<section class="sheet" data-layout="sheet">
+  <Grain />
+  <header class="nav">
+    <a class="wordmark" href="/">kinxdred</a>
+    <nav>
+      <a href="/characters">characters</a>
+      <a href="/works">works</a>
+    </nav>
+  </header>
+  <div class="body">
+    <p class="eyebrow">{status}</p>
+    <h1>{page.name}</h1>
+    <p class="tagline">{page.tagline}</p>
+    <p class="bio">{page.bio}</p>
+    <p class="swatch"><i aria-hidden="true"></i> {page.color}</p>
+    {page.hub ? <a class="cta" href={page.hub}>Open {page.hub}</a> : null}
+    <div class="frost">
+      {
+        page.works.length > 0 ? (
+          <div>
+            <h2>Works</h2>
+            <ul>
+              {page.works.map((work) => (
+                <li>
+                  <a href={work.url}>
+                    <span>{work.title}</span>
+                    <span class="url">{work.url}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null
+      }
+      {
+        page.bonds.length > 0 ? (
+          <div>
+            <h2>Relationships</h2>
+            <ul>
+              {page.bonds.map((bond) => (
+                <li>
+                  <span>
+                    {bond.name} · {bond.kinds}
+                    {bond.note ? ` — ${bond.note}` : ''}
+                  </span>
+                  {bond.tension !== null ? <span class="url">tension {bond.tension}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .sheet {
+    position: relative;
+    min-height: 100vh;
+    background: var(--ground);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 300;
+  }
+
+  .nav {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 22px 32px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .nav a,
+  .cta,
+  .frost a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: none;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .nav nav {
+    display: flex;
+    gap: 1.25rem;
+  }
+
+  .nav a:hover,
+  .frost a:hover,
+  .cta:hover {
+    color: var(--accent);
+  }
+
+  .body {
+    position: relative;
+    z-index: 2;
+    width: min(40rem, calc(100% - 3rem));
+    margin: 0 auto;
+    padding: 3.2rem 0 4.5rem;
+  }
+
+  .eyebrow {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0.45rem 0 1rem;
+    font-family: var(--font-display);
+    font-size: clamp(44px, 8.5vw, 116px);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  .tagline {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .bio {
+    max-width: 62ch;
+    margin: 0.8rem 0 0;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.2rem 0 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+  }
+
+  .swatch i {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    background: var(--accent);
+  }
+
+  .cta {
+    display: inline-flex;
+    margin-top: 1.4rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .frost {
+    margin-top: 2.2rem;
+    padding: 0.4rem 1.15rem 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    background: rgba(8, 8, 8, 0.88);
+    backdrop-filter: blur(14px);
+  }
+
+  h2 {
+    margin: 1rem 0 0.35rem;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li,
+  .frost a {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .url {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+
+  a:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 800px) {
+    .nav,
+    .body {
+      width: auto;
+    }
+
+    .nav {
+      padding: 16px 18px;
+    }
+
+    .body {
+      padding: 1.5rem 1.15rem 3rem;
+    }
+  }
+</style>

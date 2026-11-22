@@ -8,11 +8,9 @@ export const SUPA_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZnlzcG96Y215ZWZncmtneGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2OTQxMTksImV4cCI6MjA5MDI3MDExOX0.cwB-4U5tnY3AC-lZhRv0ptWZZ5tqVZyK0TiHlQk1ViI';
 export const API_URL = 'https://kin-agent-production.up.railway.app';
 
-/* Site-root paths. js/site-base.js sets SITE_BASE on GitHub Pages project sites. */
+/* Site-root paths. Vercel serves the repo from `/`. */
 export function asset(path) {
-  if (typeof path !== 'string' || path.charAt(0) !== '/' || path.charAt(1) === '/') return path;
-  const base = (typeof window !== 'undefined' && window.SITE_BASE) || '';
-  return base + path;
+  return path;
 }
 
 const root = (path) => asset(path);

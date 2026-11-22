@@ -1,28 +1,18 @@
 # kinxdred
 
-KIN × DRED. 정적 HTML/CSS/JS. 이 저장소만으로 Vercel과 GitHub Pages에서 열린다.
+KIN × DRED. 정적 HTML/CSS/JS. Vercel에서 연다.
+
+주소는 `https://kindred-home.vercel.app` 이다.
 
 K2(퀴즈, 월드컵)만 아직 살아있는 Supabase(`lmfyspozcmyefgrkgxch`)와 AniList를 쓴다. 갤러리, D2, D14는 저장소 안 데이터다.
 
-## GitHub Pages
-
-배포 워크플로는 `.github/workflows/pages.yml`이다. `main`에 푸시되면 사이트를 올린다. 한 번만 소스를 지정하면 된다.
-
-1. 이 저장소의 **Settings → Pages**
-2. **Build and deployment** 아래 **Source**를 **GitHub Actions**로 둔다
-3. `main`에 이 워크플로가 들어간 뒤 Actions 탭에서 Deploy GitHub Pages가 끝나는지 본다
-
-주소는 `https://ben-blog.github.io/kindred_home/` 이다.
-
-브랜치에서 직접 배포하려면 Source를 **Deploy from a branch**, 브랜치를 `main`, 폴더를 `/ (root)`로 둔다. 둘 중 하나만 켠다. 루트에 `.nojekyll`이 있다.
-
-로컬 확인:
+## 로컬 확인
 
 ```bash
 python3 -m http.server 8765
 ```
 
-`http://127.0.0.1:8765/` 는 Vercel과 같이 루트에서 연다. Pages 접두어(`/kindred_home/`)는 `github.io`에서만 `js/site-base.js`가 붙인다.
+`http://127.0.0.1:8765/` 는 Vercel과 같이 사이트 루트다. `vercel.json`의 rewrite와 `/mood-camera` 프록시는 Vercel에서만 적용된다. 로컬 정적 서버는 그 경로를 대신 열어 주지 않는다.
 
 ## 갤러리 이미지
 

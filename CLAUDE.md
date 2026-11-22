@@ -1,10 +1,10 @@
 # HOME 프로젝트
 
 ## 개요
-kinxdred 메인 웹사이트. 정적 HTML/CSS/JS. Vercel과 GitHub Pages 둘 다 루트 정적 파일로 연다.
+kinxdred 메인 웹사이트. 정적 HTML/CSS/JS. Vercel에서 루트로 연다.
 
 - GitHub: `ben-blog/kindred_home`
-- 배포: Vercel, GitHub Pages (`https://ben-blog.github.io/kindred_home/`)
+- 배포: Vercel (`https://kindred-home.vercel.app`)
 
 ## 기술 스택
 - 순수 HTML / CSS / JavaScript (프레임워크 없음)
@@ -18,7 +18,7 @@ kinxdred 메인 웹사이트. 정적 HTML/CSS/JS. Vercel과 GitHub Pages 둘 다
 home/
 ├── index.html                 ← 메인 랜딩 (kinxdred 진입점)
 ├── main.html                  ← 메인 콘텐츠 페이지
-├── vercel.json                ← 정적 출력만 (rewrite 없음)
+├── vercel.json                ← Vercel rewrite (월드컵, 퀴즈, mood-camera 프록시)
 ├── data/                      ← 갤러리 JSON, 메인 카드, D2 트랙
 ├── js/                        ← site-base, gallery, d2, d14
 ├── assets/gallery/            ← 갤러리·D2·D14 원본 webp
@@ -47,15 +47,13 @@ home/
 │       └── index.html         ← D14 프론트엔드
 ```
 
-## 경로
-GitHub Pages 프로젝트 사이트는 `/kindred_home/` 아래다. HTML 링크는 페이지 기준 상대 경로. JS의 사이트 루트 경로는 `js/site-base.js`의 `asset()`가 `github.io`에서만 접두어를 붙인다. Vercel과 로컬 루트 서버는 접두어가 없다.
+## Vercel Rewrite
+`vercel.json`이 파일보다 먼저가 아니라, 같은 경로에 파일이 있으면 그 파일이 이긴다. rewrite 대상 경로에는 `index.html`을 두지 않는다.
 
-예전에 rewrite로 열리던 주소는 폴더 `index.html`이 실제 파일로 보낸다.
-
-- `/kin/k2/worldcup/work` → `kin/k2/services/worldcup-work/worldcup.html`
-- `/kin/k2/worldcup/character` → `kin/k2/services/worldcup-character/worldcup.html`
-- `/kin/k2/quiz`, `/kin/k2/result` → `kin/k2/` (퀴즈는 그 페이지 안)
-- `/mood-camera` → `https://mirrored-five.vercel.app/mood-camera`
+- `/kin/k2/quiz`, `/kin/k2/result` → `/kin/k2/index.html` (퀴즈는 그 페이지 안. 옛 `services/quiz`, `services/result`는 없다)
+- `/kin/k2/worldcup/work` → `/kin/k2/services/worldcup-work/worldcup.html`
+- `/kin/k2/worldcup/character` → `/kin/k2/services/worldcup-character/worldcup.html`
+- `/mood-camera`, `/mood-camera/:path*`, `/_next/:path*` → `https://mirrored-five.vercel.app` 프록시
 
 ## 코딩 컨벤션
 - ES Modules (`import/export`)
@@ -72,4 +70,4 @@ GitHub Pages 프로젝트 사이트는 `/kindred_home/` 아래다. HTML 링크�
 ## Git 주의사항
 - `dred/d2/musicdb/`는 `.gitignore`
 - `.DS_Store`는 전역 무시
-- 갤러리 데이터와 Pages 켜는 법은 `README.md`
+- 갤러리 데이터는 `README.md`

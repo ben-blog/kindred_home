@@ -436,13 +436,6 @@ const copy = {
     }
   });
 
-  input.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      form.requestSubmit();
-    }
-  });
-
   try {
     const stored = sessionStorage.getItem(`call:${slug}`) || '';
     if (/^[a-zA-Z0-9-]{1,64}$/.test(stored)) sessionId = stored;
@@ -521,4 +514,12 @@ const copy = {
         if (offline) offline.hidden = false;
       });
   }
+</script>
+
+<script>
+  import { attachImeEnterGuard } from '../../../lib/ime-enter.js';
+
+  const callInput = document.querySelector('#call-input');
+  const callForm = document.querySelector('#call-form');
+  if (callInput && callForm) attachImeEnterGuard(callInput, callForm);
 </script>

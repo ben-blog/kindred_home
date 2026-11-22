@@ -1,10 +1,21 @@
 /**
  * Lazy memory sphere. The call page owns the data; this file only draws it.
  * Layout and accent come from the character, not from a name.
+ * Emotion colors come from src/config/memory-emotions.js.
  */
+import {
+  memoryEmotionColor,
+  memoryEmotionCss,
+  memoryEmotionLabel,
+  memoryEmotions,
+} from '../config/memory-emotions.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
+
+const PULSE_MS = 980;
+const SPIN = 0.16;
+
 export async function mountSphere(root, call, options) {
-  const reduced = options.reduced === true;
+  let reduced = options.reduced === true;
   let THREE;
   try {
     THREE = await import('three');
@@ -14,8 +25,8 @@ export async function mountSphere(root, call, options) {
 
   const accent = safeColor(options.accent, '#ffffff');
   const layout = options.layout === 'void' ? 'void' : 'board';
-  const width = root.clientWidth || 160;
-  const height = root.clientHeight || 160;
+  const width = root.clientWidth || 220;
+  const height = root.clientHeight || 220;
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -23,38 +34,78 @@ export async function mountSphere(root, call, options) {
     return null;
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setSize(width, height);
+  renderer.setSize(width, height, false);
   renderer.setClearColor(0x000000, 0);
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   root.replaceChildren(renderer.domElement);
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 20);
-  camera.position.z = 3.15;
+  const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 20);
+  camera.position.z = 4.05;
+  const tilt = new THREE.Group();
+  tilt.rotation.x = 0.22;
+  tilt.rotation.z = 0.46;
+  scene.add(tilt);
   const rig = new THREE.Group();
-  scene.add(rig);
+  tilt.add(rig);
+  let spin = 0.62;
+  rig.rotation.y = spin;
 
-  const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 24, 16),
-    new THREE.MeshBasicMaterial({
-      color: accent,
-      transparent: true,
-      opacity: 0.035,
-      depthWrite: false,
-    })
-  );
-  rig.add(shell);
+  const accentColor = displayColor(THREE, accent);
+  const globe = new THREE.SphereGeometry(1, 64, 40);
+  const shell = shellMaterial(THREE, accentColor, 1);
+  const back = shellMaterial(THREE, accentColor, 0);
+  const frontMesh = new THREE.Mesh(globe, shell);
+  const backMesh = new THREE.Mesh(globe, back);
+  backMesh.renderOrder = 0;
+  frontMesh.renderOrder = 1;
+  rig.add(backMesh, frontMesh);
 
-  const dot = glowTexture(THREE);
-  const material = new THREE.PointsMaterial({
-    size: layout === 'void' ? 0.05 : 0.06,
-    map: dot,
-    vertexColors: true,
+  const pointMaterial = new THREE.ShaderMaterial({
     transparent: true,
-    opacity: 1,
     depthWrite: false,
-    sizeAttenuation: true,
-    blending: THREE.AdditiveBlending,
+    depthTest: false,
+    toneMapped: false,
+    uniforms: {
+      uPixelRatio: { value: renderer.getPixelRatio() },
+      uFit: { value: fitScale(width) },
+    },
+    vertexShader: `
+      uniform float uPixelRatio;
+      uniform float uFit;
+      attribute vec3 color;
+      attribute float aSize;
+      varying vec3 vColor;
+      varying float vFacing;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vec3 viewNormal = normalize(normalMatrix * normalize(position));
+        float front = smoothstep(-0.2, 0.85, viewNormal.z);
+        vFacing = front;
+        vColor = color * mix(0.5, 1.0, front);
+        gl_Position = projectionMatrix * mv;
+        float dist = max(0.35, -mv.z);
+        float persp = 4.05 / dist;
+        gl_PointSize = aSize * uFit * uPixelRatio * persp * mix(0.66, 1.05, front);
+        gl_PointSize = clamp(gl_PointSize, 1.5, 48.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vFacing;
+      void main() {
+        vec2 uv = gl_PointCoord - vec2(0.5);
+        float d = length(uv);
+        float disc = 1.0 - smoothstep(0.3, 0.5, d);
+        float core = 1.0 - smoothstep(0.0, 0.18, d);
+        if (disc <= 0.01) discard;
+        vec3 rgb = mix(vColor, vec3(1.0), core * 0.08);
+        float alpha = disc * mix(0.62, 1.0, vFacing);
+        gl_FragColor = vec4(rgb, alpha);
+      }
+    `,
   });
+
   let pointsMesh = null;
   let lineMesh = null;
   let records = [];
@@ -62,28 +113,66 @@ export async function mountSphere(root, call, options) {
   let focusId = '';
   let retrieved = new Set();
   let frame = 0;
+  let last = performance.now();
   const raycaster = new THREE.Raycaster();
-  raycaster.params.Points.threshold = 0.09;
+  raycaster.params.Points.threshold = 0.14;
   const pointer = new THREE.Vector2(2, 2);
+
   const label = document.createElement('p');
   label.className = 'call-memory-label';
   label.hidden = true;
-  root.append(label);
+  const legend = document.createElement('ul');
+  legend.className = 'call-memory-legend';
+  legend.setAttribute('aria-label', 'emotions');
+  legend.hidden = true;
+  root.append(label, legend);
+
+  function resize() {
+    const nextWidth = root.clientWidth || width;
+    const nextHeight = root.clientHeight || height;
+    if (nextWidth < 2 || nextHeight < 2) return;
+    camera.aspect = nextWidth / nextHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(nextWidth, nextHeight, false);
+    pointMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+    pointMaterial.uniforms.uFit.value = fitScale(nextWidth);
+    if (reduced) paint(performance.now());
+  }
 
   function rebuild(next, nextVersion) {
     const previous = new Map(records.map((item) => [item.id, item]));
     const moved = version !== '' && nextVersion !== version;
+    const arriving = previous.size > 0 && !moved;
+    const now = performance.now();
     version = nextVersion;
+    const crowd = pointSize(next.length, layout);
     records = next.map((point) => {
       const prior = previous.get(point.id);
       const target = new THREE.Vector3(point.x, point.y, point.z).normalize();
       const shown = prior
         ? prior.shown.clone()
-        : target.clone().multiplyScalar(moved || reduced ? 1 : 2.5);
+        : target.clone().multiplyScalar(reduced || moved ? 1 : arriving ? 1.35 : 2.15);
       if (moved && prior) shown.copy(prior.shown);
-      return { ...point, target, shown, color: kindColor(THREE, accent, point.kind, layout) };
+      const born = !reduced && arriving && !prior ? now : prior?.born || 0;
+      return {
+        ...point,
+        target,
+        shown,
+        born,
+        color: pointColor(THREE, accent, point, layout),
+        size: crowd * intensityScale(point.intensity),
+      };
     });
-    if (pointsMesh) rig.remove(pointsMesh);
+    if (pointsMesh) {
+      rig.remove(pointsMesh);
+      pointsMesh.geometry.dispose();
+      pointsMesh = null;
+    }
+    if (!records.length) {
+      paintLegend();
+      if (reduced) paint(now);
+      return;
+    }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
       'position',
@@ -93,37 +182,89 @@ export async function mountSphere(root, call, options) {
       'color',
       new THREE.BufferAttribute(new Float32Array(records.length * 3), 3)
     );
-    pointsMesh = new THREE.Points(geometry, material);
-    material.size = pointSize(records.length, layout);
+    geometry.setAttribute(
+      'aSize',
+      new THREE.BufferAttribute(new Float32Array(records.length), 1)
+    );
+    pointsMesh = new THREE.Points(geometry, pointMaterial);
+    pointsMesh.renderOrder = 2;
+    pointsMesh.frustumCulled = false;
     rig.add(pointsMesh);
-    writeBuffers(1);
+    paintLegend();
+    if (reduced) paint(now);
   }
 
-  function writeBuffers(glow) {
+  function paintLegend() {
+    const present = memoryEmotions.filter((emotion) =>
+      records.some((record) => record.emotion === emotion)
+    );
+    legend.replaceChildren();
+    legend.hidden = present.length === 0;
+    for (const emotion of present) {
+      const item = document.createElement('li');
+      const swatch = document.createElement('i');
+      swatch.style.background = memoryEmotionCss(accent, emotion, 0.84, layout);
+      const name = document.createElement('span');
+      name.textContent = memoryEmotionLabel(emotion);
+      item.append(swatch, name);
+      legend.append(item);
+    }
+  }
+
+  function writeBuffers(now) {
     if (!pointsMesh) return;
     const position = pointsMesh.geometry.attributes.position;
     const color = pointsMesh.geometry.attributes.color;
+    const size = pointsMesh.geometry.attributes.aSize;
     records.forEach((record, index) => {
       position.setXYZ(index, record.shown.x, record.shown.y, record.shown.z);
-      const tint = record.color.clone();
-      if (retrieved.has(record.id)) tint.lerp(new THREE.Color('#ffffff'), 0.35 + 0.65 * glow);
-      if (record.id === focusId) tint.lerp(new THREE.Color('#ffffff'), 0.8);
-      color.setXYZ(index, tint.r, tint.g, tint.b);
+      let { r, g, b } = record.color;
+      const pulse = pulseAmount(record, now);
+      if (pulse > 0) {
+        r += (1 - r) * pulse * 0.75;
+        g += (1 - g) * pulse * 0.75;
+        b += (1 - b) * pulse * 0.75;
+      }
+      if (retrieved.has(record.id)) {
+        const glow = reduced ? 1 : 0.65 + Math.sin(now / 280) * 0.35;
+        const mix = 0.35 + 0.65 * glow;
+        r += (1 - r) * mix;
+        g += (1 - g) * mix;
+        b += (1 - b) * mix;
+      }
+      if (record.id === focusId) {
+        r += (1 - r) * 0.8;
+        g += (1 - g) * 0.8;
+        b += (1 - b) * 0.8;
+      }
+      color.setXYZ(index, r, g, b);
+      size.setX(index, record.size * (1 + pulse * 1.25));
     });
     position.needsUpdate = true;
     color.needsUpdate = true;
+    size.needsUpdate = true;
+  }
+
+  function syncLines() {
+    if (!lineMesh) return;
+    const position = lineMesh.geometry.attributes.position;
+    records
+      .filter((record) => retrieved.has(record.id))
+      .forEach((record, index) => {
+        position.setXYZ(index, record.shown.x, record.shown.y, record.shown.z);
+      });
+    position.needsUpdate = true;
   }
 
   function drawLines() {
     if (lineMesh) {
       rig.remove(lineMesh);
       lineMesh.geometry.dispose();
+      lineMesh.material.dispose();
+      lineMesh = null;
     }
     const chosen = records.filter((record) => retrieved.has(record.id));
-    if (!chosen.length) {
-      lineMesh = null;
-      return;
-    }
+    if (!chosen.length) return;
     const positions = new Float32Array(chosen.length * 6);
     chosen.forEach((record, index) => {
       positions.set([record.shown.x, record.shown.y, record.shown.z, 0, 0, 0], index * 6);
@@ -133,11 +274,13 @@ export async function mountSphere(root, call, options) {
     lineMesh = new THREE.LineSegments(
       geometry,
       new THREE.LineBasicMaterial({
-        color: accent,
+        color: accentColor,
         transparent: true,
-        opacity: layout === 'void' ? 0.28 : 0.4,
+        opacity: layout === 'void' ? 0.34 : 0.42,
+        depthWrite: false,
       })
     );
+    lineMesh.renderOrder = 3;
     rig.add(lineMesh);
   }
 
@@ -159,6 +302,15 @@ export async function mountSphere(root, call, options) {
     const name = document.createElement('span');
     name.textContent = record.label || record.kind;
     label.append(name);
+    const emotion = memoryEmotionLabel(record.emotion);
+    if (emotion) {
+      const mood = document.createElement('span');
+      mood.className = 'call-memory-emotion';
+      const swatch = document.createElement('i');
+      swatch.style.background = memoryEmotionCss(accent, emotion, record.intensity, layout);
+      mood.append(swatch, document.createTextNode(emotion));
+      label.append(mood);
+    }
     const href = safeHttpUrl(record.url);
     if (!href) return;
     const link = document.createElement('a');
@@ -168,6 +320,12 @@ export async function mountSphere(root, call, options) {
     link.rel = 'noopener noreferrer';
     link.textContent = href;
     label.append(link);
+  }
+
+  function paint(now) {
+    writeBuffers(now);
+    syncLines();
+    renderer.render(scene, camera);
   }
 
   renderer.domElement.addEventListener('pointermove', (event) => {
@@ -191,37 +349,47 @@ export async function mountSphere(root, call, options) {
     const record = hit();
     focusId = record?.id || '';
     showLabel(record);
+    if (reduced) paint(performance.now());
   });
 
-  const observer = new ResizeObserver(() => {
-    const nextWidth = root.clientWidth || 160;
-    const nextHeight = root.clientHeight || 160;
-    camera.aspect = nextWidth / nextHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(nextWidth, nextHeight);
-  });
+  const observer = new ResizeObserver(() => resize());
   observer.observe(root);
 
   let stopped = false;
-  function animate() {
-    if (stopped) return;
+  function animate(now) {
+    if (stopped || reduced) return;
     frame = requestAnimationFrame(animate);
-    records.forEach((record) => record.shown.lerp(record.target, reduced ? 1 : 0.08));
-    if (!reduced) rig.rotation.y += 0.0024;
-    const glow = reduced ? 1 : 0.65 + Math.sin(performance.now() / 280) * 0.35;
-    writeBuffers(glow);
-    if (lineMesh) {
-      const position = lineMesh.geometry.attributes.position;
-      records
-        .filter((record) => retrieved.has(record.id))
-        .forEach((record, index) => {
-          position.setXYZ(index, record.shown.x, record.shown.y, record.shown.z);
-        });
-      position.needsUpdate = true;
-    }
-    renderer.render(scene, camera);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    spin += dt * SPIN;
+    rig.rotation.y = spin;
+    records.forEach((record) => record.shown.lerp(record.target, 0.08));
+    paint(now);
   }
-  animate();
+
+  function holdStill() {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    records.forEach((record) => record.shown.copy(record.target));
+    rig.rotation.y = 0.7;
+    paint(performance.now());
+  }
+
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  motion.addEventListener('change', () => {
+    reduced = motion.matches;
+    if (reduced) holdStill();
+    else if (!frame) {
+      last = performance.now();
+      frame = requestAnimationFrame(animate);
+    }
+  });
+
+  if (reduced) holdStill();
+  else {
+    last = performance.now();
+    frame = requestAnimationFrame(animate);
+  }
 
   return {
     setMap(detail) {
@@ -246,17 +414,104 @@ export async function mountSphere(root, call, options) {
           .map((item) => item.id)
       );
       drawLines();
+      if (reduced) paint(performance.now());
     },
     focus(id) {
       focusId = id || '';
       const record = records.find((item) => item.id === focusId);
       showLabel(record || null);
+      if (reduced) paint(performance.now());
+    },
+    stop() {
+      stopped = true;
+      if (frame) cancelAnimationFrame(frame);
+      observer.disconnect();
     },
   };
 }
 
+function pulseAmount(record, now) {
+  if (!record.born) return 0;
+  const age = now - record.born;
+  if (age < 0 || age >= PULSE_MS) return 0;
+  return Math.sin((age / PULSE_MS) * Math.PI);
+}
+
+function shellMaterial(THREE, color, side) {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    toneMapped: false,
+    side: side === 1 ? THREE.FrontSide : THREE.BackSide,
+    uniforms: {
+      uColor: { value: color },
+      uSide: { value: side },
+    },
+    vertexShader: `
+      varying vec3 vObj;
+      varying vec3 vWorld;
+      varying vec3 vNormalW;
+      void main() {
+        vObj = position;
+        vec4 world = modelMatrix * vec4(position, 1.0);
+        vWorld = world.xyz;
+        vNormalW = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * world;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uSide;
+      varying vec3 vObj;
+      varying vec3 vWorld;
+      varying vec3 vNormalW;
+      float gridLine(float coord) {
+        float w = max(fwidth(coord), 0.0015);
+        float d = abs(fract(coord - 0.5) - 0.5);
+        return 1.0 - smoothstep(w * 0.15, w * 1.2, d);
+      }
+      void main() {
+        vec3 p = normalize(vObj);
+        vec3 n = normalize(vNormalW);
+        vec3 viewDir = normalize(cameraPosition - vWorld);
+        float face = clamp(abs(dot(n, viewDir)), 0.0, 1.0);
+        float fresnel = pow(1.0 - face, 1.65);
+        float lat = asin(clamp(p.y, -1.0, 1.0));
+        float lon = atan(p.z, p.x);
+        float latLine = gridLine(lat / (3.14159265 / 6.0));
+        float lonLine = gridLine(lon / (3.14159265 / 4.0));
+        lonLine *= smoothstep(0.98, 0.72, abs(p.y));
+        float equator = 1.0 - smoothstep(0.0, max(fwidth(p.y) * 1.7, 0.004), abs(p.y));
+        float grid = clamp(max(max(latLine, lonLine), equator), 0.0, 1.0);
+        float rim = uSide * smoothstep(0.08, 1.0, fresnel);
+        vec3 ink = vec3(0.015, 0.016, 0.022);
+        vec3 lineColor = mix(uColor, vec3(1.0), 0.22);
+        vec3 rgb = mix(ink, lineColor, clamp(grid, 0.0, 1.0));
+        rgb = mix(rgb, uColor, rim);
+        float alpha = uSide * 0.16 + grid * mix(0.28, 0.72, uSide) + rim * 0.78;
+        gl_FragColor = vec4(rgb, clamp(alpha, 0.0, 0.94));
+      }
+    `,
+  });
+}
+
 function safeColor(value, fallback) {
   return /^#[0-9A-Fa-f]{6}$/.test(value || '') ? value : fallback;
+}
+
+function displayColor(THREE, hex) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return new THREE.Color(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
+
+function pointColor(THREE, accent, point, layout) {
+  if (point.emotion) {
+    const tint = memoryEmotionColor(accent, point.emotion, point.intensity, layout);
+    if (tint) return tint;
+  }
+  const color = kindColor(THREE, accent, point.kind, layout).convertLinearToSRGB();
+  return { r: color.r, g: color.g, b: color.b };
 }
 
 function kindColor(THREE, accent, kind, layout) {
@@ -284,23 +539,17 @@ function kindColor(THREE, accent, kind, layout) {
   return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l);
 }
 
-function pointSize(count, layout) {
-  const base = layout === 'void' ? 0.058 : 0.062;
-  const scale = Math.min(1, 16 / Math.sqrt(Math.max(count, 1)));
-  return base * Math.max(0.35, scale);
+function fitScale(canvasWidth) {
+  return Math.min(1, Math.max(0.62, (canvasWidth || 260) / 260));
 }
 
-function glowTexture(THREE) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 64;
-  const context = canvas.getContext('2d');
-  const glow = context.createRadialGradient(32, 32, 0, 32, 32, 32);
-  glow.addColorStop(0, 'rgba(255,255,255,1)');
-  glow.addColorStop(0.18, 'rgba(255,255,255,0.9)');
-  glow.addColorStop(0.45, 'rgba(255,255,255,0.22)');
-  glow.addColorStop(1, 'rgba(255,255,255,0)');
-  context.fillStyle = glow;
-  context.fillRect(0, 0, 64, 64);
-  return new THREE.CanvasTexture(canvas);
+function pointSize(count, layout) {
+  const base = layout === 'void' ? 13 : 14;
+  const scale = Math.min(1, 20 / Math.sqrt(Math.max(count, 1)));
+  return base * Math.max(0.46, scale);
+}
+
+function intensityScale(intensity) {
+  if (typeof intensity !== 'number') return 1;
+  return 0.58 + 0.74 * Math.min(1, Math.max(0, intensity));
 }

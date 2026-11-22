@@ -1,3 +1,4 @@
+import { CHAT_MAX_MESSAGES, CHAT_MAX_TEXT, clampChatText } from '../chat-compose.js';
 import { upstreamTokens, clientAddress, createLimiter, sameOrigin } from '../proxy.js';
 import { requireLeader } from './auth.js';
 import { httpsOrigin, worldConfig } from './env.js';
@@ -10,8 +11,6 @@ export const CHAT_BODY_LIMIT = 96 * 1024;
 export const CHAT_RATE_LIMIT = 20;
 export const CHAT_RATE_WINDOW_MS = 60_000;
 export const CHAT_TIMEOUT_MS = 55_000;
-const MAX_MESSAGES = 24;
-const MAX_TEXT = 2000;
 const MAX_PLAN = 4000;
 const SESSION = /^[a-zA-Z0-9-]{1,64}$/;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -115,8 +114,9 @@ async function dispatch(request, options) {
       redirect: 'manual',
       cache: 'no-store',
     });
-  } catch {
-    return json(502, { error: 'unavailable' }, cors, leader.cookies);
+  } catch (error) {
+    const timedOut = error?.name === 'TimeoutError';
+    return json(timedOut ? 504 : 502, { error: 'unavailable' }, cors, leader.cookies);
   }
 
   const type = upstream.headers.get('content-type') || '';
@@ -160,6 +160,14 @@ function memoryPath(slug, value) {
   return value;
 }
 
+function messageShape(message) {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return null;
+  if (Object.keys(message).some((key) => key !== 'role' && key !== 'content')) return null;
+  if (message.role !== 'user' && message.role !== 'assistant') return null;
+  if (typeof message.content !== 'string') return null;
+  return message;
+}
+
 function normalizeChat(body) {
   const keys = Object.keys(body);
   if (
@@ -168,24 +176,23 @@ function normalizeChat(body) {
   ) {
     return null;
   }
-  if (
-    !Array.isArray(body.messages) ||
-    body.messages.length === 0 ||
-    body.messages.length > MAX_MESSAGES
-  ) {
-    return null;
-  }
+  if (!Array.isArray(body.messages) || body.messages.length === 0) return null;
+  const window = body.messages.slice(-CHAT_MAX_MESSAGES);
   const messages = [];
-  for (const message of body.messages) {
-    if (!message || typeof message !== 'object' || Array.isArray(message)) return null;
-    if (Object.keys(message).some((key) => key !== 'role' && key !== 'content')) return null;
-    if (message.role !== 'user' && message.role !== 'assistant') return null;
-    if (typeof message.content !== 'string') return null;
+  for (let index = 0; index < window.length; index += 1) {
+    const message = messageShape(window[index]);
+    if (!message) return null;
+    const last = index === window.length - 1;
     const content = message.content.trim();
-    if (!content || content.length > MAX_TEXT) return null;
-    messages.push({ role: message.role, content });
+    if (last) {
+      if (message.role !== 'user' || !content || content.length > CHAT_MAX_TEXT) return null;
+      messages.push({ role: 'user', content });
+      continue;
+    }
+    if (!content) continue;
+    messages.push({ role: message.role, content: clampChatText(content, CHAT_MAX_TEXT) });
   }
-  if (messages[messages.length - 1].role !== 'user') return null;
+  if (!messages.length || messages.at(-1).role !== 'user') return null;
   let forceWebSearch = false;
   if (body.forceWebSearch != null) {
     if (typeof body.forceWebSearch !== 'boolean') return null;

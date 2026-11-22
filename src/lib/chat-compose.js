@@ -1,10 +1,10 @@
 /**
  * Outbound chat text for the leader call.
  *
- * The chat route (`src/lib/world/chat.js`) rejects a user message longer than
- * 2000 characters, a history longer than 24 messages, and more than 20 posts
- * per minute. Queued lines are joined into one user message so one reply can
- * answer them, and a join that would exceed 2000 stays in the queue.
+ * The chat route clamps earlier turns to 2000 characters and keeps the last
+ * 24. It rejects only the newest user message when that line is empty or
+ * longer than 2000. Queued lines are joined into one user message so one
+ * reply can answer them, and a join that would exceed 2000 stays in the queue.
  */
 
 export const CHAT_MAX_TEXT = 2000;
@@ -117,6 +117,50 @@ export function takeBatch(pending, maxLen = CHAT_MAX_TEXT) {
 
 export function joinBatch(batch) {
   return batch.map((item) => item.text).join('\n');
+}
+
+/** Trim to the route cap without ending on a lone surrogate. */
+export function clampChatText(value, maxLen = CHAT_MAX_TEXT) {
+  if (typeof value !== 'string') return '';
+  const text = value.trim();
+  if (text.length <= maxLen) return text;
+  let end = maxLen;
+  const code = text.charCodeAt(end - 1);
+  if (code >= 0xd800 && code <= 0xdbff) end -= 1;
+  return text.slice(0, end);
+}
+
+/**
+ * History sent with the next line. Over-long turns are cut, empty turns are
+ * left out, and only the last `maxMessages` remain. The newest user line is
+ * included when it is already within the cap.
+ */
+export function clampHistory(messages, maxMessages = CHAT_MAX_MESSAGES, maxLen = CHAT_MAX_TEXT) {
+  if (!Array.isArray(messages)) return [];
+  const clamped = [];
+  for (const message of messages) {
+    if (!message || (message.role !== 'user' && message.role !== 'assistant')) continue;
+    if (typeof message.content !== 'string') continue;
+    const content = clampChatText(message.content, maxLen);
+    if (!content) continue;
+    clamped.push({ role: message.role, content });
+  }
+  return clamped.slice(-maxMessages);
+}
+
+/**
+ * Which short status line to show. `reason` is `network`, `stream`, or
+ * `empty`. A numeric `status` covers the HTTP response.
+ */
+export function explainFailure({ status, reason } = {}) {
+  if (reason === 'network') return 'dropped';
+  if (reason === 'stream') return 'unanswered';
+  if (reason === 'empty') return 'quiet';
+  if (status === 400 || status === 413) return 'rejected';
+  if (status === 408 || status === 504) return 'timeout';
+  if (status === 429) return 'wait';
+  if (typeof status === 'number' && status >= 500) return 'unavailable';
+  return 'dropped';
 }
 
 /** Retry-After seconds, or an HTTP date. Unknown values wait a minute, capped at two. */

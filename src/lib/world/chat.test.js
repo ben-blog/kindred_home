@@ -413,3 +413,104 @@ test('an upstream failure stays a generic 502', async () => {
   assert.equal(text.includes('railway'), false);
   assert.equal(text.includes('kin-admin-key'), false);
 });
+
+test('a long assistant turn in history is clamped and the newest user line stays strict', async () => {
+  const seen = [];
+  const fetch = leaderFetch(leaderId, async (_href, init) => {
+    seen.push(JSON.parse(init.body));
+    return new Response(
+      sse(['data: {"type":"token","text":"ok"}\n\ndata: {"type":"done","mood":"calm"}\n\n']),
+      {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }
+    );
+  });
+  const response = await handleWorldChat(
+    request('/api/world/chat/dred', {
+      ...signedIn,
+      body: {
+        messages: [
+          { role: 'user', content: 'b'.repeat(2400) },
+          { role: 'assistant', content: '가'.repeat(2500) },
+          { role: 'assistant', content: '   ' },
+          { role: 'user', content: '  still here  ' },
+        ],
+      },
+    }),
+    base({ slug: 'dred', fetch })
+  );
+  assert.equal(response.status, 200);
+  assert.equal(seen.length, 1);
+  assert.deepEqual(seen[0].messages, [
+    { role: 'user', content: 'b'.repeat(2000) },
+    { role: 'assistant', content: '가'.repeat(2000) },
+    { role: 'user', content: 'still here' },
+  ]);
+
+  const many = [];
+  for (let index = 0; index < 31; index += 1) {
+    many.push({ role: index % 2 === 0 ? 'user' : 'assistant', content: `m${index}` });
+  }
+  const windowed = await handleWorldChat(
+    request('/api/world/chat/dred', { ...signedIn, body: { messages: many } }),
+    base({ slug: 'dred', fetch })
+  );
+  assert.equal(windowed.status, 200);
+  assert.equal(seen[1].messages.length, 24);
+  assert.equal(seen[1].messages[0].content, 'm7');
+  assert.equal(seen[1].messages.at(-1).role, 'user');
+  assert.equal(seen[1].messages.at(-1).content, 'm30');
+
+  let called = false;
+  const rejected = await handleWorldChat(
+    request('/api/world/chat/dred', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'x'.repeat(2001) }] },
+    }),
+    base({
+      slug: 'dred',
+      fetch: leaderFetch(leaderId, () => {
+        called = true;
+        throw new Error('agent should not be called');
+      }),
+    })
+  );
+  assert.equal(rejected.status, 400);
+  assert.equal(called, false);
+});
+
+test('an upstream timeout is 504 and a streamed error stays a generic event', async () => {
+  const timedOut = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({
+      fetch: leaderFetch(leaderId, () => {
+        throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+      }),
+    })
+  );
+  assert.equal(timedOut.status, 504);
+  assert.equal(await timedOut.text(), '{"error":"unavailable"}');
+
+  const fetch = leaderFetch(leaderId, async () => {
+    return new Response(sse(['data: {"type":"error","message":"credit balance is too low"}\n\n']), {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  });
+  const response = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({ fetch })
+  );
+  assert.equal(response.status, 200);
+  const text = await response.text();
+  assert.equal(text.includes('credit'), false);
+  assert.match(text, /"type":"error"/);
+  assert.match(text, /"message":"unavailable"/);
+});

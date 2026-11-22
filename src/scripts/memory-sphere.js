@@ -49,7 +49,7 @@ export async function mountSphere(root, call, options) {
     map: dot,
     vertexColors: true,
     transparent: true,
-    opacity: layout === 'void' ? 0.8 : 0.95,
+    opacity: 1,
     depthWrite: false,
     sizeAttenuation: true,
     blending: THREE.AdditiveBlending,
@@ -233,8 +233,8 @@ function kindColor(THREE, accent, kind, layout) {
   const hash = [...String(kind)].reduce((sum, char) => sum + char.charCodeAt(0), 0);
   hsl.h = (hsl.h + (hash % 6) * 0.07) % 1;
   if (layout === 'void') {
-    hsl.s = Math.min(hsl.s, 0.35);
-    hsl.l = 0.68;
+    hsl.s = Math.min(hsl.s, 0.45);
+    hsl.l = 0.84;
   } else {
     hsl.l = Math.min(0.62, Math.max(0.42, hsl.l));
   }
@@ -242,7 +242,7 @@ function kindColor(THREE, accent, kind, layout) {
 }
 
 function pointSize(count, layout) {
-  const base = layout === 'void' ? 0.05 : 0.062;
+  const base = layout === 'void' ? 0.058 : 0.062;
   const scale = Math.min(1, 16 / Math.sqrt(Math.max(count, 1)));
   return base * Math.max(0.35, scale);
 }

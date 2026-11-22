@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "eslint 'kin/**/*.js'",
-    "lint:fix": "eslint 'kin/**/*.js' --fix",
-    "format": "prettier --write 'kin/**/*.js' '**/*.css'",
+    "lint": "eslint js",
+    "lint:fix": "eslint js --fix",
+    "format": "prettier --write js",
     "prepare": "node -e \"process.exit(process.env.CI ? 0 : 1)\" || husky"
   },
   "devDependencies": {
@@ -17,11 +17,8 @@
     "prettier": "^3.0.0"
   },
   "lint-staged": {
-    "kin/**/*.js": [
+    "js/**/*.js": [
       "eslint --fix",
-      "prettier --write"
-    ],
-    "**/*.css": [
       "prettier --write"
     ]
   }

@@ -85,26 +85,7 @@
         "kin_perspective": "oh right i was sitting here. energy drink's probably warm now. but i need to know what happens next so.",
         "dred_perspective": "KIN's spot is always like this. gone but still there."
       },
-      "actions": {
-        "ko": [
-          {
-            "type": "link",
-            "label": "너의 만화·애니",
-            "url": "/kin/k2/",
-            "title": "넌 어떤 만화·애니 덕후?",
-            "desc": "KIN이 고른 장면들, 퀴즈로 만나봐"
-          }
-        ],
-        "en": [
-          {
-            "type": "link",
-            "label": "manga · anime",
-            "url": "/kin/k2/",
-            "title": "what kind of otaku are you?",
-            "desc": "scenes KIN picked, meet them as a quiz"
-          }
-        ]
-      }
+      "actions": {}
     },
     {
       "id": "kin_a1_laptop_night",
@@ -401,26 +382,7 @@
         "kin_perspective": "i don't even know what i drew lol. but looking at it now it feels like everything i want is in here somehow. still just doodling right",
         "dred_perspective": "what comes out when you're not trying to show anyone. that's the real thing."
       },
-      "actions": {
-        "ko": [
-          {
-            "type": "link",
-            "label": "3년 후 나는",
-            "url": "https://mirrored-five.vercel.app/",
-            "title": "3년 후에 난 뭐하고 있을까",
-            "desc": "지금의 선택이 3년 뒤 어디로 데려가는지"
-          }
-        ],
-        "en": [
-          {
-            "type": "link",
-            "label": "3 years later",
-            "url": "https://mirrored-five.vercel.app/",
-            "title": "where will i be in 3 years?",
-            "desc": "where does todays choice take you"
-          }
-        ]
-      }
+      "actions": {}
     },
     {
       "id": "kin_k1_adachi_clean",

@@ -34,26 +34,7 @@
     "title_en": "Be Right Back",
     "show_on_main": true,
     "order_num": 2,
-    "actions": {
-      "ko": [
-        {
-          "type": "link",
-          "label": "너의 만화·애니",
-          "url": "/kin/k2/",
-          "title": "넌 어떤 만화·애니 덕후?",
-          "desc": "KIN이 고른 장면들, 퀴즈로 만나봐"
-        }
-      ],
-      "en": [
-        {
-          "type": "link",
-          "label": "manga · anime",
-          "url": "/kin/k2/",
-          "title": "what kind of otaku are you?",
-          "desc": "scenes KIN picked, meet them as a quiz"
-        }
-      ]
-    }
+    "actions": {}
   },
   {
     "item_id": "dred_d1_2_rush_hour",
@@ -90,26 +71,7 @@
     "title_en": "Didn't Notice the Time",
     "show_on_main": true,
     "order_num": 9,
-    "actions": {
-      "ko": [
-        {
-          "type": "link",
-          "label": "3년 후 나는",
-          "url": "https://mirrored-five.vercel.app/",
-          "title": "3년 후에 난 뭐하고 있을까",
-          "desc": "지금의 선택이 3년 뒤 어디로 데려가는지"
-        }
-      ],
-      "en": [
-        {
-          "type": "link",
-          "label": "3 years later",
-          "url": "https://mirrored-five.vercel.app/",
-          "title": "where will i be in 3 years?",
-          "desc": "where does todays choice take you"
-        }
-      ]
-    }
+    "actions": {}
   },
   {
     "item_id": "dred_g3_music",
@@ -118,26 +80,7 @@
     "title_en": "When Sound Fills the Room",
     "show_on_main": true,
     "order_num": 10,
-    "actions": {
-      "ko": [
-        {
-          "type": "link",
-          "label": "D2 — drop",
-          "url": "/dred/d2",
-          "title": "D2",
-          "desc": "drop"
-        }
-      ],
-      "en": [
-        {
-          "type": "link",
-          "label": "D2 — drop",
-          "url": "/dred/d2",
-          "title": "D2",
-          "desc": "drop"
-        }
-      ]
-    }
+    "actions": {}
   },
   {
     "item_id": "kin_scene_chaos_v1",

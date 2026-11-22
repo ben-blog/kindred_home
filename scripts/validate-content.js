@@ -1,9 +1,9 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { vercelRedirects, vercelRewrites } from '../routing/legacy.js';
 import { site } from '../src/config/site.js';
 import { loadCollections, repoRoot } from '../world/load.js';
-import { siteSchema } from '../world/schema.js';
+import { expressionSchema, siteSchema } from '../world/schema.js';
 
 const errors = [];
 const { loaded, errors: schemaErrors } = loadCollections();
@@ -94,6 +94,16 @@ for (const character of characters) {
     } else {
       agentPaths.set(character.agent.path, character.slug);
     }
+    if (character.agent.chat) {
+      const chatOwner = agentPaths.get(character.agent.chat);
+      if (chatOwner) {
+        errors.push(
+          `characters/${character.slug}: agent chat ${character.agent.chat} is also used by ${chatOwner}`
+        );
+      } else {
+        agentPaths.set(character.agent.chat, character.slug);
+      }
+    }
   }
   for (const workSlug of character.works) {
     const work = workBySlug.get(workSlug);
@@ -162,6 +172,7 @@ for (const campaign of campaigns) {
 
 checkGallery('kindred_gallery_kin.json');
 checkGallery('kindred_gallery_dred.json');
+checkExpressions();
 checkJsonLinks('main-actions.json');
 
 const parsedSite = siteSchema.safeParse(site);
@@ -184,7 +195,9 @@ if (vercel.outputDirectory || vercel.buildCommand === null) {
   errors.push('vercel.json must let the Astro build produce the deployment');
 }
 if (vercel.crons) {
-  errors.push('vercel.json must not declare crons; the build output registers the one daily ingest');
+  errors.push(
+    'vercel.json must not declare crons; the build output registers the one daily ingest'
+  );
 }
 
 if (errors.length > 0) {
@@ -195,6 +208,75 @@ if (errors.length > 0) {
 console.log(
   `content ok: ${characters.length} characters, ${works.length} works, ${relations.length} relations, ${sources.length} sources`
 );
+
+function checkExpressions() {
+  const dir = path.join(repoRoot, 'src', 'content', 'expressions');
+  if (!existsSync(dir)) return;
+  const files = readdirSync(dir)
+    .filter((name) => name.endsWith('.json'))
+    .sort();
+  const seen = new Set();
+  for (const file of files) {
+    const full = path.join(dir, file);
+    let raw;
+    try {
+      raw = JSON.parse(readFileSync(full, 'utf8'));
+    } catch (error) {
+      errors.push(`expressions/${file}: ${error.message}`);
+      continue;
+    }
+    const parsed = expressionSchema.safeParse(raw);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        const at = issue.path.join('.') || '(root)';
+        errors.push(`expressions/${file}: ${at}: ${issue.message}`);
+      }
+      continue;
+    }
+    const stem = file.replace(/\.json$/, '');
+    if (parsed.data.slug !== stem) {
+      errors.push(`expressions/${file}: slug "${parsed.data.slug}" must match the file name`);
+    }
+    const character = characterBySlug.get(parsed.data.slug);
+    if (!character) {
+      errors.push(`expressions/${file}: unknown character ${parsed.data.slug}`);
+      continue;
+    }
+    if (!character.agent?.chat) {
+      errors.push(`expressions/${file}: ${parsed.data.slug} has no chat route`);
+    }
+    seen.add(parsed.data.slug);
+    const galleryPath = path.join(
+      repoRoot,
+      'public',
+      'data',
+      `kindred_gallery_${parsed.data.slug}.json`
+    );
+    if (!existsSync(galleryPath)) continue;
+    const gallery = JSON.parse(readFileSync(galleryPath, 'utf8'));
+    const active = new Set(
+      (gallery.images ?? [])
+        .filter((image) => image && image.is_active !== false && image.id)
+        .map((image) => image.id)
+    );
+    const tagged = new Set();
+    for (const frame of parsed.data.frames) {
+      if (tagged.has(frame.id)) errors.push(`expressions/${file}: duplicate id ${frame.id}`);
+      tagged.add(frame.id);
+      if (!frame.src && !active.has(frame.id)) {
+        errors.push(`expressions/${file}: ${frame.id} is not in the gallery`);
+      }
+    }
+    for (const id of active) {
+      if (!tagged.has(id)) errors.push(`expressions/${file}: gallery image ${id} has no emotions`);
+    }
+  }
+  for (const character of characters) {
+    if (character.agent?.chat && !seen.has(character.slug)) {
+      errors.push(`expressions/${character.slug}.json: missing for a character with chat`);
+    }
+  }
+}
 
 function dataOf(entries) {
   return (entries ?? []).map((entry) => entry.data);

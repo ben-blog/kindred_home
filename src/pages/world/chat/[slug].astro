@@ -1,0 +1,282 @@
+---
+import { readFileSync, existsSync } from 'node:fs';
+import path from 'node:path';
+import { getCollection } from 'astro:content';
+import Grain from '../../../components/character/Grain.astro';
+import Base from '../../../layouts/Base.astro';
+import { characterSurface } from '../../../lib/character-layout.js';
+import { callFrames, openingFrame } from '../../../lib/expressions.js';
+import { text } from '../../../lib/locale.js';
+import { isPublicStatus } from '../../../lib/publish.js';
+
+const expressionModules = import.meta.glob('../../../content/expressions/*.json', {
+  eager: true,
+  import: 'default',
+});
+const expressions = new Map(
+  Object.values(expressionModules).map((file) => [file.slug, file])
+);
+
+export async function getStaticPaths() {
+  const characters = await getCollection('characters');
+  return characters
+    .filter((entry) => isPublicStatus(entry.data.status) && entry.data.agent?.chat)
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+const surface = characterSurface(data);
+const name = text(data.name);
+const tagline = text(data.profile.tagline);
+const galleryPath = path.join(process.cwd(), 'public', 'data', `kindred_gallery_${data.slug}.json`);
+const gallery = existsSync(galleryPath) ? JSON.parse(readFileSync(galleryPath, 'utf8')) : { images: [] };
+const frames = callFrames(gallery, expressions.get(data.slug));
+const opening = openingFrame(frames);
+const copy = {
+  end: text({ en: 'end' }),
+  you: text({ en: 'you' }),
+  say: text({ en: 'say' }),
+  send: text({ en: 'send' }),
+  dropped: text({ en: 'The line dropped.' }),
+  wait: text({ en: 'Wait.' }),
+};
+---
+
+<Base
+  frame="character"
+  title={`${name} — kinxdred`}
+  description={tagline}
+  accent={surface.accent}
+  ground={surface.ground}
+  ink={surface.ink}
+>
+  <div class="call" data-layout={surface.layout} data-slug={data.slug}>
+    <Grain />
+    <header class="call-bar">
+      <a href="/">kinxdred</a>
+      <a href="/characters">characters</a>
+      <p class="call-name">{name}</p>
+      <time id="call-timer" datetime="PT0S">00:00</time>
+      <a class="call-end" href="/world/admin">{copy.end}</a>
+    </header>
+    <section class="call-stage" data-mood="calm" aria-label={name}>
+      {
+        opening ? (
+          <>
+            <img class="call-photo is-shown" src={opening.src} alt={opening.title || name} />
+            <img class="call-photo" src={opening.src} alt="" aria-hidden="true" />
+          </>
+        ) : null
+      }
+      <p class="call-caption">{tagline}</p>
+      <div class="call-self"><span>{copy.you}</span></div>
+    </section>
+    <section class="call-side">
+      <ol class="call-log" id="call-log"></ol>
+      <form class="call-form" id="call-form">
+        <label class="call-label" for="call-input">{copy.say}</label>
+        <textarea id="call-input" name="message" rows="2" maxlength="2000" required></textarea>
+        <button class="call-send" type="submit">{copy.send}</button>
+      </form>
+      <p class="call-status" id="call-status" aria-live="polite"></p>
+    </section>
+  </div>
+</Base>
+
+<script define:vars={{ slug: data.slug, name, frames, copy }}>
+  const stage = document.querySelector('.call-stage');
+  const photos = [...document.querySelectorAll('.call-photo')];
+  const form = document.querySelector('#call-form');
+  const input = document.querySelector('#call-input');
+  const log = document.querySelector('#call-log');
+  const status = document.querySelector('#call-status');
+  const timer = document.querySelector('#call-timer');
+  const messages = [];
+  const cursor = { calm: 1 };
+  let plan;
+  let sessionId = '';
+  let sending = false;
+  let front = 0;
+  let started = 0;
+
+  function pool(emotion) {
+    const tagged = frames.filter((frame) => frame.emotions.includes(emotion));
+    const portraits = tagged.filter((frame) => frame.portrait);
+    if (portraits.length) return portraits;
+    if (tagged.length) return tagged;
+    const faces = frames.filter((frame) => frame.portrait);
+    return faces.length ? faces : frames;
+  }
+
+  function show(emotion) {
+    const list = pool(emotion);
+    if (!list.length || photos.length < 2) return;
+    const index = cursor[emotion] ?? 0;
+    cursor[emotion] = index + 1;
+    const frame = list[index % list.length];
+    const next = 1 - front;
+    photos[next].src = frame.src;
+    photos[next].alt = frame.title || name;
+    photos[next].classList.add('is-shown');
+    photos[next].removeAttribute('aria-hidden');
+    photos[front].classList.remove('is-shown');
+    photos[front].setAttribute('aria-hidden', 'true');
+    front = next;
+    stage.dataset.mood = emotion;
+  }
+
+  function line(who, value, mine) {
+    const item = document.createElement('li');
+    item.className = mine ? 'call-line is-you' : 'call-line';
+    const label = document.createElement('span');
+    label.textContent = who;
+    const body = document.createElement('p');
+    body.textContent = value;
+    item.append(label, body);
+    log.append(item);
+    log.scrollTop = log.scrollHeight;
+    return body;
+  }
+
+  function tick() {
+    const seconds = Math.max(0, Math.floor((Date.now() - started) / 1000));
+    const text = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    timer.textContent = text;
+    timer.dateTime = `PT${seconds}S`;
+  }
+
+  async function readStream(response, body) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let reply = '';
+    let expression = 'calm';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() ?? '';
+      for (const part of parts) {
+        const row = part.split('\n').find((item) => item.startsWith('data:'));
+        if (!row) continue;
+        let data;
+        try {
+          data = JSON.parse(row.slice(5).trim());
+        } catch {
+          continue;
+        }
+        if (data.type === 'token' && typeof data.text === 'string') {
+          reply += data.text;
+          body.textContent = reply;
+          log.scrollTop = log.scrollHeight;
+        } else if (data.type === 'done') {
+          if (typeof data.expression === 'string') expression = data.expression;
+          if (typeof data.sessionId === 'string') {
+            sessionId = data.sessionId;
+            try {
+              sessionStorage.setItem(`call:${slug}`, sessionId);
+            } catch {
+              sessionId = data.sessionId;
+            }
+          }
+          if (data.plan && typeof data.plan === 'object') plan = data.plan;
+        } else if (data.type === 'error') {
+          throw new Error('stream');
+        }
+      }
+    }
+    return { reply, expression };
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const value = input.value.trim();
+    if (!value || sending || !started) return;
+    sending = true;
+    status.textContent = '';
+    input.value = '';
+    messages.push({ role: 'user', content: value });
+    line(copy.you, value, true);
+    const body = line(name, '', false);
+    stage.classList.add('is-talking');
+    try {
+      const payload = { messages: messages.slice(-24) };
+      if (sessionId) payload.sessionId = sessionId;
+      if (plan) payload.plan = plan;
+      const response = await fetch(`/api/world/chat/${slug}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+        body: JSON.stringify(payload),
+      });
+      if (response.status === 401 || response.status === 403) {
+        location.replace('/world/admin');
+        return;
+      }
+      if (response.status === 429) {
+        body.textContent = copy.wait;
+        messages.pop();
+        return;
+      }
+      if (!response.ok || !response.body) {
+        body.textContent = copy.dropped;
+        messages.pop();
+        return;
+      }
+      const result = await readStream(response, body);
+      if (!result.reply) body.textContent = copy.dropped;
+      else messages.push({ role: 'assistant', content: result.reply });
+      show(result.expression || 'calm');
+    } catch {
+      body.textContent = copy.dropped;
+      if (messages.at(-1)?.role === 'user') messages.pop();
+    } finally {
+      stage.classList.remove('is-talking');
+      sending = false;
+      input.focus();
+    }
+  });
+
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  try {
+    const stored = sessionStorage.getItem(`call:${slug}`) || '';
+    if (/^[a-zA-Z0-9-]{1,64}$/.test(stored)) sessionId = stored;
+  } catch {
+    sessionId = '';
+  }
+
+  async function connect() {
+    try {
+      const response = await fetch('/api/world/auth/session', {
+        headers: { accept: 'application/json' },
+      });
+      if (response.status === 503) {
+        status.textContent = copy.dropped;
+        return;
+      }
+      const body = await response.json().catch(() => ({}));
+      if (!body.signedIn) {
+        location.replace('/world/admin');
+        return;
+      }
+      started = Date.now();
+      tick();
+      setInterval(tick, 1000);
+      input.focus();
+    } catch {
+      status.textContent = copy.dropped;
+    }
+  }
+
+  connect();
+</script>

@@ -39,6 +39,7 @@ Run `npm run check` before opening a PR. `vercel.json` redirects and the `/mood-
 ```
 public/                 live HTML, CSS, JS, gallery JSON, images. Served as-is.
 src/content/            canon. One JSON file per entry. The file name is the id.
+                        expressions/<slug>.json tags gallery stills for the leader call.
 src/config/site.js      default locale and the enabled locale list
 src/lib/locale.js       text(field) for pages. Do not read .en or .ko in a page.
 src/pages/              new Astro pages, /api/health, /api/event, and /api/world
@@ -61,6 +62,7 @@ Live URLs that must keep their current behavior:
 - `/_next/*` rewrites to that same host
 - `/api/health` returns JSON `{ "ok": true }` from a Vercel function
 - `/api/event` accepts a character event and forwards it. See Browser calls. The same allowlist is reachable at the path on the character's `agent.path` (for example `/api/kin/event`)
+- `POST /api/world/chat/<slug>` streams a leader-only call to the character's agent. `/world/chat/<slug>` is the call page. A character with no `agent.chat` has neither.
 
 `/kin` and `/dred` stay the existing hubs. They are recorded as `aliases` on the character. They are not redirects to `/characters/[slug]`. New pages live beside them: `/characters`, `/characters/[slug]`, `/works`, `/works/[slug]`, `/c/[slug]`.
 
@@ -210,8 +212,13 @@ Routes, all fail closed with 503 when any world env var is missing or unsafe:
 | `GET /api/world/ingest` | Vercel Cron only. `Authorization: Bearer` must match `CRON_SECRET`. |
 | `POST /api/world/auth/magic` | asks Supabase Auth for a magic link. `create_user` is false. |
 | `GET` / `POST` / `DELETE /api/world/auth/session` | the httpOnly leader cookie. `POST` accepts the magic-link `token_hash` or, if the redirect used a hash fragment, the access and refresh tokens. The anon key stays on the server. |
+| `POST /api/world/chat/<slug>` | the leader session only. Streams the character agent's chat reply. 503 when the world env, the agent origin, or that agent's token is missing. |
 
-`/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` writes that one job into `.vercel/output/config.json`. `vercel.json` does not repeat it. Vercel would otherwise register the same path and schedule twice.
+`/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. `/world/chat/<slug>` is the leader's call with a character that has `agent.chat`. The page sends the browser to `/world/admin` until the leader session is present. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` writes that one job into `.vercel/output/config.json`. `vercel.json` does not repeat it. Vercel would otherwise register the same path and schedule twice.
+
+The call does not append `world_events`. A later tick could record one as an `agent_action` whose payload `action` is `note` (logged, no stat change) once that shape is chosen.
+
+`src/content/expressions/<slug>.json` maps each gallery image id to expression labels (`joy`, `playful`, `calm`, `shy`, `sad`, `intense`, `tired`) and `portrait`. The call prefers a portrait tagged with the reply's expression. A frame may set `src` to a still on this site; that still wins over the gallery file, so a later expression image is picked up without a code change. The proxy classifies the reply from the agent's `mood` or `emotion` label, then from the reply text. World `energy` at or below 2 leans `tired` unless the reply is already `joy`, `playful`, or `intense`. World `mood` at or below 1 turns a calm reply `sad`.
 
 The leader account is one Supabase Auth user. Sign-ups stay disabled. `WORLD_LEADER_USER_ID` must be that user's id. A session for anyone else is 403.
 
@@ -251,9 +258,9 @@ Set these in the Vercel project. The repo lists the names in `.env.example` and 
 | `KIN_AGENT_URL` | kin-agent origin (`https` host only, no path) |
 | `DRED_AGENT_URL` | dred-agent origin |
 | `MIRRORED_API_URL` | mirrored-api origin |
-| `KIN_AGENT_TOKEN` | optional bearer for kin-agent |
-| `DRED_AGENT_TOKEN` | optional bearer for dred-agent |
-| `MIRRORED_API_TOKEN` | optional bearer for mirrored-api |
+| `KIN_AGENT_TOKEN` | bearer for kin-agent. Optional for events. Required for chat: set it to that service's `ADMIN_API_KEY`. |
+| `DRED_AGENT_TOKEN` | bearer for dred-agent. Same rule as `KIN_AGENT_TOKEN`. |
+| `MIRRORED_API_TOKEN` | bearer for mirrored-api. Optional until a character chats through it. |
 | `WORLD_SUPABASE_URL` | kinxdred_home API origin (`https` host only, no path) |
 | `WORLD_SUPABASE_SERVICE_KEY` | service role key. Server only. |
 | `WORLD_SUPABASE_ANON_KEY` | anon key for the magic-link exchange. Server only. It is not a client bundle key. |

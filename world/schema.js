@@ -127,6 +127,13 @@ export const characterSchema = z
         service: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/),
         upstream: z.enum(agentUpstreamKeys),
         path: agentPathSchema,
+        /** Chat route on that agent. Omitted means this character has no call. */
+        chat: agentPathSchema.optional(),
+        /** User id the agent expects. The browser cannot choose a different one. */
+        chatUser: z
+          .string()
+          .regex(/^[a-zA-Z0-9_-]{1,50}$/)
+          .optional(),
         methods: z
           .array(z.enum(['POST']))
           .min(1)
@@ -151,6 +158,13 @@ export const characterSchema = z
           code: 'custom',
           message: `agent path must start with ${prefix}`,
           path: ['agent', 'path'],
+        });
+      }
+      if (character.agent.chat && !character.agent.chat.startsWith(prefix)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `agent chat path must start with ${prefix}`,
+          path: ['agent', 'chat'],
         });
       }
     }
@@ -437,6 +451,27 @@ export const campaignSchema = z.strictObject({
 const isoTimestamp = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/);
+
+/** Expression labels the call stage understands. Gallery tags and the chat proxy share this list. */
+export const expressionEmotions = ['joy', 'playful', 'calm', 'shy', 'sad', 'intense', 'tired'];
+
+const expressionSrc = z
+  .string()
+  .regex(/^\/[A-Za-z0-9/_.-]+$/)
+  .refine((value) => !value.includes('..') && !value.includes('//'), 'src must stay on this site');
+
+export const expressionSchema = z.strictObject({
+  slug: slugSchema,
+  frames: z.array(
+    z.strictObject({
+      id: z.string().min(1).max(80),
+      emotions: z.array(z.enum(expressionEmotions)).min(1),
+      portrait: z.boolean(),
+      /** Optional still. When set, it wins over the gallery file with the same id. */
+      src: expressionSrc.optional(),
+    })
+  ),
+});
 
 export const eventTypes = ['influence', 'agent_action', 'external', 'tick'];
 

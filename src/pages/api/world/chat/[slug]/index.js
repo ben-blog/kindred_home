@@ -1,5 +1,5 @@
-import { bundledCanon } from '../../../../lib/canon-files.js';
-import { handleWorldChat } from '../../../../lib/world/chat.js';
+import { bundledCanon } from '../../../../../lib/canon-files.js';
+import { handleWorldChat } from '../../../../../lib/world/chat.js';
 
 export const prerender = false;
 

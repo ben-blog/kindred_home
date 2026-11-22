@@ -37,6 +37,7 @@
     "path": "/api/kin/event",
     "chat": "/api/kin/chat",
     "chatUser": "ben",
+    "memory": "/api/kin/memory/map",
     "methods": ["POST"]
   },
   "works": ["kin-gallery"],

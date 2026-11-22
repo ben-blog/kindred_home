@@ -131,6 +131,8 @@ export const characterSchema = z
         path: agentPathSchema,
         /** Chat route on that agent. Omitted means this character has no call. */
         chat: agentPathSchema.optional(),
+        /** Memory map on that agent. Omitted means the call has no sphere. */
+        memory: agentPathSchema.optional(),
         /** User id the agent expects. The browser cannot choose a different one. */
         chatUser: z
           .string()
@@ -167,6 +169,13 @@ export const characterSchema = z
           code: 'custom',
           message: `agent chat path must start with ${prefix}`,
           path: ['agent', 'chat'],
+        });
+      }
+      if (character.agent.memory && !character.agent.memory.startsWith(prefix)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `agent memory path must start with ${prefix}`,
+          path: ['agent', 'memory'],
         });
       }
     }

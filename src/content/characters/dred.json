@@ -37,6 +37,7 @@
     "upstream": "DRED_AGENT_URL",
     "path": "/api/dred/event",
     "chat": "/api/dred/chat",
+    "memory": "/api/dred/memory/map",
     "methods": ["POST"]
   },
   "works": ["dred-gallery", "d14"],

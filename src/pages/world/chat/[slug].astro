@@ -44,6 +44,16 @@ const copy = {
   send: text({ en: 'send' }),
   dropped: text({ en: 'The line dropped.' }),
   wait: text({ en: 'Wait.' }),
+  memory: text({ en: 'memory' }),
+  offline: text({ en: 'memory offline' }),
+  thinking: text({ en: 'thinking' }),
+  received: text({ en: 'message received' }),
+  retrieved: text({ en: 'retrieved' }),
+  world: text({ en: 'world' }),
+  emotion: text({ en: 'emotion' }),
+  reply: text({ en: 'reply' }),
+  saved: text({ en: 'saved' }),
+  none: text({ en: 'none' }),
 };
 ---
 
@@ -75,8 +85,17 @@ const copy = {
       }
       <p class="call-caption">{tagline}</p>
       <div class="call-self"><span>{copy.you}</span></div>
+      <div class="call-memory" id="call-memory">
+        <button type="button" class="call-tool" id="call-memory-toggle">{copy.memory}</button>
+        <div class="call-memory-view" id="call-memory-view"></div>
+        <p class="call-memory-status" id="call-memory-status" hidden>{copy.offline}</p>
+      </div>
     </section>
     <section class="call-side">
+      <div class="call-tools">
+        <button type="button" class="call-tool" id="call-think-toggle">{copy.thinking}</button>
+      </div>
+      <div class="call-think" id="call-think" hidden></div>
       <ol class="call-log" id="call-log">
         {idle ? <li class="call-empty" id="call-empty">{idle}</li> : null}
       </ol>
@@ -130,6 +149,7 @@ const copy = {
     photos[front].setAttribute('aria-hidden', 'true');
     front = next;
     stage.dataset.mood = emotion;
+    return frame;
   }
 
   function line(who, value, mine) {
@@ -152,12 +172,13 @@ const copy = {
     timer.dateTime = `PT${seconds}S`;
   }
 
-  async function readStream(response, body) {
+  async function readStream(response, body, turn) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let reply = '';
     let expression = 'calm';
+    let world = null;
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -176,9 +197,19 @@ const copy = {
         if (data.type === 'token' && typeof data.text === 'string') {
           reply += data.text;
           body.textContent = reply;
+          turn.reply.body.textContent = reply;
           log.scrollTop = log.scrollHeight;
+        } else if (data.type === 'trace') {
+          if (data.stage === 'retrieved') {
+            fillRetrieved(turn.retrieved, data.items || []);
+            document.querySelector('.call')?.dispatchEvent(
+              new CustomEvent('memory-trace', { detail: data })
+            );
+          }
+          if (data.stage === 'saved') fillSaved(turn.saved, data.ids || []);
         } else if (data.type === 'done') {
           if (typeof data.expression === 'string') expression = data.expression;
+          if (data.world && typeof data.world === 'object') world = data.world;
           if (typeof data.sessionId === 'string') {
             sessionId = data.sessionId;
             try {
@@ -193,7 +224,95 @@ const copy = {
         }
       }
     }
-    return { reply, expression };
+    return { reply, expression, world };
+  }
+
+  function step(number, label, value) {
+    const row = document.createElement('p');
+    const title = document.createElement('span');
+    title.textContent = `${number} ${label}`;
+    const body = document.createElement('span');
+    body.textContent = value;
+    row.append(title, body);
+    return { row, body };
+  }
+
+  function fillRetrieved(slot, items) {
+    slot.body.replaceChildren();
+    if (!items.length) {
+      slot.body.textContent = copy.none;
+      return;
+    }
+    const list = document.createElement('span');
+    list.className = 'call-retrieved';
+    for (const item of items) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'call-chip';
+      chip.dataset.id = item.id;
+      const score = typeof item.score === 'number' ? ` ${item.score}` : '';
+      chip.textContent = `${item.label || item.kind}${score}`;
+      chip.addEventListener('pointerenter', () => {
+        document.querySelector('.call')?.dispatchEvent(
+          new CustomEvent('memory-focus', { detail: { id: item.id } })
+        );
+      });
+      chip.addEventListener('pointerleave', () => {
+        document.querySelector('.call')?.dispatchEvent(
+          new CustomEvent('memory-focus', { detail: { id: '' } })
+        );
+      });
+      list.append(chip);
+    }
+    slot.body.append(list);
+  }
+
+  function fillSaved(slot, ids) {
+    slot.body.textContent = ids.length ? ids.join(', ') : copy.none;
+    pendingSaved = ids.length ? null : slot;
+  }
+
+  function noteSaved(points) {
+    if (!pendingSaved || !points.length) return;
+    pendingSaved.body.textContent = points.map((point) => point.label || point.id).join(', ');
+    pendingSaved = null;
+  }
+
+  let pendingSaved = null;
+  let since = '';
+
+  async function pollMemory() {
+    const query = since ? `?since=${encodeURIComponent(since)}` : '';
+    const status = document.querySelector('#call-memory-status');
+    try {
+      const response = await fetch(`/api/world/chat/${slug}/memory${query}`, {
+        headers: { accept: 'application/json' },
+      });
+      if (response.status === 401 || response.status === 403) {
+        location.replace('/world/admin');
+        return;
+      }
+      if (!response.ok) throw new Error('memory');
+      const body = await response.json();
+      const call = document.querySelector('.call');
+      const current = call.memoryMap;
+      const known = new Set((current?.points || []).map((point) => point.id));
+      let points = Array.isArray(body.points) ? body.points : [];
+      if (query && current && body.basisVersion === current.basisVersion) {
+        points = current.points.concat(points.filter((point) => !known.has(point.id)));
+      }
+      const arrived = points.filter((point) => !known.has(point.id));
+      const detail = { basisVersion: body.basisVersion || '', points };
+      call.memoryMap = detail;
+      call.dispatchEvent(new CustomEvent('memory-map', { detail }));
+      for (const point of points) {
+        if (point.createdAt && point.createdAt > since) since = point.createdAt;
+      }
+      status.hidden = true;
+      noteSaved(arrived);
+    } catch {
+      status.hidden = false;
+    }
   }
 
   form.addEventListener('submit', async (event) => {
@@ -207,6 +326,26 @@ const copy = {
     document.querySelector('#call-empty')?.remove();
     line(copy.you, value, true);
     const body = line(name, '', false);
+    const turn = {
+      retrieved: step('2', copy.retrieved, copy.none),
+      world: step('3', copy.world, copy.none),
+      emotion: step('4', copy.emotion, copy.none),
+      reply: step('5', copy.reply, ''),
+      saved: step('6', copy.saved, copy.none),
+    };
+    const article = document.createElement('article');
+    article.className = 'call-turn';
+    article.append(
+      step('1', copy.received, value).row,
+      turn.retrieved.row,
+      turn.world.row,
+      turn.emotion.row,
+      turn.reply.row,
+      turn.saved.row
+    );
+    const think = document.querySelector('#call-think');
+    think.append(article);
+    think.scrollTop = think.scrollHeight;
     stage.classList.add('is-talking');
     try {
       const payload = { messages: messages.slice(-24) };
@@ -231,10 +370,20 @@ const copy = {
         messages.pop();
         return;
       }
-      const result = await readStream(response, body);
-      if (!result.reply) body.textContent = copy.dropped;
-      else messages.push({ role: 'assistant', content: result.reply });
-      show(result.expression || 'calm');
+      const result = await readStream(response, body, turn);
+      if (!result.reply) {
+        body.textContent = copy.dropped;
+        turn.reply.body.textContent = copy.dropped;
+      } else messages.push({ role: 'assistant', content: result.reply });
+      const frame = show(result.expression || 'calm');
+      const world = result.world;
+      turn.world.body.textContent = world
+        ? `mood ${world.mood ?? copy.none} · energy ${world.energy ?? copy.none}`
+        : copy.none;
+      turn.emotion.body.textContent = frame?.title
+        ? `${result.expression || 'calm'} · ${frame.title}`
+        : result.expression || 'calm';
+      if (turn.saved.body.textContent === copy.none) pendingSaved = turn.saved;
     } catch {
       body.textContent = copy.dropped;
       if (messages.at(-1)?.role === 'user') messages.pop();
@@ -276,6 +425,8 @@ const copy = {
       started = Date.now();
       tick();
       setInterval(tick, 1000);
+      pollMemory();
+      setInterval(pollMemory, 10000);
       input.focus();
     } catch {
       status.textContent = copy.dropped;
@@ -283,4 +434,49 @@ const copy = {
   }
 
   connect();
+
+  document.querySelector('#call-think-toggle')?.addEventListener('click', () => {
+    const panel = document.querySelector('#call-think');
+    panel.hidden = !panel.hidden;
+  });
+  document.querySelector('#call-memory-toggle')?.addEventListener('click', () => {
+    document.querySelector('#call-memory')?.classList.toggle('is-open');
+  });
+  document.querySelector('.call')?.addEventListener('memory-hover', (event) => {
+    const id = event.detail?.id || '';
+    for (const chip of document.querySelectorAll('.call-chip')) {
+      chip.classList.toggle('is-hot', chip.dataset.id === id);
+    }
+  });
+</script>
+
+<script>
+  import { mountSphere } from '../../../scripts/memory-sphere.js';
+
+  const call = document.querySelector('.call');
+  const view = document.querySelector('#call-memory-view');
+  const offline = document.querySelector('#call-memory-status');
+  if (call && view) {
+    const style = getComputedStyle(document.documentElement);
+    mountSphere(view, call, {
+      accent: style.getPropertyValue('--accent').trim(),
+      ground: style.getPropertyValue('--ground').trim(),
+      layout: call.dataset.layout,
+      reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    })
+      .then((api) => {
+        if (!api) {
+          if (offline) offline.hidden = false;
+          return;
+        }
+        const apply = (detail) => api.setMap(detail);
+        call.addEventListener('memory-map', (event) => apply(event.detail));
+        call.addEventListener('memory-trace', (event) => api.showRetrieved(event.detail?.items || []));
+        call.addEventListener('memory-focus', (event) => api.focus(event.detail?.id || ''));
+        if (call.memoryMap) apply(call.memoryMap);
+      })
+      .catch(() => {
+        if (offline) offline.hidden = false;
+      });
+  }
 </script>

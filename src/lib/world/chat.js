@@ -2,6 +2,7 @@ import { upstreamTokens, clientAddress, createLimiter, sameOrigin } from '../pro
 import { requireLeader } from './auth.js';
 import { httpsOrigin, worldConfig } from './env.js';
 import { corsHeaders, guard, json, readJson } from './http.js';
+import { parseTrace } from './memory.js';
 import { resolveExpression } from './mood.js';
 import { createWorldStore } from './store.js';
 
@@ -101,6 +102,7 @@ async function dispatch(request, options) {
   headers.set('accept', 'text/event-stream');
   headers.set('authorization', `Bearer ${token}`);
   headers.set('x-admin-key', token);
+  headers.set('x-trace', '1');
 
   let upstream;
   try {
@@ -146,8 +148,15 @@ function routeFrom(character) {
     upstream: agent.upstream,
     token: upstreamTokens[agent.upstream],
     path: agent.chat,
+    memory: memoryPath(character.slug, agent.memory),
     chatUser,
   };
+}
+
+function memoryPath(slug, value) {
+  if (typeof value !== 'string' || !CHAT_PATH.test(value)) return '';
+  if (!value.startsWith(`/api/${slug}/`)) return '';
+  return value;
 }
 
 function normalizeChat(body) {
@@ -250,10 +259,16 @@ export function rewriteSse(body, vitals = {}) {
 }
 
 function renderBlock(block, state) {
-  const line = block
+  const lines = block
     .split('\n')
     .map((item) => item.trim())
-    .find((item) => item.startsWith('data:'));
+    .filter(Boolean);
+  const eventName =
+    lines
+      .find((item) => item.startsWith('event:'))
+      ?.slice(6)
+      .trim() || '';
+  const line = lines.find((item) => item.startsWith('data:'));
   if (!line) return '';
   let data;
   try {
@@ -275,6 +290,11 @@ function renderBlock(block, state) {
       mood: state.mood,
     });
     const done = { type: 'done', expression };
+    if (state.mood != null || state.energy != null) {
+      done.world = {};
+      if (state.mood != null) done.world.mood = state.mood;
+      if (state.energy != null) done.world.energy = state.energy;
+    }
     if (typeof data.sessionId === 'string' && SESSION.test(data.sessionId))
       done.sessionId = data.sessionId;
     if (data.plan && typeof data.plan === 'object' && !Array.isArray(data.plan)) {
@@ -285,6 +305,11 @@ function renderBlock(block, state) {
   }
   if (data.type === 'error') {
     return `data: ${JSON.stringify({ type: 'error', message: 'unavailable' })}\n\n`;
+  }
+  if (eventName === 'trace' || data.type === 'trace' || data.stage) {
+    const trace = parseTrace(data);
+    if (!trace) return '';
+    return `data: ${JSON.stringify(trace)}\n\n`;
   }
   return '';
 }

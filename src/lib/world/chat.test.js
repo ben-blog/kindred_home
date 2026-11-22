@@ -190,6 +190,7 @@ test('the proxy streams the agent reply and stamps an expression', async () => {
     seen.push({ href, init });
     assert.equal(href, 'https://kin-agent.example.test/api/kin/chat');
     assert.equal(init.headers.get('x-admin-key'), env.KIN_AGENT_TOKEN);
+    assert.equal(init.headers.get('x-trace'), '1');
     assert.equal(init.headers.get('authorization'), `Bearer ${env.KIN_AGENT_TOKEN}`);
     assert.equal(init.headers.get('origin'), null);
     assert.equal(init.headers.get('cookie'), null);
@@ -263,6 +264,38 @@ test('a split SSE event is reassembled and low energy can settle on tired', asyn
   assert.equal(events[0].text, 'okay');
   assert.equal(events[1].expression, 'tired');
   assert.equal(events[1].userId, undefined);
+});
+
+test('a trace event is passed through without the rest of the agent payload', async () => {
+  const fetch = leaderFetch(leaderId, async () => {
+    return new Response(
+      sse([
+        'event: trace\ndata: {"stage":"retrieved","items":[{"id":"m1","kind":"note","label":"the bus","score":0.82,"prompt":"secret"}],"system":"hidden"}\n\n',
+        'data: {"type":"token","text":"hey"}\n\n',
+        'data: {"type":"done","mood":"calm"}\n\n',
+        'event: trace\ndata: {"stage":"saved","ids":["m2"]}\n\n',
+      ]),
+      { status: 200, headers: { 'content-type': 'text/event-stream' } }
+    );
+  });
+  const response = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({ fetch, vitals: { energy: 5, mood: 2 } })
+  );
+  const events = (await response.text())
+    .split('\n\n')
+    .filter(Boolean)
+    .map((block) => JSON.parse(block.replace(/^data:\s*/, '')));
+  assert.equal(events[0].stage, 'retrieved');
+  assert.deepEqual(events[0].items, [{ id: 'm1', kind: 'note', label: 'the bus', score: 0.82 }]);
+  assert.equal(JSON.stringify(events[0]).includes('secret'), false);
+  assert.equal(events[1].text, 'hey');
+  assert.equal(events[2].expression, 'calm');
+  assert.deepEqual(events[2].world, { mood: 2, energy: 5 });
+  assert.deepEqual(events[3], { type: 'trace', stage: 'saved', ids: ['m2'] });
 });
 
 test('an upstream failure stays a generic 502', async () => {

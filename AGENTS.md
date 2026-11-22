@@ -212,7 +212,8 @@ Routes, all fail closed with 503 when any world env var is missing or unsafe:
 | `GET /api/world/ingest` | Vercel Cron only. `Authorization: Bearer` must match `CRON_SECRET`. |
 | `POST /api/world/auth/magic` | asks Supabase Auth for a magic link. `create_user` is false. |
 | `GET` / `POST` / `DELETE /api/world/auth/session` | the httpOnly leader cookie. `POST` accepts the magic-link `token_hash` or, if the redirect used a hash fragment, the access and refresh tokens. The anon key stays on the server. |
-| `POST /api/world/chat/<slug>` | the leader session only. Streams the character agent's chat reply. 503 when the world env, the agent origin, or that agent's token is missing. |
+| `POST /api/world/chat/<slug>` | the leader session only. Streams the character agent's chat reply. Sends `X-Trace: 1`. 503 when the world env, the agent origin, or that agent's token is missing. |
+| `GET /api/world/chat/<slug>/memory` | the leader session only. Proxies the character's `agent.memory` map. 404 when that field is absent. The call still works without it. |
 
 `/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. `/world/chat/<slug>` is the leader's call with a character that has `agent.chat`. The page sends the browser to `/world/admin` until the leader session is present. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` writes that one job into `.vercel/output/config.json`. `vercel.json` does not repeat it. Vercel would otherwise register the same path and schedule twice.
 

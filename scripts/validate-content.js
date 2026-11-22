@@ -104,6 +104,16 @@ for (const character of characters) {
         agentPaths.set(character.agent.chat, character.slug);
       }
     }
+    if (character.agent.memory) {
+      const memoryOwner = agentPaths.get(character.agent.memory);
+      if (memoryOwner) {
+        errors.push(
+          `characters/${character.slug}: agent memory ${character.agent.memory} is also used by ${memoryOwner}`
+        );
+      } else {
+        agentPaths.set(character.agent.memory, character.slug);
+      }
+    }
   }
   for (const workSlug of character.works) {
     const work = workBySlug.get(workSlug);

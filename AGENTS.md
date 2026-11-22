@@ -211,7 +211,7 @@ Routes, all fail closed with 503 when any world env var is missing or unsafe:
 | `POST /api/world/auth/magic` | asks Supabase Auth for a magic link. `create_user` is false. |
 | `GET` / `POST` / `DELETE /api/world/auth/session` | the httpOnly leader cookie. `POST` accepts the magic-link `token_hash` or, if the redirect used a hash fragment, the access and refresh tokens. The anon key stays on the server. |
 
-`/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` copies `vercel.json` `crons` into the build output.
+`/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` writes that one job into `.vercel/output/config.json`. `vercel.json` does not repeat it. Vercel would otherwise register the same path and schedule twice.
 
 The leader account is one Supabase Auth user. Sign-ups stay disabled. `WORLD_LEADER_USER_ID` must be that user's id. A session for anyone else is 403.
 

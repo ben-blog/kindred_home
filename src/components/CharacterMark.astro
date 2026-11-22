@@ -1,0 +1,150 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  mark: CollectionEntry<'characters'>['data']['identity']['mark'];
+}
+
+const { points, wobble, speed, scatterOnHover } = Astro.props.mark;
+const count = Math.max(3, points);
+const easing = [0.16, 1, 0.3, 1];
+const turn = 2 * Math.PI;
+
+// All poses share the same knots so the browser can morph the closed curve.
+function outline(phase: number) {
+  const knots = Array.from({ length: count }, (_, index) => {
+    const angle = turn * index / count - 0.9;
+    const contour = 1 + 0.22 * Math.sin(2 * angle) + 0.16 * Math.cos(3 * angle);
+    const ripple = Math.min(wobble, 0.35) * Math.sin(phase + 2 * angle);
+    const radius = 65 * (contour + ripple);
+    return { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+  });
+
+  const pair = (x: number, y: number) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+  const segments = knots.map((knot, i) => {
+    const prev = knots[(i + count - 1) % count];
+    const next = knots[(i + 1) % count];
+    const following = knots[(i + 2) % count];
+    const out = pair(knot.x + (next.x - prev.x) / 6, knot.y + (next.y - prev.y) / 6);
+    const into = pair(next.x - (following.x - knot.x) / 6, next.y - (following.y - knot.y) / 6);
+    return `C ${out} ${into} ${pair(next.x, next.y)}`;
+  });
+  return `M ${pair(knots[0].x, knots[0].y)} ${segments.join(' ')} Z`;
+}
+
+const still = outline(0);
+const poses = [still, outline(turn / 3), outline(2 * turn / 3), still];
+---
+
+<character-mark aria-hidden="true" style={`--mark-ease:cubic-bezier(${easing.join(',')})`}>
+  <svg viewBox="-112 -112 224 224" focusable="false">
+    <defs>
+      <radialGradient id="hero-mark-ink" cx="78%" cy="36%" r="84%">
+        <stop offset="0" class="highlight" />
+        <stop offset=".46" stop-color="currentColor" />
+        <stop offset="1" class="shadow" />
+      </radialGradient>
+    </defs>
+    <g class="body">
+      {scatterOnHover && (
+        <g class="drops" fill="currentColor">
+          <circle cx="-37" cy="-29" r="4" />
+          <circle cx="40" cy="20" r="6" />
+          <circle cx="34" cy="30" r="2.5" />
+        </g>
+      )}
+      <path d={still} fill="url(#hero-mark-ink)">
+        {wobble > 0 && (
+          <animate attributeName="d" values={poses.join(';')} dur={`${4 / speed}s`}
+            keyTimes="0;.333333;.666667;1" calcMode="spline"
+            keySplines={Array(3).fill(easing.join(' ')).join(';')}
+            begin="indefinite" repeatCount="indefinite" />
+        )}
+      </path>
+    </g>
+  </svg>
+</character-mark>
+
+<style>
+  character-mark {
+    display: block;
+    position: absolute;
+    width: var(--mark-size);
+    inset-block-start: 50%;
+    inset-inline-start: min(calc(100% - var(--mark-size) * .45), calc(100cqi - var(--mark-size) * .9));
+    transform: translateY(-50%);
+    color: var(--accent);
+  }
+  svg { display: block; width: 100%; }
+  .highlight { stop-color: color-mix(in srgb, currentColor 76%, white); }
+  .shadow { stop-color: color-mix(in srgb, currentColor 25%, black); }
+  .drops { opacity: 0; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .body {
+      transform: translate(var(--push-x, 0px), var(--push-y, 0px));
+      transition: transform .4s var(--mark-ease);
+    }
+    .drops {
+      transform-box: view-box;
+      transform-origin: center;
+      transition: transform .45s var(--mark-ease), opacity .3s var(--mark-ease);
+    }
+    [data-pushed] .drops { transform: scale(1.95); opacity: 1; }
+  }
+</style>
+
+<script>
+  class CharacterMarkElement extends HTMLElement {
+    connectedCallback() {
+      const motion = matchMedia('(prefers-reduced-motion: no-preference)');
+      const animation = this.querySelector('animate');
+      let visible = false;
+      let playing = false;
+
+      const release = () => {
+        this.removeAttribute('data-pushed');
+        this.style.removeProperty('--push-x');
+        this.style.removeProperty('--push-y');
+      };
+      const sync = () => {
+        const active = visible && motion.matches;
+        if (!active) release();
+        if (!animation || active === playing) return;
+        if (active) animation.beginElement();
+        else animation.endElement();
+        playing = active;
+      };
+      const observer = new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        sync();
+      });
+      const push = (event: PointerEvent) => {
+        if (!motion.matches || event.pointerType === 'touch') return;
+        const box = this.getBoundingClientRect();
+        const x = (0.5 - (event.clientX - box.left) / box.width) * 16;
+        const y = (0.5 - (event.clientY - box.top) / box.height) * 16;
+        this.style.setProperty('--push-x', `${x}px`);
+        this.style.setProperty('--push-y', `${y}px`);
+        this.setAttribute('data-pushed', '');
+      };
+      observer.observe(this);
+      motion.addEventListener('change', sync);
+      this.addEventListener('pointermove', push);
+      this.addEventListener('pointerleave', release);
+      this.addEventListener('pointercancel', release);
+      this.cleanup = () => {
+        observer.disconnect();
+        motion.removeEventListener('change', sync);
+        this.removeEventListener('pointermove', push);
+        this.removeEventListener('pointerleave', release);
+        this.removeEventListener('pointercancel', release);
+        visible = false;
+        sync();
+      };
+    }
+    private cleanup?: () => void;
+    disconnectedCallback() { this.cleanup?.(); }
+  }
+  customElements.define('character-mark', CharacterMarkElement);
+</script>

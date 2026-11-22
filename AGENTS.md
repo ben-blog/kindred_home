@@ -4,6 +4,8 @@ Operating guide for coding agents on kinxdred.com. This includes OpenAI Codex CL
 
 The live site must keep working. This phase is structure. It is not a visual redesign.
 
+Visual work, including Codex, reads `DESIGN.md` before editing anything a visitor sees. That file is the binding visual spec: tokens measured from `public/`, what may be borrowed from telemyr.com, and the Do / Don't list. If `DESIGN.md` disagrees with `src/styles/site.css`, follow `DESIGN.md`. A pull request that changes how a page looks must include before and after screenshots of every existing page it touches.
+
 ## Commands
 
 Node 22. From the repo root:
@@ -65,7 +67,7 @@ There is one world, `kinxdred`. Adding a second file under `src/content/world/` 
 
 Every character has a relation to the leader entity (`ben`, kind `leader`) whose kinds include `leader` and `friend`. That relation is concept only. DRED's relation also includes `썸` (mutual romantic interest, not a couple) and a numeric `tension`. The character file's `relationships` array must match the relation file.
 
-Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) is the future blob mark. Nothing draws it yet. Tuning those numbers is safe.
+Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) is the hero blob mark. Nothing draws it yet. Tuning those numbers is safe. The rest of the visual system — type, grain, frost, motion, and what not to borrow — is `DESIGN.md`.
 
 `initial` is the v0 starting snapshot (`mood`, `energy`, `xp`, `level`). `level` must be `1 + floor(xp / xpPerLevel)`.
 
@@ -205,7 +207,9 @@ No character uses `MIRRORED_API_URL` yet. Nothing in `public/` or `src/` calls m
 
 ## Codex and other local CLIs
 
-Visual tuning belongs here, with a browser on `npm run dev`.
+Read `DESIGN.md` first. It is mandatory for visual work. Tokens, motion, the telemyr borrow list, reduced motion, and the Do / Don't checklist live there.
+
+Visual tuning belongs here, with a browser on `npm run dev`. A pull request that changes how a page looks must include before and after screenshots of every existing page it touches. `DESIGN.md` states that rule.
 
 Safe to edit while watching the page:
 

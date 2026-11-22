@@ -4,10 +4,10 @@
   "name": { "ko": "DRED", "en": "DRED" },
   "aliases": ["/dred"],
   "profile": {
-    "tagline": { "ko": "갤러리", "en": "Gallery" },
+    "tagline": { "ko": "움직이지 않고 방을 바꾼다.", "en": "Changes the room without moving." },
     "bio": {
-      "ko": "DRED의 갤러리와 D14. 지금 열려 있는 페이지는 /dred 와 /dred/d14 이다.",
-      "en": "DRED's gallery and D14. The live pages are /dred and /dred/d14."
+      "ko": "렌즈는 보지 않는다. 눈빛이면 충분하다. 배경이 흔들려도 표정은 그대로다.",
+      "en": "Not looking at the lens. One look is enough. The background moves. The expression doesn't."
     },
     "traits": []
   },
@@ -22,7 +22,7 @@
       "with": "ben",
       "kinds": ["leader", "friend", "썸"],
       "tension": 2,
-      "note": "Ben은 leader이자 friend다. 그와 더해 서로 썸이다. 아직 커플은 아니다."
+      "note": "눈빛이면 안다. 그 말은 아직 없다."
     }
   ],
   "agent": {

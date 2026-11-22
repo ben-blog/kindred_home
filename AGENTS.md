@@ -4,6 +4,8 @@ Operating guide for coding agents on kinxdred.com. This includes OpenAI Codex CL
 
 The live site must keep working. This phase is structure. It is not a visual redesign.
 
+Visual work, including Codex, reads `DESIGN.md` before editing anything a visitor sees. That file is the binding visual spec: tokens measured from `public/`, what may be borrowed from telemyr.com, and the Do / Don't list. If `DESIGN.md` disagrees with `src/styles/site.css`, follow `DESIGN.md`. A pull request that changes how a page looks must include before and after screenshots of every existing page it touches.
+
 ## Commands
 
 Node 22. From the repo root:
@@ -36,6 +38,8 @@ Run `npm run check` before opening a PR. `vercel.json` redirects and the `/mood-
 ```
 public/                 live HTML, CSS, JS, gallery JSON, images. Served as-is.
 src/content/            canon. One JSON file per entry. The file name is the id.
+src/config/site.js      default locale and the enabled locale list
+src/lib/locale.js       text(field) for pages. Do not read .en or .ko in a page.
 src/pages/              new Astro pages, /api/health, and /api/event
 src/layouts/Base.astro  shell for the new pages
 src/styles/site.css     tokens and styles for the new pages only
@@ -59,13 +63,31 @@ Live URLs that must keep their current behavior:
 
 There is one world, `kinxdred`. Adding a second file under `src/content/world/` fails validation on purpose.
 
+## Language
+
+Copy fields are language maps. `en` is required. Any other locale key is optional (`ko`, `ja`, `zh-hant`). A missing `en` fails validation. The site speaks one language at a time. The setting is `src/config/site.js`:
+
+```js
+export const site = { defaultLocale: 'en', locales: ['en'] };
+```
+
+Pages call `text(field)` from `src/lib/locale.js`. They do not read `.en` or `.ko`. `text` uses `defaultLocale`. A requested locale is used only when it is listed in `locales` and the field has that key. Otherwise it returns `en`. There is no language switch and no locale route in this phase.
+
+To add a language later:
+
+1. Write the new key on the fields that should change (`"ko": "..."` next to `"en"`). Fields you skip stay English.
+2. Add that code to `locales` in `src/config/site.js`. Until it is listed, `text` keeps returning `en`.
+3. Pass the locale into `text(field, locale)` from the future switch. Do not add the switch, or a `/ko/` route, until that task says so.
+
+`defaultLocale` must be one of `locales`, and `locales` must include `en`.
+
 ## Character
 
 `src/content/characters/<slug>.json`, plus a matching `src/content/entities/<slug>.json` with `"kind": "character"` and the same `status`.
 
 Every character has a relation to the leader entity (`ben`, kind `leader`) whose kinds include `leader` and `friend`. That relation is concept only. DRED's relation also includes `썸` (mutual romantic interest, not a couple) and a numeric `tension`. The character file's `relationships` array must match the relation file.
 
-Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) is the future blob mark. Nothing draws it yet. Tuning those numbers is safe.
+Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) is the hero blob mark. Nothing draws it yet. Tuning those numbers is safe. The rest of the visual system — type, grain, frost, motion, and what not to borrow — is `DESIGN.md`.
 
 `initial` is the v0 starting snapshot (`mood`, `energy`, `xp`, `level`). `level` must be `1 + floor(xp / xpPerLevel)`.
 
@@ -116,15 +138,17 @@ Set the work and its entity to `archived`. Leave `url` working.
 {
   "slug": "spring",
   "status": "draft",
-  "title": { "ko": "...", "en": "..." },
-  "summary": { "ko": "...", "en": "..." },
+  "title": { "en": "..." },
+  "summary": { "en": "..." },
   "characters": ["kin"],
   "start": "2026-03-01",
   "end": "2026-03-31",
   "utmCampaign": "spring",
-  "cta": { "label": { "ko": "...", "en": "..." }, "href": "/" }
+  "cta": { "label": { "en": "..." }, "href": "/" }
 }
 ```
+
+`en` is required on each of those fields. Another locale key is optional. See Language.
 
 Set `status` to `active` to publish `/c/<slug>`. `end` must be on or after `start`. Retire by setting `archived` (the URL stays) or `draft` (the URL is not built).
 
@@ -205,7 +229,9 @@ No character uses `MIRRORED_API_URL` yet. Nothing in `public/` or `src/` calls m
 
 ## Codex and other local CLIs
 
-Visual tuning belongs here, with a browser on `npm run dev`.
+Read `DESIGN.md` first. It is mandatory for visual work. Tokens, motion, the telemyr borrow list, reduced motion, and the Do / Don't checklist live there.
+
+Visual tuning belongs here, with a browser on `npm run dev`. A pull request that changes how a page looks must include before and after screenshots of every existing page it touches. `DESIGN.md` states that rule.
 
 Safe to edit while watching the page:
 

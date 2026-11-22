@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { vercelRedirects, vercelRewrites } from '../routing/legacy.js';
+import { site } from '../src/config/site.js';
 import { loadCollections, repoRoot } from '../world/load.js';
+import { siteSchema } from '../world/schema.js';
 
 const errors = [];
 const { loaded, errors: schemaErrors } = loadCollections();
@@ -161,6 +163,14 @@ for (const campaign of campaigns) {
 checkGallery('kindred_gallery_kin.json');
 checkGallery('kindred_gallery_dred.json');
 checkJsonLinks('main-actions.json');
+
+const parsedSite = siteSchema.safeParse(site);
+if (!parsedSite.success) {
+  for (const issue of parsedSite.error.issues) {
+    const at = issue.path.join('.') || '(root)';
+    errors.push(`src/config/site.js: ${at}: ${issue.message}`);
+  }
+}
 
 const vercelPath = path.join(repoRoot, 'vercel.json');
 const vercel = JSON.parse(readFileSync(vercelPath, 'utf8'));

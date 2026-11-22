@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { text } from '../../lib/locale.js';
 import { compareEntries, isPublicStatus } from '../../lib/publish.js';
 
 const works = (await getCollection('works'))
@@ -16,7 +17,7 @@ const works = (await getCollection('works'))
       works.map((entry) => (
         <li>
           <a href={`/works/${entry.data.slug}/`}>
-            <span>{entry.data.title.en}</span>
+            <span>{text(entry.data.title)}</span>
             <span class="meta">{entry.data.url}</span>
           </a>
         </li>

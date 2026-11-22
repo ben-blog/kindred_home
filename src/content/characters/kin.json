@@ -4,10 +4,9 @@
   "name": { "ko": "KIN", "en": "KIN" },
   "aliases": ["/kin"],
   "profile": {
-    "tagline": { "ko": "갤러리", "en": "Gallery" },
+    "tagline": { "en": "Watches first. Speaks later." },
     "bio": {
-      "ko": "KIN의 갤러리. 지금 열려 있는 페이지는 /kin 이다.",
-      "en": "KIN's gallery. The live page is /kin."
+      "en": "Came in with no plan. Already knows what to get. Draws, plays ball, and codes. All at once."
     },
     "traits": []
   },
@@ -21,7 +20,7 @@
     {
       "with": "ben",
       "kinds": ["leader", "friend"],
-      "note": "Ben은 이 세계의 leader이자 friend다. 지금은 개념만 둔다."
+      "note": { "en": "A friend. Words come later." }
     }
   ],
   "agent": {

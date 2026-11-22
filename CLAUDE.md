@@ -2,6 +2,8 @@
 
 코딩 에이전트용 전체 절차는 `AGENTS.md`에 있다. 둘의 내용이 어긋나면 `AGENTS.md`와 `npm run check`를 따른다.
 
+시각 작업은 `DESIGN.md`를 먼저 읽는다. 색, 글자, 모션, telemyr.com에서 가져올 것과 가져오지 말 것, Do / Don't는 그 파일이 기준이다. `src/styles/site.css`와 어긋나면 `DESIGN.md`를 따른다. 화면이 바뀌는 PR은 건드린 기존 페이지의 전후 스크린샷을 넣는다.
+
 ## 개요
 
 kinxdred 메인 웹사이트. Astro 정적 출력 + Vercel adapter. 지금 열려 있는 페이지는 `public/`에 그대로 있고, 캐릭터·작품·세계 데이터는 `src/content`에 있다.
@@ -68,9 +70,8 @@ D14는 `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`를 �
 ## 코딩 컨벤션
 
 - 지금 페이지의 상대 경로를 유지한다. 공용 스크립트의 이미지 경로는 `asset('/assets/...')`
-- 새 페이지의 색·글꼴은 `src/styles/site.css`. 캐릭터 색은 character 파일의 `identity.color`에서 `--accent`로 들어간다
-- 폰트: Syne (제목), DM Mono (본문)
-- 팔레트: `--black: #0a0a0a`, `--yellow: #FFE500`, `--dred: #5B4FCF`, `--white: #f5f5f0`
+- 새 페이지의 색·글꼴은 `src/styles/site.css`에 두되, 값은 `DESIGN.md`를 따른다. 캐릭터 색은 character 파일의 `identity.color`에서 `--accent`로 들어간다. 코드에 KIN, DRED 이름이나 인원수를 박지 않는다
+- 글꼴과 팔레트의 기준은 `DESIGN.md`다. 제목은 Syne, UI는 DM Mono. D14만 Cormorant Garamond와 Share Tech Mono를 쓴다
 - 시각 조정은 `src/styles`, `src/layouts`, `src/pages`의 마크업, `identity.mark`까지. `public/`과 `world/step.js`는 그 작업에 포함하지 않는다
 
 ## 환경변수

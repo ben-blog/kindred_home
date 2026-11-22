@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { text } from '../../lib/locale.js';
 import { compareEntries, isPublicStatus } from '../../lib/publish.js';
 
 const characters = (await getCollection('characters'))
@@ -16,7 +17,7 @@ const characters = (await getCollection('characters'))
       characters.map((entry) => (
         <li>
           <a href={`/characters/${entry.data.slug}/`}>
-            <span style={`color:${entry.data.identity.color}`}>{entry.data.name.en}</span>
+            <span style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</span>
             <span class="meta">
               {entry.data.status}
               {entry.data.aliases[0] ? ` · ${entry.data.aliases[0]}` : ''}

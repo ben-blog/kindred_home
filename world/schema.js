@@ -5,10 +5,46 @@ export const slugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
 export const statusSchema = z.enum(['active', 'archived', 'draft']);
 
-export const localizedSchema = z.strictObject({
-  ko: z.string().min(1),
-  en: z.string().min(1),
-});
+/** Two-letter language, optional region or script: `en`, `ko`, `zh-hant`. */
+const localeKey = z.string().regex(/^[a-z]{2}(?:-[a-z0-9]{2,8})*$/);
+
+/**
+ * A language map. `en` is required. Any other locale key is optional.
+ * `ko` is not special: it is just another locale.
+ */
+export const localizedSchema = z
+  .record(localeKey, z.string().min(1))
+  .superRefine((value, ctx) => {
+    if (typeof value.en !== 'string' || value.en.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'en is required',
+        path: ['en'],
+      });
+    }
+  });
+
+export const siteSchema = z
+  .strictObject({
+    defaultLocale: localeKey,
+    locales: z.array(localeKey).min(1),
+  })
+  .superRefine((site, ctx) => {
+    if (!site.locales.includes('en')) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'locales must include en',
+        path: ['locales'],
+      });
+    }
+    if (!site.locales.includes(site.defaultLocale)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'defaultLocale must be one of locales',
+        path: ['defaultLocale'],
+      });
+    }
+  });
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 
@@ -23,7 +59,7 @@ const relationshipSchema = z
   .strictObject({
     with: slugSchema,
     kinds: z.array(z.string().min(1)).min(1),
-    note: z.string().min(1).optional(),
+    note: localizedSchema.optional(),
     tension: z.number().nonnegative().optional(),
   })
   .superRefine(requireTensionForSseom);

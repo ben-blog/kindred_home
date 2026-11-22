@@ -46,11 +46,14 @@ const calls = (await getCollection('characters'))
 </Base>
 
 <script>
+  import { attachImeEnterGuard } from '../../lib/ime-enter.js';
+
   const form = document.querySelector('#magic-form');
   const email = document.querySelector('#leader-email');
   const tickButton = document.querySelector('#tick-button');
   const signOut = document.querySelector('#sign-out');
   const status = document.querySelector('#auth-status');
+  if (email && form) attachImeEnterGuard(email, form);
 
   function say(text) {
     status.textContent = text;

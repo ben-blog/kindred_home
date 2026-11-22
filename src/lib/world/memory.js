@@ -1,12 +1,16 @@
 /**
  * Adapter for the agent memory map and the chat trace.
  * GET map: { character, basisVersion, basisFingerprint, total, limit, truncated, nextCursor, points }
- * points: { id, kind, label, createdAt, x, y, z }. Label is one line, at most 80 characters.
- * Trace, once, before tokens: { stage: 'retrieved', items: [{ id, kind, label, score }] }.
+ * points: { id, kind, label, createdAt, x, y, z, url? }. Label is one line, at most 80 characters.
+ * url, when present, is an http(s) source. A missing or unsafe url is left off the point.
+ * Traces arrive before the tokens that use them, in that order. Zero or more web searches,
+ * and one retrieved list: { stage: 'retrieved', items: [{ id, kind, label, score }] }.
+ * A web search is { stage: 'web_search', query, results: [{ title, url }] }, at most 5 results.
  * score null is a recency recall. Reflections are listed there and are not on the sphere.
  * This proxy follows nextCursor itself and caches the assembled map for a few seconds.
  * Change this file if that contract moves.
  */
+import { safeHttpUrl } from '../safe-url.js';
 import { clientAddress, createLimiter, sameOrigin } from '../proxy.js';
 import { requireLeader } from './auth.js';
 import { chatRoutes } from './chat.js';
@@ -19,6 +23,9 @@ const CACHE_MS = 8_000;
 const UPSTREAM_LIMIT = 16;
 const MAX_POINTS = 4000;
 const MAX_ITEMS = 40;
+const MAX_RESULTS = 5;
+const QUERY_MAX = 200;
+const TITLE_MAX = 140;
 const MAX_PAGES = 5;
 const MAX_BODY = 2 * 1024 * 1024;
 const PAGE_LIMIT = 1000;
@@ -74,7 +81,13 @@ export function parseMemoryMap(raw, slug) {
 
 export function parseTrace(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  if (raw.stage !== 'retrieved' || !Array.isArray(raw.items)) return null;
+  if (raw.stage === 'retrieved') return parseRetrieved(raw);
+  if (raw.stage === 'web_search') return parseWebSearch(raw);
+  return null;
+}
+
+function parseRetrieved(raw) {
+  if (!Array.isArray(raw.items)) return null;
   const items = [];
   for (const item of raw.items) {
     const clean = cleanItem(item);
@@ -82,6 +95,19 @@ export function parseTrace(raw) {
     if (items.length >= MAX_ITEMS) break;
   }
   return { type: 'trace', stage: 'retrieved', items };
+}
+
+function parseWebSearch(raw) {
+  const query = clipLabel(raw.query, QUERY_MAX);
+  if (!query) return null;
+  const results = [];
+  const list = Array.isArray(raw.results) ? raw.results : [];
+  for (const item of list) {
+    const clean = cleanSearchResult(item);
+    if (clean) results.push(clean);
+    if (results.length >= MAX_RESULTS) break;
+  }
+  return { type: 'trace', stage: 'web_search', query, results };
 }
 
 export function handleWorldMemory(request, options = {}) {
@@ -323,7 +349,16 @@ function cleanPoint(point) {
   if (typeof point.createdAt === 'string' && SINCE.test(point.createdAt)) {
     clean.createdAt = point.createdAt;
   }
+  const url = safeHttpUrl(point.url);
+  if (url) clean.url = url;
   return clean;
+}
+
+function cleanSearchResult(item) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+  const url = safeHttpUrl(item.url);
+  if (!url) return null;
+  return { title: clipLabel(item.title, TITLE_MAX) || url, url };
 }
 
 function cleanItem(item) {
@@ -347,13 +382,13 @@ function cleanId(value) {
   return trimmed;
 }
 
-function clipLabel(value) {
+function clipLabel(value, max = LABEL) {
   if (typeof value !== 'string') return '';
   let out = '';
   for (let index = 0; index < value.length; index += 1) {
     out += value.charCodeAt(index) < 32 ? ' ' : value[index];
   }
-  return out.replace(/ +/g, ' ').trim().slice(0, LABEL);
+  return out.replace(/ +/g, ' ').trim().slice(0, max);
 }
 
 function cleanVersion(value) {

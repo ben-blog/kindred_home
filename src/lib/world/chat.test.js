@@ -302,6 +302,94 @@ test('a trace event is passed through without the rest of the agent payload', as
   assert.deepEqual(events[2].world, { mood: 2, energy: 5 });
 });
 
+test('web search traces stay in arrival order and keep only a title and an http url', async () => {
+  const fetch = leaderFetch(leaderId, async () => {
+    return new Response(
+      sse([
+        'event: trace\ndata: {"stage":"web_search","query":"subculture zines","results":[{"title":"A stack of zines","url":"https://example.com/zines","html":"<script>alert(1)</script>"},{"title":"skip","url":"javascript:alert(1)"}],"secret":"nope"}\n\n',
+        'event: trace\ndata: {"stage":"retrieved","items":[{"id":"m1","kind":"knowledge","label":"a zine","score":0.4,"prompt":"secret"}]}\n\n',
+        'data: {"type":"token","text":"hey"}\n\n',
+        'event: trace\ndata: {"stage":"web_search","query":"later","results":[{"title":"After","url":"http://after.example/x"}]}\n\n',
+        'data: {"type":"done","mood":"calm"}\n\n',
+      ]),
+      { status: 200, headers: { 'content-type': 'text/event-stream' } }
+    );
+  });
+  const response = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({ fetch, vitals: { energy: 5, mood: 2 } })
+  );
+  const events = (await response.text())
+    .split('\n\n')
+    .filter(Boolean)
+    .map((block) => JSON.parse(block.replace(/^data:\s*/, '')));
+  assert.deepEqual(
+    events.map((event) => event.stage || event.type),
+    ['web_search', 'retrieved', 'token', 'web_search', 'done']
+  );
+  assert.deepEqual(events[0], {
+    type: 'trace',
+    stage: 'web_search',
+    query: 'subculture zines',
+    results: [{ title: 'A stack of zines', url: 'https://example.com/zines' }],
+  });
+  assert.equal(events[1].stage, 'retrieved');
+  assert.deepEqual(events[1].items, [{ id: 'm1', kind: 'knowledge', label: 'a zine', score: 0.4 }]);
+  assert.equal(events[3].query, 'later');
+  const text = JSON.stringify(events);
+  assert.equal(text.includes('script'), false);
+  assert.equal(text.includes('javascript'), false);
+  assert.equal(text.includes('secret'), false);
+  assert.equal(text.includes('nope'), false);
+});
+
+test('forceWebSearch is forwarded only when the leader asks for it', async () => {
+  const bodies = [];
+  const fetch = leaderFetch(leaderId, async (_href, init) => {
+    bodies.push(JSON.parse(init.body));
+    return new Response(sse(['data: {"type":"done","mood":"calm"}\n\n']), {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  });
+  const on = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }], forceWebSearch: true },
+    }),
+    base({ fetch })
+  );
+  assert.equal(on.status, 200);
+  assert.equal(bodies[0].forceWebSearch, true);
+  assert.equal(bodies[0].userId, 'ben');
+
+  const off = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }], forceWebSearch: false },
+    }),
+    base({ fetch })
+  );
+  assert.equal(off.status, 200);
+  assert.equal(Object.hasOwn(bodies[1], 'forceWebSearch'), false);
+
+  const bad = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }], forceWebSearch: 'yes' },
+    }),
+    base({
+      fetch: leaderFetch(leaderId, () => {
+        throw new Error('agent should not be called');
+      }),
+    })
+  );
+  assert.equal(bad.status, 400);
+});
+
 test('an upstream failure stays a generic 502', async () => {
   const fetch = leaderFetch(leaderId, async () => {
     return new Response(

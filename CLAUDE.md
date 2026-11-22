@@ -14,8 +14,8 @@ kinxdred 메인 웹사이트. Astro 정적 출력 + Vercel adapter. 지금 열�
 
 - Astro (`output: 'static'`), content collections, `@astrojs/vercel`
 - 살아 있는 페이지는 여전히 순수 HTML / CSS / JS (`public/`)
-- 가벼운 API는 이 저장소의 Vercel function (`/api`). 지금은 `/api/health`만
-- 긴 에이전트는 Railway에 그대로 둔다 (`kin-agent`, `dred-agent`, `mirrored-api`). 이 페이즈에서 호출을 바꾸지 않는다
+- 가벼운 API는 이 저장소의 Vercel function (`/api/health`, `/api/event`)
+- 긴 에이전트는 Railway에 둔다 (`kin-agent`, `dred-agent`, `mirrored-api`). 브라우저는 그 주소를 직접 치지 않고 `/api/event`로 보낸다
 - 데이터는 나중에 Supabase. 이 페이즈에서는 스키마와 reducer만 저장소에 있다. 키를 넣지 않는다
 
 ## 폴더
@@ -30,7 +30,7 @@ public/                 지금 사이트. 빌드가 그대로 복사한다
 ├── js/                 site-base, gallery, d14
 └── assets/gallery/
 src/content/            캐릭터, 세계, 장소, 존재, 관계, 외부 소스, 작품, 캠페인
-src/pages/              /characters, /works, /c/[slug], /api/health
+src/pages/              /characters, /works, /c/[slug], /api/health, /api/event
 world/step.js           step(state, events) -> state
 routing/legacy.js       옛 K2·D2 redirect, GAZE rewrite
 ```
@@ -75,9 +75,14 @@ D14는 `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`를 �
 
 ## 환경변수
 
-- Supabase 클라이언트는 없다. 키를 코드나 브라우저에 두지 않는다
-- 갤러리 Supabase와 D2 API는 더 이상 쓰지 않는다
-- `dred/d2/musicdb/` 옛 스크립트에 삭제된 프로젝트의 service_role 키가 있었다. 그 폴더를 다시 넣지 말 것
+이름은 `.env.example`과 `AGENTS.md`에만 둔다. 값은 Vercel에 넣는다. 비어 있거나 안전한 origin이 아니면 `/api/event`는 503이고, 페이지는 그 응답을 무시한다.
+
+- `KIN_AGENT_URL` — kin-agent origin
+- `DRED_AGENT_URL` — dred-agent origin
+- `MIRRORED_API_URL` — mirrored-api origin. 아직 이 키를 쓰는 캐릭터는 없다
+- `KIN_AGENT_TOKEN`, `DRED_AGENT_TOKEN`, `MIRRORED_API_TOKEN` — 선택. 있을 때만 `Authorization: Bearer`
+
+어느 항목에도 service-role 키를 넣지 않는다. Supabase 클라이언트는 없다. `dred/d2/musicdb/` 옛 스크립트에 삭제된 프로젝트의 service_role 키가 있었다. 그 폴더를 다시 넣지 말 것.
 
 ## Git 주의사항
 

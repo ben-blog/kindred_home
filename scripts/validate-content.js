@@ -8,6 +8,7 @@ const { loaded, errors: schemaErrors } = loadCollections();
 errors.push(...schemaErrors);
 
 const characters = dataOf(loaded.characters);
+const agentPaths = new Map();
 const worlds = dataOf(loaded.world);
 const locations = dataOf(loaded.locations);
 const entities = dataOf(loaded.entities);
@@ -40,7 +41,8 @@ for (const character of characters) {
     errors.push(`characters/${character.slug}: unknown location ${character.location}`);
   }
   for (const alias of character.aliases) {
-    if (!publicPathExists(alias)) errors.push(`characters/${character.slug}: alias ${alias} has no page`);
+    if (!publicPathExists(alias))
+      errors.push(`characters/${character.slug}: alias ${alias} has no page`);
   }
   if (rules) {
     if (character.initial.mood > rules.moodMax) {
@@ -54,7 +56,9 @@ for (const character of characters) {
       errors.push(`characters/${character.slug}: level must be ${level}`);
     }
   }
-  const leaderRelation = relations.find((relation) => connects(relation, character.slug, leader?.slug));
+  const leaderRelation = relations.find((relation) =>
+    connects(relation, character.slug, leader?.slug)
+  );
   if (!leader || !leaderRelation) {
     errors.push(`characters/${character.slug}: needs a relation to the leader`);
   } else if (!leaderRelation.kinds.includes('leader') || !leaderRelation.kinds.includes('friend')) {
@@ -63,14 +67,30 @@ for (const character of characters) {
   for (const listed of character.relationships) {
     const relation = relations.find((item) => connects(item, character.slug, listed.with));
     if (!relation) {
-      errors.push(`characters/${character.slug}: relationship with ${listed.with} has no relation file`);
+      errors.push(
+        `characters/${character.slug}: relationship with ${listed.with} has no relation file`
+      );
       continue;
     }
     if (!sameSet(relation.kinds, listed.kinds)) {
-      errors.push(`characters/${character.slug}: kinds for ${listed.with} differ from the relation file`);
+      errors.push(
+        `characters/${character.slug}: kinds for ${listed.with} differ from the relation file`
+      );
     }
     if ((listed.tension ?? null) !== (relation.tension ?? null)) {
-      errors.push(`characters/${character.slug}: tension for ${listed.with} differs from the relation file`);
+      errors.push(
+        `characters/${character.slug}: tension for ${listed.with} differs from the relation file`
+      );
+    }
+  }
+  if (character.agent) {
+    const previous = agentPaths.get(character.agent.path);
+    if (previous) {
+      errors.push(
+        `characters/${character.slug}: agent path ${character.agent.path} is also used by ${previous}`
+      );
+    } else {
+      agentPaths.set(character.agent.path, character.slug);
     }
   }
   for (const workSlug of character.works) {
@@ -97,15 +117,18 @@ for (const work of works) {
     }
   }
   if (work.external) {
-    if (!rewriteCovers(work.url)) errors.push(`works/${work.slug}: external url ${work.url} is not rewritten`);
+    if (!rewriteCovers(work.url))
+      errors.push(`works/${work.slug}: external url ${work.url} is not rewritten`);
   } else if (!publicPathExists(work.url)) {
     errors.push(`works/${work.slug}: url ${work.url} has no page`);
   }
 }
 
 for (const relation of relations) {
-  if (!entityBySlug.has(relation.from)) errors.push(`relations/${relation.id}: unknown from ${relation.from}`);
-  if (!entityBySlug.has(relation.to)) errors.push(`relations/${relation.id}: unknown to ${relation.to}`);
+  if (!entityBySlug.has(relation.from))
+    errors.push(`relations/${relation.id}: unknown from ${relation.from}`);
+  if (!entityBySlug.has(relation.to))
+    errors.push(`relations/${relation.id}: unknown to ${relation.to}`);
   if (rules && relation.strength > rules.relationMax) {
     errors.push(`relations/${relation.id}: strength exceeds relationMax`);
   }
@@ -130,7 +153,8 @@ for (const source of sources) {
 for (const campaign of campaigns) {
   if (campaign.end < campaign.start) errors.push(`campaigns/${campaign.slug}: end is before start`);
   for (const slug of campaign.characters) {
-    if (!characterBySlug.has(slug)) errors.push(`campaigns/${campaign.slug}: unknown character ${slug}`);
+    if (!characterBySlug.has(slug))
+      errors.push(`campaigns/${campaign.slug}: unknown character ${slug}`);
   }
 }
 

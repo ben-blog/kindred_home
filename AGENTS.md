@@ -26,17 +26,17 @@ Run `npm run check` before opening a PR. `vercel.json` redirects and the `/mood-
 
 - Characters, works, and campaigns are files in `src/content`. Do not hardcode how many characters exist, and do not branch on the names KIN or DRED in code. Tests may name the current canon.
 - A character is `active`, `archived`, or `draft`. Draft is not built. Archived keeps its URL.
-- Secrets stay out of the repo and out of the browser. Do not add Supabase keys, service-role keys, or new Railway calls. Do not change Supabase, Railway, or the existing agent payloads in `public/`.
+- Secrets stay out of the repo and out of the browser. Do not add Supabase keys, service-role keys, or Railway URLs. Do not change Supabase or the Railway services. Do not change the agent event objects the hubs already send (`service`, `event_type`, `payload`, and KIN's `timestamp`).
 - `world/step.js` is the only place that changes world state. It is a pure `step(state, events) -> state`. Visitors enqueue `influence`. The world changes only when the leader ticks. External sources are config only: `fetch` stays `false`.
 - Do not delete or retarget the legacy routes in `routing/legacy.js`.
-- `public/` is the current site, copied through unchanged. Leave it alone unless the user explicitly asks to change the landing page, galleries, or D14.
+- `public/` is the current site. Visual tuning leaves it alone. The hubs post events to `/api/event` and must not call Railway or Supabase themselves.
 
 ## Layout
 
 ```
 public/                 live HTML, CSS, JS, gallery JSON, images. Served as-is.
 src/content/            canon. One JSON file per entry. The file name is the id.
-src/pages/              new Astro pages and /api/health
+src/pages/              new Astro pages, /api/health, and /api/event
 src/layouts/Base.astro  shell for the new pages
 src/styles/site.css     tokens and styles for the new pages only
 world/                  reducer, state builder, zod schemas. No Astro imports in step.js.
@@ -53,6 +53,7 @@ Live URLs that must keep their current behavior:
 - `/mood-camera` and `/mood-camera/*` rewrite to `https://mirrored-five.vercel.app`
 - `/_next/*` rewrites to that same host
 - `/api/health` returns JSON `{ "ok": true }` from a Vercel function
+- `/api/event` accepts a character event and forwards it. See Browser calls. The same allowlist is reachable at the path on the character's `agent.path` (for example `/api/kin/event`)
 
 `/kin` and `/dred` stay the existing hubs. They are recorded as `aliases` on the character. They are not redirects to `/characters/[slug]`. New pages live beside them: `/characters`, `/characters/[slug]`, `/works`, `/works/[slug]`, `/c/[slug]`.
 
@@ -162,6 +163,46 @@ External categories, not fetched:
 - DRED: `music` (`new_song`, `lyrics`)
 - shared: `weather` (`weather`, `season`)
 
+## Browser calls
+
+Hubs and D14 do not call Railway or Supabase. On `kinxdred.com` and `www.kinxdred.com` they POST `/api/event`:
+
+```json
+{ "slug": "kin", "event": { "service": "gallery", "event_type": "gallery_visit", "payload": {} } }
+```
+
+`event` is the existing payload. The function drops `slug` and forwards `event` only. Other hosts skip the call. A failure, including 503, is ignored, so the page still renders.
+
+`POST /api/<slug>/...` forwards only when that exact path is `agent.path` for that character and the method is `POST`. Every other path is 404. Every other method is 405.
+
+Routing is the character file: `slug` -> `agent.upstream`. The proxy has no character-name branches. A new public character is picked up from `src/content/characters`. Its `agent.path` must start with `/api/<slug>/`, and `agent.upstream` must be one of the origin keys below. Draft characters are not routed. `methods` can only list `POST`.
+
+Missing or unsafe origin config fails closed with `503` and `{ "error": "unavailable" }`. The function does not guess a host. Upstream errors are `502` with the same body. Responses never include the upstream body, a stack, or a token.
+
+Per serverless instance, not a global counter:
+
+- JSON body at most 32KB
+- 30 POSTs per IP per 60 seconds. The map holds at most 1000 IPs
+- upstream timeout 8 seconds
+- an `Origin` header must match this request's origin. No `Access-Control-Allow-Origin: *`
+- hop-by-hop headers, cookies, and the caller's `Authorization` are not forwarded
+- the paired `*_TOKEN` is sent as `Authorization: Bearer` only when it is set and is a single header-safe line
+
+### Environment
+
+Set these in the Vercel project. The repo lists the names in `.env.example` and nowhere stores a value.
+
+| Name | Upstream |
+| --- | --- |
+| `KIN_AGENT_URL` | kin-agent origin (`https` host only, no path) |
+| `DRED_AGENT_URL` | dred-agent origin |
+| `MIRRORED_API_URL` | mirrored-api origin |
+| `KIN_AGENT_TOKEN` | optional bearer for kin-agent |
+| `DRED_AGENT_TOKEN` | optional bearer for dred-agent |
+| `MIRRORED_API_TOKEN` | optional bearer for mirrored-api |
+
+No character uses `MIRRORED_API_URL` yet. Nothing in `public/` or `src/` calls mirrored-api. The key is allowlisted so a character file can point at it without a proxy edit. Do not put a service-role key in any of these.
+
 ## Codex and other local CLIs
 
 Visual tuning belongs here, with a browser on `npm run dev`.
@@ -178,7 +219,7 @@ When the first interactive island is needed, add a small UI library such as Prea
 Do not, as part of visual tuning:
 
 - edit `world/step.js`, `routing/legacy.js`, or `public/`
-- add a backend, a key, or a browser call to Railway or Supabase
+- add a key, or a browser call to Railway or Supabase. Hubs already post to `/api/event`
 - rename routes or aliases
 - turn on `fetch` for an external source
 - restyle the preserved galleries by editing `public/**/*.html`
@@ -189,5 +230,5 @@ If a visual change needs one of those, stop and say so.
 
 - Preserved files in `public/` are byte-identical in `.vercel/output/static`.
 - D14's HTML still contains `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`.
-- New character and work pages do not print `railway.app` URLs.
+- Built HTML and JS do not contain `railway.app`, `supabase.co`, or `service_role`.
 - Draft content is absent from the build.

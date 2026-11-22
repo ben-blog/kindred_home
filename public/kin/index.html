@@ -431,9 +431,8 @@ body::after{
 const SFXS = ['HA!','HEY','WOW','!!!','HMM','YO','haha','...','?!','zzz','YES'];
 
 /* ── KIN REPORTER ── */
-const KIN_API = 'https://kin-agent-production.up.railway.app/api/kin/event';
 function reportToKin(event_type, payload = {}) {
-  reportEvent(KIN_API, { service: 'gallery', event_type, payload, timestamp: new Date().toISOString() });
+  reportEvent('kin', { service: 'gallery', event_type, payload, timestamp: new Date().toISOString() });
 }
 
 /* ── STATE ── */

@@ -26,7 +26,9 @@
   ],
   "agent": {
     "service": "kin-agent",
-    "eventPath": "https://kin-agent-production.up.railway.app/api/kin/event"
+    "upstream": "KIN_AGENT_URL",
+    "path": "/api/kin/event",
+    "methods": ["POST"]
   },
   "works": ["kin-gallery"],
   "location": "kin-gallery",

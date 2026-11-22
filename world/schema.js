@@ -12,6 +12,13 @@ export const localizedSchema = z.strictObject({
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 
+/** Env var names the event proxy may use as upstream origins. Values stay in the host env. */
+export const agentUpstreamKeys = ['KIN_AGENT_URL', 'DRED_AGENT_URL', 'MIRRORED_API_URL'];
+
+const agentPathSchema = z
+  .string()
+  .regex(/^\/api\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:[_-][a-z0-9]+)*)+$/);
+
 const relationshipSchema = z
   .strictObject({
     with: slugSchema,
@@ -21,58 +28,76 @@ const relationshipSchema = z
   })
   .superRefine(requireTensionForSseom);
 
-export const characterSchema = z.strictObject({
-  slug: slugSchema,
-  status: statusSchema,
-  name: localizedSchema,
-  aliases: z.array(z.string().regex(/^\/[A-Za-z0-9/_-]*$/)).default([]),
-  profile: z.strictObject({
-    tagline: localizedSchema,
-    bio: localizedSchema,
-    traits: z.array(z.string().min(1)).default([]),
-  }),
-  identity: z.strictObject({
-    color: hexColor,
-    mark: z.strictObject({
-      points: z.number().int().positive(),
-      wobble: z.number().nonnegative(),
-      speed: z.number().positive(),
-      scatterOnHover: z.boolean(),
+export const characterSchema = z
+  .strictObject({
+    slug: slugSchema,
+    status: statusSchema,
+    name: localizedSchema,
+    aliases: z.array(z.string().regex(/^\/[A-Za-z0-9/_-]*$/)).default([]),
+    profile: z.strictObject({
+      tagline: localizedSchema,
+      bio: localizedSchema,
+      traits: z.array(z.string().min(1)).default([]),
     }),
-    model: z.string().min(1).optional(),
-  }),
-  voice: z.strictObject({
-    tone: z.string(),
-    do: z.array(z.string().min(1)).default([]),
-    dont: z.array(z.string().min(1)).default([]),
-    sampleLines: z.array(z.string().min(1)).default([]),
-  }),
-  lore: z
-    .array(
-      z.strictObject({
-        id: slugSchema,
-        title: localizedSchema,
-        body: localizedSchema,
-        unlock: z.strictObject({ stage: z.number().int().positive() }).optional(),
+    identity: z.strictObject({
+      color: hexColor,
+      mark: z.strictObject({
+        points: z.number().int().positive(),
+        wobble: z.number().nonnegative(),
+        speed: z.number().positive(),
+        scatterOnHover: z.boolean(),
+      }),
+      model: z.string().min(1).optional(),
+    }),
+    voice: z.strictObject({
+      tone: z.string(),
+      do: z.array(z.string().min(1)).default([]),
+      dont: z.array(z.string().min(1)).default([]),
+      sampleLines: z.array(z.string().min(1)).default([]),
+    }),
+    lore: z
+      .array(
+        z.strictObject({
+          id: slugSchema,
+          title: localizedSchema,
+          body: localizedSchema,
+          unlock: z.strictObject({ stage: z.number().int().positive() }).optional(),
+        })
+      )
+      .default([]),
+    relationships: z.array(relationshipSchema).default([]),
+    agent: z
+      .strictObject({
+        service: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/),
+        upstream: z.enum(agentUpstreamKeys),
+        path: agentPathSchema,
+        methods: z
+          .array(z.enum(['POST']))
+          .min(1)
+          .max(1)
+          .default(['POST']),
       })
-    )
-    .default([]),
-  relationships: z.array(relationshipSchema).default([]),
-  agent: z
-    .strictObject({
-      service: z.string().min(1),
-      eventPath: z.url(),
-    })
-    .optional(),
-  works: z.array(slugSchema).default([]),
-  location: slugSchema,
-  initial: z.strictObject({
-    mood: z.number().int().nonnegative(),
-    energy: z.number().int().nonnegative(),
-    xp: z.number().int().nonnegative(),
-    level: z.number().int().positive(),
-  }),
-});
+      .optional(),
+    works: z.array(slugSchema).default([]),
+    location: slugSchema,
+    initial: z.strictObject({
+      mood: z.number().int().nonnegative(),
+      energy: z.number().int().nonnegative(),
+      xp: z.number().int().nonnegative(),
+      level: z.number().int().positive(),
+    }),
+  })
+  .superRefine((character, ctx) => {
+    if (!character.agent) return;
+    const prefix = `/api/${character.slug}/`;
+    if (!character.agent.path.startsWith(prefix)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `agent path must start with ${prefix}`,
+        path: ['agent', 'path'],
+      });
+    }
+  });
 
 export const worldRulesSchema = z.strictObject({
   moodThreshold: z.number().int().positive(),

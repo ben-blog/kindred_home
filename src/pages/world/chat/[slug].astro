@@ -43,6 +43,11 @@ const copy = {
   say: text({ en: 'say' }),
   send: text({ en: 'send' }),
   dropped: text({ en: 'The line dropped.' }),
+  rejected: text({ en: "That didn't send." }),
+  timeout: text({ en: 'That took too long.' }),
+  unavailable: text({ en: 'No answer came back.' }),
+  unanswered: text({ en: "They couldn't answer." }),
+  quiet: text({ en: 'Nothing came back.' }),
   wait: text({ en: 'Wait.' }),
   memory: text({ en: 'memory' }),
   offline: text({ en: 'memory offline' }),
@@ -113,10 +118,10 @@ const copy = {
       <ol class="call-log" id="call-log">
         {idle ? <li class="call-empty" id="call-empty">{idle}</li> : null}
       </ol>
-      <form class="call-form" id="call-form">
+      <form class="call-form" id="call-form" novalidate>
         <label class="call-label" for="call-input">{copy.say}</label>
         <div class="call-compose">
-          <textarea id="call-input" name="message" rows="2" maxlength="2000" required></textarea>
+          <textarea id="call-input" name="message" rows="2" maxlength="2000"></textarea>
           <button
             type="button"
             class="call-emoji"

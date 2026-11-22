@@ -305,6 +305,7 @@ await send('keep me');
 await page.waitForFunction(() => document.querySelector('.call-retry'));
 assert.deepEqual(await youTexts(), ['keep me']);
 assert.equal(await page.evaluate(() => window.__chat.requests.length), 1);
+assert.equal(await page.$eval('#call-status', (el) => el.textContent), 'The line dropped.');
 await page.click('.call-retry');
 await page.waitForFunction(() => window.__chat.requests.length === 2);
 assert.equal(
@@ -312,6 +313,53 @@ assert.equal(
   'keep me'
 );
 assert.deepEqual(await youTexts(), ['keep me']);
+
+await open('kin', desktop);
+await page.evaluate(() => {
+  window.__chat.script.push({ status: 400 });
+});
+await send('nope');
+await page.waitForFunction(() => document.querySelector('.call-retry'));
+assert.equal(await page.$eval('#call-status', (el) => el.textContent), "That didn't send.");
+await page.click('.call-retry');
+await page.waitForFunction(() => window.__chat.requests.length === 2);
+assert.equal(await page.evaluate(() => window.__chat.requests[1].messages.at(-1).content), 'nope');
+
+await open('kin', desktop);
+await page.evaluate(() => {
+  window.__chat.script.push({ status: 502 });
+});
+await send('down');
+await page.waitForFunction(() => document.querySelector('.call-retry'));
+assert.equal(await page.$eval('#call-status', (el) => el.textContent), 'No answer came back.');
+
+await open('kin', desktop);
+await page.evaluate(() => {
+  window.__chat.script.push({ status: 504 });
+});
+await send('slow');
+await page.waitForFunction(() => document.querySelector('.call-retry'));
+assert.equal(await page.$eval('#call-status', (el) => el.textContent), 'That took too long.');
+
+await open('kin', desktop);
+await send('stream');
+await page.waitForFunction(() => window.__chat.streams.length === 1);
+await pushText(0, 'data: {"type":"error","message":"unavailable"}\n\n');
+await page.evaluate(() => window.__chat.streams[0].close());
+await page.waitForFunction(() => document.querySelector('.call-retry'));
+assert.equal(await page.$eval('#call-status', (el) => el.textContent), "They couldn't answer.");
+await page.click('.call-retry');
+await page.waitForFunction(() => window.__chat.requests.length === 2);
+assert.equal(
+  await page.evaluate(() => window.__chat.requests.at(-1).messages.at(-1).content),
+  'stream'
+);
+
+await open('kin', desktop);
+await send('');
+assert.equal(await page.evaluate(() => window.__chat.requests.length), 0);
+assert.equal(await page.$eval('#call-input', (el) => el.validationMessage), '');
+assert.equal(await page.$eval('#call-input', (el) => el.required), false);
 
 await open('kin', desktop);
 await send('paint');

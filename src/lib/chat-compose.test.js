@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   CHAT_MAX_TEXT,
+  clampChatText,
+  clampHistory,
   createSseReader,
   EMOJI_GROUPS,
+  explainFailure,
   insertAtCaret,
   isIncompleteGrapheme,
   joinBatch,
@@ -82,6 +85,43 @@ test('the SSE reader keeps a character split across chunks', () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].text, 'Hi 😀');
   assert.equal(events[0].text.includes('\uFFFD'), false);
+});
+
+test('history clamps a long assistant turn and drops a blank one', () => {
+  const history = clampHistory([
+    { role: 'user', content: 'hi' },
+    { role: 'assistant', content: `${'가'.repeat(2500)}` },
+    { role: 'assistant', content: '   ' },
+    { role: 'user', content: '  again  ' },
+  ]);
+  assert.equal(history.length, 3);
+  assert.equal(history[1].role, 'assistant');
+  assert.equal(history[1].content, '가'.repeat(CHAT_MAX_TEXT));
+  assert.equal(history[2].content, 'again');
+  const emoji = `${'a'.repeat(1999)}\uD83D\uDE00`;
+  assert.equal(clampChatText(emoji).length, 1999);
+  assert.equal(clampChatText(emoji).endsWith('\uD83D'), false);
+});
+
+test('a long history keeps the newest line inside the 24-message window', () => {
+  const messages = [];
+  for (let index = 0; index < 30; index += 1) {
+    messages.push({ role: index % 2 === 0 ? 'user' : 'assistant', content: `m${index}` });
+  }
+  const history = clampHistory(messages);
+  assert.equal(history.length, 24);
+  assert.equal(history.at(-1).content, 'm29');
+  assert.equal(history[0].content, 'm6');
+});
+
+test('failure copy follows the status and the stream reason', () => {
+  assert.equal(explainFailure({ reason: 'network' }), 'dropped');
+  assert.equal(explainFailure({ status: 200, reason: 'stream' }), 'unanswered');
+  assert.equal(explainFailure({ status: 200, reason: 'empty' }), 'quiet');
+  assert.equal(explainFailure({ status: 400 }), 'rejected');
+  assert.equal(explainFailure({ status: 504 }), 'timeout');
+  assert.equal(explainFailure({ status: 502 }), 'unavailable');
+  assert.equal(explainFailure({ status: 429 }), 'wait');
 });
 
 test('retry-after accepts seconds and dates and ignores junk', () => {

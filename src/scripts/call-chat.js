@@ -1,7 +1,8 @@
 import {
-  CHAT_MAX_MESSAGES,
+  clampHistory,
   createSseReader,
   EMOJI_GROUPS,
+  explainFailure,
   insertAtCaret,
   joinBatch,
   retryDelayMs,
@@ -186,7 +187,9 @@ export function mountCall(config) {
         }
         if (data.plan && typeof data.plan === 'object') plan = data.plan;
       } else if (data.type === 'error') {
-        throw new Error('stream');
+        const failure = new Error('stream');
+        failure.reason = 'stream';
+        throw failure;
       }
     };
     while (true) {
@@ -432,10 +435,17 @@ export function mountCall(config) {
     turn.emotion.body.textContent = frame?.title
       ? `${result.expression || 'calm'} · ${frame.title}`
       : result.expression || 'calm';
-    if (!result.reply) {
-      body.textContent = copy.dropped;
-      turn.reply.body.textContent = copy.dropped;
-    }
+    body.textContent = result.reply;
+  }
+
+  function failTurn(body, turn, reason, code) {
+    const key = explainFailure({ status: code, reason });
+    const message = copy[key] || copy.dropped;
+    body.textContent = message;
+    if (turn?.reply?.body) turn.reply.body.textContent = message;
+    status.textContent = message;
+    console.warn('[call] chat failed', code ?? reason);
+    if (messages.at(-1)?.role === 'user') messages.pop();
   }
 
   async function perform(batch) {
@@ -445,7 +455,7 @@ export function mountCall(config) {
     status.textContent = '';
     stage.classList.add('is-talking');
     try {
-      const payload = { messages: messages.slice(-CHAT_MAX_MESSAGES) };
+      const payload = { messages: clampHistory(messages) };
       if (sessionId) payload.sessionId = sessionId;
       if (plan) payload.plan = plan;
       if (searchToggle?.getAttribute('aria-pressed') === 'true') payload.forceWebSearch = true;
@@ -458,9 +468,7 @@ export function mountCall(config) {
           body: JSON.stringify(payload),
         });
       } catch {
-        body.textContent = copy.dropped;
-        status.textContent = copy.dropped;
-        if (messages.at(-1)?.role === 'user') messages.pop();
+        failTurn(body, turn, 'network');
         return 'fail';
       }
       if (response.status === 401 || response.status === 403) {
@@ -470,30 +478,33 @@ export function mountCall(config) {
       if (response.status === 429) {
         body.textContent = copy.wait;
         status.textContent = copy.wait;
+        console.warn('[call] chat failed', response.status);
         if (messages.at(-1)?.role === 'user') messages.pop();
         holdUntil = Date.now() + retryDelayMs(response.headers.get('retry-after'));
         return 'rate';
       }
       if (!response.ok || !response.body) {
-        body.textContent = copy.dropped;
-        status.textContent = copy.dropped;
-        if (messages.at(-1)?.role === 'user') messages.pop();
+        failTurn(body, turn, '', response.status);
         return 'fail';
       }
-      const result = await readStream(response, body, turn);
-      finishTurn(body, turn, result);
-      if (!result.reply) {
-        status.textContent = copy.dropped;
-        if (messages.at(-1)?.role === 'user') messages.pop();
+      let result;
+      try {
+        result = await readStream(response, body, turn);
+      } catch (error) {
+        failTurn(body, turn, error?.reason === 'stream' ? 'stream' : 'network', response.status);
         return 'fail';
       }
-      messages.push({ role: 'assistant', content: result.reply });
+      const reply = typeof result.reply === 'string' ? result.reply.trim() : '';
+      if (!reply) {
+        failTurn(body, turn, 'empty', response.status);
+        return 'fail';
+      }
+      finishTurn(body, turn, { ...result, reply });
+      messages.push({ role: 'assistant', content: reply });
       armSaved(turn.saved);
       return 'ok';
     } catch {
-      body.textContent = copy.dropped;
-      status.textContent = copy.dropped;
-      if (messages.at(-1)?.role === 'user') messages.pop();
+      failTurn(body, turn, 'network');
       return 'fail';
     } finally {
       stage.classList.remove('is-talking');

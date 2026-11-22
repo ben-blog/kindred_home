@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { isPublicStatus } from '../../lib/publish.js';
+
+export async function getStaticPaths() {
+  const works = await getCollection('works');
+  return works
+    .filter((entry) => isPublicStatus(entry.data.status))
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+---
+
+<Base title={`${data.title.en} — kinxdred`} description={data.summary.en}>
+  <p class="eyebrow">{data.kind} · {data.scope}</p>
+  <h1>{data.title.en}</h1>
+  <p>{data.summary.ko}</p>
+  <p>{data.summary.en}</p>
+  <a class="primary" href={data.url}>Open {data.url}</a>
+  {
+    data.characters.length > 0 ? (
+      <ul class="links">
+        {data.characters.map((slug) => (
+          <li>
+            <a href={`/characters/${slug}/`}>
+              <span>{slug}</span>
+              <span class="meta">character</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : null
+  }
+</Base>

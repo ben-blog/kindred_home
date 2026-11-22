@@ -1,0 +1,193 @@
+# AGENTS.md
+
+Operating guide for coding agents on kinxdred.com. This includes OpenAI Codex CLI, which the site owner uses locally for visual tuning. `CLAUDE.md` is the Korean companion. If a rule here disagrees with a comment in old code, follow this file and keep `npm run check` green.
+
+The live site must keep working. This phase is structure. It is not a visual redesign.
+
+## Commands
+
+Node 22. From the repo root:
+
+```bash
+npm install
+npm run dev          # http://localhost:4321
+npm run serve        # production build. astro preview does not run with the Vercel adapter
+npm run validate     # content schema and cross-references
+npm test             # world reducer and publish rules
+npm run lint
+npm run build        # static pages + Vercel function output
+npm run check:links  # preserved files, internal links, legacy routes
+npm run check        # all of the above, in that order
+```
+
+Run `npm run check` before opening a PR. `vercel.json` redirects and the `/mood-camera` proxy apply on Vercel. The link check replays the built Vercel route table locally.
+
+## Hard rules
+
+- Characters, works, and campaigns are files in `src/content`. Do not hardcode how many characters exist, and do not branch on the names KIN or DRED in code. Tests may name the current canon.
+- A character is `active`, `archived`, or `draft`. Draft is not built. Archived keeps its URL.
+- Secrets stay out of the repo and out of the browser. Do not add Supabase keys, service-role keys, or new Railway calls. Do not change Supabase, Railway, or the existing agent payloads in `public/`.
+- `world/step.js` is the only place that changes world state. It is a pure `step(state, events) -> state`. Visitors enqueue `influence`. The world changes only when the leader ticks. External sources are config only: `fetch` stays `false`.
+- Do not delete or retarget the legacy routes in `routing/legacy.js`.
+- `public/` is the current site, copied through unchanged. Leave it alone unless the user explicitly asks to change the landing page, galleries, or D14.
+
+## Layout
+
+```
+public/                 live HTML, CSS, JS, gallery JSON, images. Served as-is.
+src/content/            canon. One JSON file per entry. The file name is the id.
+src/pages/              new Astro pages and /api/health
+src/layouts/Base.astro  shell for the new pages
+src/styles/site.css     tokens and styles for the new pages only
+world/                  reducer, state builder, zod schemas. No Astro imports in step.js.
+routing/legacy.js       redirects and GAZE rewrites. vercel.json must match.
+scripts/                validate, route injection, link check
+```
+
+Live URLs that must keep their current behavior:
+
+- `/`, `/index.html`, `/main.html`
+- `/kin`, `/dred`, `/dred/d14` (D14 still loads three.js r128 from cdnjs)
+- `/data/kindred_gallery_kin.json`, `/data/kindred_gallery_dred.json`, `/data/main-actions.json`
+- `/kin/k2`, `/kin/k2/*`, and the same paths with a trailing slash, redirect to `/main.html`. Same for `/dred/d2`.
+- `/mood-camera` and `/mood-camera/*` rewrite to `https://mirrored-five.vercel.app`
+- `/_next/*` rewrites to that same host
+- `/api/health` returns JSON `{ "ok": true }` from a Vercel function
+
+`/kin` and `/dred` stay the existing hubs. They are recorded as `aliases` on the character. They are not redirects to `/characters/[slug]`. New pages live beside them: `/characters`, `/characters/[slug]`, `/works`, `/works/[slug]`, `/c/[slug]`.
+
+There is one world, `kinxdred`. Adding a second file under `src/content/world/` fails validation on purpose.
+
+## Character
+
+`src/content/characters/<slug>.json`, plus a matching `src/content/entities/<slug>.json` with `"kind": "character"` and the same `status`.
+
+Every character has a relation to the leader entity (`ben`, kind `leader`) whose kinds include `leader` and `friend`. That relation is concept only. DRED's relation also includes `썸` (mutual romantic interest, not a couple) and a numeric `tension`. The character file's `relationships` array must match the relation file.
+
+Identity color is `identity.color`. KIN is `#FFE500`. DRED is `#5B4FCF`. New pages set `--accent` from that field. `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) is the future blob mark. Nothing draws it yet. Tuning those numbers is safe.
+
+`initial` is the v0 starting snapshot (`mood`, `energy`, `xp`, `level`). `level` must be `1 + floor(xp / xpPerLevel)`.
+
+### Add
+
+1. Create the character file with `"status": "draft"`.
+2. Add the entity, a location if it needs a new one, and a `leader` + `friend` relation to `ben`.
+3. Point `location` at a location file. Point `works` at work files, or leave it empty.
+4. Run `npm run validate`. Draft pages are not emitted. Preview with `npm run dev` only shows them after you switch the status.
+5. Set `"status": "active"` when it should be public. `/characters/<slug>` is created. No page code changes.
+
+### Change
+
+Edit the character file. A change inside the world (mood, bond, place) is an event fed through `step`, not a hand edit of derived state. Canon edits are the files above. Run `npm run check`.
+
+### Retire
+
+Set the character, its entity, and its works to `"status": "archived"`. Keep the files and the aliases. The URL stays, and `step` does not move an archived character. Do not delete the hub under `public/` until a later phase says that hub is gone.
+
+## Work
+
+`src/content/works/<slug>.json` and `src/content/entities/<slug>.json` with `"kind": "work"`.
+
+- `scope: "character"` lists the cast in `characters`. Each listed character's `works` array must include this slug.
+- `scope: "shared"` has `"characters": []` and appears on every public character. GAZE is shared.
+- `external: false` means `url` is a file under `public/` (`/kin`, `/dred/d14`).
+- `external: true` means `url` is a rewrite (`/mood-camera`). Do not add a `public/` page at that path. A file there would hide the rewrite.
+
+`/works/<slug>` is generated for `active` and `archived`. The live experience stays at `url`.
+
+### Add
+
+Add the work file and the entity. For an interactive piece, add the real page under `public/` and set `url` to it. Run `npm run check`.
+
+### Change
+
+Edit the work file. Keep `url` pointed at the live page.
+
+### Retire
+
+Set the work and its entity to `archived`. Leave `url` working.
+
+## Campaign
+
+`src/content/campaigns/<slug>.json`. `template.json` is a draft example. It is not published. Copy it.
+
+```json
+{
+  "slug": "spring",
+  "status": "draft",
+  "title": { "ko": "...", "en": "..." },
+  "summary": { "ko": "...", "en": "..." },
+  "characters": ["kin"],
+  "start": "2026-03-01",
+  "end": "2026-03-31",
+  "utmCampaign": "spring",
+  "cta": { "label": { "ko": "...", "en": "..." }, "href": "/" }
+}
+```
+
+Set `status` to `active` to publish `/c/<slug>`. `end` must be on or after `start`. Retire by setting `archived` (the URL stays) or `draft` (the URL is not built).
+
+## World model
+
+Static canon lives in `src/content`. `world/state.js` `createState(canon)` builds the initial state. `world/step.js` applies events.
+
+```js
+import { step } from './world/step.js';
+const next = step(state, events);
+```
+
+An event has `id`, `worldId`, `tick`, `at`, `who`, `what`, `where`, `payload`, and `source`. `what` is one of:
+
+| what | source | effect before a tick | effect on the leader's tick |
+| --- | --- | --- | --- |
+| `influence` | `visitor-influence` | queued | warmth on an active character |
+| `agent_action` | `agent` | queued | `move` changes location, `note` is only logged |
+| `external` | `external` | queued | logged, no stat change |
+| `tick` | `leader` | the leader (`who` is the leader slug) advances time | pending events are applied and stamped with the new tick |
+
+Rules in `src/content/world/kinxdred.json`:
+
+- Warmth at or above `moodThreshold` (10) raises mood by 1, capped at `moodMax`.
+- One event may carry at most `maxInfluencePerEvent` (5). Reaching the threshold takes more than one event.
+- No warmth decays energy by `energyIdleDecay`. Warmth adds to energy, capped, and adds to xp.
+- `level` is `1 + floor(xp / xpPerLevel)`. Crossing a level unlocks lore whose `unlock.stage` is now met.
+- Warmth strengthens that character's relation with the leader by 1. A `썸` relation also raises `tension` by 1. If two characters who share a relation both receive warmth, that relation strengthens by 1.
+- Archived characters do not change. Invalid events are ignored. The input state is not mutated.
+
+`whereIs(state, slug)` reads the location after the last tick. Do not persist this state to Supabase in this phase.
+
+External categories, not fetched:
+
+- KIN: `subculture` (`anime_release`, `manga_release`)
+- DRED: `music` (`new_song`, `lyrics`)
+- shared: `weather` (`weather`, `season`)
+
+## Codex and other local CLIs
+
+Visual tuning belongs here, with a browser on `npm run dev`.
+
+Safe to edit while watching the page:
+
+- `src/styles/site.css`
+- markup and layout in `src/layouts` and `src/pages` (except `src/pages/api`)
+- `identity.mark` and profile copy in character JSON
+- a new component under `src/components`
+
+When the first interactive island is needed, add a small UI library such as Preact and use `client:visible` or `client:idle`. Keep three.js off the character pages. D14 already loads r128. Do not upgrade it in a visual pass.
+
+Do not, as part of visual tuning:
+
+- edit `world/step.js`, `routing/legacy.js`, or `public/`
+- add a backend, a key, or a browser call to Railway or Supabase
+- rename routes or aliases
+- turn on `fetch` for an external source
+- restyle the preserved galleries by editing `public/**/*.html`
+
+If a visual change needs one of those, stop and say so.
+
+## Checks that must stay true
+
+- Preserved files in `public/` are byte-identical in `.vercel/output/static`.
+- D14's HTML still contains `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`.
+- New character and work pages do not print `railway.app` URLs.
+- Draft content is absent from the build.

@@ -1,0 +1,14 @@
+{
+  "slug": "gaze",
+  "status": "active",
+  "title": { "ko": "GAZE", "en": "GAZE" },
+  "summary": {
+    "ko": "같은 사진, 다른 시선. 주소는 /mood-camera.",
+    "en": "Same photo, different eyes. The page is /mood-camera."
+  },
+  "kind": "external",
+  "url": "/mood-camera",
+  "external": true,
+  "scope": "shared",
+  "characters": []
+}

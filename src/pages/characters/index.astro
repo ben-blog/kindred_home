@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { compareEntries, isPublicStatus } from '../../lib/publish.js';
+
+const characters = (await getCollection('characters'))
+  .filter((entry) => isPublicStatus(entry.data.status))
+  .sort(compareEntries);
+---
+
+<Base title="Characters — kinxdred" description="Characters in the kinxdred world.">
+  <p class="eyebrow">characters</p>
+  <h1>Roster</h1>
+  <ul class="links">
+    {
+      characters.map((entry) => (
+        <li>
+          <a href={`/characters/${entry.data.slug}/`}>
+            <span style={`color:${entry.data.identity.color}`}>{entry.data.name.en}</span>
+            <span class="meta">
+              {entry.data.status}
+              {entry.data.aliases[0] ? ` · ${entry.data.aliases[0]}` : ''}
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

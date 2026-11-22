@@ -1,0 +1,8 @@
+{
+  "id": "kin-ben",
+  "from": "kin",
+  "to": "ben",
+  "kinds": ["leader", "friend"],
+  "strength": 2,
+  "note": "Concept only. Leader and friend."
+}

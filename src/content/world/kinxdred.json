@@ -1,0 +1,15 @@
+{
+  "id": "kinxdred",
+  "name": "kinxdred",
+  "tick": 0,
+  "rules": {
+    "moodThreshold": 10,
+    "moodMax": 5,
+    "energyMax": 10,
+    "energyIdleDecay": 1,
+    "xpPerLevel": 10,
+    "relationMax": 8,
+    "tensionMax": 10,
+    "maxInfluencePerEvent": 5
+  }
+}

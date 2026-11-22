@@ -1,0 +1,14 @@
+{
+  "slug": "dred-gallery",
+  "status": "active",
+  "title": { "ko": "DRED Gallery", "en": "DRED Gallery" },
+  "summary": {
+    "ko": "DRED 갤러리. 주소는 /dred.",
+    "en": "The DRED gallery. The page is /dred."
+  },
+  "kind": "gallery",
+  "url": "/dred",
+  "external": false,
+  "scope": "character",
+  "characters": ["dred"]
+}

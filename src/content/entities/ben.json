@@ -1,0 +1,10 @@
+{
+  "slug": "ben",
+  "kind": "leader",
+  "name": "Ben",
+  "status": "active",
+  "role": {
+    "ko": "이 세계를 만든 사람. 모든 캐릭터의 leader이자 friend. 지금은 개념만 둔다.",
+    "en": "Creator of this world. Leader and friend of every character. Concept only."
+  }
+}

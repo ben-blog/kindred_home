@@ -1,0 +1,7 @@
+{
+  "id": "shared-weather",
+  "scope": "shared",
+  "category": "weather",
+  "kinds": ["weather", "season"],
+  "fetch": false
+}

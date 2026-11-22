@@ -33,25 +33,26 @@ export async function mountSphere(root, call, options) {
   scene.add(rig);
 
   const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(1.02, 28, 20),
+    new THREE.SphereGeometry(1, 24, 16),
     new THREE.MeshBasicMaterial({
       color: accent,
-      wireframe: true,
       transparent: true,
-      opacity: layout === 'void' ? 0.12 : 0.22,
+      opacity: 0.035,
+      depthWrite: false,
     })
   );
   rig.add(shell);
 
-  const dot = circleTexture(THREE);
+  const dot = glowTexture(THREE);
   const material = new THREE.PointsMaterial({
-    size: layout === 'void' ? 0.055 : 0.085,
+    size: layout === 'void' ? 0.05 : 0.06,
     map: dot,
     vertexColors: true,
     transparent: true,
-    opacity: layout === 'void' ? 0.62 : 0.95,
+    opacity: layout === 'void' ? 0.8 : 0.95,
     depthWrite: false,
     sizeAttenuation: true,
+    blending: THREE.AdditiveBlending,
   });
   let pointsMesh = null;
   let lineMesh = null;
@@ -92,6 +93,7 @@ export async function mountSphere(root, call, options) {
       new THREE.BufferAttribute(new Float32Array(records.length * 3), 3)
     );
     pointsMesh = new THREE.Points(geometry, material);
+    material.size = pointSize(records.length, layout);
     rig.add(pointsMesh);
     writeBuffers(1);
   }
@@ -103,7 +105,7 @@ export async function mountSphere(root, call, options) {
     records.forEach((record, index) => {
       position.setXYZ(index, record.shown.x, record.shown.y, record.shown.z);
       const tint = record.color.clone();
-      if (retrieved.has(record.id)) tint.lerp(new THREE.Color('#ffffff'), 0.55 * glow);
+      if (retrieved.has(record.id)) tint.lerp(new THREE.Color('#ffffff'), 0.35 + 0.65 * glow);
       if (record.id === focusId) tint.lerp(new THREE.Color('#ffffff'), 0.8);
       color.setXYZ(index, tint.r, tint.g, tint.b);
     });
@@ -239,14 +241,23 @@ function kindColor(THREE, accent, kind, layout) {
   return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l);
 }
 
-function circleTexture(THREE) {
+function pointSize(count, layout) {
+  const base = layout === 'void' ? 0.05 : 0.062;
+  const scale = Math.min(1, 16 / Math.sqrt(Math.max(count, 1)));
+  return base * Math.max(0.35, scale);
+}
+
+function glowTexture(THREE) {
   const canvas = document.createElement('canvas');
   canvas.width = 64;
   canvas.height = 64;
   const context = canvas.getContext('2d');
-  context.fillStyle = '#ffffff';
-  context.beginPath();
-  context.arc(32, 32, 28, 0, Math.PI * 2);
-  context.fill();
+  const glow = context.createRadialGradient(32, 32, 0, 32, 32, 32);
+  glow.addColorStop(0, 'rgba(255,255,255,1)');
+  glow.addColorStop(0.18, 'rgba(255,255,255,0.9)');
+  glow.addColorStop(0.45, 'rgba(255,255,255,0.22)');
+  glow.addColorStop(1, 'rgba(255,255,255,0)');
+  context.fillStyle = glow;
+  context.fillRect(0, 0, 64, 64);
   return new THREE.CanvasTexture(canvas);
 }

@@ -642,6 +642,24 @@ html.frame-character:has(.call) body {
   width: 168px;
 }
 
+.call-memory .call-tool,
+.call-memory-label,
+.call-memory-status {
+  background: rgba(8, 8, 8, 0.78);
+  backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.call-memory .call-tool {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.call-memory-label:not([hidden]),
+.call-memory-status:not([hidden]) {
+  display: inline-block;
+  padding: 0.15rem 0.35rem;
+}
+
 .call-memory-view {
   width: 168px;
   height: 168px;

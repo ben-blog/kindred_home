@@ -12,10 +12,10 @@ import { corsHeaders, guard, json } from './http.js';
 
 export const MEMORY_RATE_LIMIT = 40;
 export const MEMORY_TIMEOUT_MS = 8_000;
-const MAX_POINTS = 400;
+const MAX_POINTS = 4000;
 const MAX_ITEMS = 12;
 const MAX_IDS = 40;
-const MAX_BODY = 512 * 1024;
+const MAX_BODY = 2 * 1024 * 1024;
 const LABEL = 80;
 const ID = 80;
 const KIND = /^[a-z0-9][a-z0-9_-]{0,39}$/i;

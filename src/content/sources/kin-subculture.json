@@ -1,0 +1,8 @@
+{
+  "id": "kin-subculture",
+  "scope": "character",
+  "character": "kin",
+  "category": "subculture",
+  "kinds": ["anime_release", "manga_release"],
+  "fetch": false
+}

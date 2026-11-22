@@ -1,0 +1,80 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { compareEntries, isPublicStatus, worksForCharacter } from '../../lib/publish.js';
+
+export async function getStaticPaths() {
+  const characters = await getCollection('characters');
+  return characters
+    .filter((entry) => isPublicStatus(entry.data.status))
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+const [works, relations, entities] = await Promise.all([
+  getCollection('works'),
+  getCollection('relations'),
+  getCollection('entities'),
+]);
+const names = new Map(entities.map((item) => [item.data.slug, item.data.name]));
+const relatedWorks = worksForCharacter(data.slug, works).sort(compareEntries);
+const bonds = relations
+  .filter((relation) => relation.data.from === data.slug || relation.data.to === data.slug)
+  .sort((a, b) => a.data.id.localeCompare(b.data.id));
+const hub = data.aliases[0];
+const notes = new Map(data.relationships.map((item) => [item.with, item.note]));
+---
+
+<Base title={`${data.name.en} — kinxdred`} description={data.profile.bio.en} accent={data.identity.color}>
+  <p class="eyebrow">
+    {data.status === 'archived' ? <span class="status-archived">archived</span> : data.status}
+    {data.agent ? ` · ${data.agent.service}` : ''}
+  </p>
+  <h1>{data.name.en}</h1>
+  <p>{data.profile.tagline.ko} / {data.profile.tagline.en}</p>
+  <p class="swatch"><i></i> {data.identity.color}</p>
+  <p>{data.profile.bio.ko}</p>
+  <p>{data.profile.bio.en}</p>
+  {hub ? <a class="primary" href={hub}>Open {hub}</a> : null}
+
+  <h2>Works</h2>
+  <ul class="links">
+    {
+      relatedWorks.map((work) => (
+        <li>
+          <a href={work.data.url}>
+            <span>{work.data.title.en}</span>
+            <span class="meta">{work.data.url}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2>Relationships</h2>
+  <ul class="bonds">
+    {
+      bonds.map((relation) => {
+        const other = relation.data.from === data.slug ? relation.data.to : relation.data.from;
+        return (
+          <li class="card">
+            <span>
+              {names.get(other) ?? other}
+              <span class="note"> · {relation.data.kinds.join(' · ')}</span>
+              {(notes.get(other) ?? relation.data.note) ? (
+                <span class="note"> — {notes.get(other) ?? relation.data.note}</span>
+              ) : null}
+            </span>
+            {relation.data.kinds.includes('썸') && typeof relation.data.tension === 'number' ? (
+              <span class="meta">tension {relation.data.tension}</span>
+            ) : null}
+          </li>
+        );
+      })
+    }
+  </ul>
+</Base>

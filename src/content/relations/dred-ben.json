@@ -1,0 +1,9 @@
+{
+  "id": "dred-ben",
+  "from": "dred",
+  "to": "ben",
+  "kinds": ["leader", "friend", "썸"],
+  "strength": 2,
+  "tension": 2,
+  "note": "Leader and friend, plus 썸: mutual romantic interest, not a couple yet."
+}

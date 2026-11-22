@@ -1,0 +1,35 @@
+---
+import '../styles/site.css';
+
+const { title, description, accent = '' } = Astro.props;
+const accentStyle = /^#[0-9A-Fa-f]{6}$/.test(accent) ? `--accent:${accent}` : '';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body style={accentStyle}>
+    <header class="top">
+      <a href="/">kinxdred</a>
+      <nav>
+        <a href="/characters">characters</a>
+        <a href="/works">works</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>

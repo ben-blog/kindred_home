@@ -1,0 +1,34 @@
+{
+  "slug": "kin",
+  "status": "active",
+  "name": { "ko": "KIN", "en": "KIN" },
+  "aliases": ["/kin"],
+  "profile": {
+    "tagline": { "ko": "갤러리", "en": "Gallery" },
+    "bio": {
+      "ko": "KIN의 갤러리. 지금 열려 있는 페이지는 /kin 이다.",
+      "en": "KIN's gallery. The live page is /kin."
+    },
+    "traits": []
+  },
+  "identity": {
+    "color": "#FFE500",
+    "mark": { "points": 6, "wobble": 0.08, "speed": 1, "scatterOnHover": true }
+  },
+  "voice": { "tone": "", "do": [], "dont": [], "sampleLines": [] },
+  "lore": [],
+  "relationships": [
+    {
+      "with": "ben",
+      "kinds": ["leader", "friend"],
+      "note": "Ben은 이 세계의 leader이자 friend다. 지금은 개념만 둔다."
+    }
+  ],
+  "agent": {
+    "service": "kin-agent",
+    "eventPath": "https://kin-agent-production.up.railway.app/api/kin/event"
+  },
+  "works": ["kin-gallery"],
+  "location": "kin-gallery",
+  "initial": { "mood": 2, "energy": 5, "xp": 0, "level": 1 }
+}

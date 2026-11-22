@@ -3,9 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "lint": "eslint js",
-    "lint:fix": "eslint js --fix",
-    "format": "prettier --write js",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build && node scripts/apply-legacy-routes.js",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "serve": "node scripts/serve-built.js",
+    "validate": "node scripts/validate-content.js",
+    "test": "node --test world/*.test.js src/lib/*.test.js scripts/*.test.js",
+    "check:links": "node scripts/check-links.js",
+    "check": "npm run validate && npm test && npm run lint && npm run build && npm run check:links",
+    "lint": "eslint public/js world routing scripts src/lib src/pages/api",
+    "lint:fix": "eslint public/js world routing scripts src/lib src/pages/api --fix",
+    "format": "prettier --write public/js world routing scripts src/lib src/pages/api",
     "prepare": "node -e \"process.exit(process.env.CI ? 0 : 1)\" || husky"
   },
   "devDependencies": {
@@ -17,9 +25,13 @@
     "prettier": "^3.0.0"
   },
   "lint-staged": {
-    "js/**/*.js": [
+    "public/js/**/*.js": [
       "eslint --fix",
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^11.0.22",
+    "astro": "^7.4.13"
   }
 }

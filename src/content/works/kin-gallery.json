@@ -1,0 +1,14 @@
+{
+  "slug": "kin-gallery",
+  "status": "active",
+  "title": { "ko": "KIN Gallery", "en": "KIN Gallery" },
+  "summary": {
+    "ko": "KIN 갤러리. 주소는 /kin.",
+    "en": "The KIN gallery. The page is /kin."
+  },
+  "kind": "gallery",
+  "url": "/kin",
+  "external": false,
+  "scope": "character",
+  "characters": ["kin"]
+}

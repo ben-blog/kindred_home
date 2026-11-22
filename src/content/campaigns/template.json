@@ -1,0 +1,17 @@
+{
+  "slug": "template",
+  "status": "draft",
+  "title": { "ko": "템플릿", "en": "Template" },
+  "summary": {
+    "ko": "발행되지 않는 캠페인 예시. 실제 캠페인을 만들 때 복사한다.",
+    "en": "Unpublished campaign template. Copy it when adding a real campaign."
+  },
+  "characters": [],
+  "start": "2026-01-01",
+  "end": "2026-01-02",
+  "utmCampaign": "template",
+  "cta": {
+    "label": { "ko": "홈", "en": "Home" },
+    "href": "/"
+  }
+}

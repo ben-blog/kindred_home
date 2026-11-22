@@ -1,30 +1,33 @@
 # kinxdred
 
-KIN × DRED. 정적 HTML/CSS/JS. Vercel에서 연다.
+KIN × DRED. Astro로 빌드하고 Vercel에서 연다. 지금 열려 있는 랜딩, 메인, 갤러리, D14는 `public/`에 그대로 있다.
 
-주소는 `https://kindred-home.vercel.app` 이다.
+주소는 `https://kindred-home.vercel.app` 이고, 도메인은 `https://kinxdred.com` 이다.
 
-갤러리와 D14는 저장소 안 데이터다. K2(퀴즈·월드컵)와 D2(선곡)는 뺐다. 옛 주소 `/kin/k2`, `/kin/k2/*`, `/dred/d2`, `/dred/d2/*` 는 끝의 `/`가 있어도 Vercel에서 `/main.html`로 보낸다. 「3년 후 나는」외부 링크도 뺐다. GAZE는 `/mood-camera` 프록시로 그대로다.
+갤러리와 D14는 저장소 안 데이터다. K2(퀴즈·월드컵)와 D2(선곡)는 뺐다. 옛 주소 `/kin/k2`, `/kin/k2/*`, `/dred/d2`, `/dred/d2/*` 는 끝의 `/`가 있어도 `/main.html`로 보낸다. GAZE는 `/mood-camera` 프록시로 그대로다.
+
+캐릭터·작품·세계 문서는 `AGENTS.md`.
 
 ## 로컬 확인
 
 ```bash
-python3 -m http.server 8765
+npm install
+npm run dev
 ```
 
-`http://127.0.0.1:8765/` 는 Vercel과 같이 사이트 루트다. `vercel.json`의 redirect와 `/mood-camera` 프록시는 Vercel에서만 적용된다. 로컬 정적 서버는 그 경로를 대신 열어 주지 않는다.
+`http://localhost:4321/` 가 사이트 루트다. 프로덕션 출력은 `npm run build` 다음 `npm run check:links` 가 라우트 표로 확인한다. `vercel.json`의 redirect와 `/mood-camera` 프록시는 Vercel 배포에서 적용되고, 링크 검사는 그 라우트 표를 로컬에서 다시 적용한다.
 
 ## 갤러리 이미지
 
-`assets/gallery/`는 Supabase Storage 버킷 `assets`의 원본 webp다. 페이지는 파일명만 붙인다 (`/assets/gallery/<filename>`). KIN 23장, DRED 28장(활성), 비활성 2장. D14 옥상 그림 `dred_rooftop_sunset_v1.webp`는 DRED 갤러리 항목이기도 하다.
+`public/assets/gallery/`는 Supabase Storage 버킷 `assets`의 원본 webp다. 페이지는 파일명만 붙인다 (`/assets/gallery/<filename>`). KIN 23장, DRED 28장(활성), 비활성 2장. D14 옥상 그림 `dred_rooftop_sunset_v1.webp`는 DRED 갤러리 항목이기도 하다.
 
 ## 데이터
 
 | 파일 | 내용 |
 | --- | --- |
-| `data/kindred_gallery_kin.json` | 활성 KIN 23. 스키마 v2.1에 `show_on_main`, `like_count`, 태그 추가 |
-| `data/kindred_gallery_dred.json` | 활성 DRED 28. 같은 스키마 |
-| `data/main-actions.json` | `show_on_main=true` 16장. 메인 메뉴는 그 중 링크가 있는 카드만 그린다. 남은 링크는 GAZE와 D14 |
+| `public/data/kindred_gallery_kin.json` | 활성 KIN 23. 스키마 v2.1에 `show_on_main`, `like_count`, 태그 추가 |
+| `public/data/kindred_gallery_dred.json` | 활성 DRED 28. 같은 스키마 |
+| `public/data/main-actions.json` | `show_on_main=true` 16장. 메인 메뉴는 그 중 링크가 있는 카드만 그린다. 남은 링크는 GAZE와 D14 |
 
 본문 순서는 DB `order_num`, 같으면 `id`다. 항목 1–23의 태그는 `gallery_item_tags`, 그 다음 항목은 `gallery_items.tags`다. 활성인데 파일이 없는 카드는 `kindred_mood_camera`뿐이고 `/mood-camera`로 간다.
 

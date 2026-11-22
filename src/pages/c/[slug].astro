@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { isPublicStatus } from '../../lib/publish.js';
+
+export async function getStaticPaths() {
+  const campaigns = await getCollection('campaigns');
+  return campaigns
+    .filter((entry) => isPublicStatus(entry.data.status))
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+---
+
+<Base title={`${data.title.en} — kinxdred`} description={data.summary.en}>
+  <p class="eyebrow">
+    {data.status} · {data.start} – {data.end}
+  </p>
+  <h1>{data.title.en}</h1>
+  <p>{data.summary.ko}</p>
+  <p>{data.summary.en}</p>
+  <a class="primary" href={data.cta.href}>{data.cta.label.en}</a>
+</Base>

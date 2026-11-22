@@ -1,0 +1,14 @@
+{
+  "slug": "d14",
+  "status": "active",
+  "title": { "ko": "D14", "en": "D14" },
+  "summary": {
+    "ko": "D14. 주소는 /dred/d14.",
+    "en": "D14. The page is /dred/d14."
+  },
+  "kind": "experience",
+  "url": "/dred/d14",
+  "external": false,
+  "scope": "character",
+  "characters": ["dred"]
+}

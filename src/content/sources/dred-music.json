@@ -1,0 +1,8 @@
+{
+  "id": "dred-music",
+  "scope": "character",
+  "character": "dred",
+  "category": "music",
+  "kinds": ["new_song", "lyrics"],
+  "fetch": false
+}

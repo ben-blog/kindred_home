@@ -16,7 +16,13 @@
     "ground": "#080806",
     "mark": { "type": "gaze", "delay": 280, "easing": [0.87, 0, 0.13, 1] }
   },
-  "voice": { "tone": "", "do": [], "dont": [], "sampleLines": [] },
+  "voice": {
+    "tone": "",
+    "do": [],
+    "dont": [],
+    "sampleLines": [],
+    "idle": { "en": "Watching. Speak when you want." }
+  },
   "lore": [],
   "relationships": [
     {

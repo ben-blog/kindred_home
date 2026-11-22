@@ -110,6 +110,8 @@ export const characterSchema = z
       do: z.array(z.string().min(1)).default([]),
       dont: z.array(z.string().min(1)).default([]),
       sampleLines: z.array(z.string().min(1)).default([]),
+      /** Quiet line in an empty call. Omitted means the transcript starts blank. */
+      idle: localizedSchema.optional(),
     }),
     lore: z
       .array(

@@ -32,6 +32,7 @@ const data = entry.data;
 const surface = characterSurface(data);
 const name = text(data.name);
 const tagline = text(data.profile.tagline);
+const idle = text(data.voice.idle);
 const galleryPath = path.join(process.cwd(), 'public', 'data', `kindred_gallery_${data.slug}.json`);
 const gallery = existsSync(galleryPath) ? JSON.parse(readFileSync(galleryPath, 'utf8')) : { images: [] };
 const frames = callFrames(gallery, expressions.get(data.slug));
@@ -76,7 +77,9 @@ const copy = {
       <div class="call-self"><span>{copy.you}</span></div>
     </section>
     <section class="call-side">
-      <ol class="call-log" id="call-log"></ol>
+      <ol class="call-log" id="call-log">
+        {idle ? <li class="call-empty" id="call-empty">{idle}</li> : null}
+      </ol>
       <form class="call-form" id="call-form">
         <label class="call-label" for="call-input">{copy.say}</label>
         <textarea id="call-input" name="message" rows="2" maxlength="2000" required></textarea>
@@ -201,6 +204,7 @@ const copy = {
     status.textContent = '';
     input.value = '';
     messages.push({ role: 'user', content: value });
+    document.querySelector('#call-empty')?.remove();
     line(copy.you, value, true);
     const body = line(name, '', false);
     stage.classList.add('is-talking');

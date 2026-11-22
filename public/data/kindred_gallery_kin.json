@@ -211,22 +211,7 @@
         "kin_perspective": "oh hey lol everyone's looking somewhere else. whatever everyone's got their own direction i'm just looking at mine",
         "dred_perspective": "doesn't care that they're the only one facing this way. that's KIN's thing."
       },
-      "actions": {
-        "ko": [
-          {
-            "type": "link",
-            "label": "Gaze",
-            "url": "/mood-camera"
-          }
-        ],
-        "en": [
-          {
-            "type": "link",
-            "label": "Gaze",
-            "url": "/mood-camera"
-          }
-        ]
-      }
+      "actions": {}
     },
     {
       "id": "kin_c2_convenience_night",

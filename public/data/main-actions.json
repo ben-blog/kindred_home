@@ -1,33 +1,5 @@
 [
   {
-    "item_id": "kindred_mood_camera",
-    "character": "kindred",
-    "title_ko": "GAZE",
-    "title_en": "GAZE",
-    "show_on_main": true,
-    "order_num": 1,
-    "actions": {
-      "ko": [
-        {
-          "type": "link",
-          "label": "GAZE",
-          "url": "/mood-camera",
-          "title": "GAZE",
-          "desc": "같은 사진, 다른 시선"
-        }
-      ],
-      "en": [
-        {
-          "type": "link",
-          "label": "GAZE",
-          "url": "/mood-camera",
-          "title": "GAZE",
-          "desc": "Same Photo, Different Eyes"
-        }
-      ]
-    }
-  },
-  {
     "item_id": "kin_room_mangacafe",
     "character": "kin",
     "title_ko": "곧 돌아올 자리",

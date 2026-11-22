@@ -15,6 +15,7 @@ export const vercelRewrites = [
     destination: 'https://mirrored-five.vercel.app/mood-camera/:path*',
   },
   { source: '/_next/:path*', destination: 'https://mirrored-five.vercel.app/_next/:path*' },
+  { source: '/assets/gallery/:file', destination: '/api/gallery/file?name=:file' },
 ];
 
 /**

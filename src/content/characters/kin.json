@@ -38,6 +38,7 @@
     "chat": "/api/kin/chat",
     "chatUser": "ben",
     "memory": "/api/kin/memory/map",
+    "album": "/api/kin/album-moment",
     "methods": ["POST"]
   },
   "works": ["kin-gallery"],

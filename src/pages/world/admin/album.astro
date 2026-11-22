@@ -1,0 +1,453 @@
+---
+import { getCollection } from 'astro:content';
+import Frame from '../../../components/world/Frame.astro';
+import Base from '../../../layouts/Base.astro';
+import { memoryEmotions } from '../../../config/memory-emotions.js';
+import { text } from '../../../lib/locale.js';
+import { isPublicStatus } from '../../../lib/publish.js';
+
+const people = (await getCollection('characters'))
+  .filter((entry) => isPublicStatus(entry.data.status) && entry.data.agent?.album)
+  .sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+
+const fields = [
+  ['title', 'title'],
+  ['technique', 'technique'],
+  ['description', 'description'],
+  ['kin_perspective', 'kin perspective'],
+  ['dred_perspective', 'dred perspective'],
+];
+---
+
+<Base frame="world" title="Album — kinxdred" description="Leader album for the kinxdred galleries.">
+  <Frame>
+    <div class="album">
+      <p class="eyebrow">leader</p>
+      <h1>Album</h1>
+      <p class="world-copy"><a href="/world/admin">tick</a></p>
+      <form class="panel" id="magic-form">
+        <label class="eyebrow" for="leader-email">email</label>
+        <input id="leader-email" name="email" type="email" autocomplete="username" required maxlength="200" />
+        <div class="world-actions">
+          <button type="submit">send link</button>
+          <button type="button" id="sign-out" hidden>sign out</button>
+        </div>
+      </form>
+      <div id="studio" hidden>
+        <form class="panel" id="upload-form">
+          <label class="eyebrow" for="album-character">character</label>
+          <select id="album-character" name="character" required>
+            {
+              people.map((entry) => (
+                <option value={entry.data.slug}>{text(entry.data.name)}</option>
+              ))
+            }
+          </select>
+          <label class="eyebrow" for="album-file">picture</label>
+          <input id="album-file" name="image" type="file" accept="image/png,image/jpeg,image/webp" required />
+          <label class="eyebrow" for="album-note">note</label>
+          <input id="album-note" name="note" type="text" maxlength="200" placeholder="optional, one line" />
+          <div class="world-actions">
+            <button type="submit">upload</button>
+          </div>
+        </form>
+        <ul class="album-list" id="album-list"></ul>
+        <form class="panel" id="review" hidden>
+          <img class="album-preview" id="review-image" alt="" />
+          <p class="meta" id="review-meta"></p>
+          <label class="eyebrow" for="field-style">style</label>
+          <input id="field-style" maxlength="80" />
+          <label class="eyebrow" for="field-tags">tags</label>
+          <textarea id="field-tags" placeholder="한국어 | english"></textarea>
+          <div class="album-columns">
+            <div>
+              <p class="eyebrow">ko</p>
+              {
+                fields.map(([key, label]) => (
+                  <label class="eyebrow" for={`ko-${key}`}>
+                    {label}
+                    <textarea id={`ko-${key}`} data-locale="ko" data-key={key}></textarea>
+                  </label>
+                ))
+              }
+            </div>
+            <div>
+              <p class="eyebrow">en</p>
+              {
+                fields.map(([key, label]) => (
+                  <label class="eyebrow" for={`en-${key}`}>
+                    {label}
+                    <textarea id={`en-${key}`} data-locale="en" data-key={key}></textarea>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+          <label class="eyebrow" for="field-summary">felt memory</label>
+          <textarea id="field-summary" maxlength="600"></textarea>
+          <label class="eyebrow" for="field-emotion">emotion</label>
+          <select id="field-emotion">
+            {memoryEmotions.map((emotion) => <option value={emotion}>{emotion}</option>)}
+          </select>
+          <label class="eyebrow" for="field-intensity">intensity</label>
+          <input id="field-intensity" type="number" min="0" max="1" step="0.01" />
+          <label class="eyebrow" for="field-reason">why</label>
+          <input id="field-reason" maxlength="180" />
+          <label class="eyebrow" for="field-main">
+            <input id="field-main" type="checkbox" /> show on main
+          </label>
+          <div class="world-actions">
+            <button type="button" id="save">save</button>
+            <button type="button" id="regenerate">regenerate</button>
+            <button type="button" id="publish">approve and publish</button>
+          </div>
+          <label class="eyebrow" for="reject-reason">reject because</label>
+          <input id="reject-reason" maxlength="500" />
+          <div class="world-actions">
+            <button type="button" id="reject">reject</button>
+          </div>
+        </form>
+      </div>
+      <p class="world-status" id="album-status" aria-live="polite"></p>
+    </div>
+  </Frame>
+</Base>
+
+<script>
+  import { attachImeEnterGuard } from '../../../lib/ime-enter.js';
+
+  const form = document.querySelector('#magic-form');
+  const email = document.querySelector('#leader-email');
+  const signOut = document.querySelector('#sign-out');
+  const studio = document.querySelector('#studio');
+  const status = document.querySelector('#album-status');
+  const uploadForm = document.querySelector('#upload-form');
+  const list = document.querySelector('#album-list');
+  const review = document.querySelector('#review');
+  const reviewImage = document.querySelector('#review-image');
+  const reviewMeta = document.querySelector('#review-meta');
+  if (email && form) attachImeEnterGuard(email, form);
+
+  const jsonHeaders = { 'content-type': 'application/json', accept: 'application/json' };
+  let current = null;
+  let busy = false;
+
+  function say(text) {
+    status.textContent = text;
+  }
+
+  async function readBody(response) {
+    return response.json().catch(() => ({}));
+  }
+
+  function detail(body, fallback) {
+    return body.detail || fallback;
+  }
+
+  async function refreshSession() {
+    const response = await fetch('/api/world/auth/session', { headers: { accept: 'application/json' } });
+    if (response.status === 503) {
+      say('Unavailable.');
+      studio.hidden = true;
+      return false;
+    }
+    const body = await readBody(response);
+    const signedIn = body.signedIn === true;
+    studio.hidden = !signedIn;
+    signOut.hidden = !signedIn;
+    email.disabled = signedIn;
+    if (signedIn) {
+      say('Signed in.');
+      await loadList();
+    }
+    return signedIn;
+  }
+
+  async function loadList() {
+    const response = await fetch('/api/world/album', { headers: { accept: 'application/json' } });
+    if (!response.ok) return;
+    const body = await readBody(response);
+    list.replaceChildren();
+    for (const item of body.submissions || []) {
+      const entry = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      const title = item.caption?.en?.title || item.caption?.ko?.title || 'untitled';
+      button.textContent = `${item.character} · ${item.status} · ${title}`;
+      button.addEventListener('click', () => openItem(item));
+      entry.append(button);
+      list.append(entry);
+    }
+  }
+
+  function setFields(caption) {
+    document.querySelector('#field-style').value = caption?.style || '';
+    document.querySelector('#field-tags').value = (caption?.tags || [])
+      .map((tag) => `${tag.name_ko} | ${tag.name_en}`)
+      .join('\n');
+    for (const node of review.querySelectorAll('[data-locale]')) {
+      const block = caption?.[node.dataset.locale] || {};
+      node.value = block[node.dataset.key] || '';
+    }
+    document.querySelector('#field-summary').value = caption?.felt?.summary || '';
+    document.querySelector('#field-emotion').value = caption?.felt?.emotion?.label || 'calm';
+    document.querySelector('#field-intensity').value =
+      caption?.felt?.emotion?.intensity ?? '';
+    document.querySelector('#field-reason').value = caption?.felt?.emotion?.reason || '';
+    document.querySelector('#field-main').checked = caption?.show_on_main === true;
+  }
+
+  function readCaption() {
+    const block = (locale) => {
+      const out = {};
+      for (const node of review.querySelectorAll(`[data-locale="${locale}"]`)) {
+        out[node.dataset.key] = node.value;
+      }
+      return out;
+    };
+    const tags = document
+      .querySelector('#field-tags')
+      .value.split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [ko, en] = line.split('|');
+        return { name_ko: (ko || '').trim(), name_en: (en || ko || '').trim() };
+      });
+    return {
+      style: document.querySelector('#field-style').value,
+      tags,
+      ko: block('ko'),
+      en: block('en'),
+      felt: {
+        summary: document.querySelector('#field-summary').value,
+        emotion: {
+          label: document.querySelector('#field-emotion').value,
+          intensity: Number(document.querySelector('#field-intensity').value),
+          reason: document.querySelector('#field-reason').value,
+        },
+      },
+      show_on_main: document.querySelector('#field-main').checked,
+    };
+  }
+
+  function openItem(item) {
+    current = item;
+    review.hidden = false;
+    reviewImage.src = item.ready ? `/api/world/album/${item.id}/file` : '';
+    reviewImage.alt = item.caption?.en?.title || item.character;
+    reviewMeta.textContent = [item.character, item.status, item.leaderNote, item.reviewerNote]
+      .filter(Boolean)
+      .join(' · ');
+    setFields(item.caption);
+    const locked = item.status !== 'generated';
+    for (const node of review.querySelectorAll('input, textarea, select')) {
+      if (node.id === 'reject-reason') continue;
+      node.disabled = locked;
+    }
+    document.querySelector('#save').disabled = locked;
+    document.querySelector('#publish').disabled = locked;
+    document.querySelector('#regenerate').disabled = !(
+      item.ready && (item.status === 'drafted' || item.status === 'generated')
+    );
+    document.querySelector('#reject').disabled = !(item.status === 'drafted' || item.status === 'generated');
+  }
+
+  async function upload(file, character, note) {
+    const created = await fetch('/api/world/album', {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ character, note, type: file.type, bytes: file.size }),
+    });
+    const createdBody = await readBody(created);
+    if (!created.ok) throw new Error(detail(createdBody, 'The upload did not start.'));
+    const size = createdBody.chunkBytes;
+    for (let index = 0, offset = 0; offset < file.size; index += 1) {
+      const piece = file.slice(offset, offset + size);
+      const sent = await fetch(`/api/world/album/${createdBody.id}/chunk?index=${index}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/octet-stream' },
+        body: piece,
+      });
+      if (!sent.ok) {
+        const body = await readBody(sent);
+        throw new Error(detail(body, 'A piece of the upload failed.'));
+      }
+      offset += size;
+    }
+    const received = await fetch(`/api/world/album/${createdBody.id}/receive`, { method: 'POST' });
+    const receivedBody = await readBody(received);
+    if (!received.ok) throw new Error(detail(receivedBody, 'The picture could not be saved.'));
+    const generated = await fetch(`/api/world/album/${createdBody.id}/generate`, { method: 'POST' });
+    const generatedBody = await readBody(generated);
+    await loadList();
+    if (!generated.ok) {
+      openItem(receivedBody);
+      throw new Error(detail(generatedBody, 'The caption failed. Regenerate.'));
+    }
+    openItem(generatedBody);
+    say('Caption ready.');
+  }
+
+  const params = new URLSearchParams(location.search);
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type');
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+  if (tokenHash || accessToken || params.get('error')) history.replaceState(null, '', location.pathname);
+
+  try {
+    if (params.get('error')) say('The link did not work.');
+    else if (tokenHash && type) {
+      const response = await fetch('/api/world/auth/session', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ tokenHash, type }),
+      });
+      say(response.ok ? 'Signed in.' : 'The link did not work.');
+    } else if (accessToken && refreshToken) {
+      const response = await fetch('/api/world/auth/session', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ accessToken, refreshToken }),
+      });
+      say(response.ok ? 'Signed in.' : 'The link did not work.');
+    }
+    await refreshSession();
+  } catch {
+    say('Unavailable.');
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    say('Sending.');
+    try {
+      const response = await fetch('/api/world/auth/magic', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ email: email.value }),
+      });
+      say(response.ok ? 'Check your email.' : 'Unavailable.');
+    } catch {
+      say('Unavailable.');
+    }
+  });
+
+  signOut.addEventListener('click', async () => {
+    await fetch('/api/world/auth/session', { method: 'DELETE' }).catch(() => {});
+    studio.hidden = true;
+    say('');
+    await refreshSession().catch(() => {});
+  });
+
+  uploadForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (busy) return;
+    const file = document.querySelector('#album-file').files[0];
+    if (!file) return;
+    busy = true;
+    say('Uploading.');
+    try {
+      await upload(
+        file,
+        document.querySelector('#album-character').value,
+        document.querySelector('#album-note').value
+      );
+    } catch (error) {
+      say(error.message || 'The upload failed.');
+    }
+    busy = false;
+  });
+
+  async function postCaption(path, caption) {
+    const response = await fetch(path, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify(caption ? { caption } : {}),
+    });
+    const body = await readBody(response);
+    if (!response.ok) throw new Error(detail(body, 'That did not work.'));
+    return body;
+  }
+
+  document.querySelector('#save').addEventListener('click', async () => {
+    if (!current || busy) return;
+    busy = true;
+    say('Saving.');
+    try {
+      const response = await fetch(`/api/world/album/${current.id}`, {
+        method: 'PATCH',
+        headers: jsonHeaders,
+        body: JSON.stringify({ caption: readCaption() }),
+      });
+      const body = await readBody(response);
+      if (!response.ok) throw new Error(detail(body, 'The caption is missing a field.'));
+      openItem(body);
+      await loadList();
+      say('Saved.');
+    } catch (error) {
+      say(error.message);
+    }
+    busy = false;
+  });
+
+  document.querySelector('#regenerate').addEventListener('click', async () => {
+    if (!current || busy) return;
+    busy = true;
+    say('Writing.');
+    try {
+      const response = await fetch(`/api/world/album/${current.id}/generate`, { method: 'POST' });
+      const body = await readBody(response);
+      if (!response.ok) throw new Error(detail(body, 'The caption failed. Regenerate.'));
+      openItem(body);
+      await loadList();
+      say('Caption ready.');
+    } catch (error) {
+      say(error.message);
+    }
+    busy = false;
+  });
+
+  document.querySelector('#publish').addEventListener('click', async () => {
+    if (!current || busy) return;
+    busy = true;
+    say('Publishing.');
+    try {
+      const body = await postCaption(`/api/world/album/${current.id}/publish`, readCaption());
+      say(body.url ? `Published. ${body.url}` : 'Published.');
+      await loadList();
+      if (body.status) openItem({ ...current, status: 'published', galleryItemId: body.itemId, ready: true });
+    } catch (error) {
+      say(error.message);
+      await loadList();
+    }
+    busy = false;
+  });
+
+  document.querySelector('#reject').addEventListener('click', async () => {
+    if (!current || busy) return;
+    const reason = document.querySelector('#reject-reason').value.trim();
+    if (!reason) {
+      say('A rejection needs a reason.');
+      return;
+    }
+    busy = true;
+    say('Rejecting.');
+    try {
+      const response = await fetch(`/api/world/album/${current.id}/reject`, {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ reason }),
+      });
+      const body = await readBody(response);
+      if (!response.ok) throw new Error(detail(body, 'That did not work.'));
+      openItem(body);
+      await loadList();
+      say('Rejected.');
+    } catch (error) {
+      say(error.message);
+    }
+    busy = false;
+  });
+</script>

@@ -114,6 +114,16 @@ for (const character of characters) {
         agentPaths.set(character.agent.memory, character.slug);
       }
     }
+    if (character.agent.album) {
+      const albumOwner = agentPaths.get(character.agent.album);
+      if (albumOwner) {
+        errors.push(
+          `characters/${character.slug}: agent album ${character.agent.album} is also used by ${albumOwner}`
+        );
+      } else {
+        agentPaths.set(character.agent.album, character.slug);
+      }
+    }
   }
   for (const workSlug of character.works) {
     const work = workBySlug.get(workSlug);

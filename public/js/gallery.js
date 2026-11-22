@@ -60,6 +60,24 @@ function normalizeTags(tags) {
     .filter(Boolean);
 }
 
+function mergeGalleryImages(images, extra) {
+  var seen = Object.create(null);
+  var out = Array.isArray(images) ? images.slice() : [];
+  for (var i = 0; i < out.length; i++) {
+    var current = out[i];
+    if (current && current.id) seen[current.id] = true;
+    if (current && current.filename) seen['file:' + current.filename] = true;
+  }
+  var more = Array.isArray(extra) ? extra : [];
+  for (var j = 0; j < more.length; j++) {
+    var im = more[j];
+    if (!im || !im.filename) continue;
+    if ((im.id && seen[im.id]) || seen['file:' + im.filename]) continue;
+    out.push(im);
+  }
+  return out;
+}
+
 function gallerySrc(filename) {
   return asset('/assets/gallery/' + filename);
 }

@@ -133,6 +133,8 @@ export const characterSchema = z
         chat: agentPathSchema.optional(),
         /** Memory map on that agent. Omitted means the call has no sphere. */
         memory: agentPathSchema.optional(),
+        /** Album-moment write on that agent. Omitted means publish cannot store a memory. */
+        album: agentPathSchema.optional(),
         /** User id the agent expects. The browser cannot choose a different one. */
         chatUser: z
           .string()
@@ -176,6 +178,13 @@ export const characterSchema = z
           code: 'custom',
           message: `agent memory path must start with ${prefix}`,
           path: ['agent', 'memory'],
+        });
+      }
+      if (character.agent.album && !character.agent.album.startsWith(prefix)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `agent album path must start with ${prefix}`,
+          path: ['agent', 'album'],
         });
       }
     }

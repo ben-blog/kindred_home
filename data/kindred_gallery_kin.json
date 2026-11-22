@@ -1,7 +1,7 @@
 {
   "character": "KIN",
   "version": "2.1",
-  "updated": "2026",
+  "updated": "2026-11-22",
   "images": [
     {
       "id": "kin_g3_bus_risograph",
@@ -9,7 +9,30 @@
       "style": "G — Risograph Print",
       "order_num": 1,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 6,
+      "tags": [
+        {
+          "name_ko": "버스",
+          "name_en": "bus"
+        },
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "이동중",
+          "name_en": "in transit"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "Two Stops Away",
         "technique": "Risograph 2도 오버프린트. teal과 red 잉크 레이어가 어긋나며 동일 인물의 두 시선이 한 프레임에 겹침. 크림 페이퍼 베이스, 망점, 잉크 번짐.",
@@ -32,7 +55,22 @@
       "style": "K — Adachi Mitsuru Style",
       "order_num": 2,
       "is_active": true,
-      "tags": [],
+      "show_on_main": true,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "방",
+          "name_en": "room"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "아다치",
+          "name_en": "adachi style"
+        }
+      ],
       "ko": {
         "title": "곧 돌아올 자리",
         "technique": "아다치 미쓰루 스타일 인테리어 일러스트. 따뜻한 선화, 소프트 채색. 옐로우 컬러 팔레트 중심. 캐릭터 부재 씬.",
@@ -47,7 +85,26 @@
         "kin_perspective": "oh right i was sitting here. energy drink's probably warm now. but i need to know what happens next so.",
         "dred_perspective": "KIN's spot is always like this. gone but still there."
       },
-      "actions": {}
+      "actions": {
+        "ko": [
+          {
+            "type": "link",
+            "label": "너의 만화·애니",
+            "url": "/kin/k2/",
+            "title": "넌 어떤 만화·애니 덕후?",
+            "desc": "KIN이 고른 장면들, 퀴즈로 만나봐"
+          }
+        ],
+        "en": [
+          {
+            "type": "link",
+            "label": "manga · anime",
+            "url": "/kin/k2/",
+            "title": "what kind of otaku are you?",
+            "desc": "scenes KIN picked, meet them as a quiz"
+          }
+        ]
+      }
     },
     {
       "id": "kin_a1_laptop_night",
@@ -55,7 +112,26 @@
       "style": "A — Korean Webtoon Flat",
       "order_num": 3,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "방",
+          "name_en": "room"
+        },
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "찾았다",
         "technique": "Korean Webtoon Flat 스타일. 플랫 컬러, 굵은 블랙 아웃라인. 네이비 블루 배경에 랩탑 화면 빛이 얼굴을 조명.",
@@ -78,7 +154,26 @@
       "style": "A — Korean Webtoon Flat",
       "order_num": 4,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "편의점",
+          "name_en": "convenience store"
+        },
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "이게 맞을 것 같은데",
         "technique": "Korean Webtoon Flat 스타일. 편의점 형광등 아래 자연스러운 채광. 선반과 냉장고 배경 디테일 묘사.",
@@ -101,7 +196,26 @@
       "style": "C — 차차(@cha_cha_9_9) Style",
       "order_num": 5,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "지하철",
+          "name_en": "subway"
+        },
+        {
+          "name_ko": "군중속",
+          "name_en": "in a crowd"
+        },
+        {
+          "name_ko": "관찰",
+          "name_en": "observing"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "나만 이 방향",
         "technique": "차차 스타일. 극단적 원근법 탑뷰. KIN만 선명하고 채도 높게, 군중은 모노크롬.",
@@ -116,7 +230,22 @@
         "kin_perspective": "oh hey lol everyone's looking somewhere else. whatever everyone's got their own direction i'm just looking at mine",
         "dred_perspective": "doesn't care that they're the only one facing this way. that's KIN's thing."
       },
-      "actions": {}
+      "actions": {
+        "ko": [
+          {
+            "type": "link",
+            "label": "Gaze",
+            "url": "/mood-camera"
+          }
+        ],
+        "en": [
+          {
+            "type": "link",
+            "label": "Gaze",
+            "url": "/mood-camera"
+          }
+        ]
+      }
     },
     {
       "id": "kin_c2_convenience_night",
@@ -124,7 +253,26 @@
       "style": "C — 차차(@cha_cha_9_9) Style",
       "order_num": 6,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "편의점",
+          "name_en": "convenience store"
+        },
+        {
+          "name_ko": "새벽",
+          "name_en": "dawn"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "KIN",
         "technique": "차차 스타일. 극단적 worm's eye view. 바닥에서 올려다보는 시점. 피시아이 렌즈 왜곡. KIN 레터링 타이포.",
@@ -147,7 +295,14 @@
       "style": "G — Risograph Print",
       "order_num": 7,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "됐어, 해",
         "technique": "Risograph 단색 인쇄. 옐로우+블랙 2도. 망점 텍스처, 그레인. KIN 타이포그래피. 포스터 포맷.",
@@ -170,7 +325,26 @@
       "style": "G — Risograph Print",
       "order_num": 8,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "지하철",
+          "name_en": "subway"
+        },
+        {
+          "name_ko": "대기",
+          "name_en": "waiting"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "다음 차 타면 되지",
         "technique": "Risograph 2도 인쇄. 옐로우+블랙 팔레트. 지하철 모션블러가 망점으로 표현됨. 수직 구도.",
@@ -193,7 +367,26 @@
       "style": "C — 차차(@cha_cha_9_9) Style",
       "order_num": 9,
       "is_active": true,
-      "tags": [],
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "방",
+          "name_en": "room"
+        },
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "시간 가는 줄 몰랐어",
         "technique": "차차 스타일. 탑뷰 bird's eye view. KIN과 스케치북만 선명, 주변은 탈색. 심야.",
@@ -212,15 +405,19 @@
         "ko": [
           {
             "type": "link",
-            "label": "3년 후의 나 계산해보기",
-            "url": "https://mirrored-five.vercel.app/"
+            "label": "3년 후 나는",
+            "url": "https://mirrored-five.vercel.app/",
+            "title": "3년 후에 난 뭐하고 있을까",
+            "desc": "지금의 선택이 3년 뒤 어디로 데려가는지"
           }
         ],
         "en": [
           {
             "type": "link",
-            "label": "see your next 3 years",
-            "url": "https://mirrored-five.vercel.app/"
+            "label": "3 years later",
+            "url": "https://mirrored-five.vercel.app/",
+            "title": "where will i be in 3 years?",
+            "desc": "where does todays choice take you"
           }
         ]
       }
@@ -231,7 +428,18 @@
       "style": "K — Adachi Mitsuru Style",
       "order_num": 10,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "아다치",
+          "name_en": "adachi style"
+        }
+      ],
       "ko": {
         "title": "그냥 나야",
         "technique": "아다치 미쓰루 스타일. 절제된 선화, 플랫 옐로우+화이트 컬러, 흰 배경. 최소한의 음영.",
@@ -254,7 +462,22 @@
       "style": "K — Adachi Mitsuru Style",
       "order_num": 11,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 2,
+      "tags": [
+        {
+          "name_ko": "거리",
+          "name_en": "street"
+        },
+        {
+          "name_ko": "낮",
+          "name_en": "daytime"
+        },
+        {
+          "name_ko": "아다치",
+          "name_en": "adachi style"
+        }
+      ],
       "ko": {
         "title": "이거 진짜 맛있다고",
         "technique": "아다치 미쓰루 스타일. 따뜻한 앰버 톤 채색, 소프트한 선화. 오코노미야끼 가게 인테리어.",
@@ -268,6 +491,379 @@
         "description": "Okonomiyaki counter. KIN lifts a piece with chopsticks, mouth already open. Eyes wide. Sizzling on the iron plate to the left.",
         "kin_perspective": "okay listen the sauce ratio matters. mayo first then sauce. other way around and it's different. just trust me on this",
         "dred_perspective": "face said it before the words did."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_paris_mini_v1",
+      "filename": "kin_paris_mini_v1.webp",
+      "style": "K — Adachi Mitsuru Style",
+      "order_num": 12,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "낮",
+          "name_en": "daytime"
+        },
+        {
+          "name_ko": "거리",
+          "name_en": "street"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "아다치",
+          "name_en": "adachi style"
+        },
+        {
+          "name_ko": "자동차",
+          "name_en": "car"
+        }
+      ],
+      "ko": {
+        "title": "여기도 KIN이 있음",
+        "technique": "Adachi Mitsuru 스타일. 따뜻한 워터컬러 터치, 부드러운 라인워크. 파리 코블스톤 거리, 클래식 미니쿠퍼 다크그린. 자연광, 흐린 배경 인물.",
+        "description": "파리 거리. KIN이 클래식 미니쿠퍼 보닛에 기대 팔짱을 끼고 서있음. 번호판엔 KIN 01. 표정은 여유롭고 약간 뿌듯함. 어디서든 이런 순간을 찾아내는 게 KIN이라는 걸 알 수 있음.",
+        "kin_perspective": "파리까지 왔는데 차도 멋지고 날씨도 좋고ㅋ 이 차 내 거임? 아닌가. 아무튼 분위기는 내 거임",
+        "dred_perspective": "어디 가든 자기 자리를 만드는 타입."
+      },
+      "en": {
+        "title": "KIN Shows Up Here Too",
+        "technique": "Adachi Mitsuru style. Warm watercolor touch, soft linework. Paris cobblestone street, classic dark green Mini Cooper. Natural light, softly sketched background figures.",
+        "description": "Paris street. KIN leans against the hood of a classic Mini Cooper, arms crossed. Plate reads KIN 01. Expression relaxed, a little pleased. Finding moments like this anywhere — that's just KIN.",
+        "kin_perspective": "all the way in paris and the car is cute and the weather is nice lol. is this my car?? probably not. vibe is mine though",
+        "dred_perspective": "the type that makes a place their own wherever they go."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_cherry_blossom_v2",
+      "filename": "kin_cherry_blossom_v2.webp",
+      "style": "K — Adachi Mitsuru Style",
+      "order_num": 13,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "낮",
+          "name_en": "daytime"
+        },
+        {
+          "name_ko": "군중속",
+          "name_en": "in a crowd"
+        },
+        {
+          "name_ko": "이동중",
+          "name_en": "in transit"
+        },
+        {
+          "name_ko": "아다치",
+          "name_en": "adachi style"
+        }
+      ],
+      "ko": {
+        "title": "이 정도면 충분히 봄이지",
+        "technique": "Adachi Mitsuru 스타일. 핑크 벚꽃 터널, 따뜻한 봄빛. 실사에 가까운 배경 군중, 아웃포커스. 옐로우+화이트 팔레트.",
+        "description": "윤중로 벚꽃길. KIN이 백팩 메고 천천히 걷고 있음. 양옆으로 사람들이 지나가는데 KIN은 그냥 앞을 봄. 꽃잎이 떨어지고 빛이 부드럽게 내려앉음. 특별히 뭔가를 하는 것도 아닌데, 이 순간 자체가 충분함.",
+        "kin_perspective": "사람 많을 줄 알았는데 막상 오니까 괜찮네ㅋ 꽃도 예쁘고 날씨도 좋고. 이런 날은 그냥 걸으면 됨",
+        "dred_perspective": "봄은 설명 없이도 기분이 좋아짐. 그게 맞는 것 같음."
+      },
+      "en": {
+        "title": "This Is Enough Spring",
+        "technique": "Adachi Mitsuru style. Pink cherry blossom tunnel, warm spring light. Near-realistic background crowd, out of focus. Yellow + white palette.",
+        "description": "Yeouido cherry blossom path. KIN walks slowly with a backpack. People pass on either side but KIN just looks ahead. Petals fall, light settles softly. Not doing anything in particular — but this moment is enough.",
+        "kin_perspective": "thought it'd be packed but once i got here it was actually fine lol. flowers are pretty and the weather is nice. days like this you just walk",
+        "dred_perspective": "spring makes you feel good without needing a reason. seems right."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_chaos_v1",
+      "filename": "kin_scene_chaos_v1.webp",
+      "style": "A — Korean Webtoon Flat",
+      "order_num": 21,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "동시에 다 하려다가",
+        "technique": "플랫 컬러 라인아트. 옐로우 소용돌이 배경. 탑뷰 카오스 구도.",
+        "description": "그림도 그리고 농구도 하고 코딩도 하고 싶음. 동시에. 물건들이 다 날아다님. KIN은 이게 정상 상태임.",
+        "kin_perspective": "이거 나 맞음. 근데 다 함ㅋ 언젠간",
+        "dred_perspective": "하나만 해."
+      },
+      "en": {
+        "title": "Trying to Do Everything at Once",
+        "technique": "Flat color line art. Yellow swirl background. Top-view chaos composition.",
+        "description": "Wants to draw, play ball, and code. All at once. Everything's flying. This is KIN's baseline.",
+        "kin_perspective": "this is literally me. but i'll do all of it. eventually",
+        "dred_perspective": "pick one."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_handrake_v1",
+      "filename": "kin_scene_handrake_v1.webp",
+      "style": "A — Korean Webtoon Flat",
+      "order_num": 22,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "뭔가 생각났을 때",
+        "technique": "플랫 컬러 라인아트. 오렌지 + 마젠타 블롭 배경. 클로즈업 포트레이트.",
+        "description": "머리에 손 얹고 카메라 봄. 방금 뭔가 떠올랐거나 아니면 그냥 포즈임. 둘 다일 수도.",
+        "kin_perspective": "어 잠깐만 생각났어 뭔가. 까먹기 전에 적어야 하는데",
+        "dred_perspective": "적어. 안 적으면 사라짐."
+      },
+      "en": {
+        "title": "When Something Hits",
+        "technique": "Flat color line art. Orange + magenta blob background. Close-up portrait.",
+        "description": "Hand on head, looking at the camera. Either just had an idea or this is just a pose. Could be both.",
+        "kin_perspective": "wait wait wait i just thought of something. gotta write it down before it's gone",
+        "dred_perspective": "write it down. it'll disappear."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_leanback_v1",
+      "filename": "kin_scene_leanback_v1.webp",
+      "style": "A — Korean Webtoon Flat",
+      "order_num": 23,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "중력이 선택사항일 때",
+        "technique": "플랫 컬러 라인아트. 옐로우 단색 배경. 풀바디 다이나믹 포즈.",
+        "description": "앞으로 기울어져 있음. 데님 재킷. 옐로우 배경. 이유는 모름. KIN은 원래 이러고 다님.",
+        "kin_perspective": "이게 편함 사실ㅋ 왜인지는 나도 모름",
+        "dred_perspective": "허리 나간다."
+      },
+      "en": {
+        "title": "Gravity Optional",
+        "technique": "Flat color line art. Solid yellow background. Full body dynamic pose.",
+        "description": "Leaning forward at an angle that shouldn't work. Denim jacket. Yellow background. No reason. KIN just does this.",
+        "kin_perspective": "this is actually comfortable lol. don't ask me why",
+        "dred_perspective": "your back."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_dred_scene_laundry_v1",
+      "filename": "kin_dred_scene_laundry_v1.webp",
+      "style": "G — Risograph Print",
+      "order_num": 24,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "세탁 중 (대화 없음)",
+        "technique": "리소그래프 그레인 텍스처. 핑크/퍼플 팔레트. KIN×DRED 첫 투샷.",
+        "description": "KIN은 서서 책 읽음. DRED는 세탁기 위에 앉아있음. 토끼 두 마리. 아무 말 없음. 근데 같이 있음.",
+        "kin_perspective": "이거 좋음. 아무 말 안 해도 되는 사람 옆에 있는 거",
+        "dred_perspective": "."
+      },
+      "en": {
+        "title": "Laundry (No Talking)",
+        "technique": "Risograph grain texture. Pink/purple palette. First KIN×DRED two-shot.",
+        "description": "KIN reads standing up. DRED sits on the washer. Two rabbits. No conversation. Still together.",
+        "kin_perspective": "this is nice. being with someone you don't have to talk to",
+        "dred_perspective": "."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_hyundaestore_v1",
+      "filename": "kin_scene_hyundaestore_v1.webp",
+      "style": "G — Risograph Print",
+      "order_num": 25,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "현대상점 앞에서",
+        "technique": "리소그래프 프린트 — 블루+옐로우 2도 인쇄, 하프톤 텍스처",
+        "description": "달 뜬 밤, 가게 앞 의자에 앉아 책 한 권. 딱히 집에 갈 이유가 없었다.",
+        "kin_perspective": "어 이거 재밌는데ㅋㅋ 한 페이지만 더 읽고 들어가야지",
+        "dred_perspective": "읽고 있군."
+      },
+      "en": {
+        "title": "Outside Hyundae Store",
+        "technique": "Risograph Print — two-color blue and yellow, halftone texture",
+        "description": "A book, a stool, a quiet night outside the store. No real reason to go home yet.",
+        "kin_perspective": "oh wait this is actually good lol. one more page then I'll head in.",
+        "dred_perspective": "Reading."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_recordshop_v1",
+      "filename": "kin_scene_recordshop_v1.webp",
+      "style": "D3 — Painterly Solitude",
+      "order_num": 26,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "찾았다, 이거",
+        "technique": "페인터리 소프트 렌더링 — 드라마틱 단일 조명, 따뜻한 앰버 톤",
+        "description": "좁고 어두운 레코드샵. 헤드폰 쓰고 음반 하나 꺼내 들었는데 — 딱 맞는 게 있었다.",
+        "kin_perspective": "야 이거 진짜다. 이런 거 찾으려고 여기 온 거잖아",
+        "dred_perspective": "찾는 건 좋아하지 않는다."
+      },
+      "en": {
+        "title": "Found It",
+        "technique": "Painterly soft render — single overhead lamp, warm amber tones",
+        "description": "A cramped record shop, headphones on. Pulled one out and it just clicked.",
+        "kin_perspective": "this is it. this is exactly why I came here.",
+        "dred_perspective": "I don't search."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_rooftop_v1",
+      "filename": "kin_scene_rooftop_v1.webp",
+      "style": "D2 — City Pop Illustration",
+      "order_num": 27,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "그냥 올려다봄",
+        "technique": "시티팝 일러스트 — 로우앵글 구도, 썸머 컬러 팔레트",
+        "description": "아무 이유 없이 올라왔다. 도시가 아래 있고, 하늘이 위에 있고, 비행기 한 대.",
+        "kin_perspective": "그냥 올라오고 싶었어. 이유 같은 거 없어",
+        "dred_perspective": "비효율적이다."
+      },
+      "en": {
+        "title": "Just Looking Up",
+        "technique": "City pop illustration — low angle composition, summer color palette",
+        "description": "No reason to come up here. City below, sky above, one plane.",
+        "kin_perspective": "just felt like coming up. no reason.",
+        "dred_perspective": "Inefficient."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_greenstore_v1",
+      "filename": "kin_scene_greenstore_v1.webp",
+      "style": "A — Korean Webtoon Flat",
+      "order_num": 28,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "일상",
+          "name_en": "일상"
+        },
+        {
+          "name_ko": "여행",
+          "name_en": "여행"
+        }
+      ],
+      "ko": {
+        "title": "여기도 괜찮네",
+        "technique": "Korean Webtoon Flat 스타일. 선명한 그린 외벽의 골목 가게, 낮 자연광. 따뜻한 테라코타 지붕과 코발트 스톤 바닥. 전신 구도.",
+        "description": "낯선 골목, 초록 가게 앞. KIN이 한 손을 주머니에 넣고 서 있다. 진열대에 색색 병들이 늘어서 있고, 문 앞 계단에 화분이 몇 개. 어디인지 모르지만 발걸음이 멈춘 자리.",
+        "kin_perspective": "지도 없이 걷다가 발견한 가게ㅋ 뭐 파는 데인지 모르겠는데 일단 느낌이 좋아서 멈춤. 이런 거 좋아하는 사람 나 말고 또 있을 듯",
+        "dred_perspective": "지도 밖의 장소가 제일 솔직함."
+      },
+      "en": {
+        "title": "Not a Bad Spot",
+        "technique": "Korean Webtoon Flat style. Vivid green storefront in a narrow alley, natural daylight. Warm terracotta roof tiles and cobblestone ground. Full-body composition.",
+        "description": "An unfamiliar alley, a green shop. KIN stands with one hand in a pocket. Colorful bottles line the shelf inside, a few pots sit on the front steps. No idea where this is, but it felt right to stop.",
+        "kin_perspective": "found this place just walking around with no map lol. no idea what they sell but the vibe made me stop. bet someone else would love this too",
+        "dred_perspective": "the places off the map are the most honest."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_scene_terrace_v1",
+      "filename": "kin_scene_terrace_v1.webp",
+      "style": "KIN ROUGH",
+      "order_num": 29,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "일상",
+          "name_en": "일상"
+        },
+        {
+          "name_ko": "여름",
+          "name_en": "여름"
+        },
+        {
+          "name_ko": "힐링",
+          "name_en": "힐링"
+        }
+      ],
+      "ko": {
+        "title": "할 거 없는데 나쁘지 않음",
+        "technique": "KIN ROUGH 스타일. 블루/핑크 스플릿 배경, 열대식물, 버블티. 러프한 손그림 라인. 1:1 구도.",
+        "description": "아무 계획 없이 나왔는데 괜찮은 자리 발견함. 버블티 하나 시켜놓고 야자수 사이에 앉아있는 중. 이게 잘 쉬는 거 맞지?",
+        "kin_perspective": "아 이거 완전 내 자리다ㅋㅋ 펄 다 빨아먹었는데 자리 뜨기 싫어서 빈 컵 들고 계속 앉아있는 중. 오늘 여기서 마감할 듯",
+        "dred_perspective": "비워야 채워짐. 근데 넌 비우는 척하면서 채우고 있잖아."
+      },
+      "en": {
+        "title": "Nothing to Do, Not Bad Though",
+        "technique": "KIN ROUGH style. Blue/pink split backdrop, tropical plants, bubble tea. Raw hand-drawn lines. 1:1 composition.",
+        "description": "Went out with zero plans, found a decent spot. Bubble tea in hand, sitting between palm leaves. Pretty sure this counts as resting.",
+        "kin_perspective": "okay this is literally my spot lol. drank all the pearls but i'm still sitting here holding an empty cup. might just stay here all day",
+        "dred_perspective": "you empty out to fill up. but you're filling up while pretending to empty."
+      },
+      "actions": {}
+    },
+    {
+      "id": "kin_linedrawing_v1",
+      "filename": "kin_linedrawing_v1.webp",
+      "style": "KIN LINE",
+      "order_num": 30,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "일상",
+          "name_en": "일상"
+        },
+        {
+          "name_ko": "감성",
+          "name_en": "감성"
+        },
+        {
+          "name_ko": "미니멀",
+          "name_en": "미니멀"
+        }
+      ],
+      "ko": {
+        "title": "딴 생각 중",
+        "technique": "KIN LINE 스타일. 미니멀 라인 드로잉, 흰 배경. 옐로우 헤어만 채색. 앉아서 위를 바라보는 포즈. 1:1 구도.",
+        "description": "선 몇 개짜리 사람. 앉아서 위를 보고 있는데 표정이 나쁘지 않다. 생각이 많은 건지 없는 건지 본인도 모르는 것 같은 얼굴.",
+        "kin_perspective": "멍 때리는 거 아니고 진짜로 생각하는 건데 설명하기 귀찮아서 그냥 멍 때리는 척함ㅋ 이해하는 사람만 이해해",
+        "dred_perspective": "적을수록 더 많이 보임."
+      },
+      "en": {
+        "title": "Somewhere Else",
+        "technique": "KIN LINE style. Minimal line drawing, white background. Yellow hair fill only. Seated, looking up. 1:1 composition.",
+        "description": "A person in a few lines. Sitting, looking up, expression not bad. Face that can't quite tell if they're thinking too much or nothing at all.",
+        "kin_perspective": "i'm actually thinking really hard but it's too much to explain so i just look zoned out lol. you either get it or you don't",
+        "dred_perspective": "less shows more."
       },
       "actions": {}
     }

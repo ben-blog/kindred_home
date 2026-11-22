@@ -1,10 +1,12 @@
 /* Flatten restored gallery JSON (v2.1) into the shape the pages already render,
    and keep likes on this browser. */
 
+var LIKE_BASE = Object.create(null);
+
 function flattenGallery(doc) {
   var images = (doc && doc.images) || [];
   return images
-    .filter(function (im) { return im.is_active !== false; })
+    .filter(function (im) { return im.is_active !== false && im.filename; })
     .sort(function (a, b) { return (a.order_num || 0) - (b.order_num || 0); })
     .map(function (im) {
       var ko = im.ko || {};
@@ -14,6 +16,8 @@ function flattenGallery(doc) {
       if (!tags.length && im.style) {
         tags = [{ name_ko: im.style, name_en: im.style }];
       }
+      var likeCount = typeof im.like_count === 'number' ? im.like_count : 0;
+      if (im.id) LIKE_BASE[im.id] = likeCount;
       return {
         id: im.id,
         item_id: im.id,
@@ -21,6 +25,8 @@ function flattenGallery(doc) {
         style: im.style || '',
         order_num: im.order_num || 0,
         character: (doc.character || '').toLowerCase(),
+        show_on_main: im.show_on_main === true,
+        like_count: likeCount,
         title_ko: ko.title || '',
         title_en: en.title || '',
         technique_ko: ko.technique || '',
@@ -75,29 +81,16 @@ function actionLinkHtml(action, className) {
   return '<a class="' + className + '" href="' + href + '"' + attrs + '>' + (action.label || '') + '</a>';
 }
 
-var LIKE_COUNTS_KEY = 'kxd_like_counts';
-
-function readLikeCounts() {
-  try { return JSON.parse(localStorage.getItem(LIKE_COUNTS_KEY) || '{}'); }
-  catch (e) { return {}; }
-}
-
+/* DB count is the baseline. This browser adds one only while kxd_liked is set. */
 function localLikeCount(itemId) {
-  var counts = readLikeCounts();
-  if (Object.prototype.hasOwnProperty.call(counts, itemId)) return counts[itemId] || 0;
+  var base = Object.prototype.hasOwnProperty.call(LIKE_BASE, itemId) ? LIKE_BASE[itemId] : 0;
   try {
     var liked = JSON.parse(localStorage.getItem('kxd_liked') || '{}');
-    return liked[itemId] ? 1 : 0;
-  } catch (e) { return 0; }
+    if (liked[itemId]) return base + 1;
+  } catch (e) {}
+  return base;
 }
 
-function localAdjustLike(itemId, delta) {
-  var counts = readLikeCounts();
-  var base = Object.prototype.hasOwnProperty.call(counts, itemId)
-    ? (counts[itemId] || 0)
-    : localLikeCount(itemId);
-  counts[itemId] = Math.max(0, base + delta);
-  try { localStorage.setItem(LIKE_COUNTS_KEY, JSON.stringify(counts)); }
-  catch (e) {}
-  return counts[itemId];
+function localAdjustLike(itemId) {
+  return localLikeCount(itemId);
 }

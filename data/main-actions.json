@@ -1,102 +1,241 @@
 [
   {
-    "item_id": "k2",
-    "character": "kin",
-    "title_ko": "K2",
-    "title_en": "K2",
+    "item_id": "kindred_mood_camera",
+    "character": "kindred",
+    "title_ko": "GAZE",
+    "title_en": "GAZE",
+    "show_on_main": true,
+    "order_num": 1,
     "actions": {
-      "ko": [{
-        "label": "퀴즈 · 월드컵",
-        "title": "K2",
-        "desc": "10문제, 그리고 캐릭터랑 작품 월드컵.",
-        "url": "/kin/k2/"
-      }],
-      "en": [{
-        "label": "quiz · worldcup",
-        "title": "K2",
-        "desc": "Ten questions, then the character and work worldcups.",
-        "url": "/kin/k2/"
-      }]
+      "ko": [
+        {
+          "type": "link",
+          "label": "GAZE",
+          "url": "/mood-camera",
+          "title": "GAZE",
+          "desc": "같은 사진, 다른 시선"
+        }
+      ],
+      "en": [
+        {
+          "type": "link",
+          "label": "GAZE",
+          "url": "/mood-camera",
+          "title": "GAZE",
+          "desc": "Same Photo, Different Eyes"
+        }
+      ]
+    }
+  },
+  {
+    "item_id": "kin_room_mangacafe",
+    "character": "kin",
+    "title_ko": "곧 돌아올 자리",
+    "title_en": "Be Right Back",
+    "show_on_main": true,
+    "order_num": 2,
+    "actions": {
+      "ko": [
+        {
+          "type": "link",
+          "label": "너의 만화·애니",
+          "url": "/kin/k2/",
+          "title": "넌 어떤 만화·애니 덕후?",
+          "desc": "KIN이 고른 장면들, 퀴즈로 만나봐"
+        }
+      ],
+      "en": [
+        {
+          "type": "link",
+          "label": "manga · anime",
+          "url": "/kin/k2/",
+          "title": "what kind of otaku are you?",
+          "desc": "scenes KIN picked, meet them as a quiz"
+        }
+      ]
+    }
+  },
+  {
+    "item_id": "dred_d1_2_rush_hour",
+    "character": "dred",
+    "title_ko": "Rush Hour",
+    "title_en": "Rush Hour",
+    "show_on_main": true,
+    "order_num": 5,
+    "actions": {
+      "ko": [
+        {
+          "type": "link",
+          "label": "D14 — hour",
+          "url": "/dred/d14",
+          "title": "D14",
+          "desc": "hour"
+        }
+      ],
+      "en": [
+        {
+          "type": "link",
+          "label": "D14 — hour",
+          "url": "/dred/d14",
+          "title": "D14",
+          "desc": "hour"
+        }
+      ]
     }
   },
   {
     "item_id": "kin_c3_sketchbook_floor",
     "character": "kin",
-    "title_ko": "3년 후의 나",
-    "title_en": "Next 3 Years",
+    "title_ko": "시간 가는 줄 몰랐어",
+    "title_en": "Didn't Notice the Time",
+    "show_on_main": true,
+    "order_num": 9,
     "actions": {
-      "ko": [{
-        "label": "3년 후의 나 계산해보기",
-        "title": "3년 후의 나",
-        "desc": "스케치북에 적혀 있던 그 주소.",
-        "url": "https://mirrored-five.vercel.app/"
-      }],
-      "en": [{
-        "label": "see your next 3 years",
-        "title": "Next 3 Years",
-        "desc": "The address that was on the sketchbook page.",
-        "url": "https://mirrored-five.vercel.app/"
-      }]
+      "ko": [
+        {
+          "type": "link",
+          "label": "3년 후 나는",
+          "url": "https://mirrored-five.vercel.app/",
+          "title": "3년 후에 난 뭐하고 있을까",
+          "desc": "지금의 선택이 3년 뒤 어디로 데려가는지"
+        }
+      ],
+      "en": [
+        {
+          "type": "link",
+          "label": "3 years later",
+          "url": "https://mirrored-five.vercel.app/",
+          "title": "where will i be in 3 years?",
+          "desc": "where does todays choice take you"
+        }
+      ]
     }
   },
   {
-    "item_id": "mood-camera",
-    "character": "kindred",
-    "title_ko": "Mood Camera",
-    "title_en": "Mood Camera",
-    "actions": {
-      "ko": [{
-        "label": "무드 카메라",
-        "title": "Mood Camera",
-        "desc": "KIN과 DRED 밖의 카메라. 별도 사이트로 연다.",
-        "url": "https://mirrored-five.vercel.app/mood-camera"
-      }],
-      "en": [{
-        "label": "mood camera",
-        "title": "Mood Camera",
-        "desc": "Opens the camera on its own site.",
-        "url": "https://mirrored-five.vercel.app/mood-camera"
-      }]
-    }
-  },
-  {
-    "item_id": "d2",
+    "item_id": "dred_g3_music",
     "character": "dred",
-    "title_ko": "D2",
-    "title_en": "D2",
+    "title_ko": "소리가 공간을 채울 때",
+    "title_en": "When Sound Fills the Room",
+    "show_on_main": true,
+    "order_num": 10,
     "actions": {
-      "ko": [{
-        "label": "선곡",
-        "title": "D2",
-        "desc": "키워드 두 개. 곡은 여기서 고른다.",
-        "url": "/dred/d2/"
-      }],
-      "en": [{
-        "label": "a track",
-        "title": "D2",
-        "desc": "Two keywords. The track is picked here.",
-        "url": "/dred/d2/"
-      }]
+      "ko": [
+        {
+          "type": "link",
+          "label": "D2 — drop",
+          "url": "/dred/d2",
+          "title": "D2",
+          "desc": "drop"
+        }
+      ],
+      "en": [
+        {
+          "type": "link",
+          "label": "D2 — drop",
+          "url": "/dred/d2",
+          "title": "D2",
+          "desc": "drop"
+        }
+      ]
     }
   },
   {
-    "item_id": "d14",
+    "item_id": "kin_scene_chaos_v1",
+    "character": "kin",
+    "title_ko": "동시에 다 하려다가",
+    "title_en": "Trying to Do Everything at Once",
+    "show_on_main": true,
+    "order_num": 21,
+    "actions": {}
+  },
+  {
+    "item_id": "dred_scene_cassette_v2",
     "character": "dred",
-    "title_ko": "D14",
-    "title_en": "D14",
-    "actions": {
-      "ko": [{
-        "label": "이 시간",
-        "title": "D14",
-        "desc": "시각, 달, 계절. 한 문장.",
-        "url": "/dred/d14/"
-      }],
-      "en": [{
-        "label": "this hour",
-        "title": "D14",
-        "desc": "Hour, moon, season. One sentence.",
-        "url": "/dred/d14/"
-      }]
-    }
+    "title_ko": "들을 사람은 없다",
+    "title_en": "No One to Listen",
+    "show_on_main": true,
+    "order_num": 21,
+    "actions": {}
+  },
+  {
+    "item_id": "kin_scene_handrake_v1",
+    "character": "kin",
+    "title_ko": "뭔가 생각났을 때",
+    "title_en": "When Something Hits",
+    "show_on_main": true,
+    "order_num": 22,
+    "actions": {}
+  },
+  {
+    "item_id": "dred_scene_nightsky_v3",
+    "character": "dred",
+    "title_ko": "올려다볼 이유",
+    "title_en": "A Reason to Look Up",
+    "show_on_main": true,
+    "order_num": 22,
+    "actions": {}
+  },
+  {
+    "item_id": "kin_scene_leanback_v1",
+    "character": "kin",
+    "title_ko": "중력이 선택사항일 때",
+    "title_en": "Gravity Optional",
+    "show_on_main": true,
+    "order_num": 23,
+    "actions": {}
+  },
+  {
+    "item_id": "dred_scene_portrait_v3",
+    "character": "dred",
+    "title_ko": "다 보인다",
+    "title_en": "I See Everything",
+    "show_on_main": true,
+    "order_num": 23,
+    "actions": {}
+  },
+  {
+    "item_id": "kin_dred_scene_laundry_v1",
+    "character": "kin",
+    "title_ko": "세탁 중 (대화 없음)",
+    "title_en": "Laundry (No Talking)",
+    "show_on_main": true,
+    "order_num": 24,
+    "actions": {}
+  },
+  {
+    "item_id": "dred_scene_psychwave_v2",
+    "character": "dred",
+    "title_ko": "소음 속에서",
+    "title_en": "Inside the Noise",
+    "show_on_main": true,
+    "order_num": 24,
+    "actions": {}
+  },
+  {
+    "item_id": "kin_scene_hyundaestore_v1",
+    "character": "kin",
+    "title_ko": "현대상점 앞에서",
+    "title_en": "Outside Hyundae Store",
+    "show_on_main": true,
+    "order_num": 25,
+    "actions": {}
+  },
+  {
+    "item_id": "kin_scene_recordshop_v1",
+    "character": "kin",
+    "title_ko": "찾았다, 이거",
+    "title_en": "Found It",
+    "show_on_main": true,
+    "order_num": 26,
+    "actions": {}
+  },
+  {
+    "item_id": "kin_scene_rooftop_v1",
+    "character": "kin",
+    "title_ko": "그냥 올려다봄",
+    "title_en": "Just Looking Up",
+    "show_on_main": true,
+    "order_num": 27,
+    "actions": {}
   }
 ]

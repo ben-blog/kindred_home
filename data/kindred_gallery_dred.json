@@ -1,7 +1,7 @@
 {
   "character": "DRED",
   "version": "2.1",
-  "updated": "2026",
+  "updated": "2026-11-22",
   "images": [
     {
       "id": "dred_a1_camera_black",
@@ -9,7 +9,22 @@
       "style": "A — Korean Webtoon Flat",
       "order_num": 1,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "관찰",
+          "name_en": "observing"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "뭘 찍는지는 말 안 해도 돼",
         "technique": "Korean Webtoon Flat 스타일. 순수 블랙 배경, 화이트 아웃라인. 플랫 컬러, 굵은 라인. 필름 카메라 디테일 묘사.",
@@ -32,7 +47,26 @@
       "style": "A — Korean Webtoon Flat",
       "order_num": 2,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "방",
+          "name_en": "room"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "관찰",
+          "name_en": "observing"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "비가 오면 생각이 정리된다",
         "technique": "Korean Webtoon Flat 스타일. 화이트 아웃라인. 빗방울 흐르는 창문 유리 디테일, 흐릿한 도시 배경.",
@@ -55,7 +89,26 @@
       "style": "C — 차차(@cha_cha_9_9) Style",
       "order_num": 3,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "지하철",
+          "name_en": "subway"
+        },
+        {
+          "name_ko": "군중속",
+          "name_en": "in a crowd"
+        },
+        {
+          "name_ko": "이동중",
+          "name_en": "in transit"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "혼자 올라가는 방향",
         "technique": "차차 스타일. 탑뷰. 에스컬레이터 사선 구도. 군중은 올라가는 방향, DRED만 내려가는 에스컬레이터. DRED만 컬러, 주변은 모노크롬.",
@@ -78,7 +131,26 @@
       "style": "C — 차차(@cha_cha_9_9) Style",
       "order_num": 4,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "주차장",
+          "name_en": "parking lot"
+        },
+        {
+          "name_ko": "대기",
+          "name_en": "waiting"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "웹툰",
+          "name_en": "webtoon"
+        }
+      ],
       "ko": {
         "title": "내릴 준비가 됐을 때 내린다",
         "technique": "차차 스타일. 극단적 worm's eye view. 지하 주차장 바닥에서 올려다보는 시점. 차 문 열린 구도.",
@@ -101,7 +173,26 @@
       "style": "D1 — Graphic Novel",
       "order_num": 5,
       "is_active": true,
-      "tags": [],
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "발코니",
+          "name_en": "balcony"
+        },
+        {
+          "name_ko": "황혼",
+          "name_en": "dusk"
+        },
+        {
+          "name_ko": "관찰",
+          "name_en": "observing"
+        },
+        {
+          "name_ko": "그래픽노블",
+          "name_en": "graphic novel"
+        }
+      ],
       "ko": {
         "title": "Rush Hour",
         "technique": "Graphic Novel 스타일. 세밀한 건축 라인워크, 시네마틱 구도. 앰버+쿨블루 조명 분할. 유럽풍 도시 배경.",
@@ -116,7 +207,26 @@
         "kin_perspective": "how did you even get up there lol. that's dangerous. but that view is actually incredible i want to sit there too",
         "dred_perspective": "everyone's going somewhere. how many of them actually know where."
       },
-      "actions": {}
+      "actions": {
+        "ko": [
+          {
+            "type": "link",
+            "label": "D14 — hour",
+            "url": "/dred/d14",
+            "title": "D14",
+            "desc": "hour"
+          }
+        ],
+        "en": [
+          {
+            "type": "link",
+            "label": "D14 — hour",
+            "url": "/dred/d14",
+            "title": "D14",
+            "desc": "hour"
+          }
+        ]
+      }
     },
     {
       "id": "dred_d2_gas_station_worm",
@@ -124,7 +234,26 @@
       "style": "D2 — City Pop Illustration",
       "order_num": 6,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "주유소",
+          "name_en": "gas station"
+        },
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "시티팝",
+          "name_en": "city pop"
+        }
+      ],
       "ko": {
         "title": "네온 아래",
         "technique": "City Pop 스타일. 80-90년대 레트로 애니 감성. 극단적 worm's eye view. 주유소 네온사인 핑크+퍼플+옐로우. 야간 배경.",
@@ -147,7 +276,22 @@
       "style": "D3 — Painterly Solitude",
       "order_num": 7,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "거리",
+          "name_en": "street"
+        },
+        {
+          "name_ko": "낮",
+          "name_en": "daytime"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        }
+      ],
       "ko": {
         "title": "아무도 없을 때의 얼굴",
         "technique": "하이퍼리얼 디지털 페인팅. 구름 가득한 여름 하늘 배경. 아래서 올려다보는 시점. 눈을 감은 DRED.",
@@ -170,7 +314,14 @@
       "style": "G — Risograph Print",
       "order_num": 8,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "둘이면 완전하다",
         "technique": "Risograph 오버프린트 듀얼. KIN 옐로우+DRED 퍼플 레이어가 경계에서 겹치며 제3의 색 생성. 블랙 배경, 화이트 아웃라인. 등을 맞댄 구도.",
@@ -193,7 +344,18 @@
       "style": "G — Risograph Print",
       "order_num": 9,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "돌아보는 이유는 하나야",
         "technique": "Risograph 단색 인쇄. 퍼플+블랙 2도. 망점, 그레인 텍스처. 3/4 뒷모습에서 돌아보는 구도.",
@@ -208,7 +370,22 @@
         "kin_perspective": "look at those eyes lol. like there's something to say but they're not saying it. when DRED looks back there's always a reason. never does it for nothing",
         "dred_perspective": "i only look back when there's something to verify."
       },
-      "actions": {}
+      "actions": {
+        "ko": [
+          {
+            "type": "link",
+            "label": "Gaze",
+            "url": "/mood-camera"
+          }
+        ],
+        "en": [
+          {
+            "type": "link",
+            "label": "Gaze",
+            "url": "/mood-camera"
+          }
+        ]
+      }
     },
     {
       "id": "dred_g3_music",
@@ -216,7 +393,22 @@
       "style": "G — Risograph Print",
       "order_num": 10,
       "is_active": true,
-      "tags": [],
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "방",
+          "name_en": "room"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "소리가 공간을 채울 때",
         "technique": "Risograph 스타일. 퍼플 계열 플랫 컬러. 레트로 음악 소품들 — 붐박스, LP, 카세트테이프. 맨발, 바닥에 앉은 포즈.",
@@ -231,7 +423,26 @@
         "kin_perspective": "what does DRED even listen to?? boombox AND vinyl lol. tell me. i'll listen to anything",
         "dred_perspective": "good music doesn't need an explanation. you just listen."
       },
-      "actions": {}
+      "actions": {
+        "ko": [
+          {
+            "type": "link",
+            "label": "D2 — drop",
+            "url": "/dred/d2",
+            "title": "D2",
+            "desc": "drop"
+          }
+        ],
+        "en": [
+          {
+            "type": "link",
+            "label": "D2 — drop",
+            "url": "/dred/d2",
+            "title": "D2",
+            "desc": "drop"
+          }
+        ]
+      }
     },
     {
       "id": "dred_g4_highway_wall",
@@ -239,7 +450,26 @@
       "style": "G — Risograph Print",
       "order_num": 11,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "거리",
+          "name_en": "street"
+        },
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "리소그래프",
+          "name_en": "risograph"
+        }
+      ],
       "ko": {
         "title": "다 지나간다",
         "technique": "Risograph 2도 오버프린트. 네이비+오렌지 팔레트. 망점, 그레인, 잉크 번짐. 고속도로 모션블러와 방음벽 그래피티.",
@@ -262,7 +492,22 @@
       "style": "D1 — Graphic Novel",
       "order_num": 12,
       "is_active": true,
-      "tags": [],
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "방",
+          "name_en": "room"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "그래픽노블",
+          "name_en": "graphic novel"
+        }
+      ],
       "ko": {
         "title": "떠난 것 같은데 돌아올지 모르는",
         "technique": "Graphic Novel 스타일. 페리윙클 벽, 쿨블루 도시 빛만의 단일 광원. 꺼진 스탠드, 필름 카메라, LP, 헤드폰. 캐릭터 부재 씬.",
@@ -276,6 +521,531 @@
         "description": "DRED's studio. No one here. City photographs taped to a periwinkle wall. Film camera on the desk, empty cup, scattered papers. Only city light through the window. Can't tell if DRED was here and left — or hasn't come yet.",
         "kin_perspective": "can i go in lol?? feels like you're not supposed to just walk in. but those photos — did DRED shoot all of these?",
         "dred_perspective": "this space is me. you should be able to tell without an explanation."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_d2_muscle_car_twilight",
+      "filename": "dred_muscle_car_twilight_v1.webp",
+      "style": "D2 — City Pop Illustration",
+      "order_num": 13,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "황혼",
+          "name_en": "dusk"
+        },
+        {
+          "name_ko": "거리",
+          "name_en": "street"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "시티팝",
+          "name_en": "city pop"
+        },
+        {
+          "name_ko": "자동차",
+          "name_en": "car"
+        }
+      ],
+      "ko": {
+        "title": "출발은 내가 정함",
+        "technique": "City Pop 일러스트레이션. 핑크+퍼플+블루 황혼 하늘. 클래식 머슬카 후면, 도쿄타워 실루엣. 가로등 오렌지 림라이트.",
+        "description": "황혼의 도쿄. 클래식 머슬카 후면에 기댄 DRED. 뒷모습. 하늘은 핑크와 퍼플이 섞이고, 도시는 서서히 빛을 켬. 아무도 재촉하지 않음. 떠날지 말지는 DRED가 결정함.",
+        "kin_perspective": "저 차 어디서 났어ㅋ? 분위기 미쳤다 진짜. 근데 또 혼자임. DRED는 이런 순간도 혼자 즐기는구나",
+        "dred_perspective": "황혼은 끝이 아님. 다음을 고르는 시간."
+      },
+      "en": {
+        "title": "I Decide When to Leave",
+        "technique": "City Pop illustration. Pink + purple + blue twilight sky. Classic muscle car rear view, Tokyo Tower silhouette. Orange street lamp rim light.",
+        "description": "Tokyo at dusk. DRED leans against the back of a classic muscle car. Seen from behind. The sky bleeds pink into purple. The city begins to light up. No one is rushing. Whether to leave or stay — that's DRED's call.",
+        "kin_perspective": "where did that car come from lol. the vibe is insane. but alone again. i guess DRED enjoys moments like this solo too",
+        "dred_perspective": "dusk isn't an ending. it's time to choose what's next."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_d1_rooftop_sunset",
+      "filename": "dred_rooftop_sunset_v1.webp",
+      "style": "D1 — Graphic Novel",
+      "order_num": 14,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "황혼",
+          "name_en": "dusk"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "관찰",
+          "name_en": "observing"
+        },
+        {
+          "name_ko": "그래픽노블",
+          "name_en": "graphic novel"
+        },
+        {
+          "name_ko": "옥상",
+          "name_en": "rooftop"
+        }
+      ],
+      "ko": {
+        "title": "경계에 앉는 이유",
+        "technique": "Graphic Novel 스타일. 네온 핑크+시안 라인, 도시 야경 스카이라인. 옥상 끝 구도. 드라마틱한 석양 실루엣.",
+        "description": "고층 옥상 끝. DRED가 다리 내려뜨리고 걸터앉음. 발 아래 도시. 석양이 붉고 하늘은 퍼플로 번짐. 네온 라인이 발아래 빛남. 위험한 자리인데 DRED한테는 가장 편한 자리.",
+        "kin_perspective": "야 내려와ㅋ 무섭지 않아? 나는 저기 절대 못 앉음. 근데 DRED 저 표정 보면... 진짜 괜찮은 것 같음",
+        "dred_perspective": "끝에 앉아야 전체가 보임."
+      },
+      "en": {
+        "title": "Why I Sit on the Edge",
+        "technique": "Graphic Novel style. Neon pink + cyan lines, city skyline. Rooftop ledge composition. Dramatic sunset silhouette.",
+        "description": "Edge of a high rooftop. DRED sits with legs dangling over the city. The sunset bleeds red into purple. Neon strips glow beneath. It's a dangerous seat. For DRED it's the most comfortable one.",
+        "kin_perspective": "get down from there lol. aren't you scared?? i could never sit there. but the way DRED looks... actually seems fine",
+        "dred_perspective": "you have to sit at the edge to see the whole thing."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_d1_rooftop_headphones",
+      "filename": "dred_rooftop_headphones_v1.webp",
+      "style": "D1 — Graphic Novel",
+      "order_num": 15,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "심야",
+          "name_en": "late night"
+        },
+        {
+          "name_ko": "혼자",
+          "name_en": "alone"
+        },
+        {
+          "name_ko": "그래픽노블",
+          "name_en": "graphic novel"
+        },
+        {
+          "name_ko": "옥상",
+          "name_en": "rooftop"
+        },
+        {
+          "name_ko": "음악",
+          "name_en": "music"
+        }
+      ],
+      "ko": {
+        "title": "소음 차단, 신호만 수신",
+        "technique": "Graphic Novel 스타일. 핑크+퍼플 황혼 하늘. 옥상 난간, 도시 야경. 퍼플+화이트 커스텀 헤드폰.",
+        "description": "옥상 난간 앞 DRED. 뒷모습에서 고개를 살짝 돌림. 퍼플+화이트 헤드폰을 낀 채 핑크+퍼플 하늘을 배경으로 서있음. 손은 주머니 안. 도시의 소음은 차단됐고, DRED만의 주파수가 흐름.",
+        "kin_perspective": "헤드폰 뭐야 저거 예쁘다ㅋ 퍼플이네. 나도 하나 갖고 싶음. 근데 저 상태에서 말 걸면 화낼 것 같아서 못 하겠음",
+        "dred_perspective": "필요한 소리만 들리게 세팅함."
+      },
+      "en": {
+        "title": "Noise Cancelled, Signal Only",
+        "technique": "Graphic Novel style. Pink + purple twilight sky. Rooftop railing, city night view. Purple + white custom headphones.",
+        "description": "DRED in front of a rooftop railing. Body facing away, head turned slightly. Purple and white headphones on, standing against a pink and purple sky. Hands in pockets. The city's noise is cut. Only DRED's frequency plays.",
+        "kin_perspective": "wait those headphones are so cute lol. purple too. i want a pair. but they look so into it i feel like i can't interrupt",
+        "dred_perspective": "set it up so only the necessary sounds get through."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_staircase_v1",
+      "filename": "dred_scene_staircase_v1.webp",
+      "style": "D1 — Graphic Novel",
+      "order_num": 17,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "비상구 없음",
+        "technique": "90s 세이넨 망가 스타일. 흑백 + 퍼플 단색. 스크린톤 텍스처. 로우앵글 구도.",
+        "description": "클럽 지하 계단. 올라갈 생각 없음. DRED는 원래 이런 데서 제일 편함.",
+        "kin_perspective": "야 거기 혼자야? 나 내려가도 돼?ㅋㅋ 아니면 말고",
+        "dred_perspective": "올라가기 싫을 때가 있음. 그냥 여기 있으면 됨."
+      },
+      "en": {
+        "title": "No Exit",
+        "technique": "90s seinen manga style. Monochrome + purple accent. Screentone texture. Low angle shot.",
+        "description": "Basement stairwell of a club she didn't come to dance at. This is where DRED actually belongs.",
+        "kin_perspective": "yo are you alone down there?? can i come?? nvm forget i asked",
+        "dred_perspective": "sometimes you just don't want to go back up."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_velvetdress_v1",
+      "filename": "dred_scene_velvetdress_v1.webp",
+      "style": "D3 — Painterly Solitude",
+      "order_num": 18,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "딱히 갈 데도 없으면서",
+        "technique": "페인터리 소프트 렌더링. 퍼플/오렌지 투톤 조명. 블랙 벨벳 오프숄더 드레스.",
+        "description": "잘 차려입었는데 아무 계획도 없음. 퍼플 조명, 오렌지 림라이트. DRED가 제일 잘하는 상태.",
+        "kin_perspective": "어디 가? 아니 어디 가는 거야진짜로. 나도 데려가",
+        "dred_perspective": "아무 데도 안 감. 그게 포인트임."
+      },
+      "en": {
+        "title": "Nowhere to Be",
+        "technique": "Painterly soft rendering. Purple/orange two-tone lighting. Black velvet off-shoulder dress.",
+        "description": "Dressed up with nowhere to go. Purple light, orange rim. DRED's natural state.",
+        "kin_perspective": "wait where are you going. no seriously WHERE. take me",
+        "dred_perspective": "nowhere. that's the point."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_alley_v1",
+      "filename": "dred_scene_alley_v1.webp",
+      "style": "D1 — Graphic Novel",
+      "order_num": 19,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "뒤돌아보는 이유",
+        "technique": "세이넨 망가 라인아트. 어안렌즈 왜곡 구도. 페리윙클 틴트 + 물방울 렌즈 오버레이.",
+        "description": "골목 한가운데. 오토바이. 뒤돌아 봤는데 표정은 시큰둥. 뭔가 있긴 한데 뭔진 모름.",
+        "kin_perspective": "뭐 봤어? 나야? 나 맞지?ㅋㅋ",
+        "dred_perspective": "그냥 뒤가 신경 쓰였음."
+      },
+      "en": {
+        "title": "Why She Looked Back",
+        "technique": "Seinen manga line art. Fisheye lens distortion. Periwinkle tint + water droplet lens overlay.",
+        "description": "Middle of an alley. Motorcycle. She looked back but her face says nothing. Something's there. Not sure what.",
+        "kin_perspective": "did you see me?? was it me?? it was me right",
+        "dred_perspective": "just felt like looking."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_cassette_v2",
+      "filename": "dred_scene_cassette_v2.webp",
+      "style": "A — Korean Webtoon Flat",
+      "order_num": 21,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "들을 사람은 없다",
+        "technique": "한국 웹툰 플랫 컬러, 순백 배경",
+        "description": "카세트를 들고 있다. 재생할 생각은 없다.",
+        "kin_perspective": "저 표정은 뭔가 있는데.. 물어보면 안 될 것 같아.",
+        "dred_perspective": "들어줄 사람이 있어야 틀지."
+      },
+      "en": {
+        "title": "No One to Listen",
+        "technique": "Korean webtoon flat color, white background",
+        "description": "Holding a cassette. Not planning to play it.",
+        "kin_perspective": "there's something going on there.. feels like I shouldn't ask",
+        "dred_perspective": "Only play it if someone's worth listening."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_nightsky_v3",
+      "filename": "dred_scene_nightsky_v3.webp",
+      "style": "D2 — City Pop Illustration",
+      "order_num": 22,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "올려다볼 이유",
+        "technique": "시티팝 일러스트, 핑크+블루 그라데이션 밤하늘",
+        "description": "핑크빛 구름이 지나간다. 병을 들고 아무 말 없이 올려다본다.",
+        "kin_perspective": "저 하늘 진짜 예쁘다.. 나도 저렇게 멍하니 있고 싶어",
+        "dred_perspective": "하늘은 대답하지 않는다."
+      },
+      "en": {
+        "title": "A Reason to Look Up",
+        "technique": "City pop illustration, pink and blue gradient night sky",
+        "description": "Pink clouds pass. Bottle in hand, looking up, saying nothing.",
+        "kin_perspective": "that sky is actually beautiful.. I want to just stand there too",
+        "dred_perspective": "The sky doesn't answer."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_portrait_v3",
+      "filename": "dred_scene_portrait_v3.webp",
+      "style": "D1 — Graphic Novel",
+      "order_num": 23,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "다 보인다",
+        "technique": "쿨 블루톤 애니 라인아트, 다크 배경",
+        "description": "눈빛 하나로 충분하다. 말은 필요 없다.",
+        "kin_perspective": "저 눈빛에 뭔가 있는데.. 뭔지 모르겠어",
+        "dred_perspective": "다 보인다."
+      },
+      "en": {
+        "title": "I See Everything",
+        "technique": "Cool blue tone anime line art, dark background",
+        "description": "One look is enough. No words needed.",
+        "kin_perspective": "there's something in that look.. can't quite place it",
+        "dred_perspective": "I see everything."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_psychwave_v2",
+      "filename": "dred_scene_psychwave_v2.webp",
+      "style": "D3 — Painterly Solitude",
+      "order_num": 24,
+      "is_active": true,
+      "show_on_main": true,
+      "like_count": 0,
+      "tags": [],
+      "ko": {
+        "title": "소음 속에서",
+        "technique": "사이키델릭 웨이브 배경, 쿨 퍼플 블루톤 애니 라인아트",
+        "description": "배경이 흔들려도 표정은 흔들리지 않는다.",
+        "kin_perspective": "배경이 너무 어지러운데 얘는 왜 저렇게 멀쩡해ㅋㅋ",
+        "dred_perspective": "소음은 내 것이 아니다."
+      },
+      "en": {
+        "title": "Inside the Noise",
+        "technique": "Psychedelic wave background, cool purple blue tone anime line art",
+        "description": "The background moves. The expression doesn't.",
+        "kin_perspective": "the background is going crazy but she's just... sitting there lol",
+        "dred_perspective": "The noise isn't mine."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_bluestripe_v1",
+      "filename": "dred_scene_bluestripe_v1.webp",
+      "style": "D1 — Graphic Novel",
+      "order_num": 25,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "패션",
+          "name_en": "패션"
+        },
+        {
+          "name_ko": "도시",
+          "name_en": "도시"
+        }
+      ],
+      "ko": {
+        "title": "볼 만한 건 없어",
+        "technique": "Graphic Novel 스타일. 코발트 블루 단색 배경, 옐로우-블랙 스트라이프 이너. 앉은 전신 구도, 시선은 화면 밖.",
+        "description": "낮은 곳에 앉아 있지만 내려다보는 사람은 DRED 쪽. 블루 재킷 아래 옐로우 스트라이프가 유일한 색. 볼 것 없다는 듯 시선을 던지지만, 시선이 닿는 곳마다 긴장감이 생긴다.",
+        "kin_perspective": "드레드 저 옷 어디서 산 거야ㅋㅋ 스트라이프 은근 귀여운데 본인은 절대 인정 안 할 듯",
+        "dred_perspective": "편한 자리에 앉을 때가 제일 솔직함."
+      },
+      "en": {
+        "title": "Nothing Worth Seeing",
+        "technique": "Graphic Novel style. Cobalt blue monochrome background, yellow-black stripe inner. Seated full-body, gaze directed off-frame.",
+        "description": "Sitting low, but DRED is the one looking down. Yellow stripes under a blue jacket — the only warmth in frame. Eyes tossed aside like nothing matters, but tension follows wherever they land.",
+        "kin_perspective": "where did dred get that top lol the stripes are kinda cute but no way she'd ever admit it",
+        "dred_perspective": "the most honest version of you shows up when you sit somewhere comfortable."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_crosswalk_v1",
+      "filename": "dred_scene_crosswalk_v1.webp",
+      "style": "D3 — Painterly Solitude",
+      "order_num": 26,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "도시",
+          "name_en": "도시"
+        },
+        {
+          "name_ko": "일상",
+          "name_en": "일상"
+        }
+      ],
+      "ko": {
+        "title": "부른 적 없어",
+        "technique": "모노크롬 스케치 스타일. 흑백 펜 드로잉, 망점 텍스처. 상반신 클로즈업, 뒤돌아보는 구도.",
+        "description": "횡단보도 앞, DRED가 뒤를 돌아본다. 연필 선 같은 건물, 흐릿한 거리. 표정에 감정은 없지만 돌아본 동작 자체가 대답.",
+        "kin_perspective": "어 드레드 왜 뒤돌아봄? 나 불렀나? 아닌가ㅋ 저 표정 보면 절대 먼저 부른 건 아닌데",
+        "dred_perspective": "돌아본 건 맞음. 이유는 없음."
+      },
+      "en": {
+        "title": "Didn't Call You",
+        "technique": "Monochrome sketch style. Black-and-white pen drawing, halftone dot texture. Upper-body close-up, looking-back composition.",
+        "description": "At a crosswalk, DRED glances back. Pencil-line buildings, a hazy street. No emotion in the face, but the act of turning is the answer.",
+        "kin_perspective": "wait why did dred turn around? did i call her? nah lol that face says she definitely didn't go first",
+        "dred_perspective": "i looked back. no reason."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_studio_v1",
+      "filename": "dred_scene_studio_v1.webp",
+      "style": "D2 — City Pop Illustration",
+      "order_num": 27,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "일상",
+          "name_en": "일상"
+        },
+        {
+          "name_ko": "작업",
+          "name_en": "작업"
+        }
+      ],
+      "ko": {
+        "title": "방해하지 마",
+        "technique": "City Pop Illustration 스타일. 라벤더-퍼플 모노톤. 팔짱 낀 상반신 구도, 식물과 모니터가 있는 작업 공간.",
+        "description": "자기 공간, 자기 리듬. DRED가 팔짱을 끼고 의자에 앉아 있다. 모니터 불빛과 화분들 사이. 누가 말을 걸어도 이 템포는 안 바뀔 것 같은 얼굴.",
+        "kin_perspective": "드레드 작업 중일 때 말 걸면 진짜 무섭거든ㅋ 근데 저 식물들은 누가 키우는 거야 은근 감성 있네",
+        "dred_perspective": "집중이 깨지면 다시 못 들어감. 아는 사람은 알아서 조용함."
+      },
+      "en": {
+        "title": "Don't Interrupt",
+        "technique": "City Pop Illustration style. Lavender-purple monotone. Arms-crossed upper body, workspace with plants and monitor.",
+        "description": "Her space, her rhythm. DRED sits arms-crossed in a chair. Between monitor glow and potted plants. A face that says no one's changing this tempo.",
+        "kin_perspective": "dred is actually scary when you interrupt her working lol but who's growing all those plants? lowkey sentimental",
+        "dred_perspective": "once focus breaks it doesn't come back. people who get it stay quiet."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_wormseye_v2",
+      "filename": "dred_scene_wormseye_v2.webp",
+      "style": "C — Extreme Perspective",
+      "order_num": 28,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 1,
+      "tags": [
+        {
+          "name_ko": "미스터리",
+          "name_en": "미스터리"
+        },
+        {
+          "name_ko": "도시",
+          "name_en": "도시"
+        }
+      ],
+      "ko": {
+        "title": "시간은 내 편이야",
+        "technique": "극단적 탑뷰(워즈아이). 퍼플-다크 톤 시계 문양 바닥, 브레이드+번 헤어. 셀카 앵글로 손을 뻗은 구도.",
+        "description": "시계 문양 위에 서 있는 DRED. 위에서 내려다보는 앵글인데, 올려다보는 건 오히려 보는 사람 쪽. 안경 너머 시선이 렌즈를 관통한다. 시간 위에 서 있지만 쫓기는 사람의 표정은 아니다.",
+        "kin_perspective": "헐 드레드 안경 쓴 거 처음 봐ㅋㅋ 시계 바닥 위에서 셀카 찍는 거 왜 이렇게 간지나지",
+        "dred_perspective": "시간은 쫓는 게 아님. 서 있는 거."
+      },
+      "en": {
+        "title": "Time Is on My Side",
+        "technique": "Extreme top-down worm's-eye view. Purple-dark clock pattern floor, braid+bun hair. Selfie angle with outstretched arm.",
+        "description": "DRED stands on a clock face. Shot from above, but it's the viewer who looks up. Eyes behind glasses cut through the lens. Standing on time, but not the face of someone being chased by it.",
+        "kin_perspective": "wait dred in glasses?? first time lol. taking a selfie on a clock floor is way too cool",
+        "dred_perspective": "you don't chase time. you stand on it."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_bukchon_v1",
+      "filename": "dred_scene_bukchon_v1.webp",
+      "style": "RISO NOIR",
+      "order_num": 31,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "도시",
+          "name_en": "도시"
+        },
+        {
+          "name_ko": "야경",
+          "name_en": "야경"
+        },
+        {
+          "name_ko": "감성",
+          "name_en": "감성"
+        }
+      ],
+      "ko": {
+        "title": "아무도 없는 골목",
+        "technique": "RISO NOIR 스타일. 북촌 한옥 골목, 퍼플 야간 하늘, 가로등, 퍼플 나방. 9:16 구도.",
+        "description": "관광객이 다 빠진 시간의 북촌. DRED가 골목 중앙을 걷고 있다. N서울타워가 지붕 사이로 보이고, 나방 한 마리가 벽에 앉아있다. 아무도 없는 게 오히려 딱 맞는 자리.",
+        "kin_perspective": "나 여기 가봤는데 낮엔 사람 너무 많아서 별로였거든. 근데 이 시간엔 완전 다른 곳 같다. 드레드한테 어울리는 시간대 있음ㅋ",
+        "dred_perspective": "사람 없는 골목이 원래 모습임."
+      },
+      "en": {
+        "title": "The Alley Nobody Uses",
+        "technique": "RISO NOIR style. Bukchon hanok alley, purple night sky, street lantern, purple moth. 9:16 composition.",
+        "description": "Bukchon after the tourists leave. DRED walks the center of the alley. N Seoul Tower visible between rooftops, a moth rests on the wall. Empty feels exactly right.",
+        "kin_perspective": "i've been here but it's way too crowded during the day. at this hour it's a completely different place. dred just has her own time zone lol",
+        "dred_perspective": "the alley without people is what it actually looks like."
+      },
+      "actions": {}
+    },
+    {
+      "id": "dred_scene_rainstreet_v1",
+      "filename": "dred_scene_rainstreet_v1.webp",
+      "style": "PAINTWAVE",
+      "order_num": 32,
+      "is_active": true,
+      "show_on_main": false,
+      "like_count": 0,
+      "tags": [
+        {
+          "name_ko": "도시",
+          "name_en": "도시"
+        },
+        {
+          "name_ko": "야경",
+          "name_en": "야경"
+        },
+        {
+          "name_ko": "무드",
+          "name_en": "무드"
+        }
+      ],
+      "ko": {
+        "title": "우산 같은 거 안 씀",
+        "technique": "PAINTWAVE 스타일. 심야 도시 거리, 빗속, 오버사이즈 가죽 재킷. 퍼플/네이비 팔레트. 4:5 구도.",
+        "description": "비가 오는데 DRED는 그냥 맞고 있다. 우산도 없고, 피할 생각도 없다. 가죽 재킷에 빗방울이 맺히고, 도시 불빛이 젖은 바닥에 번진다. 비가 와서 불편한 게 아니라 원래 이런 날씨가 맞는 사람.",
+        "kin_perspective": "드레드 우산 들고 있는 거 상상이 안 됨ㅋㅋ 근데 진짜 비 맞고 있는 거 보면 멋있긴 해. 나는 절대 못 함",
+        "dred_perspective": "비는 그냥 날씨임. 피할 이유가 없어."
+      },
+      "en": {
+        "title": "Not the Umbrella Type",
+        "technique": "PAINTWAVE style. Late-night city street, heavy rain, oversized leather jacket. Purple/navy palette. 4:5 composition.",
+        "description": "It's raining and DRED is just standing in it. No umbrella, no intention of moving. Raindrops bead on the leather jacket, city lights bleed into the wet ground. Not someone inconvenienced by rain — someone who belongs in it.",
+        "kin_perspective": "cannot imagine dred holding an umbrella lol. but watching her just stand in the rain is actually kind of cool. could never be me",
+        "dred_perspective": "rain is just weather. no reason to avoid it."
       },
       "actions": {}
     }

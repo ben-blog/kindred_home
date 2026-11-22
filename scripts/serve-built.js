@@ -46,7 +46,7 @@ const server = http.createServer(async (request, response) => {
     }
     const file = findFile(pathname);
     if (file) {
-      response.writeHead(200);
+      response.writeHead(200, { 'content-type': contentType(file) });
       createReadStream(file).pipe(response);
       return;
     }
@@ -93,6 +93,19 @@ async function toWebRequest(incoming, listenPort) {
 
 function fileExists(pathname) {
   return Boolean(findFile(pathname));
+}
+
+function contentType(file) {
+  const types = {
+    '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
+    '.json': 'application/json; charset=utf-8',
+    '.svg': 'image/svg+xml',
+    '.webp': 'image/webp',
+    '.png': 'image/png',
+  };
+  return types[path.extname(file)] || 'application/octet-stream';
 }
 
 function findFile(pathname) {

@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { characterSchema, localizedSchema, siteSchema, sourceSchema, workSchema } from './schema.js';
+import {
+  characterSchema,
+  localizedSchema,
+  siteSchema,
+  sourceSchema,
+  workSchema,
+} from './schema.js';
 
 test('a localized field requires en and keeps extra locales', () => {
   assert.deepEqual(localizedSchema.parse({ en: 'Hello' }), { en: 'Hello' });
@@ -129,6 +135,22 @@ test('a board needs a gaze mark and a void needs a room mark', () => {
     )
   );
   assert.equal(blob.success, false);
+});
+
+test('a chat path has to stay on that character', () => {
+  const board = character({ color: '#AABBCC', mark: { type: 'gaze' } }, 'board');
+  board.agent = {
+    service: 'nova-agent',
+    upstream: 'KIN_AGENT_URL',
+    path: '/api/nova/event',
+    chat: '/api/nova/chat',
+    chatUser: 'ben',
+  };
+  assert.equal(characterSchema.parse(board).agent.chat, '/api/nova/chat');
+  board.agent.chat = '/api/other/chat';
+  const crossed = characterSchema.safeParse(board);
+  assert.equal(crossed.success, false);
+  assert.ok(crossed.error.issues.some((issue) => issue.path.join('.') === 'agent.chat'));
 });
 
 test('a work stays listed unless the file hides it', () => {

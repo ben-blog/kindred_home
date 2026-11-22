@@ -1,0 +1,524 @@
+---
+import { readFileSync, existsSync } from 'node:fs';
+import path from 'node:path';
+import { getCollection } from 'astro:content';
+import Grain from '../../../components/character/Grain.astro';
+import Base from '../../../layouts/Base.astro';
+import { characterSurface } from '../../../lib/character-layout.js';
+import { callFrames, openingFrame } from '../../../lib/expressions.js';
+import { text } from '../../../lib/locale.js';
+import { isPublicStatus } from '../../../lib/publish.js';
+
+const expressionModules = import.meta.glob('../../../content/expressions/*.json', {
+  eager: true,
+  import: 'default',
+});
+const expressions = new Map(
+  Object.values(expressionModules).map((file) => [file.slug, file])
+);
+
+export async function getStaticPaths() {
+  const characters = await getCollection('characters');
+  return characters
+    .filter((entry) => isPublicStatus(entry.data.status) && entry.data.agent?.chat)
+    .map((entry) => ({
+      params: { slug: entry.data.slug },
+      props: { entry },
+    }));
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+const surface = characterSurface(data);
+const name = text(data.name);
+const tagline = text(data.profile.tagline);
+const idle = text(data.voice.idle);
+const galleryPath = path.join(process.cwd(), 'public', 'data', `kindred_gallery_${data.slug}.json`);
+const gallery = existsSync(galleryPath) ? JSON.parse(readFileSync(galleryPath, 'utf8')) : { images: [] };
+const frames = callFrames(gallery, expressions.get(data.slug));
+const opening = openingFrame(frames);
+const copy = {
+  end: text({ en: 'end' }),
+  you: text({ en: 'you' }),
+  say: text({ en: 'say' }),
+  send: text({ en: 'send' }),
+  dropped: text({ en: 'The line dropped.' }),
+  wait: text({ en: 'Wait.' }),
+  memory: text({ en: 'memory' }),
+  offline: text({ en: 'memory offline' }),
+  thinking: text({ en: 'thinking' }),
+  received: text({ en: 'message received' }),
+  retrieved: text({ en: 'retrieved' }),
+  world: text({ en: 'world' }),
+  emotion: text({ en: 'emotion' }),
+  reply: text({ en: 'reply' }),
+  saved: text({ en: 'saved' }),
+  none: text({ en: 'none' }),
+  pending: text({ en: 'none yet' }),
+  recent: text({ en: 'recent' }),
+};
+---
+
+<Base
+  frame="character"
+  title={`${name} — kinxdred`}
+  description={tagline}
+  accent={surface.accent}
+  ground={surface.ground}
+  ink={surface.ink}
+>
+  <div class="call" data-layout={surface.layout} data-slug={data.slug}>
+    <Grain />
+    <header class="call-bar">
+      <a href="/">kinxdred</a>
+      <a href="/characters">characters</a>
+      <p class="call-name">{name}</p>
+      <time id="call-timer" datetime="PT0S">00:00</time>
+      <a class="call-end" href="/world/admin">{copy.end}</a>
+    </header>
+    <section class="call-stage" data-mood="calm" aria-label={name}>
+      {
+        opening ? (
+          <>
+            <img class="call-photo is-shown" src={opening.src} alt={opening.title || name} />
+            <img class="call-photo" src={opening.src} alt="" aria-hidden="true" />
+          </>
+        ) : null
+      }
+      <p class="call-caption">{tagline}</p>
+      <div class="call-self"><span>{copy.you}</span></div>
+      <div class="call-memory" id="call-memory">
+        <button type="button" class="call-tool" id="call-memory-toggle">{copy.memory}</button>
+        <div class="call-memory-view" id="call-memory-view"></div>
+        <p class="call-memory-status" id="call-memory-status" hidden>{copy.offline}</p>
+      </div>
+    </section>
+    <section class="call-side">
+      <div class="call-tools">
+        <button type="button" class="call-tool" id="call-think-toggle">{copy.thinking}</button>
+      </div>
+      <div class="call-think" id="call-think" hidden></div>
+      <ol class="call-log" id="call-log">
+        {idle ? <li class="call-empty" id="call-empty">{idle}</li> : null}
+      </ol>
+      <form class="call-form" id="call-form">
+        <label class="call-label" for="call-input">{copy.say}</label>
+        <textarea id="call-input" name="message" rows="2" maxlength="2000" required></textarea>
+        <button class="call-send" type="submit">{copy.send}</button>
+      </form>
+      <p class="call-status" id="call-status" aria-live="polite"></p>
+    </section>
+  </div>
+</Base>
+
+<script define:vars={{ slug: data.slug, name, frames, copy }}>
+  const stage = document.querySelector('.call-stage');
+  const photos = [...document.querySelectorAll('.call-photo')];
+  const form = document.querySelector('#call-form');
+  const input = document.querySelector('#call-input');
+  const log = document.querySelector('#call-log');
+  const status = document.querySelector('#call-status');
+  const timer = document.querySelector('#call-timer');
+  const messages = [];
+  const cursor = { calm: 1 };
+  let plan;
+  let sessionId = '';
+  let sending = false;
+  let front = 0;
+  let started = 0;
+
+  function pool(emotion) {
+    const tagged = frames.filter((frame) => frame.emotions.includes(emotion));
+    const portraits = tagged.filter((frame) => frame.portrait);
+    if (portraits.length) return portraits;
+    if (tagged.length) return tagged;
+    const faces = frames.filter((frame) => frame.portrait);
+    return faces.length ? faces : frames;
+  }
+
+  function show(emotion) {
+    const list = pool(emotion);
+    if (!list.length || photos.length < 2) return;
+    const index = cursor[emotion] ?? 0;
+    cursor[emotion] = index + 1;
+    const frame = list[index % list.length];
+    const next = 1 - front;
+    photos[next].src = frame.src;
+    photos[next].alt = frame.title || name;
+    photos[next].classList.add('is-shown');
+    photos[next].removeAttribute('aria-hidden');
+    photos[front].classList.remove('is-shown');
+    photos[front].setAttribute('aria-hidden', 'true');
+    front = next;
+    stage.dataset.mood = emotion;
+    return frame;
+  }
+
+  function line(who, value, mine) {
+    const item = document.createElement('li');
+    item.className = mine ? 'call-line is-you' : 'call-line';
+    const label = document.createElement('span');
+    label.textContent = who;
+    const body = document.createElement('p');
+    body.textContent = value;
+    item.append(label, body);
+    log.append(item);
+    log.scrollTop = log.scrollHeight;
+    return body;
+  }
+
+  function tick() {
+    const seconds = Math.max(0, Math.floor((Date.now() - started) / 1000));
+    const text = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    timer.textContent = text;
+    timer.dateTime = `PT${seconds}S`;
+  }
+
+  async function readStream(response, body, turn) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let reply = '';
+    let expression = 'calm';
+    let world = null;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() ?? '';
+      for (const part of parts) {
+        const row = part.split('\n').find((item) => item.startsWith('data:'));
+        if (!row) continue;
+        let data;
+        try {
+          data = JSON.parse(row.slice(5).trim());
+        } catch {
+          continue;
+        }
+        if (data.type === 'token' && typeof data.text === 'string') {
+          reply += data.text;
+          body.textContent = reply;
+          turn.reply.body.textContent = reply;
+          log.scrollTop = log.scrollHeight;
+        } else if (data.type === 'trace' && data.stage === 'retrieved') {
+          fillRetrieved(turn.retrieved, data.items || []);
+          document.querySelector('.call')?.dispatchEvent(
+            new CustomEvent('memory-trace', { detail: data })
+          );
+        } else if (data.type === 'done') {
+          if (typeof data.expression === 'string') expression = data.expression;
+          if (data.world && typeof data.world === 'object') world = data.world;
+          if (typeof data.sessionId === 'string') {
+            sessionId = data.sessionId;
+            try {
+              sessionStorage.setItem(`call:${slug}`, sessionId);
+            } catch {
+              sessionId = data.sessionId;
+            }
+          }
+          if (data.plan && typeof data.plan === 'object') plan = data.plan;
+        } else if (data.type === 'error') {
+          throw new Error('stream');
+        }
+      }
+    }
+    return { reply, expression, world };
+  }
+
+  function step(number, label, value) {
+    const row = document.createElement('p');
+    const title = document.createElement('span');
+    title.textContent = `${number} ${label}`;
+    const body = document.createElement('span');
+    body.textContent = value;
+    row.append(title, body);
+    return { row, body };
+  }
+
+  function fillRetrieved(slot, items) {
+    slot.body.replaceChildren();
+    if (!items.length) {
+      slot.body.textContent = copy.none;
+      return;
+    }
+    const list = document.createElement('span');
+    list.className = 'call-retrieved';
+    for (const item of items) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'call-chip';
+      chip.dataset.id = item.id;
+      const score = typeof item.score === 'number' ? ` ${item.score}` : ` ${copy.recent}`;
+      chip.textContent = `${item.label || item.kind}${score}`;
+      if (item.kind !== 'reflection') {
+        chip.addEventListener('pointerenter', () => {
+          document.querySelector('.call')?.dispatchEvent(
+            new CustomEvent('memory-focus', { detail: { id: item.id } })
+          );
+        });
+        chip.addEventListener('pointerleave', () => {
+          document.querySelector('.call')?.dispatchEvent(
+            new CustomEvent('memory-focus', { detail: { id: '' } })
+          );
+        });
+      }
+      list.append(chip);
+    }
+    slot.body.append(list);
+  }
+
+  function armSaved(slot) {
+    const at = Date.now();
+    pendingSaved = { slot, at, until: at + 60_000 };
+    slot.body.textContent = copy.pending;
+  }
+
+  function noteSaved(points, at) {
+    if (!pendingSaved) return;
+    if (at > pendingSaved.until) {
+      pendingSaved = null;
+      return;
+    }
+    const fresh = points.filter((point) => Date.parse(point.createdAt) >= pendingSaved.at);
+    if (!fresh.length) return;
+    pendingSaved.slot.body.textContent = fresh.map((point) => point.label || point.id).join(', ');
+    pendingSaved = null;
+  }
+
+  let pendingSaved = null;
+  let since = '';
+  let polling = false;
+
+  async function pollMemory() {
+    if (polling) return;
+    polling = true;
+    try {
+      await readMap(false);
+    } catch {
+      const memoryStatus = document.querySelector('#call-memory-status');
+      if (memoryStatus) memoryStatus.hidden = false;
+    } finally {
+      polling = false;
+    }
+  }
+
+  async function readMap(forceFull) {
+    const query = !forceFull && since ? `?since=${encodeURIComponent(since)}` : '';
+    const memoryStatus = document.querySelector('#call-memory-status');
+    const startedAt = Date.now();
+    const response = await fetch(`/api/world/chat/${slug}/memory${query}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (response.status === 401 || response.status === 403) {
+      location.replace('/world/admin');
+      return;
+    }
+    const call = document.querySelector('.call');
+    if (response.status === 429) {
+      if (!call.memoryMap) memoryStatus.hidden = false;
+      return;
+    }
+    if (!response.ok) throw new Error('memory');
+    const body = await response.json();
+    const current = call.memoryMap;
+    if (
+      query &&
+      current?.basisFingerprint &&
+      body.basisFingerprint &&
+      body.basisFingerprint !== current.basisFingerprint
+    ) {
+      since = '';
+      call.memoryMap = null;
+      call.dispatchEvent(
+        new CustomEvent('memory-map', {
+          detail: { basisVersion: '', basisFingerprint: '', points: [], reset: true },
+        })
+      );
+      return readMap(true);
+    }
+    const known = new Set((current?.points || []).map((point) => point.id));
+    let points = Array.isArray(body.points) ? body.points : [];
+    if (query && current && body.basisFingerprint && body.basisFingerprint === current.basisFingerprint) {
+      points = current.points.concat(points.filter((point) => !known.has(point.id)));
+    }
+    const arrived = points.filter((point) => !known.has(point.id));
+    const detail = {
+      basisVersion: body.basisVersion ?? '',
+      basisFingerprint: body.basisFingerprint || '',
+      points,
+    };
+    call.memoryMap = detail;
+    call.dispatchEvent(new CustomEvent('memory-map', { detail }));
+    for (const point of points) {
+      if (point.createdAt && point.createdAt > since) since = point.createdAt;
+    }
+    memoryStatus.hidden = true;
+    noteSaved(query ? arrived : points, startedAt);
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const value = input.value.trim();
+    if (!value || sending || !started) return;
+    sending = true;
+    status.textContent = '';
+    input.value = '';
+    messages.push({ role: 'user', content: value });
+    document.querySelector('#call-empty')?.remove();
+    line(copy.you, value, true);
+    const body = line(name, '', false);
+    const turn = {
+      retrieved: step('2', copy.retrieved, copy.none),
+      world: step('3', copy.world, copy.none),
+      emotion: step('4', copy.emotion, copy.none),
+      reply: step('5', copy.reply, ''),
+      saved: step('6', copy.saved, copy.none),
+    };
+    const article = document.createElement('article');
+    article.className = 'call-turn';
+    article.append(
+      step('1', copy.received, value).row,
+      turn.retrieved.row,
+      turn.world.row,
+      turn.emotion.row,
+      turn.reply.row,
+      turn.saved.row
+    );
+    const think = document.querySelector('#call-think');
+    think.append(article);
+    think.scrollTop = think.scrollHeight;
+    stage.classList.add('is-talking');
+    try {
+      const payload = { messages: messages.slice(-24) };
+      if (sessionId) payload.sessionId = sessionId;
+      if (plan) payload.plan = plan;
+      const response = await fetch(`/api/world/chat/${slug}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
+        body: JSON.stringify(payload),
+      });
+      if (response.status === 401 || response.status === 403) {
+        location.replace('/world/admin');
+        return;
+      }
+      if (response.status === 429) {
+        body.textContent = copy.wait;
+        messages.pop();
+        return;
+      }
+      if (!response.ok || !response.body) {
+        body.textContent = copy.dropped;
+        messages.pop();
+        return;
+      }
+      const result = await readStream(response, body, turn);
+      if (!result.reply) {
+        body.textContent = copy.dropped;
+        turn.reply.body.textContent = copy.dropped;
+      } else messages.push({ role: 'assistant', content: result.reply });
+      const frame = show(result.expression || 'calm');
+      const world = result.world;
+      turn.world.body.textContent = world
+        ? `mood ${world.mood ?? copy.none} · energy ${world.energy ?? copy.none}`
+        : copy.none;
+      turn.emotion.body.textContent = frame?.title
+        ? `${result.expression || 'calm'} · ${frame.title}`
+        : result.expression || 'calm';
+      if (result.reply) armSaved(turn.saved);
+    } catch {
+      body.textContent = copy.dropped;
+      if (messages.at(-1)?.role === 'user') messages.pop();
+    } finally {
+      stage.classList.remove('is-talking');
+      sending = false;
+      input.focus();
+    }
+  });
+
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  try {
+    const stored = sessionStorage.getItem(`call:${slug}`) || '';
+    if (/^[a-zA-Z0-9-]{1,64}$/.test(stored)) sessionId = stored;
+  } catch {
+    sessionId = '';
+  }
+
+  async function connect() {
+    try {
+      const response = await fetch('/api/world/auth/session', {
+        headers: { accept: 'application/json' },
+      });
+      if (response.status === 503) {
+        status.textContent = copy.dropped;
+        return;
+      }
+      const body = await response.json().catch(() => ({}));
+      if (!body.signedIn) {
+        location.replace('/world/admin');
+        return;
+      }
+      started = Date.now();
+      tick();
+      setInterval(tick, 1000);
+      pollMemory();
+      setInterval(pollMemory, 10000);
+      input.focus();
+    } catch {
+      status.textContent = copy.dropped;
+    }
+  }
+
+  connect();
+
+  document.querySelector('#call-think-toggle')?.addEventListener('click', () => {
+    const panel = document.querySelector('#call-think');
+    panel.hidden = !panel.hidden;
+  });
+  document.querySelector('#call-memory-toggle')?.addEventListener('click', () => {
+    document.querySelector('#call-memory')?.classList.toggle('is-open');
+  });
+  document.querySelector('.call')?.addEventListener('memory-hover', (event) => {
+    const id = event.detail?.id || '';
+    for (const chip of document.querySelectorAll('.call-chip')) {
+      chip.classList.toggle('is-hot', chip.dataset.id === id);
+    }
+  });
+</script>
+
+<script>
+  import { mountSphere } from '../../../scripts/memory-sphere.js';
+
+  const call = document.querySelector('.call');
+  const view = document.querySelector('#call-memory-view');
+  const offline = document.querySelector('#call-memory-status');
+  if (call && view) {
+    const style = getComputedStyle(document.documentElement);
+    mountSphere(view, call, {
+      accent: style.getPropertyValue('--accent').trim(),
+      ground: style.getPropertyValue('--ground').trim(),
+      layout: call.dataset.layout,
+      reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    })
+      .then((api) => {
+        if (!api) {
+          if (offline) offline.hidden = false;
+          return;
+        }
+        const apply = (detail) => api.setMap(detail);
+        call.addEventListener('memory-map', (event) => apply(event.detail));
+        call.addEventListener('memory-trace', (event) => api.showRetrieved(event.detail?.items || []));
+        call.addEventListener('memory-focus', (event) => api.focus(event.detail?.id || ''));
+        if (call.memoryMap) apply(call.memoryMap);
+      })
+      .catch(() => {
+        if (offline) offline.hidden = false;
+      });
+  }
+</script>

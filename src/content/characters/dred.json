@@ -16,7 +16,13 @@
     "ground": "#000000",
     "mark": { "type": "room", "drift": 22, "follow": 1.6, "easing": [0.34, 1.56, 0.64, 1] }
   },
-  "voice": { "tone": "", "do": [], "dont": [], "sampleLines": [] },
+  "voice": {
+    "tone": "",
+    "do": [],
+    "dont": [],
+    "sampleLines": [],
+    "idle": { "en": "One look is enough." }
+  },
   "lore": [],
   "relationships": [
     {
@@ -30,6 +36,8 @@
     "service": "dred-agent",
     "upstream": "DRED_AGENT_URL",
     "path": "/api/dred/event",
+    "chat": "/api/dred/chat",
+    "memory": "/api/dred/memory/map",
     "methods": ["POST"]
   },
   "works": ["dred-gallery", "d14"],

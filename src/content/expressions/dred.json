@@ -1,0 +1,222 @@
+{
+  "slug": "dred",
+  "frames": [
+    {
+      "id": "dred_a1_camera_black",
+      "emotions": [
+        "calm",
+        "intense"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_a2_rain_window",
+      "emotions": [
+        "calm",
+        "sad"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_c1_escalator",
+      "emotions": [
+        "shy",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_c2_parking_worm",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_d1_2_rush_hour",
+      "emotions": [
+        "calm",
+        "tired"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_d2_gas_station_worm",
+      "emotions": [
+        "intense",
+        "playful"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_d3_painterly_solitude",
+      "emotions": [
+        "calm",
+        "tired"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_g2_kin_dred",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_g2_turnback",
+      "emotions": [
+        "intense",
+        "shy"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_g3_music",
+      "emotions": [
+        "tired",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_g4_highway_wall",
+      "emotions": [
+        "calm",
+        "tired"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_room_studio",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_d2_muscle_car_twilight",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_d1_rooftop_sunset",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_d1_rooftop_headphones",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_scene_staircase_v1",
+      "emotions": [
+        "shy",
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_scene_velvetdress_v1",
+      "emotions": [
+        "intense",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_alley_v1",
+      "emotions": [
+        "intense",
+        "shy"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_cassette_v2",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_nightsky_v3",
+      "emotions": [
+        "calm",
+        "tired"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_portrait_v3",
+      "emotions": [
+        "intense",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_psychwave_v2",
+      "emotions": [
+        "calm",
+        "intense"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_bluestripe_v1",
+      "emotions": [
+        "playful",
+        "joy",
+        "intense"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_crosswalk_v1",
+      "emotions": [
+        "shy",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_studio_v1",
+      "emotions": [
+        "calm",
+        "intense"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_wormseye_v2",
+      "emotions": [
+        "playful",
+        "intense"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "dred_scene_bukchon_v1",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "dred_scene_rainstreet_v1",
+      "emotions": [
+        "sad",
+        "calm"
+      ],
+      "portrait": true
+    }
+  ]
+}

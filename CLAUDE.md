@@ -17,7 +17,7 @@ kinxdred 메인 웹사이트. Astro 정적 출력 + Vercel adapter. 지금 열�
 - Astro (`output: 'static'`), content collections, `@astrojs/vercel`
 - 살아 있는 페이지는 여전히 순수 HTML / CSS / JS (`public/`)
 - 가벼운 API는 이 저장소의 Vercel function (`/api/health`, `/api/event`)
-- 긴 에이전트는 Railway에 둔다 (`kin-agent`, `dred-agent`, `mirrored-api`). 브라우저는 그 주소를 직접 치지 않고 `/api/event`로 보낸다
+- 긴 에이전트는 Railway에 둔다 (`kin-agent`, `dred-agent`, `mirrored-api`). 브라우저는 그 주소를 직접 치지 않는다. 허브 이벤트는 `/api/event`, 리더 통화는 `/api/world/chat/<slug>`
 - 세계 상태는 Supabase 프로젝트 `kinxdred_home`. 마이그레이션은 `supabase/migrations`에만 두고, 적용된 파일은 고치지 않는다. 스키마 변경은 소유자 승인 뒤에만 적용한다. 그 밖의 기존 테이블은 건드리지 않는다. 키 값은 넣지 않는다
 
 ## 폴더

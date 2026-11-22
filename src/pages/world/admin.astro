@@ -1,6 +1,13 @@
 ---
+import { getCollection } from 'astro:content';
 import Frame from '../../components/world/Frame.astro';
 import Base from '../../layouts/Base.astro';
+import { text } from '../../lib/locale.js';
+import { isPublicStatus } from '../../lib/publish.js';
+
+const calls = (await getCollection('characters'))
+  .filter((entry) => isPublicStatus(entry.data.status) && entry.data.agent?.chat)
+  .sort((a, b) => a.data.slug.localeCompare(b.data.slug));
 ---
 
 <Base frame="world" title="Tick — kinxdred" description="Leader tick for the kinxdred world.">
@@ -18,6 +25,23 @@ import Base from '../../layouts/Base.astro';
       </div>
       <p class="world-status" id="auth-status" aria-live="polite"></p>
     </form>
+    {
+      calls.length > 0 ? (
+        <>
+          <p class="eyebrow">call</p>
+          <ul class="links">
+            {calls.map((entry) => (
+              <li>
+                <a href={`/world/chat/${entry.data.slug}/`}>
+                  <span style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</span>
+                  <span class="meta">{text(entry.data.profile.tagline)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null
+    }
   </Frame>
 </Base>
 

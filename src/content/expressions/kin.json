@@ -1,0 +1,184 @@
+{
+  "slug": "kin",
+  "frames": [
+    {
+      "id": "kin_g3_bus_risograph",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_room_mangacafe",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_a1_laptop_night",
+      "emotions": [
+        "intense",
+        "joy",
+        "tired"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_a2_convenience_store",
+      "emotions": [
+        "joy",
+        "playful"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_c1_crowd_subway",
+      "emotions": [
+        "playful",
+        "intense"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_c2_convenience_night",
+      "emotions": [
+        "playful",
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_g1_energy_poster",
+      "emotions": [
+        "joy",
+        "playful"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_g2_subway_platform",
+      "emotions": [
+        "calm",
+        "intense"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_c3_sketchbook_floor",
+      "emotions": [
+        "tired",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_k1_adachi_clean",
+      "emotions": [
+        "calm",
+        "shy"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_k2_adachi_okonomiyaki",
+      "emotions": [
+        "joy",
+        "playful"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_paris_mini_v1",
+      "emotions": [
+        "calm",
+        "joy"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_cherry_blossom_v2",
+      "emotions": [
+        "calm",
+        "joy"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_chaos_v1",
+      "emotions": [
+        "playful",
+        "intense"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_handrake_v1",
+      "emotions": [
+        "playful",
+        "calm"
+      ],
+      "portrait": true
+    },
+    {
+      "id": "kin_scene_leanback_v1",
+      "emotions": [
+        "playful"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_dred_scene_laundry_v1",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_hyundaestore_v1",
+      "emotions": [
+        "calm",
+        "tired"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_recordshop_v1",
+      "emotions": [
+        "calm",
+        "joy"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_rooftop_v1",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_greenstore_v1",
+      "emotions": [
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_scene_terrace_v1",
+      "emotions": [
+        "playful",
+        "calm"
+      ],
+      "portrait": false
+    },
+    {
+      "id": "kin_linedrawing_v1",
+      "emotions": [
+        "shy",
+        "calm"
+      ],
+      "portrait": true
+    }
+  ]
+}

@@ -183,6 +183,9 @@ if (JSON.stringify(vercel.rewrites) !== JSON.stringify(vercelRewrites)) {
 if (vercel.outputDirectory || vercel.buildCommand === null) {
   errors.push('vercel.json must let the Astro build produce the deployment');
 }
+if (!Array.isArray(vercel.crons) || vercel.crons.length !== 1 || !dailyCron(vercel.crons[0])) {
+  errors.push('vercel.json crons must be one daily GET /api/world/ingest');
+}
 
 if (errors.length > 0) {
   for (const error of errors) console.error(error);
@@ -192,6 +195,15 @@ if (errors.length > 0) {
 console.log(
   `content ok: ${characters.length} characters, ${works.length} works, ${relations.length} relations, ${sources.length} sources`
 );
+
+function dailyCron(cron) {
+  const parts = String(cron?.schedule ?? '')
+    .trim()
+    .split(/\s+/);
+  if (cron?.path !== '/api/world/ingest' || parts.length !== 5) return false;
+  const [minute, hour, day, month, dow] = parts;
+  return /^\d+$/.test(minute) && /^\d+$/.test(hour) && day === '*' && month === '*' && dow === '*';
+}
 
 function dataOf(entries) {
   return (entries ?? []).map((entry) => entry.data);

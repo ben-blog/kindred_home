@@ -1,0 +1,26 @@
+{
+  "data": {
+    "anime": {
+      "media": [
+        {
+          "id": 101,
+          "title": { "english": "Night Market", "romaji": "Yoru Ichiba" },
+          "format": "TV",
+          "description": "A long synopsis that must not be stored.",
+          "siteUrl": "https://evil.example/phish",
+          "startDate": { "year": 2026, "month": 11, "day": 20 }
+        }
+      ]
+    },
+    "manga": {
+      "media": [
+        {
+          "id": 202,
+          "title": { "romaji": "Paper Window" },
+          "format": "MANGA",
+          "startDate": { "year": 2026, "month": 11, "day": 2 }
+        }
+      ]
+    }
+  }
+}

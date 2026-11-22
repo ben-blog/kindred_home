@@ -24,6 +24,8 @@ const missingRewrites = rewriteRoutes.filter((route) => !seen.has(routeKey(route
 config.routes.splice(filesystemAt, 0, ...missingRedirects);
 const filesystemNow = config.routes.findIndex((route) => route.handle === 'filesystem');
 config.routes.splice(filesystemNow + 1, 0, ...missingRewrites);
+const vercel = JSON.parse(readFileSync(path.join(repoRoot, 'vercel.json'), 'utf8'));
+config.crons = Array.isArray(vercel.crons) ? vercel.crons : [];
 writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
 function routesOf(result) {

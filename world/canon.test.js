@@ -57,7 +57,10 @@ test('v0 rules pool visitor influence until Ben ticks', () => {
     },
   ]);
   assert.equal(held.tick, 0);
-  assert.equal(held.relations.find((relation) => relation.id === 'dred-ben').tension, state.relations.find((r) => r.id === 'dred-ben').tension);
+  assert.equal(
+    held.relations.find((relation) => relation.id === 'dred-ben').tension,
+    state.relations.find((r) => r.id === 'dred-ben').tension
+  );
 
   const advanced = step(held, [
     {
@@ -83,13 +86,21 @@ test('v0 rules pool visitor influence until Ben ticks', () => {
   );
 });
 
-test('external source categories are stored and not fetched', () => {
+test('external sources name a provider in data and do not fetch lyric bodies', () => {
   const byId = Object.fromEntries(canon.sources.map((source) => [source.id, source]));
   assert.equal(byId['kin-subculture'].character, 'kin');
+  assert.equal(byId['kin-subculture'].provider, 'anilist');
   assert.deepEqual(byId['kin-subculture'].kinds, ['anime_release', 'manga_release']);
   assert.equal(byId['dred-music'].character, 'dred');
+  assert.equal(byId['dred-music'].provider, 'musicbrainz');
+  assert.equal(byId['dred-music'].releaseKind, 'new_song');
+  assert.notEqual(byId['dred-music'].releaseKind, 'lyrics');
   assert.deepEqual(byId['dred-music'].kinds, ['new_song', 'lyrics']);
   assert.equal(byId['shared-weather'].scope, 'shared');
+  assert.equal(byId['shared-weather'].provider, 'open-meteo');
+  assert.equal(byId['shared-weather'].character, undefined);
   assert.deepEqual(byId['shared-weather'].kinds, ['weather', 'season']);
-  for (const source of canon.sources) assert.equal(source.fetch, false);
+  for (const source of canon.sources) {
+    if (source.fetch) assert.equal(typeof source.provider, 'string');
+  }
 });

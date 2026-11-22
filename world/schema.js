@@ -12,17 +12,15 @@ const localeKey = z.string().regex(/^[a-z]{2}(?:-[a-z0-9]{2,8})*$/);
  * A language map. `en` is required. Any other locale key is optional.
  * `ko` is not special: it is just another locale.
  */
-export const localizedSchema = z
-  .record(localeKey, z.string().min(1))
-  .superRefine((value, ctx) => {
-    if (typeof value.en !== 'string' || value.en.length === 0) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'en is required',
-        path: ['en'],
-      });
-    }
-  });
+export const localizedSchema = z.record(localeKey, z.string().min(1)).superRefine((value, ctx) => {
+  if (typeof value.en !== 'string' || value.en.length === 0) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'en is required',
+      path: ['en'],
+    });
+  }
+});
 
 export const siteSchema = z
   .strictObject({
@@ -235,6 +233,26 @@ export const relationSchema = z
   })
   .superRefine(requireTensionForSseom);
 
+/** Providers the daily ingest knows. The source file picks one. Code does not. */
+export const sourceProviders = ['anilist', 'musicbrainz', 'open-meteo'];
+
+const sourceMediaSchema = z.strictObject({
+  type: z.enum(['ANIME', 'MANGA']),
+  kind: z.string().min(1),
+});
+
+const providerFields = [
+  'provider',
+  'media',
+  'releaseKind',
+  'query',
+  'latitude',
+  'longitude',
+  'timezone',
+  'weatherKind',
+  'seasonKind',
+];
+
 export const sourceSchema = z
   .strictObject({
     id: slugSchema,
@@ -242,8 +260,26 @@ export const sourceSchema = z
     character: slugSchema.optional(),
     category: z.string().min(1),
     kinds: z.array(z.string().min(1)).min(1),
-    /** v0 stores the category only. Fetching is a later phase. */
-    fetch: z.literal(false),
+    /**
+     * `false` keeps the source as catalog only.
+     * `true` requires `provider` and the fields that provider reads.
+     */
+    fetch: z.boolean(),
+    provider: z.enum(sourceProviders).optional(),
+    media: z.array(sourceMediaSchema).min(1).max(4).optional(),
+    releaseKind: z.string().min(1).optional(),
+    query: z
+      .string()
+      .regex(/^[A-Za-z0-9:()._\- ]{1,180}$/)
+      .optional(),
+    latitude: z.number().gte(-90).lte(90).optional(),
+    longitude: z.number().gte(-180).lte(180).optional(),
+    timezone: z
+      .string()
+      .regex(/^[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)+$/)
+      .optional(),
+    weatherKind: z.string().min(1).optional(),
+    seasonKind: z.string().min(1).optional(),
   })
   .superRefine((source, ctx) => {
     if (source.scope === 'character' && !source.character) {
@@ -259,6 +295,103 @@ export const sourceSchema = z
         message: 'shared sources do not name a character',
         path: ['character'],
       });
+    }
+    if (source.fetch === false) {
+      for (const key of providerFields) {
+        if (source[key] != null) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'a source that is not fetched has no provider fields',
+            path: [key],
+          });
+        }
+      }
+      return;
+    }
+    if (!source.provider) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'fetched sources require a provider',
+        path: ['provider'],
+      });
+      return;
+    }
+    const allowed = providerFieldsFor(source.provider);
+    for (const key of providerFields) {
+      if (key === 'provider') continue;
+      if (source[key] != null && !allowed.has(key)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `${source.provider} does not use ${key}`,
+          path: [key],
+        });
+      }
+    }
+    if (source.provider === 'anilist') {
+      if (!source.media?.length) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'anilist sources list media',
+          path: ['media'],
+        });
+      }
+      for (const [index, item] of (source.media ?? []).entries()) {
+        if (!source.kinds.includes(item.kind)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'media kind must be one of kinds',
+            path: ['media', index, 'kind'],
+          });
+        }
+      }
+    }
+    if (source.provider === 'musicbrainz') {
+      if (!source.releaseKind || !source.kinds.includes(source.releaseKind)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'releaseKind must be one of kinds',
+          path: ['releaseKind'],
+        });
+      }
+      if (source.releaseKind === 'lyrics') {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'a music source does not fetch lyric bodies',
+          path: ['releaseKind'],
+        });
+      }
+    }
+    if (source.provider === 'open-meteo') {
+      for (const key of ['latitude', 'longitude', 'timezone', 'weatherKind', 'seasonKind']) {
+        if (source[key] == null) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `open-meteo sources require ${key}`,
+            path: [key],
+          });
+        }
+      }
+      if (source.weatherKind && !source.kinds.includes(source.weatherKind)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weatherKind must be one of kinds',
+          path: ['weatherKind'],
+        });
+      }
+      if (source.seasonKind && !source.kinds.includes(source.seasonKind)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'seasonKind must be one of kinds',
+          path: ['seasonKind'],
+        });
+      }
+      if (source.weatherKind && source.weatherKind === source.seasonKind) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'weatherKind and seasonKind differ',
+          path: ['seasonKind'],
+        });
+      }
     }
   });
 
@@ -328,6 +461,15 @@ export const collections = {
   works: { dir: 'works', schema: workSchema, idKey: 'slug' },
   campaigns: { dir: 'campaigns', schema: campaignSchema, idKey: 'slug' },
 };
+
+function providerFieldsFor(provider) {
+  if (provider === 'anilist') return new Set(['media']);
+  if (provider === 'musicbrainz') return new Set(['releaseKind', 'query']);
+  if (provider === 'open-meteo') {
+    return new Set(['latitude', 'longitude', 'timezone', 'weatherKind', 'seasonKind']);
+  }
+  return new Set();
+}
 
 function requireTensionForSseom(value, ctx) {
   if (value.kinds.includes('썸') && typeof value.tension !== 'number') {

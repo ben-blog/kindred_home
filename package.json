@@ -8,7 +8,7 @@
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "serve": "node scripts/serve-built.js",
     "validate": "node scripts/validate-content.js",
-    "test": "node --test world/*.test.js src/lib/*.test.js scripts/*.test.js",
+    "test": "node --test world/*.test.js src/lib/*.test.js src/lib/world/*.test.js scripts/*.test.js",
     "check:links": "node scripts/check-links.js",
     "check": "npm run validate && npm test && npm run lint && npm run build && npm run check:links",
     "lint": "eslint public/js world routing scripts src/lib src/pages/api",

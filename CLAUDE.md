@@ -18,7 +18,7 @@ kinxdred 메인 웹사이트. Astro 정적 출력 + Vercel adapter. 지금 열�
 - 살아 있는 페이지는 여전히 순수 HTML / CSS / JS (`public/`)
 - 가벼운 API는 이 저장소의 Vercel function (`/api/health`, `/api/event`)
 - 긴 에이전트는 Railway에 둔다 (`kin-agent`, `dred-agent`, `mirrored-api`). 브라우저는 그 주소를 직접 치지 않고 `/api/event`로 보낸다
-- 데이터는 나중에 Supabase. 이 페이즈에서는 스키마와 reducer만 저장소에 있다. 키를 넣지 않는다
+- 세계 상태는 Supabase 프로젝트 `kinxdred_home`. 마이그레이션은 `supabase/migrations`에만 두고, 적용된 파일은 고치지 않는다. 스키마 변경은 소유자 승인 뒤에만 적용한다. 그 밖의 기존 테이블은 건드리지 않는다. 키 값은 넣지 않는다
 
 ## 폴더
 
@@ -65,7 +65,7 @@ D14는 `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`를 �
 
 ## 세계
 
-정적 canon은 `src/content`. 방문자는 `influence`만 쌓고, Ben(`kind: "leader"`)이 `tick`할 때만 `world/step.js`가 상태를 바꾼다. 모든 캐릭터는 Ben과 `leader` + `friend`다. DRED와 Ben은 추가로 `썸`이고 `tension` 숫자가 있다. 외부 소스는 데이터만 있다. KIN은 서브컬처, DRED는 음악, 공유는 날씨·계절. `fetch`는 `false`다.
+정적 canon은 `src/content`. 방문자 신호, 외부 소스, 에이전트는 이벤트를 추가만 한다. Ben(`kind: "leader"`)이 `tick`할 때만 `world/step.js`가 상태를 바꾸고, 그 결과가 `world_snapshots` 한 줄이 된다. 모든 캐릭터는 Ben과 `leader` + `friend`다. DRED와 Ben은 추가로 `썸`이고 `tension` 숫자가 있다. 외부 소스는 파일의 `provider`로 고른다. 코드에서 KIN, DRED 이름으로 갈라지지 않는다. `fetch: true`인 소스만 하루 한 번 가져온다. 가사 본문은 저장하지 않는다.
 
 ## 코딩 컨벤션
 
@@ -82,8 +82,9 @@ D14는 `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`를 �
 - `DRED_AGENT_URL` — dred-agent origin
 - `MIRRORED_API_URL` — mirrored-api origin. 아직 이 키를 쓰는 캐릭터는 없다
 - `KIN_AGENT_TOKEN`, `DRED_AGENT_TOKEN`, `MIRRORED_API_TOKEN` — 선택. 있을 때만 `Authorization: Bearer`
+- `WORLD_SUPABASE_URL`, `WORLD_SUPABASE_SERVICE_KEY`, `WORLD_SUPABASE_ANON_KEY`, `WORLD_LEADER_USER_ID`, `WORLD_IP_SALT`, `CRON_SECRET` — 세계 API. 서버만. 비면 `/api/world`는 503
 
-어느 항목에도 service-role 키를 넣지 않는다. Supabase 클라이언트는 없다. `dred/d2/musicdb/` 옛 스크립트에 삭제된 프로젝트의 service_role 키가 있었다. 그 폴더를 다시 넣지 말 것.
+에이전트 토큰에는 service-role 키를 넣지 않는다. 세계 서비스 키도 브라우저로 나가지 않는다. `dred/d2/musicdb/` 옛 스크립트에 삭제된 프로젝트의 service_role 키가 있었다. 그 폴더를 다시 넣지 말 것.
 
 ## Git 주의사항
 

@@ -3,5 +3,11 @@
   "scope": "shared",
   "category": "weather",
   "kinds": ["weather", "season"],
-  "fetch": false
+  "fetch": true,
+  "provider": "open-meteo",
+  "latitude": 37.5665,
+  "longitude": 126.978,
+  "timezone": "Asia/Seoul",
+  "weatherKind": "weather",
+  "seasonKind": "season"
 }

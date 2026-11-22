@@ -28,8 +28,9 @@ Run `npm run check` before opening a PR. `vercel.json` redirects and the `/mood-
 
 - Characters, works, and campaigns are files in `src/content`. Do not hardcode how many characters exist, and do not branch on the names KIN or DRED in code. Tests may name the current canon.
 - A character is `active`, `archived`, or `draft`. Draft is not built. Archived keeps its URL.
-- Secrets stay out of the repo and out of the browser. Do not add Supabase keys, service-role keys, or Railway URLs. Do not change Supabase or the Railway services. Do not change the agent event objects the hubs already send (`service`, `event_type`, `payload`, and KIN's `timestamp`).
-- `world/step.js` is the only place that changes world state. It is a pure `step(state, events) -> state`. Visitors enqueue `influence`. The world changes only when the leader ticks. External sources are config only: `fetch` stays `false`.
+- Secrets stay out of the repo and out of the browser. Do not commit key values or Railway URLs. Do not change the Railway services. Do not change the agent event objects the hubs already send (`service`, `event_type`, `payload`, and KIN's `timestamp`).
+- The persistent world lives in Supabase project `kinxdred_home`. Migrations live in `supabase/migrations` and are additive. Do not edit a migration after it has been applied. Schema changes need the owner's approval before anyone applies them. Do not alter tables that are outside those migrations. The service key stays on the server.
+- `world/step.js` is the only place that changes world stats. It is a pure `step(state, events) -> state`. Visitors, sources, and agents append events. The world changes only when the leader ticks. The tick route persists the snapshot `step` returns. It does not reimplement the reducer.
 - Do not delete or retarget the legacy routes in `routing/legacy.js`.
 - `public/` is the current site. Visual tuning leaves it alone. The hubs post events to `/api/event` and must not call Railway or Supabase themselves.
 
@@ -40,10 +41,12 @@ public/                 live HTML, CSS, JS, gallery JSON, images. Served as-is.
 src/content/            canon. One JSON file per entry. The file name is the id.
 src/config/site.js      default locale and the enabled locale list
 src/lib/locale.js       text(field) for pages. Do not read .en or .ko in a page.
-src/pages/              new Astro pages, /api/health, and /api/event
+src/pages/              new Astro pages, /api/health, /api/event, and /api/world
 src/layouts/Base.astro  shell for the new pages
 src/styles/site.css     tokens and styles for the new pages only
+src/lib/world/          world handlers, leader session, ingest, source parsers
 world/                  reducer, state builder, zod schemas. No Astro imports in step.js.
+supabase/migrations/    additive world SQL. Apply by hand on kinxdred_home.
 routing/legacy.js       redirects and GAZE rewrites. vercel.json must match.
 scripts/                validate, route injection, link check
 ```
@@ -179,13 +182,40 @@ Rules in `src/content/world/kinxdred.json`:
 - Warmth strengthens that character's relation with the leader by 1. A `썸` relation also raises `tension` by 1. If two characters who share a relation both receive warmth, that relation strengthens by 1.
 - Archived characters do not change. Invalid events are ignored. The input state is not mutated.
 
-`whereIs(state, slug)` reads the location after the last tick. Do not persist this state to Supabase in this phase.
+`whereIs(state, slug)` reads the location after the last tick. The live copy of that state is the latest `world_snapshots` row. `step` is still the only function that computes the next one.
 
-External categories, not fetched:
+External categories are data on the source files. A source with `"fetch": true` names a `provider`. The daily cron dispatches on that field. It does not branch on a character name. Current files:
 
-- KIN: `subculture` (`anime_release`, `manga_release`)
-- DRED: `music` (`new_song`, `lyrics`)
-- shared: `weather` (`weather`, `season`)
+- `kin-subculture`: `subculture` (`anime_release`, `manga_release`), provider `anilist`
+- `dred-music`: `music` (`new_song`, `lyrics`), provider `musicbrainz`. The fetcher emits `new_song` only. It never stores a lyric body.
+- `shared-weather`: `weather` (`weather`, `season`), provider `open-meteo`. The place is the source file's latitude, longitude, and timezone. Seoul is the current default.
+
+`fetch: false` is still valid. That source stays catalog-only and grows no provider fields.
+
+## Persistent world
+
+Visitors, external sources, and agents append rows to `world_events`. They do not change stats. `POST /api/world/tick` is the leader only. It loads the latest snapshot (or `createState(canon)` before the first tick), runs `step` over the events whose `seq` is above that snapshot's cursor, and inserts one `world_snapshots` row. Tick 0, the canon state before any tick, is written in the same transaction as tick 1. A second tick while the lock is held returns 409. The lock expires after 30 seconds.
+
+`world_transitions` is `(state, events, next_state)` for a later learned world model. `events` is the array passed to `step`, including the tick.
+
+RLS is on for `worlds`, `world_events`, `world_snapshots`, and `world_source_runs`, with no policies. `anon` and `authenticated` have no grants. Triggers reject `UPDATE` and `DELETE` on `world_events` and `world_snapshots`. Visitor addresses are stored as an HMAC (`WORLD_IP_SALT`), never as the raw address.
+
+Routes, all fail closed with 503 when any world env var is missing or unsafe:
+
+| Route | Who |
+| --- | --- |
+| `GET /api/world` | public current state. The event log and visitor ids are not in the body. |
+| `POST /api/world/signal` | same-origin visitor warmth. 2KB body cap. In-memory limit and a database limit, 30 per 60 seconds per hashed address. |
+| `POST /api/world/tick` | the leader session only. 409 when a tick is already running. |
+| `GET /api/world/ingest` | Vercel Cron only. `Authorization: Bearer` must match `CRON_SECRET`. |
+| `POST /api/world/auth/magic` | asks Supabase Auth for a magic link. `create_user` is false. |
+| `GET` / `POST` / `DELETE /api/world/auth/session` | the httpOnly leader cookie. `POST` accepts the magic-link `token_hash` or, if the redirect used a hash fragment, the access and refresh tokens. The anon key stays on the server. |
+
+`/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` copies `vercel.json` `crons` into the build output.
+
+The leader account is one Supabase Auth user. Sign-ups stay disabled. `WORLD_LEADER_USER_ID` must be that user's id. A session for anyone else is 403.
+
+Parsers are fixture-tested. CI does not call AniList, MusicBrainz, or Open-Meteo. MusicBrainz requests send `User-Agent: kinxdred-world/1.0 (https://kinxdred.com)`.
 
 ## Browser calls
 
@@ -224,8 +254,14 @@ Set these in the Vercel project. The repo lists the names in `.env.example` and 
 | `KIN_AGENT_TOKEN` | optional bearer for kin-agent |
 | `DRED_AGENT_TOKEN` | optional bearer for dred-agent |
 | `MIRRORED_API_TOKEN` | optional bearer for mirrored-api |
+| `WORLD_SUPABASE_URL` | kinxdred_home API origin (`https` host only, no path) |
+| `WORLD_SUPABASE_SERVICE_KEY` | service role key. Server only. |
+| `WORLD_SUPABASE_ANON_KEY` | anon key for the magic-link exchange. Server only. It is not a client bundle key. |
+| `WORLD_LEADER_USER_ID` | the one Supabase Auth user who may tick |
+| `WORLD_IP_SALT` | HMAC salt for visitor addresses. 16 or more header-safe characters. |
+| `CRON_SECRET` | bearer secret Vercel Cron sends to `GET /api/world/ingest` |
 
-No character uses `MIRRORED_API_URL` yet. Nothing in `public/` or `src/` calls mirrored-api. The key is allowlisted so a character file can point at it without a proxy edit. Do not put a service-role key in any of these.
+No character uses `MIRRORED_API_URL` yet. Nothing in `public/` or `src/` calls mirrored-api. The key is allowlisted so a character file can point at it without a proxy edit. Do not put a service-role key in any of the agent token vars. The world service key is the one exception, and it stays in Vercel, not in the repo and not in the browser.
 
 ## Codex and other local CLIs
 

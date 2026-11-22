@@ -1,0 +1,124 @@
+---
+import Frame from '../../components/world/Frame.astro';
+import Base from '../../layouts/Base.astro';
+---
+
+<Base frame="world" title="Tick — kinxdred" description="Leader tick for the kinxdred world.">
+  <Frame>
+    <p class="eyebrow">leader</p>
+    <h1>Tick</h1>
+    <p class="world-copy">Sign in. Then tick.</p>
+    <form class="panel" id="magic-form">
+      <label class="eyebrow" for="leader-email">email</label>
+      <input id="leader-email" name="email" type="email" autocomplete="username" required maxlength="200" />
+      <div class="world-actions">
+        <button type="submit">send link</button>
+        <button type="button" id="tick-button" disabled>tick</button>
+        <button type="button" id="sign-out" hidden>sign out</button>
+      </div>
+      <p class="world-status" id="auth-status" aria-live="polite"></p>
+    </form>
+  </Frame>
+</Base>
+
+<script>
+  const form = document.querySelector('#magic-form');
+  const email = document.querySelector('#leader-email');
+  const tickButton = document.querySelector('#tick-button');
+  const signOut = document.querySelector('#sign-out');
+  const status = document.querySelector('#auth-status');
+
+  function say(text) {
+    status.textContent = text;
+  }
+
+  async function refresh() {
+    const response = await fetch('/api/world/auth/session', { headers: { accept: 'application/json' } });
+    if (response.status === 503) {
+      say('Unavailable.');
+      tickButton.disabled = true;
+      return;
+    }
+    const body = await response.json().catch(() => ({}));
+    const signedIn = body.signedIn === true;
+    tickButton.disabled = !signedIn;
+    signOut.hidden = !signedIn;
+    email.disabled = signedIn;
+    if (signedIn) say('Signed in.');
+  }
+
+  const params = new URLSearchParams(location.search);
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type');
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+  if (tokenHash || accessToken || params.get('error')) {
+    history.replaceState(null, '', location.pathname);
+  }
+
+  try {
+    if (params.get('error')) {
+      say('The link did not work.');
+    } else if (tokenHash && type) {
+      const response = await fetch('/api/world/auth/session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ tokenHash, type }),
+      });
+      say(response.ok ? 'Signed in.' : 'The link did not work.');
+    } else if (accessToken && refreshToken) {
+      const response = await fetch('/api/world/auth/session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ accessToken, refreshToken }),
+      });
+      say(response.ok ? 'Signed in.' : 'The link did not work.');
+    }
+    await refresh();
+  } catch {
+    say('Unavailable.');
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    say('Sending.');
+    try {
+      const response = await fetch('/api/world/auth/magic', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ email: email.value }),
+      });
+      say(response.ok ? 'Check your email.' : 'Unavailable.');
+    } catch {
+      say('Unavailable.');
+    }
+  });
+
+  tickButton.addEventListener('click', async () => {
+    tickButton.disabled = true;
+    say('Ticking.');
+    try {
+      const response = await fetch('/api/world/tick', {
+        method: 'POST',
+        headers: { accept: 'application/json' },
+      });
+      if (response.status === 409) say('A tick is already running.');
+      else if (response.status === 401 || response.status === 403) say('Sign in.');
+      else if (!response.ok) say('Unavailable.');
+      else {
+        const body = await response.json().catch(() => ({}));
+        say(Number.isInteger(body.tick) ? `Tick ${body.tick}.` : 'Ticked.');
+      }
+    } catch {
+      say('Unavailable.');
+    }
+    await refresh().catch(() => {});
+  });
+
+  signOut.addEventListener('click', async () => {
+    await fetch('/api/world/auth/session', { method: 'DELETE' }).catch(() => {});
+    say('');
+    await refresh().catch(() => {});
+  });
+</script>

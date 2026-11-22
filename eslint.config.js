@@ -3,20 +3,21 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['dred/d2/api/**', 'node_modules/**']
+    ignores: ['node_modules/**']
   },
   js.configs.recommended,
   {
+    files: ['js/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.browser,
-        html2canvas: 'readonly'
+        asset: 'readonly'
       },
       ecmaVersion: 2022,
-      sourceType: 'module'
+      sourceType: 'script'
     },
     rules: {
-      'no-unused-vars': 'error',
+      'no-unused-vars': ['error', { vars: 'local', caughtErrors: 'none' }],
       'no-console': 'warn',
       'no-empty': ['error', { allowEmptyCatch: true }]
     }

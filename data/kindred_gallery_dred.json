@@ -423,26 +423,7 @@
         "kin_perspective": "what does DRED even listen to?? boombox AND vinyl lol. tell me. i'll listen to anything",
         "dred_perspective": "good music doesn't need an explanation. you just listen."
       },
-      "actions": {
-        "ko": [
-          {
-            "type": "link",
-            "label": "D2 — drop",
-            "url": "/dred/d2",
-            "title": "D2",
-            "desc": "drop"
-          }
-        ],
-        "en": [
-          {
-            "type": "link",
-            "label": "D2 — drop",
-            "url": "/dred/d2",
-            "title": "D2",
-            "desc": "drop"
-          }
-        ]
-      }
+      "actions": {}
     },
     {
       "id": "dred_g4_highway_wall",

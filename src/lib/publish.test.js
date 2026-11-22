@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { compareEntries, isPublicStatus, worksForCharacter } from './publish.js';
+import { compareEntries, isListedWork, isPublicStatus, worksForCharacter } from './publish.js';
 
 test('draft entries stay unpublished', () => {
   assert.equal(isPublicStatus('active'), true);
@@ -22,6 +22,23 @@ test('works follow scope instead of a fixed cast', () => {
     worksForCharacter('alpha', works).map((work) => work.data.slug),
     ['solo', 'shared']
   );
+});
+
+test('an unlisted work stays out of character pages and the works index', () => {
+  const works = [
+    { data: { slug: 'solo', status: 'active', scope: 'character', characters: ['alpha'], listed: true } },
+    { data: { slug: 'gaze', status: 'active', scope: 'shared', characters: [], listed: false } },
+    { data: { slug: 'shared', status: 'active', scope: 'shared', characters: [] } },
+  ];
+  assert.deepEqual(
+    worksForCharacter('alpha', works).map((work) => work.data.slug),
+    ['solo', 'shared']
+  );
+  assert.deepEqual(
+    worksForCharacter('beta', works).map((work) => work.data.slug),
+    ['shared']
+  );
+  assert.deepEqual(works.filter(isListedWork).map((work) => work.data.slug), ['solo', 'shared']);
 });
 
 test('active entries sort ahead of archived ones', () => {

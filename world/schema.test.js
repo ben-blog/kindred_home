@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { characterSchema, localizedSchema, siteSchema } from './schema.js';
+import { characterSchema, localizedSchema, siteSchema, workSchema } from './schema.js';
 
 test('a localized field requires en and keeps extra locales', () => {
   assert.deepEqual(localizedSchema.parse({ en: 'Hello' }), { en: 'Hello' });
@@ -87,4 +87,20 @@ test('a board needs a gaze mark and a void needs a room mark', () => {
     )
   );
   assert.equal(blob.success, false);
+});
+
+test('a work stays listed unless the file hides it', () => {
+  const work = {
+    slug: 'piece',
+    status: 'active',
+    title: { en: 'Piece' },
+    summary: { en: 'A piece.' },
+    kind: 'gallery',
+    url: '/kin',
+    external: false,
+    scope: 'character',
+    characters: ['kin'],
+  };
+  assert.equal(workSchema.parse(work).listed, true);
+  assert.equal(workSchema.parse({ ...work, listed: false }).listed, false);
 });

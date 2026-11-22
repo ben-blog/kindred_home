@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { characterSchema, localizedSchema, siteSchema, workSchema } from './schema.js';
+import { characterSchema, localizedSchema, siteSchema, sourceSchema, workSchema } from './schema.js';
 
 test('a localized field requires en and keeps extra locales', () => {
   assert.deepEqual(localizedSchema.parse({ en: 'Hello' }), { en: 'Hello' });
@@ -43,6 +43,43 @@ function character(identity, layout) {
   };
 }
 
+test('a fetched source names a provider and a catalog source does not', () => {
+  const catalog = sourceSchema.parse({
+    id: 'notes',
+    scope: 'shared',
+    category: 'weather',
+    kinds: ['weather'],
+    fetch: false,
+  });
+  assert.equal(catalog.fetch, false);
+  assert.equal(catalog.provider, undefined);
+
+  const fetched = sourceSchema.safeParse({ ...catalog, fetch: true });
+  assert.equal(fetched.success, false);
+
+  const withProvider = sourceSchema.safeParse({
+    id: 'notes',
+    scope: 'shared',
+    category: 'weather',
+    kinds: ['weather'],
+    fetch: false,
+    provider: 'open-meteo',
+  });
+  assert.equal(withProvider.success, false);
+
+  const lyrics = sourceSchema.safeParse({
+    id: 'songs',
+    scope: 'character',
+    character: 'alpha',
+    category: 'music',
+    kinds: ['lyrics'],
+    fetch: true,
+    provider: 'musicbrainz',
+    releaseKind: 'lyrics',
+  });
+  assert.equal(lyrics.success, false);
+});
+
 test('a character with no layout is a sheet and has no mark', () => {
   const parsed = characterSchema.parse(character({ color: '#AABBCC' }));
   assert.equal(parsed.layout, 'sheet');
@@ -56,7 +93,9 @@ test('a character with no layout is a sheet and has no mark', () => {
 });
 
 test('a board needs a gaze mark and a void needs a room mark', () => {
-  const gaze = characterSchema.parse(character({ color: '#FFE500', mark: { type: 'gaze' } }, 'board'));
+  const gaze = characterSchema.parse(
+    character({ color: '#FFE500', mark: { type: 'gaze' } }, 'board')
+  );
   assert.equal(gaze.identity.mark.type, 'gaze');
   assert.equal(gaze.identity.mark.delay, 280);
   assert.deepEqual(gaze.identity.mark.easing, [0.87, 0, 0.13, 1]);
@@ -82,7 +121,10 @@ test('a board needs a gaze mark and a void needs a room mark', () => {
 
   const blob = characterSchema.safeParse(
     character(
-      { color: '#FFE500', mark: { type: 'gaze', points: 6, wobble: 0.08, speed: 1, scatterOnHover: true } },
+      {
+        color: '#FFE500',
+        mark: { type: 'gaze', points: 6, wobble: 0.08, speed: 1, scatterOnHover: true },
+      },
       'board'
     )
   );

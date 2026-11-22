@@ -18,7 +18,13 @@ function canon() {
   return {
     world: { id: 'test', name: 'test', tick: 0, rules },
     entities: [
-      { slug: 'leader', kind: 'leader', name: 'Leader', status: 'active', role: { ko: '리더', en: 'Leader' } },
+      {
+        slug: 'leader',
+        kind: 'leader',
+        name: 'Leader',
+        status: 'active',
+        role: { ko: '리더', en: 'Leader' },
+      },
       { slug: 'alpha', kind: 'character', name: 'Alpha', status: 'active' },
       { slug: 'beta', kind: 'character', name: 'Beta', status: 'active' },
       { slug: 'gamma', kind: 'character', name: 'Gamma', status: 'active' },
@@ -52,7 +58,13 @@ function canon() {
       },
       { id: 'gamma-leader', from: 'gamma', to: 'leader', kinds: ['leader', 'friend'], strength: 0 },
       { id: 'old-leader', from: 'old', to: 'leader', kinds: ['leader', 'friend'], strength: 1 },
-      { id: 'hidden-leader', from: 'hidden', to: 'leader', kinds: ['leader', 'friend'], strength: 0 },
+      {
+        id: 'hidden-leader',
+        from: 'hidden',
+        to: 'leader',
+        kinds: ['leader', 'friend'],
+        strength: 0,
+      },
       { id: 'alpha-beta', from: 'alpha', to: 'beta', kinds: ['peer'], strength: 1 },
     ],
     sources: [
@@ -126,7 +138,10 @@ test('draft characters are omitted and archived characters stay', () => {
   assert.equal(state.leaderSlug, 'leader');
   assert.equal(state.characters.hidden, undefined);
   assert.equal(state.characters.old.status, 'archived');
-  assert.equal(state.relations.some((relation) => relation.id === 'hidden-leader'), false);
+  assert.equal(
+    state.relations.some((relation) => relation.id === 'hidden-leader'),
+    false
+  );
 });
 
 test('influence waits in pending until the leader ticks', () => {
@@ -270,6 +285,27 @@ test('agent moves apply on the tick, notes do not change stats', () => {
   assert.equal(whereIs(advanced, 'alpha'), 'hall');
   assert.equal(advanced.characters.alpha.mood, 2);
   assert.equal(whereIs(advanced, 'nobody'), null);
+});
+
+test('a fetched source still accepts an external event', () => {
+  const data = canon();
+  data.sources[0] = { ...data.sources[0], fetch: true, provider: 'anilist' };
+  const next = step(createState(data), [
+    {
+      id: 'ext-fetched',
+      worldId: 'test',
+      tick: null,
+      at: '2026-11-22T09:00:00Z',
+      who: 'source:alpha-sub',
+      what: 'external',
+      target: 'alpha',
+      payload: { category: 'subculture', kind: 'anime_release', title: 'Example' },
+      source: 'external',
+    },
+    tick('tick-fetched'),
+  ]);
+  assert.equal(next.log.filter((entry) => entry.what === 'external').length, 1);
+  assert.equal(next.characters.alpha.mood, 2);
 });
 
 test('external events are logged on the tick and do not change stats', () => {

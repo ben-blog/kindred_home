@@ -76,8 +76,10 @@ function normalizeExternal(state, event) {
   const category = event.payload.category;
   const kind = event.payload.kind;
   if (typeof category !== 'string' || typeof kind !== 'string') return null;
+  // `fetch` decides whether the cron calls out. It does not decide whether the
+  // event is valid. Category and kind still have to match a configured source.
   const source = state.sources.find(
-    (item) => item.category === category && item.kinds.includes(kind) && item.fetch === false
+    (item) => item.category === category && item.kinds.includes(kind)
   );
   if (!source) return null;
   if (source.scope === 'shared') {
@@ -119,7 +121,11 @@ function applyTick(state, event) {
     const level = 1 + Math.floor(character.xp / state.rules.xpPerLevel);
     if (level > character.level) {
       for (const lore of character.lore) {
-        if (lore.unlockStage != null && lore.unlockStage <= level && !character.unlocked.includes(lore.id)) {
+        if (
+          lore.unlockStage != null &&
+          lore.unlockStage <= level &&
+          !character.unlocked.includes(lore.id)
+        ) {
           character.unlocked.push(lore.id);
         }
       }

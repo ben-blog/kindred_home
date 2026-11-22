@@ -8,10 +8,16 @@ if (/^#[0-9A-Fa-f]{6}$/.test(ground)) parts.push(`--ground:${ground}`);
 if (ink === '#080806' || ink === 'rgba(255,255,255,.92)') parts.push(`--ink:${ink}`);
 const style = parts.join(';');
 const character = frame === 'character';
+const world = frame === 'world';
+const bare = character || world;
 ---
 
 <!doctype html>
-<html lang="en" class={character ? 'frame-character' : undefined} style={character ? style : undefined}>
+<html
+  lang="en"
+  class={character ? 'frame-character' : world ? 'frame-world' : undefined}
+  style={character ? style : undefined}
+>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,9 +31,9 @@ const character = frame === 'character';
       rel="stylesheet"
     />
   </head>
-  <body style={character ? undefined : style}>
+  <body style={bare ? undefined : style}>
     {
-      character ? (
+      bare ? (
         <slot />
       ) : (
         <>

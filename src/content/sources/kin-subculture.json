@@ -4,5 +4,10 @@
   "character": "kin",
   "category": "subculture",
   "kinds": ["anime_release", "manga_release"],
-  "fetch": false
+  "fetch": true,
+  "provider": "anilist",
+  "media": [
+    { "type": "ANIME", "kind": "anime_release" },
+    { "type": "MANGA", "kind": "manga_release" }
+  ]
 }

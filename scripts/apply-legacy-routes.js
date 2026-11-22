@@ -24,6 +24,8 @@ const missingRewrites = rewriteRoutes.filter((route) => !seen.has(routeKey(route
 config.routes.splice(filesystemAt, 0, ...missingRedirects);
 const filesystemNow = config.routes.findIndex((route) => route.handle === 'filesystem');
 config.routes.splice(filesystemNow + 1, 0, ...missingRewrites);
+// One registration. Vercel also reads vercel.json crons and rejects a second copy.
+config.crons = [{ path: '/api/world/ingest', schedule: '0 15 * * *' }];
 writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 
 function routesOf(result) {

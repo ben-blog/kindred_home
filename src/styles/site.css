@@ -171,3 +171,187 @@ p {
     padding: 2rem 1.25rem 3rem;
   }
 }
+
+html.frame-world,
+html.frame-world body {
+  background: #000;
+  color: rgba(255, 255, 255, 0.92);
+  min-height: 100vh;
+  color-scheme: dark;
+}
+
+html.frame-world body {
+  position: relative;
+}
+
+html.frame-world .grain {
+  position: fixed;
+  opacity: 0.02;
+  z-index: 8;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.frame-world .grain {
+    animation: world-grain 0.55s steps(1) infinite;
+  }
+}
+
+@keyframes world-grain {
+  0% {
+    background-position: 0 0;
+  }
+  25% {
+    background-position: -20px 10px;
+  }
+  50% {
+    background-position: 15px -20px;
+  }
+  75% {
+    background-position: -10px -15px;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+html.frame-world .world-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+html.frame-world .world-top nav {
+  display: flex;
+  gap: 1rem;
+}
+
+html.frame-world .world-top a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+}
+
+html.frame-world .world-main {
+  position: relative;
+  z-index: 1;
+  width: min(720px, calc(100% - 3rem));
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+}
+
+html.frame-world h1 {
+  margin: 0.4rem 0 0.8rem;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(44px, 8.5vw, 116px);
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+html.frame-world .eyebrow {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+}
+
+html.frame-world .world-copy,
+html.frame-world .links a,
+html.frame-world .card {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+html.frame-world .world-status,
+html.frame-world .meta {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+html.frame-world .links {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+html.frame-world .links a,
+html.frame-world .card {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+html.frame-world .panel {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.6rem;
+  padding: 1.25rem;
+  background: rgba(8, 8, 8, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+}
+
+html.frame-world input {
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 300;
+}
+
+html.frame-world input:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 2px;
+}
+
+html.frame-world .world-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+html.frame-world button {
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+html.frame-world button:disabled {
+  color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.12);
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  html.frame-world,
+  html.frame-world body {
+    cursor: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  html.frame-world .world-main {
+    width: auto;
+    padding: 2rem 1.25rem 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.frame-world .grain {
+    animation: none;
+  }
+}

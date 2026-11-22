@@ -4,5 +4,8 @@
   "character": "dred",
   "category": "music",
   "kinds": ["new_song", "lyrics"],
-  "fetch": false
+  "fetch": true,
+  "provider": "musicbrainz",
+  "releaseKind": "new_song",
+  "query": "status:official"
 }

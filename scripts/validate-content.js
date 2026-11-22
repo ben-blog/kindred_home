@@ -183,6 +183,9 @@ if (JSON.stringify(vercel.rewrites) !== JSON.stringify(vercelRewrites)) {
 if (vercel.outputDirectory || vercel.buildCommand === null) {
   errors.push('vercel.json must let the Astro build produce the deployment');
 }
+if (vercel.crons) {
+  errors.push('vercel.json must not declare crons; the build output registers the one daily ingest');
+}
 
 if (errors.length > 0) {
   for (const error of errors) console.error(error);

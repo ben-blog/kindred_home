@@ -1,0 +1,11 @@
+{
+  "releases": [
+    {
+      "id": "7b8c9d0e-1f2a-4b5c-9d0e-1f2a3b4c5d6e",
+      "title": "Glass Door",
+      "date": "2026-11-18",
+      "artist-credit": [{ "name": "Sample" }],
+      "lyrics": "verse one that must never be stored in the world"
+    }
+  ]
+}

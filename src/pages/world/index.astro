@@ -1,0 +1,105 @@
+---
+import { getCollection } from 'astro:content';
+import Frame from '../../components/world/Frame.astro';
+import Base from '../../layouts/Base.astro';
+import { text } from '../../lib/locale.js';
+import { isPublicStatus } from '../../lib/publish.js';
+
+const roster = (await getCollection('characters'))
+  .filter((entry) => isPublicStatus(entry.data.status))
+  .sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+---
+
+<Base frame="world" title="World — kinxdred" description="The kinxdred world, as it stands.">
+  <Frame>
+    <p class="eyebrow">world</p>
+    <h1>kinxdred</h1>
+    <p class="world-status" id="world-status">Waiting.</p>
+    <p class="eyebrow">now</p>
+    <ul class="links" id="world-roster">
+      {
+        roster.map((entry) => (
+          <li data-slug={entry.data.slug}>
+            <a href={`/characters/${entry.data.slug}/`}>
+              <span style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</span>
+              <span class="meta" data-stat></span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="eyebrow">bonds</p>
+    <ul class="links" id="world-bonds"></ul>
+  </Frame>
+</Base>
+
+<script>
+  const status = document.querySelector('#world-status');
+  const roster = document.querySelector('#world-roster');
+  const bonds = document.querySelector('#world-bonds');
+
+  function line(character) {
+    if (!character) return '';
+    return `${character.location} · mood ${character.mood} · energy ${character.energy}`;
+  }
+
+  function nameFor(slug) {
+    for (const item of roster.querySelectorAll('[data-slug]')) {
+      if (item.dataset.slug === slug) {
+        const label = item.querySelector('span');
+        return label?.textContent || slug;
+      }
+    }
+    return slug;
+  }
+
+  try {
+    const response = await fetch('/api/world', { headers: { accept: 'application/json' } });
+    if (!response.ok) {
+      status.textContent = 'Quiet.';
+    } else {
+      const state = await response.json();
+      const pending = Number(state.pending) || 0;
+      status.textContent = `Tick ${state.tick}` + (pending ? ` · ${pending} waiting` : '');
+      const seen = new Set();
+      for (const item of roster.querySelectorAll('[data-slug]')) {
+        const slug = item.dataset.slug;
+        seen.add(slug);
+        const stat = item.querySelector('[data-stat]');
+        stat.textContent = line(state.characters?.[slug]);
+      }
+      for (const [slug, character] of Object.entries(state.characters ?? {})) {
+        if (seen.has(slug)) continue;
+        const li = document.createElement('li');
+        li.dataset.slug = slug;
+        const link = document.createElement('a');
+        link.href = `/characters/${slug}/`;
+        const name = document.createElement('span');
+        name.textContent = slug;
+        const stat = document.createElement('span');
+        stat.className = 'meta';
+        stat.textContent = line(character);
+        link.append(name, stat);
+        li.append(link);
+        roster.append(li);
+      }
+      for (const relation of state.relations ?? []) {
+        const li = document.createElement('li');
+        const row = document.createElement('span');
+        row.className = 'card';
+        const label = document.createElement('span');
+        const kinds = Array.isArray(relation.kinds) ? relation.kinds.join(' · ') : '';
+        label.textContent = `${nameFor(relation.from)}  ×  ${nameFor(relation.to)}`;
+        const meta = document.createElement('span');
+        meta.className = 'meta';
+        const tension = typeof relation.tension === 'number' ? ` · tension ${relation.tension}` : '';
+        meta.textContent = `${kinds} · ${relation.strength}${tension}`;
+        row.append(label, meta);
+        li.append(row);
+        bonds.append(li);
+      }
+    }
+  } catch {
+    status.textContent = 'Quiet.';
+  }
+</script>

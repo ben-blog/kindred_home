@@ -59,6 +59,8 @@ const map = {
       z: 0,
       prompt: 'hidden',
       url: 'https://example.com/bus',
+      emotion: ' Joy ',
+      intensity: 0,
     },
     {
       id: 'b',
@@ -68,6 +70,8 @@ const map = {
       y: 0,
       z: 0,
       url: 'javascript:alert(1)',
+      emotion: 'rage',
+      intensity: 1.4,
     },
     { id: 'r', kind: 'reflection', label: 'not on the sphere', x: 1, y: 0, z: 0 },
   ],
@@ -103,10 +107,17 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
   assert.equal(parsed.points[0].y, 1);
   assert.equal(parsed.points[0].url, 'https://example.com/bus');
   assert.equal(parsed.points[0].createdAt, '2026-11-22T00:00:00.000Z');
+  assert.equal(parsed.points[0].emotion, 'joy');
+  assert.equal(parsed.points[0].intensity, 0);
   assert.equal(parsed.points[1].kind, 'album_moment');
   assert.equal(parsed.points[1].url, undefined);
+  assert.equal(parsed.points[1].emotion, undefined);
+  assert.equal(parsed.points[1].intensity, undefined);
   assert.equal(parsed.points[1].label.length, 80);
-  assert.equal(parsed.points.some((point) => point.kind === 'reflection'), false);
+  assert.equal(
+    parsed.points.some((point) => point.kind === 'reflection'),
+    false
+  );
   assert.equal(parsed.nextCursor, null);
   assert.equal(JSON.stringify(parsed).includes('hidden'), false);
   assert.equal(JSON.stringify(parsed).includes('nope'), false);
@@ -121,6 +132,20 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
     0
   );
   assert.equal(parseMemoryMap({ points: [] }, 'kin'), null);
+  const shaded = parseMemoryMap(
+    {
+      basisFingerprint: 'abc123def456',
+      points: [
+        { id: 'c', kind: 'knowledge', x: 0, y: 0, z: 1, emotion: 'tired', intensity: 0.3334 },
+        { id: 'd', kind: 'pattern', x: 1, y: 0, z: 0, emotion: 4, intensity: '0.2' },
+      ],
+    },
+    'kin'
+  );
+  assert.equal(shaded.points[0].emotion, 'tired');
+  assert.equal(shaded.points[0].intensity, 0.333);
+  assert.equal(shaded.points[1].emotion, undefined);
+  assert.equal(shaded.points[1].intensity, undefined);
 
   const retrieved = parseTrace({
     stage: 'retrieved',
@@ -169,10 +194,7 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
   assert.equal(JSON.stringify(searched).includes('sixth'), false);
   assert.equal(JSON.stringify(searched).includes('<img'), false);
   assert.equal(parseTrace({ stage: 'web_search', query: '   ', results: [] }), null);
-  assert.equal(
-    parseTrace({ stage: 'web_search', query: 'zines' }).results.length,
-    0
-  );
+  assert.equal(parseTrace({ stage: 'web_search', query: 'zines' }).results.length, 0);
 });
 
 test('memory fails closed without a session, a route, or agent config', async () => {
@@ -371,7 +393,10 @@ test('memory follows nextCursor, reloads when the basis changes, and caches the 
     fetch,
     ...isolated(),
   };
-  const response = await handleWorldMemory(request('/api/world/chat/kin/memory', signedIn), options);
+  const response = await handleWorldMemory(
+    request('/api/world/chat/kin/memory', signedIn),
+    options
+  );
   const body = await response.json();
   assert.deepEqual(seen, ['|', '|cursor-1']);
   assert.deepEqual(
@@ -397,9 +422,7 @@ test('memory follows nextCursor, reloads when the basis changes, and caches the 
           page({
             basisFingerprint: 'aaaaaaaaaaaa',
             nextCursor: 'cursor-2',
-            points: [
-              { id: 'old', kind: 'knowledge', label: 'old', x: 1, y: 0, z: 0 },
-            ],
+            points: [{ id: 'old', kind: 'knowledge', label: 'old', x: 1, y: 0, z: 0 }],
           })
         ),
         { status: 200 }
@@ -442,7 +465,11 @@ test('memory follows nextCursor, reloads when the basis changes, and caches the 
     { env, canon, slug: 'kin', limiter: createLimiter(), fetch: reload, ...isolated() }
   );
   const resetBody = await reset.json();
-  assert.deepEqual(shifted, ['2026-11-22T00:00:00.000Z|', '2026-11-22T00:00:00.000Z|cursor-2', '|']);
+  assert.deepEqual(shifted, [
+    '2026-11-22T00:00:00.000Z|',
+    '2026-11-22T00:00:00.000Z|cursor-2',
+    '|',
+  ]);
   assert.equal(resetBody.basisFingerprint, 'bbbbbbbbbbbb');
   assert.deepEqual(
     resetBody.points.map((point) => point.id),

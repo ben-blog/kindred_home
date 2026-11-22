@@ -1,8 +1,11 @@
 /**
  * Adapter for the agent memory map and the chat trace.
  * GET map: { character, basisVersion, basisFingerprint, total, limit, truncated, nextCursor, points }
- * points: { id, kind, label, createdAt, x, y, z, url? }. Label is one line, at most 80 characters.
+ * points: { id, kind, label, createdAt, x, y, z, url?, emotion?, intensity? }.
+ * Label is one line, at most 80 characters.
  * url, when present, is an http(s) source. A missing or unsafe url is left off the point.
+ * emotion, when present, is joy, playful, calm, shy, sad, intense, or tired.
+ * intensity, when present, is a number from 0 to 1. A bad emotion or intensity is left off.
  * Traces arrive before the tokens that use them, in that order. Zero or more web searches,
  * and one retrieved list: { stage: 'retrieved', items: [{ id, kind, label, score }] }.
  * A web search is { stage: 'web_search', query, results: [{ title, url }] }, at most 5 results.
@@ -10,6 +13,7 @@
  * This proxy follows nextCursor itself and caches the assembled map for a few seconds.
  * Change this file if that contract moves.
  */
+import { memoryEmotions } from '../../config/memory-emotions.js';
 import { safeHttpUrl } from '../safe-url.js';
 import { clientAddress, createLimiter, sameOrigin } from '../proxy.js';
 import { requireLeader } from './auth.js';
@@ -31,13 +35,8 @@ const MAX_BODY = 2 * 1024 * 1024;
 const PAGE_LIMIT = 1000;
 const LABEL = 80;
 const ID = 80;
-const SPHERE_KINDS = new Set([
-  'experience',
-  'knowledge',
-  'declaration',
-  'pattern',
-  'album_moment',
-]);
+const EMOTIONS = new Set(memoryEmotions);
+const SPHERE_KINDS = new Set(['experience', 'knowledge', 'declaration', 'pattern', 'album_moment']);
 const TRACE_KINDS = new Set([...SPHERE_KINDS, 'reflection']);
 const SINCE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 const FINGERPRINT = /^[0-9a-f]{12}$/;
@@ -204,8 +203,7 @@ async function readMemory(request, options) {
   try {
     const result = await job;
     if (result.status === 200) cache.set(key, { at: now(), body: result.payload });
-    const extra =
-      result.status === 429 ? { 'retry-after': '60', ...cors } : cors;
+    const extra = result.status === 429 ? { 'retry-after': '60', ...cors } : cors;
     return json(result.status, result.payload, extra, leader.cookies);
   } finally {
     if (inflight.get(key) === job) inflight.delete(key);
@@ -351,7 +349,22 @@ function cleanPoint(point) {
   }
   const url = safeHttpUrl(point.url);
   if (url) clean.url = url;
+  const emotion = cleanEmotion(point.emotion);
+  if (emotion) clean.emotion = emotion;
+  const intensity = cleanIntensity(point.intensity);
+  if (intensity != null) clean.intensity = intensity;
   return clean;
+}
+
+function cleanEmotion(value) {
+  if (typeof value !== 'string') return '';
+  const emotion = value.trim().toLowerCase();
+  return EMOTIONS.has(emotion) ? emotion : '';
+}
+
+function cleanIntensity(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) return null;
+  return Math.round(value * 1000) / 1000;
 }
 
 function cleanSearchResult(item) {

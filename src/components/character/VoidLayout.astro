@@ -1,0 +1,349 @@
+---
+import Grain from './Grain.astro';
+import { cssBezier, cssTime } from '../../lib/character-layout.js';
+
+const { page } = Astro.props;
+const mark = page.mark;
+const letters = Math.max([...page.name].length, 1);
+const style = [
+  `--room-drift:${cssTime(mark?.drift, 's', 22)}`,
+  `--room-follow:${cssTime(mark?.follow, 's', 1.6)}`,
+  `--room-ease:${cssBezier(mark?.easing)}`,
+  `--title-track:${(letters * 1.22).toFixed(2)}`,
+].join(';');
+const status = [page.status, page.agent, page.color].filter(Boolean).join(' · ');
+---
+
+<section class="void" data-layout="void" data-room-root style={style}>
+  <div class="room" data-room aria-hidden="true"></div>
+  <Grain />
+
+  <header class="nav">
+    <a class="wordmark" href="/">kinxdred</a>
+    <nav>
+      {
+        page.others.map((other) => (
+          <a href={other.href}>← {other.name}</a>
+        ))
+      }
+      <a href="/characters">characters</a>
+      <a href="/works">works</a>
+    </nav>
+  </header>
+
+  <div class="stage">
+    <h1>{page.name}</h1>
+  </div>
+
+  <div class="foot">
+    <div class="strip">
+      {page.works.map((work) => <a href={work.url}>{work.title}</a>)}
+      {page.hub ? <a href={page.hub}>Open {page.hub}</a> : null}
+    </div>
+    <footer class="edge">
+      <div>
+        <p class="tag">{page.tagline}</p>
+        <p class="meta">{status}</p>
+      </div>
+      <div class="aside">
+        <p class="bio">{page.bio}</p>
+        {
+          page.bonds.map((bond) => (
+            <p class="meta">
+              {bond.name} · {bond.kinds}
+              {bond.note ? ` — ${bond.note}` : ''}
+              {bond.tension !== null ? ` · tension ${bond.tension}` : ''}
+            </p>
+          ))
+        }
+      </div>
+    </footer>
+  </div>
+</section>
+
+<style is:global>
+  @property --room-x {
+    syntax: '<percentage>';
+    inherits: true;
+    initial-value: 72%;
+  }
+
+  @property --room-y {
+    syntax: '<percentage>';
+    inherits: true;
+    initial-value: 28%;
+  }
+
+  @keyframes room-drift {
+    0% {
+      --room-x: 72%;
+      --room-y: 28%;
+    }
+    40% {
+      --room-x: 24%;
+      --room-y: 48%;
+    }
+    70% {
+      --room-x: 62%;
+      --room-y: 68%;
+    }
+    100% {
+      --room-x: 72%;
+      --room-y: 28%;
+    }
+  }
+</style>
+
+<style>
+  .void {
+    position: relative;
+    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--ground);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 300;
+  }
+
+  .room {
+    position: absolute;
+    inset: -15%;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 90% 70% at var(--room-x) var(--room-y),
+      color-mix(in srgb, var(--accent) 62%, transparent) 0%,
+      color-mix(in srgb, var(--accent) 22%, transparent) 32%,
+      color-mix(in srgb, var(--accent) 6%, transparent) 58%,
+      transparent 74%
+    );
+  }
+
+  .nav {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 22px 32px;
+    background: linear-gradient(rgba(0, 0, 0, 0.8), transparent);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+
+  .nav a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .nav a:hover {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .wordmark {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .nav nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .stage {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0 32px;
+  }
+
+  h1 {
+    margin: 0;
+    max-width: 100%;
+    font-family: var(--font-display);
+    font-size: min(280px, calc((100vw - 4.5rem) / var(--title-track)));
+    font-weight: 800;
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+    color: var(--accent);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .foot {
+    position: absolute;
+    right: 32px;
+    bottom: 28px;
+    left: 32px;
+    z-index: 3;
+  }
+
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+    margin-bottom: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .strip a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .strip a:hover {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .edge {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .tag,
+  .bio,
+  .meta {
+    margin: 0;
+  }
+
+  .tag {
+    max-width: 42ch;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .bio {
+    max-width: 46ch;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.6;
+  }
+
+  .meta {
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .aside {
+    max-width: 46ch;
+  }
+
+  a:focus-visible {
+    outline: 1px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .void:not(.is-tracking) .room {
+      animation: room-drift var(--room-drift) cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+
+    .void.is-tracking .room {
+      animation: none;
+      transition:
+        --room-x var(--room-follow) var(--room-ease),
+        --room-y var(--room-follow) var(--room-ease);
+    }
+  }
+
+  @media (max-width: 800px) {
+    .void {
+      height: auto;
+      overflow-x: clip;
+    }
+
+    .nav {
+      padding: 16px 18px;
+      letter-spacing: 0.16em;
+    }
+
+    .nav nav {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px 14px;
+    }
+
+    .stage {
+      min-height: 68vh;
+      padding: 96px 18px 24px;
+    }
+
+    h1 {
+      white-space: nowrap;
+    }
+
+    .foot {
+      position: static;
+      padding: 0 18px 22px;
+    }
+
+    .edge {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<script>
+  function bindRoom(root) {
+    const light = root.querySelector('[data-room]');
+    if (!light || root.dataset.bound === 'true') return;
+    root.dataset.bound = 'true';
+    const motion = window.matchMedia('(prefers-reduced-motion: no-preference)');
+    const coarse = window.matchMedia('(pointer: coarse)');
+    let resume = 0;
+
+    const release = () => {
+      root.classList.remove('is-tracking');
+      light.style.removeProperty('--room-x');
+      light.style.removeProperty('--room-y');
+    };
+
+    root.addEventListener('pointermove', (event) => {
+      if (!motion.matches || coarse.matches || event.pointerType === 'touch') return;
+      window.clearTimeout(resume);
+      root.classList.add('is-tracking');
+      const box = root.getBoundingClientRect();
+      const x = Math.max(8, Math.min(92, ((event.clientX - box.left) / box.width) * 100));
+      const y = Math.max(8, Math.min(92, ((event.clientY - box.top) / box.height) * 100));
+      light.style.setProperty('--room-x', `${x.toFixed(1)}%`);
+      light.style.setProperty('--room-y', `${y.toFixed(1)}%`);
+    });
+
+    root.addEventListener('pointerleave', () => {
+      if (!motion.matches) return;
+      resume = window.setTimeout(() => {
+        if (root.matches(':hover')) return;
+        release();
+      }, 1600);
+    });
+
+    motion.addEventListener('change', () => {
+      if (!motion.matches) release();
+    });
+  }
+
+  document.querySelectorAll('[data-room-root]').forEach(bindRoom);
+</script>

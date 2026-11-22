@@ -1,0 +1,562 @@
+---
+import Grain from './Grain.astro';
+import { cssBezier, cssTime } from '../../lib/character-layout.js';
+
+const { page } = Astro.props;
+const mark = page.mark;
+const style = [
+  `--gaze-delay:${cssTime(mark?.delay, 'ms', 280)}`,
+  `--gaze-ease:${cssBezier(mark?.easing)}`,
+].join(';');
+---
+
+<section class="board" data-layout="board" data-gaze-root style={style}>
+  <Grain />
+  <svg class="doodle a" viewBox="0 0 48 48" aria-hidden="true">
+    <circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="1.2"></circle>
+    <path d="M10 24h28M24 10v28" stroke="currentColor" stroke-width="1"></path>
+  </svg>
+  <svg class="doodle b" viewBox="0 0 28 28" aria-hidden="true">
+    <path d="M4 22c8-16 16-16 20-2" fill="none" stroke="currentColor" stroke-width="1.3"></path>
+  </svg>
+  <svg class="doodle c" viewBox="0 0 36 36" aria-hidden="true">
+    <rect x="6" y="6" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1" transform="rotate(12 18 18)"></rect>
+  </svg>
+
+  <header class="nav">
+    <div class="brand-row">
+      {page.hub ? (
+        <a class="brand" href={page.hub}>{page.name}</a>
+      ) : (
+        <span class="brand">{page.name}</span>
+      )}
+      <a class="wordmark" href="/">kinxdred</a>
+    </div>
+    <nav>
+      <a href="/characters">characters</a>
+      <a href="/works">works</a>
+      {
+        page.others.map((other) => (
+          <a class="cross" href={other.href} style={`--cross:${other.color}`}>
+            {other.name} →
+          </a>
+        ))
+      }
+    </nav>
+  </header>
+
+  <div class="canvas">
+    <div class="name">
+      <h1>{page.name}</h1>
+      <div class="gaze" data-gaze aria-hidden="true">
+        <svg viewBox="0 0 36 36" focusable="false">
+          <circle class="halo" cx="18" cy="18" r="13.2"></circle>
+          <circle class="ring" cx="18" cy="18" r="9.6"></circle>
+          <circle class="glow" cx="18" cy="18" r="4.2"></circle>
+          <circle class="pupil" cx="18" cy="18" r="2.7"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <aside class="sticker tag">
+      <span class="k">tagline</span>
+      {page.tagline}
+    </aside>
+    <aside class="sticker fill bio">
+      <span class="k">bio</span>
+      {page.bio}
+    </aside>
+    <p class="sticker swatch"><i aria-hidden="true"></i> {page.color}</p>
+    {page.hub ? <a class="sticker fill cta" href={page.hub}>Open {page.hub}</a> : null}
+    {
+      page.works.length > 0 ? (
+        <aside class="sticker works">
+          <span class="k">works</span>
+          <div class="thumbs">
+            {page.works.map((work) => (
+              <a href={work.url}>
+                <b>{work.title}</b>
+                <span>{work.url}</span>
+              </a>
+            ))}
+          </div>
+        </aside>
+      ) : null
+    }
+    {
+      page.bonds.length > 0 ? (
+        <aside class="sticker bond">
+          <span class="k">relationships</span>
+          {page.bonds.map((bond) => (
+            <p>
+              {bond.name} · {bond.kinds}
+              {bond.note ? (
+                <>
+                  <br />— {bond.note}
+                </>
+              ) : null}
+              {bond.tension !== null ? (
+                <>
+                  <br />
+                  tension {bond.tension}
+                </>
+              ) : null}
+            </p>
+          ))}
+        </aside>
+      ) : null
+    }
+    <p class="sticker status">
+      {page.status}
+      {page.agent ? ` · ${page.agent}` : ''}
+    </p>
+  </div>
+</section>
+
+<style>
+  .board {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background: var(--ground);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 300;
+  }
+
+  .nav {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 18px 24px;
+    background: linear-gradient(rgba(8, 8, 6, 0.9), transparent);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .nav a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .nav a:hover {
+    color: var(--accent);
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .brand {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--accent);
+  }
+
+  .wordmark {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 8px;
+  }
+
+  .nav nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .cross {
+    color: color-mix(in srgb, var(--cross) 55%, transparent);
+  }
+
+  .nav a.cross:hover {
+    color: color-mix(in srgb, var(--cross) 85%, transparent);
+  }
+
+  .canvas {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: minmax(28px, auto);
+    gap: 10px 12px;
+    align-items: start;
+    min-height: 100vh;
+    padding: 72px 20px 28px;
+  }
+
+  .name {
+    display: flex;
+    grid-column: 1 / 8;
+    grid-row: 1 / 4;
+    align-items: center;
+    gap: 1.1rem;
+    min-width: 0;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(72px, 14vw, 200px);
+    font-weight: 800;
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+  }
+
+  .gaze {
+    --gaze-x: 0px;
+    --gaze-y: 0px;
+    flex: 0 0 auto;
+    width: clamp(6.2rem, 11vw, 9.5rem);
+    height: clamp(6.2rem, 11vw, 9.5rem);
+    color: var(--accent);
+  }
+
+  .gaze svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .halo {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 0.7;
+    opacity: 0.32;
+  }
+
+  .ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    opacity: 0.92;
+  }
+
+  .glow {
+    fill: currentColor;
+    opacity: 0.22;
+  }
+
+  .pupil {
+    fill: currentColor;
+  }
+
+  .pupil,
+  .glow {
+    transform: translate(var(--gaze-x), var(--gaze-y));
+    transition: transform var(--gaze-delay) var(--gaze-ease);
+  }
+
+  .sticker {
+    justify-self: start;
+    width: max-content;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 11px;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition:
+      transform 220ms var(--gaze-ease),
+      background 220ms var(--gaze-ease),
+      color 220ms var(--gaze-ease);
+  }
+
+  .sticker.fill {
+    background: var(--accent);
+    color: var(--ink);
+  }
+
+  .sticker:hover {
+    transform: rotate(0deg) translate(-3px, -4px);
+  }
+
+  .k {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  .tag {
+    grid-column: 8 / 13;
+    grid-row: 1 / 2;
+    margin-top: 8px;
+    transform: rotate(2.4deg);
+  }
+
+  .bio {
+    grid-column: 8 / 13;
+    grid-row: 2 / 4;
+    max-width: 28rem;
+    transform: rotate(-1.6deg);
+  }
+
+  .swatch {
+    display: flex;
+    grid-column: 1 / 4;
+    grid-row: 4 / 5;
+    align-items: center;
+    gap: 8px;
+    transform: rotate(-2.2deg);
+  }
+
+  .swatch i {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+  }
+
+  .cta {
+    display: flex;
+    grid-column: 4 / 8;
+    grid-row: 4 / 5;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transform: rotate(1.2deg);
+  }
+
+  .works {
+    grid-column: 1 / 7;
+    grid-row: 5 / 8;
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+    padding: 0;
+    transform: rotate(-0.6deg);
+  }
+
+  .works .k {
+    padding: 10px 12px 0;
+  }
+
+  .thumbs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    padding: 8px;
+  }
+
+  .thumbs a {
+    display: block;
+    padding: 16px 10px;
+    border: 1px solid var(--accent);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background 180ms var(--gaze-ease),
+      color 180ms var(--gaze-ease);
+  }
+
+  .thumbs a:hover {
+    background: var(--accent);
+    color: var(--ink);
+  }
+
+  .thumbs b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .thumbs span {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  .bond {
+    grid-column: 7 / 13;
+    grid-row: 5 / 7;
+    max-width: 26rem;
+    transform: rotate(1.8deg);
+  }
+
+  .bond p {
+    margin: 0;
+  }
+
+  .bond p + p {
+    margin-top: 0.7rem;
+  }
+
+  .status {
+    grid-column: 7 / 10;
+    grid-row: 7 / 8;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    transform: rotate(-3deg);
+  }
+
+  .doodle {
+    position: absolute;
+    z-index: 1;
+    color: var(--accent);
+    pointer-events: none;
+    opacity: 0.28;
+  }
+
+  .doodle.a {
+    top: 18%;
+    left: 46%;
+    width: 48px;
+  }
+
+  .doodle.b {
+    top: 62%;
+    left: 6%;
+    width: 28px;
+  }
+
+  .doodle.c {
+    right: 8%;
+    bottom: 14%;
+    width: 36px;
+  }
+
+  a:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 800px) {
+    .board {
+      overflow: visible;
+    }
+
+    .nav {
+      align-items: flex-start;
+    }
+
+    .nav nav {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px 14px;
+    }
+
+    .canvas {
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-rows: auto;
+    }
+
+    .sticker,
+    .bio,
+    .bond,
+    .name {
+      width: auto;
+      max-width: 100%;
+    }
+
+    .name,
+    .tag,
+    .bio,
+    .swatch,
+    .cta,
+    .works,
+    .bond,
+    .status {
+      grid-column: 1 / -1;
+      grid-row: auto;
+      margin: 0;
+      transform: none;
+    }
+
+    .name {
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 72px;
+    }
+
+    .doodle {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pupil,
+    .glow,
+    .sticker,
+    .thumbs a {
+      transition: none;
+    }
+
+    .sticker,
+    .sticker:hover,
+    .tag,
+    .bio,
+    .swatch,
+    .cta,
+    .works,
+    .bond,
+    .status {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  function bindGaze(root) {
+    const gaze = root.querySelector('[data-gaze]');
+    if (!gaze || root.dataset.bound === 'true') return;
+    root.dataset.bound = 'true';
+    const motion = window.matchMedia('(prefers-reduced-motion: no-preference)');
+    const coarse = window.matchMedia('(pointer: coarse)');
+
+    const reset = () => {
+      gaze.style.setProperty('--gaze-x', '0px');
+      gaze.style.setProperty('--gaze-y', '0px');
+    };
+
+    root.addEventListener('pointermove', (event) => {
+      if (!motion.matches || coarse.matches || event.pointerType === 'touch') return;
+      const box = gaze.getBoundingClientRect();
+      const dx = event.clientX - (box.left + box.width / 2);
+      const dy = event.clientY - (box.top + box.height / 2);
+      const dist = Math.min(6.2, Math.hypot(dx, dy) / 22);
+      const angle = Math.atan2(dy, dx);
+      gaze.style.setProperty('--gaze-x', `${(Math.cos(angle) * dist).toFixed(2)}px`);
+      gaze.style.setProperty('--gaze-y', `${(Math.sin(angle) * dist).toFixed(2)}px`);
+    });
+
+    root.addEventListener('pointerleave', () => {
+      if (!motion.matches) return;
+      reset();
+    });
+
+    motion.addEventListener('change', () => {
+      if (!motion.matches) reset();
+    });
+  }
+
+  document.querySelectorAll('[data-gaze-root]').forEach(bindGaze);
+</script>

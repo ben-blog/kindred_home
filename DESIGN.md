@@ -4,20 +4,39 @@ Binding visual spec for kinxdred.com. Read this before any visual change, includ
 
 This phase is structure. This document does not start a redesign. When a task does change visuals, follow this file. If it disagrees with the current `src/styles/site.css`, follow this file. `public/` is the measured source. Do not edit `public/`, `world/`, `src/pages/api`, or `vercel.json` to make them match this spec unless the task explicitly says so.
 
-Character pages stay in the existing KIN / DRED language: dark, full-bleed, film grain, frosted panels, Syne display, DM Mono labels. From [telemyr.com](https://telemyr.com), borrow only the interaction listed under Telemyr. Do not borrow the rest of that site.
+Character pages are dark and full-bleed, with film grain, Syne display, and DM Mono labels. They do not share one hero. Each character file chooses a layout. The kinxdred wordmark is the shared logo, and it links home. From [telemyr.com](https://telemyr.com), do not borrow a page. The liquid blob is not a character-page mark.
 
 Per-character values come from `src/content`. Components do not branch on the names KIN or DRED, and do not hardcode how many characters exist.
 
 ## Direction (approved)
 
-- Dark base on every character page. No light page, no white corporate canvas.
+- Dark base on every character page. No light page, no white corporate canvas. The ground may differ by layout. It does not differ by character name.
 - KIN accent is `#FFE500`. DRED accent is `#5B4FCF`. New pages read the accent from `identity.color`. They do not paint a second yellow.
 - `public/main.html` still paints some KIN type and the KIN-side cursor in `#FFE800`. That is a known inconsistency. Leave it until a task is allowed to edit `public/`.
 - Text is white at four opacities: `.92`, `.72`, `.50`, `.35`.
 - Frosted panels are `rgba(8,8,8,.88)` with a 14–16px backdrop blur. Film grain sits near 2% opacity.
 - Display type is Syne 800. UI type is DM Mono 300/400. Cormorant Garamond and Share Tech Mono belong to D14 only.
-- Motion uses the easings below, and every new motion respects `prefers-reduced-motion`. The live pages do not, yet.
-- Blob marks, borrowed from telemyr, sit in the hero only. They are driven by `identity.mark`. They are not the nav and not the cursor.
+- Motion uses the curves below. A gaze or a room reads its follow curve from `identity.mark.easing`. It does not pick that curve by character name. Every new motion respects `prefers-reduced-motion`. The hubs in `public/` do not, yet.
+
+## Per-character layouts
+
+A character page is one template, chosen by `layout` on the character file. The templates are different on purpose. KIN's file is `board`. DRED's file is `void`. A new character is `sheet` until its file says otherwise. Components select the template from that field. They do not test the slug.
+
+The wordmark `kinxdred` links to `/` on every page, including the roster, works, and campaigns. `characters` links to `/characters` on every page. `works` links to `/works`. Other public characters may appear as a cross link. On a board that link uses the other character's `identity.color`. On a void it stays quiet white. The label is `text(name)`.
+
+| Layout | Default ground | Mark | What the visitor sees |
+| --- | --- | --- | --- |
+| `board` | `#080806` | `gaze` | A dense sticker board. The name is huge. Tagline, bio, color, the hub link, works, and relationships sit on scattered notes. A gaze aperture follows the pointer. |
+| `void` | `#000000` | `room` | One still title in an empty field. The title stays on one line, caps at 280px, and scales down until the name fits the viewport. The nav is nearly hidden. Works, the hub link, the tagline, the bio, and the bonds are small strips at the bottom. Only the room light moves. |
+| `sheet` | `#080806` | none | The default. A quiet column: name, copy, a frosted panel for works and relationships. No stickers, no gaze, no room light. |
+
+`identity.ground`, when set, replaces the layout default. Both values are near-black. Accent type, sticker ink, and the room light use `identity.color` as `--accent`. Filled stickers use `--ink`: `#080806` on a light accent, `rgba(255,255,255,.92)` on a dark one. Do not write either accent hex into a component.
+
+`gaze` is an aperture beside the name. The pupil lags the pointer by `identity.mark.delay` (default `280` ms) on `identity.mark.easing` (default `cubic-bezier(.87, 0, .13, 1)`, the snap measured on `public/kin/index.html` `.cp`). The lag is a CSS transition, not a second timer. Travel stays inside the gaze type (at most `6.2px`). It is not a per-character number.
+
+`room` is a radial light in the accent, not a second shape on the title. The title does not transform. Idle drift lasts `identity.mark.drift` seconds (default `22`) on the shared curve `cubic-bezier(.16, 1, .3, 1)`. A fine pointer eases the light over `identity.mark.follow` seconds (default `1.6`) on `identity.mark.easing` (default `cubic-bezier(.34, 1.56, .64, 1)`, the spring measured on `public/dred/index.html`). The still frame, and the reduced-motion frame, hold the light at `72% 28%`.
+
+A `board` without a `gaze` mark fails validation. A `void` without a `room` mark fails validation. A `sheet` with a mark fails validation. Copy on every layout comes from the character file through `text()`.
 
 ## Color
 
@@ -32,7 +51,7 @@ Accent is data. Today the files are `src/content/characters/kin.json` (`identity
 | DRED accent | `#5B4FCF` | `public/dred/index.html` `:root { --dred:#5B4FCF }`. `public/index.html` `:root { --dred:#5B4FCF }`. `public/main.html` `.td` `color`. Character file `identity.color`. |
 | KIN accent, live drift | `#FFE800` | `public/main.html` `.tk`, the `.tx` gradient, `.card-kin-name`, the `.card-kindred-name` gradient, and `updateCursor` (`background:'#FFE800'`). Nearby tints use `rgba(255,232,0,…)` on `#sl-kin`, `.bn-k`, `.vm-char-kin`, `.vm-item-kin`, `.card-kin-tag`. Do not copy this hex onto new pages. |
 
-Approved character-page ground is near-black: `#080806` or `#000`. Pick one for the shared character layout and keep it. Do not switch the ground by character name. The hubs already differ, and that difference stays in `public/`. Do not lighten the page because the accent is yellow. The landing's `#0a0a0a` stays on the landing.
+Approved character-page grounds stay near-black: `#080806` for `board` and `sheet`, `#000` for `void`. Read `identity.ground` when the file sets it. Otherwise use the layout default in Per-character layouts. Do not switch the ground by character name. The hubs already differ, and that difference stays in `public/`. Do not lighten the page because the accent is yellow. The landing's `#0a0a0a` stays on the landing.
 
 D14's favicon SVG uses `#0a0812` as a mark fill. That is not a page background.
 
@@ -122,7 +141,7 @@ New character pages use Syne and DM Mono. They do not load Cormorant Garamond or
 | DRED spring | `cubic-bezier(.34,1.56,.64,1)` | `public/dred/index.html` `.frame.has-action:hover img` inside `@media(pointer:fine)`. The comment above it names it as spring easing. |
 | KIN snap | `cubic-bezier(.87,0,.13,1)` | `public/kin/index.html` `.cp` (the viewer crack panels). |
 
-New components use the shared curve. Do not pick the spring or the snap by testing the character's name. There is no easing field on the character file. If a character needs its own curve later, add it to the content file first.
+The shared curve is the default for new motion, including a room's idle drift. A gaze follow and a room's pointer spring read `identity.mark.easing`. Do not pick the spring or the snap by testing the character's name. The schema default for a gaze is the snap. The schema default for a room is the spring. Those defaults belong to the mark type. A character file may set its own four numbers.
 
 Durations already in use, for reference: thumb reveal `.45s`, card enter `.65s`, DRED card `.14s`, sheet `.42s`, detail `.4s`, crack `.5s`, spring `.38s`. Keep new motion in that range. Do not introduce long cinematic loads on a character page.
 
@@ -149,12 +168,13 @@ Blob marks do not replace any of these.
 
 ## Reduced motion
 
-`prefers-reduced-motion` does not appear in `public/` or `src/`. That is a gap. Every new animation, transition, grain step, cursor lerp, typewriter, blob wobble, and 3D loop must sit inside a check for `prefers-reduced-motion: reduce`.
+`prefers-reduced-motion` does not appear in `public/`. Character pages in `src/` check it. Every new animation, transition, grain step, cursor lerp, typewriter, gaze follow, room drift, and 3D loop must sit inside a check for `prefers-reduced-motion: reduce`.
 
 When it matches:
 
 - No grain animation. The still grain image may stay.
-- No blob wobble and no pointer scatter. Draw one still frame of the mark.
+- The gaze pupil stays centered. Stickers sit square. No hover lift.
+- The room light holds the still frame at `72% 28%`. No drift and no pointer spring. The title was already still.
 - No custom-cursor motion. The system cursor is fine.
 - No typewriter. D14's `typewrite` in `public/dred/d14/index.html` is the live pattern to avoid copying without this check.
 - No three.js render loop. Show the still frame.
@@ -163,13 +183,9 @@ Do not retrofit this into `public/` unless the task says to edit those files.
 
 ## Telemyr
 
-Borrow one interaction: a liquid blob mark for the character.
+Do not draw a liquid blob on a character page. The approved marks are the gaze and the room light, and they come from `identity.mark.type`. See Per-character layouts.
 
-- Shape, wobble, and speed come from that character's `identity.mark`: `points`, `wobble`, `speed`. Today KIN is `points: 6`, `wobble: 0.08`, `speed: 1`. DRED is `points: 5`, `wobble: 0.06`, `speed: 0.8`. Both set `scatterOnHover: true`. Read the file. Do not copy these numbers into a component.
-- The pointer pushes the blob. When `scatterOnHover` is true, the pointer scatters it. Color is `identity.color`.
-- The blob is in the hero only. Not in the nav. Not in the cursor. Not in a footer.
-- 3D, if the mark needs it, loads lazily when the hero is on screen or the browser is idle (`client:visible` or `client:idle`). Keep three.js off the character page unless that island is the one that needs it. D14 already loads `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`. Do not upgrade it and do not import it into the character page by default.
-- Reduced motion gets a still frame, not a paused-looking loop.
+Keep three.js off the character page. D14 already loads `https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`. Do not upgrade it and do not import it into the character page.
 
 Do not borrow from telemyr:
 
@@ -184,13 +200,15 @@ A character page is a function of `src/content/characters/<slug>.json` and the r
 
 | On the page | Field |
 | --- | --- |
+| Template | `layout` (`board`, `void`, or `sheet`) |
 | Accent, `--accent` | `identity.color` |
-| Hero blob | `identity.mark` (`points`, `wobble`, `speed`, `scatterOnHover`) |
+| Ground, `--ground` | `identity.ground`, or the layout default |
+| Gaze or room | `identity.mark` (`type`, `delay` or `drift` / `follow`, `easing`) |
 | Name | `name`, a language map. Pages read it with `text()` from `src/lib/locale.js`. |
 | Intro | `profile.tagline`, `profile.bio` |
 | Bond line | `relationships[].note`, `relationships[].kinds`. A `썸` bond also has numeric `tension`. |
 
-`identity.mark` is not drawn yet. Tuning the numbers is safe. Drawing them belongs to a visual task that follows this file.
+`sheet` has no mark. Tuning a mark's delay, drift, follow, or easing is safe. The component reads those numbers. It does not copy them from KIN or DRED.
 
 The hub URLs (`/kin`, `/dred`, `/dred/d14`) stay the live hubs. They are `aliases`. They are not redirects to `/characters/[slug]`.
 
@@ -209,7 +227,7 @@ Leave these in the code until a task is allowed to change the file that holds th
 1. `#FFE800` on `public/main.html` type and the KIN-side cursor, against approved `#FFE500`. Listed under Color.
 2. No `prefers-reduced-motion` support. New work adds it. Old pages wait.
 3. Grain opacity is a band (`.019` / `.022` / `.025`), and the landing overlay is a different treatment. New pages use about `.02`.
-4. Three dark grounds (`#080806`, `#000`, `#0a0a0a`). A shared character layout picks one of `#080806` or `#000` and does not switch it by name.
+4. Three dark grounds (`#080806`, `#000`, `#0a0a0a`). A character layout uses its own ground from Per-character layouts, or `identity.ground`. It does not switch that ground by name. The landing's `#0a0a0a` stays on the landing.
 5. `src/styles/site.css` currently copies the landing tokens (`--black:#0a0a0a`, solid `--white:#f5f5f0`) and has no grain, frost, or opacity ramp. It is the file a visual task edits. It is not the source of these tokens.
 
 ## Do / Don't
@@ -220,11 +238,12 @@ Do:
 
 - Read this file first, then the character JSON for the page being touched.
 - Keep the ground near-black and full-bleed. Put film grain near 2% opacity over it.
-- Set `--accent` from `identity.color`. Draw the hero blob from `identity.mark`.
-- Use Syne 800 at `clamp(44px, 8.5vw, 116px)` and `letter-spacing:-.02em` for the hero name. Use DM Mono 300/400, 7–12px, uppercase, tracking `.18em`–`.32em`, for labels.
+- Set `--accent` from `identity.color` and the ground from `identity.ground` or the layout default. Draw the gaze or the room from `identity.mark`. Leave a sheet unmarked.
+- Use Syne 800 for the name. A sheet uses `clamp(44px, 8.5vw, 116px)` and `letter-spacing:-.02em`. A board and a void run larger, as that layout specifies. Use DM Mono 300/400, 7–12px, uppercase, tracking `.18em`–`.32em`, for labels.
+- Link the kinxdred wordmark to `/` and `characters` to `/characters` on every page.
 - Use white at `.92` / `.72` / `.50` / `.35` for type.
 - Use frosted panels at `rgba(8,8,8,.88)` with 14–16px backdrop blur.
-- Ease new motion with `cubic-bezier(.16,1,.3,1)`.
+- Ease shared motion with `cubic-bezier(.16,1,.3,1)`. Ease a gaze or a room's pointer follow with `identity.mark.easing`.
 - Honor `prefers-reduced-motion: reduce` with a still frame and no looping motion.
 - Hide a custom cursor on `pointer: coarse`.
 - Write copy from the character's existing lines, in `en`. Add another locale only by the steps in `AGENTS.md`.
@@ -234,9 +253,9 @@ Don't:
 
 - Don't make a light character page, a white canvas, or a bottom dock.
 - Don't import telemyr's robot scene or its corporate copy.
-- Don't put the blob in the nav or the cursor.
+- Don't draw a liquid blob, and don't put a gaze or a room light in the nav or the cursor.
 - Don't hardcode a character name, a character count, `#FFE500`, or `#5B4FCF` inside a component. Read the content file.
-- Don't choose the DRED spring or the KIN snap with a name check.
+- Don't choose the spring or the snap with a name check. Read `identity.mark.easing`.
 - Don't load Cormorant Garamond or Share Tech Mono on a character page.
 - Don't add motion that ignores `prefers-reduced-motion`.
 - Don't upgrade D14's three.js, and don't restyle `public/**/*.html` as part of a character-page pass.

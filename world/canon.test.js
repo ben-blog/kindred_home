@@ -20,6 +20,13 @@ test('identity colors and the leader relations are the v0 canon', () => {
   const dred = canon.characters.find((character) => character.slug === 'dred');
   assert.equal(kin.identity.color.toLowerCase(), '#ffe500');
   assert.equal(dred.identity.color.toLowerCase(), '#5b4fcf');
+  assert.equal(kin.layout, 'board');
+  assert.equal(kin.identity.mark.type, 'gaze');
+  assert.deepEqual(kin.identity.mark.easing, [0.87, 0, 0.13, 1]);
+  assert.equal(dred.layout, 'void');
+  assert.equal(dred.identity.mark.type, 'room');
+  assert.deepEqual(dred.identity.mark.easing, [0.34, 1.56, 0.64, 1]);
+  assert.notEqual(kin.layout, dred.layout);
   assert.deepEqual(kin.aliases, ['/kin']);
   assert.deepEqual(dred.aliases, ['/dred']);
 

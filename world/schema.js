@@ -48,6 +48,30 @@ export const siteSchema = z
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 
+/** Page templates. `sheet` is the default for a character that has not chosen one. */
+export const characterLayouts = ['board', 'void', 'sheet'];
+
+/** Interactive marks. A board uses `gaze`. A void uses `room`. A sheet has none. */
+export const markTypes = ['gaze', 'room'];
+
+const bezierSchema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+
+const gazeMarkSchema = z.strictObject({
+  type: z.literal('gaze'),
+  /** Pupil lag, in milliseconds. The CSS transition is the delay. */
+  delay: z.number().positive().default(280),
+  easing: bezierSchema.default([0.87, 0, 0.13, 1]),
+});
+
+const roomMarkSchema = z.strictObject({
+  type: z.literal('room'),
+  /** Idle drift, in seconds. */
+  drift: z.number().positive().default(22),
+  /** Pointer spring, in seconds. */
+  follow: z.number().positive().default(1.6),
+  easing: bezierSchema.default([0.34, 1.56, 0.64, 1]),
+});
+
 /** Env var names the event proxy may use as upstream origins. Values stay in the host env. */
 export const agentUpstreamKeys = ['KIN_AGENT_URL', 'DRED_AGENT_URL', 'MIRRORED_API_URL'];
 
@@ -70,6 +94,7 @@ export const characterSchema = z
     status: statusSchema,
     name: localizedSchema,
     aliases: z.array(z.string().regex(/^\/[A-Za-z0-9/_-]*$/)).default([]),
+    layout: z.enum(characterLayouts).default('sheet'),
     profile: z.strictObject({
       tagline: localizedSchema,
       bio: localizedSchema,
@@ -77,12 +102,9 @@ export const characterSchema = z
     }),
     identity: z.strictObject({
       color: hexColor,
-      mark: z.strictObject({
-        points: z.number().int().positive(),
-        wobble: z.number().nonnegative(),
-        speed: z.number().positive(),
-        scatterOnHover: z.boolean(),
-      }),
+      /** Near-black page ground. Omitted means the layout default. */
+      ground: hexColor.optional(),
+      mark: z.discriminatedUnion('type', [gazeMarkSchema, roomMarkSchema]).optional(),
       model: z.string().min(1).optional(),
     }),
     voice: z.strictObject({
@@ -124,13 +146,36 @@ export const characterSchema = z
     }),
   })
   .superRefine((character, ctx) => {
-    if (!character.agent) return;
-    const prefix = `/api/${character.slug}/`;
-    if (!character.agent.path.startsWith(prefix)) {
+    if (character.agent) {
+      const prefix = `/api/${character.slug}/`;
+      if (!character.agent.path.startsWith(prefix)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: `agent path must start with ${prefix}`,
+          path: ['agent', 'path'],
+        });
+      }
+    }
+    const mark = character.identity.mark?.type;
+    if (character.layout === 'board' && mark !== 'gaze') {
       ctx.addIssue({
         code: 'custom',
-        message: `agent path must start with ${prefix}`,
-        path: ['agent', 'path'],
+        message: 'a board layout needs a gaze mark',
+        path: ['identity', 'mark'],
+      });
+    }
+    if (character.layout === 'void' && mark !== 'room') {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'a void layout needs a room mark',
+        path: ['identity', 'mark'],
+      });
+    }
+    if (character.layout === 'sheet' && mark) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'a sheet layout has no mark',
+        path: ['identity', 'mark'],
       });
     }
   });

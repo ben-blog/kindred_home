@@ -3,6 +3,7 @@
   "status": "active",
   "name": { "ko": "KIN", "en": "KIN" },
   "aliases": ["/kin"],
+  "layout": "board",
   "profile": {
     "tagline": { "en": "Watches first. Speaks later." },
     "bio": {
@@ -12,7 +13,8 @@
   },
   "identity": {
     "color": "#FFE500",
-    "mark": { "points": 6, "wobble": 0.08, "speed": 1, "scatterOnHover": true }
+    "ground": "#080806",
+    "mark": { "type": "gaze", "delay": 280, "easing": [0.87, 0, 0.13, 1] }
   },
   "voice": { "tone": "", "do": [], "dont": [], "sampleLines": [] },
   "lore": [],

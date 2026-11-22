@@ -21,7 +21,7 @@ home/
 ├── vercel.json                ← Vercel rewrite (월드컵, 퀴즈, mood-camera 프록시)
 ├── data/                      ← 갤러리 JSON, 메인 카드, D2 트랙
 ├── js/                        ← site-base, gallery, d2, d14
-├── assets/gallery/            ← 갤러리·D2·D14 이미지 (지금 placeholder)
+├── assets/gallery/            ← 갤러리·D2·D14 원본 webp
 ├── favicon.svg
 │
 ├── kin/                       ← KIN 서비스
@@ -70,4 +70,4 @@ home/
 ## Git 주의사항
 - `dred/d2/musicdb/`는 `.gitignore`
 - `.DS_Store`는 전역 무시
-- 원본 갤러리 이미지를 넣을 자리는 `README.md`
+- 갤러리 데이터는 `README.md`

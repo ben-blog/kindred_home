@@ -1215,7 +1215,7 @@ async function fetchMainActions() {
   try {
     const res = await fetch('data/main-actions.json');
     if (!res.ok) return;
-    const data = await res.json();
+    const data = (await res.json()).filter(d => d.show_on_main === true);
     mainActions.kin     = data.filter(d => d.character === 'kin');
     mainActions.kindred = data.filter(d => d.character === 'kindred');
     mainActions.dred    = data.filter(d => d.character === 'dred');

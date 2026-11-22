@@ -38,8 +38,8 @@ home/
 
 `redirects`는 그 경로의 페이지를 지운 뒤에 옛 주소를 `/main.html`로 보낸다.
 
-- `/kin/k2`, `/kin/k2/:path*` → `/main.html`
-- `/dred/d2`, `/dred/d2/:path*` → `/main.html`
+- `/kin/k2`, `/kin/k2/:path*`, `/kin/k2/:path*/` → `/main.html`
+- `/dred/d2`, `/dred/d2/:path*`, `/dred/d2/:path*/` → `/main.html`
 - `/mood-camera`, `/mood-camera/:path*`, `/_next/:path*` → `https://mirrored-five.vercel.app` 프록시 (GAZE)
 
 ## 코딩 컨벤션

@@ -4,7 +4,7 @@ KIN × DRED. 정적 HTML/CSS/JS. Vercel에서 연다.
 
 주소는 `https://kindred-home.vercel.app` 이다.
 
-갤러리와 D14는 저장소 안 데이터다. K2(퀴즈·월드컵)와 D2(선곡)는 뺐다. 옛 주소 `/kin/k2`, `/kin/k2/*`, `/dred/d2`, `/dred/d2/*` 는 Vercel에서 `/main.html`로 보낸다. 「3년 후 나는」외부 링크도 뺐다. GAZE는 `/mood-camera` 프록시로 그대로다.
+갤러리와 D14는 저장소 안 데이터다. K2(퀴즈·월드컵)와 D2(선곡)는 뺐다. 옛 주소 `/kin/k2`, `/kin/k2/*`, `/dred/d2`, `/dred/d2/*` 는 끝의 `/`가 있어도 Vercel에서 `/main.html`로 보낸다. 「3년 후 나는」외부 링크도 뺐다. GAZE는 `/mood-camera` 프록시로 그대로다.
 
 ## 로컬 확인
 

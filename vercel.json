@@ -4,8 +4,10 @@
   "redirects": [
     { "source": "/kin/k2", "destination": "/main.html", "permanent": true },
     { "source": "/kin/k2/:path*", "destination": "/main.html", "permanent": true },
+    { "source": "/kin/k2/:path*/", "destination": "/main.html", "permanent": true },
     { "source": "/dred/d2", "destination": "/main.html", "permanent": true },
-    { "source": "/dred/d2/:path*", "destination": "/main.html", "permanent": true }
+    { "source": "/dred/d2/:path*", "destination": "/main.html", "permanent": true },
+    { "source": "/dred/d2/:path*/", "destination": "/main.html", "permanent": true }
   ],
   "rewrites": [
     { "source": "/mood-camera", "destination": "https://mirrored-five.vercel.app/mood-camera" },

@@ -473,7 +473,15 @@ setLang(lang);
 async function fetchItems() {
   const res = await fetch('../data/kindred_gallery_kin.json');
   if (!res.ok) throw new Error('fetch failed');
-  return flattenGallery(await res.json());
+  const doc = await res.json();
+  try {
+    const extra = await fetch('/api/gallery/kin', { headers: { accept: 'application/json' } });
+    if (extra.ok) {
+      const more = await extra.json();
+      doc.images = mergeGalleryImages(doc.images, more && more.images);
+    }
+  } catch (e) {}
+  return flattenGallery(doc);
 }
 
 /* ── GALLERY ── */

@@ -336,10 +336,74 @@ html.frame-world button:disabled {
   cursor: default;
 }
 
+html.frame-world:has(.album) .world-main {
+  width: min(960px, calc(100% - 3rem));
+}
+
+html.frame-world .album-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+html.frame-world select,
+html.frame-world textarea {
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 300;
+}
+
+html.frame-world textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+html.frame-world select:focus,
+html.frame-world textarea:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.72);
+  outline-offset: 2px;
+}
+
+html.frame-world .album label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+html.frame-world .album-preview {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  background: #000;
+}
+
+html.frame-world .album-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+html.frame-world .album-list button {
+  width: 100%;
+  text-align: left;
+}
+
 @media (pointer: coarse) {
   html.frame-world,
   html.frame-world body {
     cursor: auto;
+  }
+}
+
+@media (max-width: 800px) {
+  html.frame-world .album-columns {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -38,6 +38,7 @@
     "path": "/api/dred/event",
     "chat": "/api/dred/chat",
     "memory": "/api/dred/memory/map",
+    "album": "/api/dred/album-moment",
     "methods": ["POST"]
   },
   "works": ["dred-gallery", "d14"],

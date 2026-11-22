@@ -33,4 +33,4 @@ npm run dev
 
 좋아요의 기준 숫자는 `gallery_likes`다. 이 브라우저에서 누르면 `localStorage`의 `kxd_liked`가 그 위에 1을 더한다.
 
-캐릭터 에이전트(`kin-agent`, `dred-agent`) 이벤트는 `kinxdred.com`에서만 보낸다. 다른 호스트는 호출하지 않아서, 허용되지 않은 Origin의 실패가 페이지를 멈추거나 콘솔을 막지 않는다.
+캐릭터 에이전트 이벤트는 `kinxdred.com`에서만 같은 출처의 `/api/event`로 보낸다. 다른 호스트는 호출하지 않는다. 업스트림 주소는 환경변수다. 없거나 잘못되면 함수는 503을 돌려 페이지는 그대로 둔다. 이름은 `AGENTS.md`와 `.env.example`에 있다.

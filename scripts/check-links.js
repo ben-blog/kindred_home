@@ -2,8 +2,9 @@ import { createReadStream, existsSync, readFileSync, readdirSync, statSync } fro
 import http from 'node:http';
 import path from 'node:path';
 import { resolveRoute } from '../routing/apply.js';
+import { agentRoutes, createLimiter, handleEventRequest } from '../src/lib/proxy.js';
 import { GET } from '../src/pages/api/health.js';
-import { repoRoot } from '../world/load.js';
+import { loadCanon, repoRoot } from '../world/load.js';
 
 const staticRoot = path.join(repoRoot, '.vercel', 'output', 'static');
 const configPath = path.join(repoRoot, '.vercel', 'output', 'config.json');
@@ -41,19 +42,32 @@ if (existsSync(path.join(staticRoot, 'c', 'template', 'index.html'))) {
 const d14 = readFileSync(path.join(staticRoot, 'dred/d14/index.html'), 'utf8');
 const threeUrl = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 if (!d14.includes(threeUrl)) failures.push('D14 no longer loads three.js r128 from cdnjs');
-if (!readFileSync(path.join(staticRoot, 'kin/index.html'), 'utf8').includes('kindred_gallery_kin.json')) {
+if (
+  !readFileSync(path.join(staticRoot, 'kin/index.html'), 'utf8').includes(
+    'kindred_gallery_kin.json'
+  )
+) {
   failures.push('KIN hub no longer reads its gallery JSON');
 }
-if (!readFileSync(path.join(staticRoot, 'dred/index.html'), 'utf8').includes('kindred_gallery_dred.json')) {
+if (
+  !readFileSync(path.join(staticRoot, 'dred/index.html'), 'utf8').includes(
+    'kindred_gallery_dred.json'
+  )
+) {
   failures.push('DRED hub no longer reads its gallery JSON');
 }
 
-for (const html of walkHtml(staticRoot)) {
+for (const file of [...walkFiles(staticRoot, '.html'), ...walkFiles(staticRoot, '.js')]) {
+  const text = readFileSync(file, 'utf8');
+  const rel = path.relative(staticRoot, file);
+  for (const token of ['railway.app', 'supabase.co', 'service_role']) {
+    if (text.includes(token)) failures.push(`${rel} contains ${token}`);
+  }
+}
+
+for (const html of walkFiles(staticRoot, '.html')) {
   const text = readFileSync(html, 'utf8');
   const rel = path.relative(staticRoot, html);
-  if (rel.startsWith(`characters${path.sep}`) || rel.startsWith(`works${path.sep}`)) {
-    if (text.includes('railway.app')) failures.push(`${rel} exposes an agent URL`);
-  }
   const base = pageBase(rel);
   for (const href of linksIn(text)) {
     let target;
@@ -128,7 +142,42 @@ for (const [pathname, type, expected] of probes) {
 
 const health = await GET();
 const healthBody = await health.json();
-if (health.status !== 200 || healthBody.ok !== true) failures.push('/api/health handler did not return {ok:true}');
+if (health.status !== 200 || healthBody.ok !== true)
+  failures.push('/api/health handler did not return {ok:true}');
+
+const canon = loadCanon();
+const eventRoute = firstFunctionRoute('/api/event');
+if (!eventRoute || eventRoute.src === '^/.*$') failures.push('/api/event is not a function');
+for (const route of agentRoutes(canon.characters).values()) {
+  const match = firstFunctionRoute(route.path);
+  if (!match || match.src === '^/.*$') failures.push(`${route.path} is not a function`);
+}
+const closed = await handleEventRequest(
+  new Request('https://kinxdred.com/api/event', {
+    method: 'POST',
+    headers: { origin: 'https://kinxdred.com', 'content-type': 'application/json' },
+    body: JSON.stringify({
+      slug: 'kin',
+      event: {
+        service: 'gallery',
+        event_type: 'gallery_visit',
+        payload: { item_count: 1, lang: 'en' },
+      },
+    }),
+  }),
+  {
+    characters: canon.characters,
+    env: {},
+    limiter: createLimiter(),
+    fetch: async () => {
+      throw new Error('upstream should not be called');
+    },
+  }
+);
+const closedText = await closed.text();
+if (closed.status !== 503 || closedText !== '{"error":"unavailable"}') {
+  failures.push(`/api/event fail-closed check failed: ${closed.status} ${closedText}`);
+}
 
 const server = http.createServer(async (request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, 'http://local').pathname);
@@ -139,7 +188,10 @@ const server = http.createServer(async (request, response) => {
     return;
   }
   if (resolved.type === 'rewrite') {
-    response.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'x-rewrite-dest': resolved.dest });
+    response.writeHead(200, {
+      'content-type': 'text/plain; charset=utf-8',
+      'x-rewrite-dest': resolved.dest,
+    });
     response.end(resolved.dest);
     return;
   }
@@ -195,6 +247,19 @@ if (failures.length > 0) {
 }
 console.log(`link check ok (${rows.length} routes)`);
 
+function firstFunctionRoute(pathname) {
+  for (const route of routes) {
+    if (route.handle || !route.src || route.status) continue;
+    if (typeof route.dest !== 'string' || /^https?:\/\//.test(route.dest)) continue;
+    try {
+      if (new RegExp(route.src).test(pathname)) return route;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 function fileExists(pathname) {
   return Boolean(findFile(pathname));
 }
@@ -214,11 +279,11 @@ function findFile(pathname) {
   return null;
 }
 
-function walkHtml(dir, found = []) {
+function walkFiles(dir, extension, found = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walkHtml(full, found);
-    else if (entry.name.endsWith('.html')) found.push(full);
+    if (entry.isDirectory()) walkFiles(full, extension, found);
+    else if (entry.name.endsWith(extension)) found.push(full);
   }
   return found;
 }

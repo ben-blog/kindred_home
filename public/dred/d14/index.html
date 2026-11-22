@@ -132,8 +132,6 @@
 <script src="../../js/d14.js"></script>
 <script>
 // ── 설정 ───────────────────────────────────────────────
-const DRED_API = 'https://dred-agent-production.up.railway.app/api/dred/event';
-
 const IMAGE_CONFIG = [
   { url: asset('/assets/gallery/dred_d1-2_rush_hour.webp'), effect:0.0, transition:0.0 },
   { url: asset('/assets/gallery/dred_g4_highway_wall.webp'), effect:1.0, transition:1.0 },
@@ -178,7 +176,7 @@ const FALLBACK={
 function fetchMessage(){
   try{
     const data=d14Message(now, lang);
-    reportEvent(DRED_API, {
+    reportEvent('dred', {
       service:'d14',
       event_type:'message_generated',
       payload:{

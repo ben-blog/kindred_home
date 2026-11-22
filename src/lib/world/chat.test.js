@@ -270,7 +270,7 @@ test('a trace event is passed through without the rest of the agent payload', as
   const fetch = leaderFetch(leaderId, async () => {
     return new Response(
       sse([
-        'event: trace\ndata: {"stage":"retrieved","items":[{"id":"m1","kind":"note","label":"the bus","score":0.82,"prompt":"secret"}],"system":"hidden"}\n\n',
+        'event: trace\ndata: {"stage":"retrieved","items":[{"id":"m1","kind":"experience","label":"the bus","score":0.82,"prompt":"secret"},{"id":"r1","kind":"reflection","label":"a note","score":null}],"system":"hidden"}\n\n',
         'data: {"type":"token","text":"hey"}\n\n',
         'data: {"type":"done","mood":"calm"}\n\n',
         'event: trace\ndata: {"stage":"saved","ids":["m2"]}\n\n',
@@ -289,13 +289,17 @@ test('a trace event is passed through without the rest of the agent payload', as
     .split('\n\n')
     .filter(Boolean)
     .map((block) => JSON.parse(block.replace(/^data:\s*/, '')));
+  assert.equal(events.length, 3);
   assert.equal(events[0].stage, 'retrieved');
-  assert.deepEqual(events[0].items, [{ id: 'm1', kind: 'note', label: 'the bus', score: 0.82 }]);
-  assert.equal(JSON.stringify(events[0]).includes('secret'), false);
+  assert.deepEqual(events[0].items, [
+    { id: 'm1', kind: 'experience', label: 'the bus', score: 0.82 },
+    { id: 'r1', kind: 'reflection', label: 'a note', score: null },
+  ]);
+  assert.equal(JSON.stringify(events).includes('secret'), false);
+  assert.equal(JSON.stringify(events).includes('saved'), false);
   assert.equal(events[1].text, 'hey');
   assert.equal(events[2].expression, 'calm');
   assert.deepEqual(events[2].world, { mood: 2, energy: 5 });
-  assert.deepEqual(events[3], { type: 'trace', stage: 'saved', ids: ['m2'] });
 });
 
 test('an upstream failure stays a generic 502', async () => {

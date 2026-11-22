@@ -207,11 +207,26 @@ export async function mountSphere(root, call, options) {
 
   return {
     setMap(detail) {
-      const points = Array.isArray(detail?.points) ? detail.points : [];
-      rebuild(points, typeof detail?.basisVersion === 'string' ? detail.basisVersion : '');
+      const points = (Array.isArray(detail?.points) ? detail.points : []).filter(
+        (point) => point && point.kind !== 'reflection'
+      );
+      const nextVersion = detail?.basisFingerprint
+        ? String(detail.basisFingerprint)
+        : detail?.basisVersion == null
+          ? ''
+          : String(detail.basisVersion);
+      if (detail?.reset || (version && nextVersion && nextVersion !== version)) {
+        records = [];
+        version = '';
+      }
+      rebuild(points, nextVersion);
     },
     showRetrieved(items) {
-      retrieved = new Set((items || []).map((item) => item.id).filter(Boolean));
+      retrieved = new Set(
+        (items || [])
+          .filter((item) => item && item.id && item.kind !== 'reflection')
+          .map((item) => item.id)
+      );
       drawLines();
     },
     focus(id) {
@@ -227,9 +242,19 @@ function safeColor(value, fallback) {
 }
 
 function kindColor(THREE, accent, kind, layout) {
-  const color = new THREE.Color(accent);
+  const color = new THREE.Color(kind === 'album_moment' ? '#FF6B4A' : accent);
   const hsl = { h: 0, s: 0, l: 0 };
   color.getHSL(hsl);
+  if (kind === 'album_moment') {
+    if (layout === 'void') {
+      hsl.s = 0.62;
+      hsl.l = 0.72;
+    } else {
+      hsl.s = 0.78;
+      hsl.l = 0.58;
+    }
+    return new THREE.Color().setHSL(hsl.h, hsl.s, hsl.l);
+  }
   const hash = [...String(kind)].reduce((sum, char) => sum + char.charCodeAt(0), 0);
   hsl.h = (hsl.h + (hash % 6) * 0.07) % 1;
   if (layout === 'void') {

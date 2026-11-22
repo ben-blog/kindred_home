@@ -54,6 +54,8 @@ const copy = {
   reply: text({ en: 'reply' }),
   saved: text({ en: 'saved' }),
   none: text({ en: 'none' }),
+  pending: text({ en: 'none yet' }),
+  recent: text({ en: 'recent' }),
 };
 ---
 
@@ -199,14 +201,11 @@ const copy = {
           body.textContent = reply;
           turn.reply.body.textContent = reply;
           log.scrollTop = log.scrollHeight;
-        } else if (data.type === 'trace') {
-          if (data.stage === 'retrieved') {
-            fillRetrieved(turn.retrieved, data.items || []);
-            document.querySelector('.call')?.dispatchEvent(
-              new CustomEvent('memory-trace', { detail: data })
-            );
-          }
-          if (data.stage === 'saved') fillSaved(turn.saved, data.ids || []);
+        } else if (data.type === 'trace' && data.stage === 'retrieved') {
+          fillRetrieved(turn.retrieved, data.items || []);
+          document.querySelector('.call')?.dispatchEvent(
+            new CustomEvent('memory-trace', { detail: data })
+          );
         } else if (data.type === 'done') {
           if (typeof data.expression === 'string') expression = data.expression;
           if (data.world && typeof data.world === 'object') world = data.world;
@@ -250,69 +249,112 @@ const copy = {
       chip.type = 'button';
       chip.className = 'call-chip';
       chip.dataset.id = item.id;
-      const score = typeof item.score === 'number' ? ` ${item.score}` : '';
+      const score = typeof item.score === 'number' ? ` ${item.score}` : ` ${copy.recent}`;
       chip.textContent = `${item.label || item.kind}${score}`;
-      chip.addEventListener('pointerenter', () => {
-        document.querySelector('.call')?.dispatchEvent(
-          new CustomEvent('memory-focus', { detail: { id: item.id } })
-        );
-      });
-      chip.addEventListener('pointerleave', () => {
-        document.querySelector('.call')?.dispatchEvent(
-          new CustomEvent('memory-focus', { detail: { id: '' } })
-        );
-      });
+      if (item.kind !== 'reflection') {
+        chip.addEventListener('pointerenter', () => {
+          document.querySelector('.call')?.dispatchEvent(
+            new CustomEvent('memory-focus', { detail: { id: item.id } })
+          );
+        });
+        chip.addEventListener('pointerleave', () => {
+          document.querySelector('.call')?.dispatchEvent(
+            new CustomEvent('memory-focus', { detail: { id: '' } })
+          );
+        });
+      }
       list.append(chip);
     }
     slot.body.append(list);
   }
 
-  function fillSaved(slot, ids) {
-    slot.body.textContent = ids.length ? ids.join(', ') : copy.none;
-    pendingSaved = ids.length ? null : slot;
+  function armSaved(slot) {
+    const at = Date.now();
+    pendingSaved = { slot, at, until: at + 60_000 };
+    slot.body.textContent = copy.pending;
   }
 
-  function noteSaved(points) {
-    if (!pendingSaved || !points.length) return;
-    pendingSaved.body.textContent = points.map((point) => point.label || point.id).join(', ');
+  function noteSaved(points, at) {
+    if (!pendingSaved) return;
+    if (at > pendingSaved.until) {
+      pendingSaved = null;
+      return;
+    }
+    const fresh = points.filter((point) => Date.parse(point.createdAt) >= pendingSaved.at);
+    if (!fresh.length) return;
+    pendingSaved.slot.body.textContent = fresh.map((point) => point.label || point.id).join(', ');
     pendingSaved = null;
   }
 
   let pendingSaved = null;
   let since = '';
+  let polling = false;
 
   async function pollMemory() {
-    const query = since ? `?since=${encodeURIComponent(since)}` : '';
-    const status = document.querySelector('#call-memory-status');
+    if (polling) return;
+    polling = true;
     try {
-      const response = await fetch(`/api/world/chat/${slug}/memory${query}`, {
-        headers: { accept: 'application/json' },
-      });
-      if (response.status === 401 || response.status === 403) {
-        location.replace('/world/admin');
-        return;
-      }
-      if (!response.ok) throw new Error('memory');
-      const body = await response.json();
-      const call = document.querySelector('.call');
-      const current = call.memoryMap;
-      const known = new Set((current?.points || []).map((point) => point.id));
-      let points = Array.isArray(body.points) ? body.points : [];
-      if (query && current && body.basisVersion === current.basisVersion) {
-        points = current.points.concat(points.filter((point) => !known.has(point.id)));
-      }
-      const arrived = points.filter((point) => !known.has(point.id));
-      const detail = { basisVersion: body.basisVersion || '', points };
-      call.memoryMap = detail;
-      call.dispatchEvent(new CustomEvent('memory-map', { detail }));
-      for (const point of points) {
-        if (point.createdAt && point.createdAt > since) since = point.createdAt;
-      }
-      status.hidden = true;
-      noteSaved(arrived);
+      await readMap(false);
     } catch {
-      status.hidden = false;
+      const memoryStatus = document.querySelector('#call-memory-status');
+      if (memoryStatus) memoryStatus.hidden = false;
+    } finally {
+      polling = false;
     }
+  }
+
+  async function readMap(forceFull) {
+    const query = !forceFull && since ? `?since=${encodeURIComponent(since)}` : '';
+    const memoryStatus = document.querySelector('#call-memory-status');
+    const startedAt = Date.now();
+    const response = await fetch(`/api/world/chat/${slug}/memory${query}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (response.status === 401 || response.status === 403) {
+      location.replace('/world/admin');
+      return;
+    }
+    const call = document.querySelector('.call');
+    if (response.status === 429) {
+      if (!call.memoryMap) memoryStatus.hidden = false;
+      return;
+    }
+    if (!response.ok) throw new Error('memory');
+    const body = await response.json();
+    const current = call.memoryMap;
+    if (
+      query &&
+      current?.basisFingerprint &&
+      body.basisFingerprint &&
+      body.basisFingerprint !== current.basisFingerprint
+    ) {
+      since = '';
+      call.memoryMap = null;
+      call.dispatchEvent(
+        new CustomEvent('memory-map', {
+          detail: { basisVersion: '', basisFingerprint: '', points: [], reset: true },
+        })
+      );
+      return readMap(true);
+    }
+    const known = new Set((current?.points || []).map((point) => point.id));
+    let points = Array.isArray(body.points) ? body.points : [];
+    if (query && current && body.basisFingerprint && body.basisFingerprint === current.basisFingerprint) {
+      points = current.points.concat(points.filter((point) => !known.has(point.id)));
+    }
+    const arrived = points.filter((point) => !known.has(point.id));
+    const detail = {
+      basisVersion: body.basisVersion ?? '',
+      basisFingerprint: body.basisFingerprint || '',
+      points,
+    };
+    call.memoryMap = detail;
+    call.dispatchEvent(new CustomEvent('memory-map', { detail }));
+    for (const point of points) {
+      if (point.createdAt && point.createdAt > since) since = point.createdAt;
+    }
+    memoryStatus.hidden = true;
+    noteSaved(query ? arrived : points, startedAt);
   }
 
   form.addEventListener('submit', async (event) => {
@@ -383,7 +425,7 @@ const copy = {
       turn.emotion.body.textContent = frame?.title
         ? `${result.expression || 'calm'} · ${frame.title}`
         : result.expression || 'calm';
-      if (turn.saved.body.textContent === copy.none) pendingSaved = turn.saved;
+      if (result.reply) armSaved(turn.saved);
     } catch {
       body.textContent = copy.dropped;
       if (messages.at(-1)?.role === 'user') messages.pop();

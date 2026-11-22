@@ -2,11 +2,9 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { text } from '../../lib/locale.js';
-import { compareEntries, isPublicStatus } from '../../lib/publish.js';
+import { compareEntries, isListedWork } from '../../lib/publish.js';
 
-const works = (await getCollection('works'))
-  .filter((entry) => isPublicStatus(entry.data.status))
-  .sort(compareEntries);
+const works = (await getCollection('works')).filter(isListedWork).sort(compareEntries);
 ---
 
 <Base title="Works — kinxdred" description="Works in the kinxdred world.">

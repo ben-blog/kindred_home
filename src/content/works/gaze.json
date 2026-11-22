@@ -10,5 +10,6 @@
   "url": "/mood-camera",
   "external": true,
   "scope": "shared",
+  "listed": false,
   "characters": []
 }

@@ -56,6 +56,8 @@ const PUBLIC = [
   ['/_astro/app.css', 'GET'],
   ['/robots.txt', 'GET'],
   ['/sitemap.xml', 'GET'],
+  ['/sitemap-index.xml', 'GET'],
+  ['/sitemap-0.xml', 'GET'],
   ['/og.png', 'GET'],
   ['/login', 'GET'],
   ['/auth/callback', 'GET'],

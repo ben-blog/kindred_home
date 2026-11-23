@@ -21,6 +21,8 @@ const PUBLIC_EXACT = new Set([
   '/dred_default2.webp',
   '/robots.txt',
   '/sitemap.xml',
+  '/sitemap-index.xml',
+  '/sitemap-0.xml',
   '/login',
   '/auth/callback',
   '/api/health',

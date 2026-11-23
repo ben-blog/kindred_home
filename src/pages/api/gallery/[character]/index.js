@@ -1,6 +1,6 @@
-import { bundledCanon } from '../../../lib/canon-files.js';
-import { staticGallery } from '../../../lib/world/gallery-static.js';
-import { handleGalleryFeed } from '../../../lib/world/gallery-public.js';
+import { bundledCanon } from '../../../../lib/canon-files.js';
+import { staticGallery } from '../../../../lib/world/gallery-static.js';
+import { handleGalleryFeed } from '../../../../lib/world/gallery-public.js';
 
 export const prerender = false;
 

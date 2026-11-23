@@ -8,21 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM Mono',monospace;cursor:none}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM Mono',monospace;cursor:none;color:rgba(255,255,255,.92)}
 @media(pointer:coarse){html,body{cursor:auto}}
 :root{--dred:#5B4FCF;--bg:#000}
+button,a{font-family:inherit}
 
 #cur{position:fixed;z-index:999;width:8px;height:8px;border-radius:50%;
   background:var(--dred);pointer-events:none;transform:translate(-50%,-50%);
-  mix-blend-mode:difference;transition:width .15s,height .15s}
-#cur.drag{width:18px;height:18px;border-radius:2px}
-
+  mix-blend-mode:difference}
 #grain{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:.025;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   background-size:200px;animation:gr .3s steps(1) infinite}
 @keyframes gr{0%{background-position:0 0}33%{background-position:-40px 30px}66%{background-position:30px -40px}}
 
-/* ── HEADER ── */
 #header{
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;justify-content:space-between;align-items:center;
@@ -30,176 +28,111 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   background:linear-gradient(rgba(0,0,0,.8),transparent);
 }
 .h-name{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--dred)}
-.h-back{font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.55);
-  text-transform:uppercase;cursor:pointer;transition:color .3s,text-shadow .3s;padding:8px 4px}
-.h-back:hover{color:var(--dred);text-shadow:0 0 12px rgba(91,79,207,.3)}
-.h-cross{font-size:10px;letter-spacing:.22em;color:rgba(255,229,0,.55);text-transform:uppercase;cursor:pointer;transition:color .3s,text-shadow .3s}
-.h-cross:hover{color:rgba(255,229,0,.85);text-shadow:0 0 12px rgba(255,229,0,.3)}
-
-/* ── LANG TOGGLE ── */
-#lang-toggle{display:flex;align-items:center;font-size:8px;letter-spacing:.2em;}
-.lt{padding:4px 8px;cursor:pointer;color:rgba(255,255,255,.50);transition:color .2s;user-select:none;}
-.lt.active{color:var(--dred);}
+.h-back{font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.50);
+  text-transform:uppercase;cursor:pointer;padding:8px 4px}
+.h-back:hover{color:var(--dred)}
+.h-cross{font-size:10px;letter-spacing:.22em;color:rgba(255,229,0,.55);text-transform:uppercase;cursor:pointer;padding:8px 4px}
+.h-cross:hover{color:rgba(255,229,0,.85)}
+#lang-toggle{display:flex;align-items:center;font-size:8px;letter-spacing:.2em}
+.lt{padding:8px;cursor:pointer;color:rgba(255,255,255,.50);user-select:none}
+.lt.active{color:var(--dred)}
 .lt-sep{color:rgba(255,255,255,.25)}
 
-/* ── STRIP ── */
-#strip-wrap{
-  position:fixed;inset:0;top:66px;
-  display:flex;align-items:center;
-  overflow:hidden;
-  user-select:none;-webkit-user-select:none;
-  touch-action:none;
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none}
+#track{will-change:transform}
+#picks,.slide{height:100vh;height:100dvh;position:relative}
+#picks{
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:84px 16px 72px;
 }
-#strip{
-  display:flex;align-items:center;gap:24px;
-  will-change:transform;
-  /* padding added by JS after items load */
+.kicker{font-size:8px;letter-spacing:.32em;text-transform:uppercase;color:var(--dred);margin-bottom:12px}
+#pick-line{
+  font-weight:300;font-size:13px;line-height:1.7;color:rgba(255,255,255,.92);
+  max-width:28em;min-height:1.7em;margin-bottom:18px;
 }
-
-/* ── FRAME ── */
-.frame{
-  flex:0 0 auto;
-  width:300px;height:400px;
-  position:relative;overflow:hidden;
-  cursor:grab;
+#pick-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:920px}
+.pick{
+  background:none;border:0;padding:0;text-align:left;cursor:pointer;color:rgba(255,255,255,.50);
 }
-@media(max-width:680px){
-  .frame{width:240px;height:320px;}
+.pick img{width:100%;height:min(34dvh,280px);object-fit:cover;display:block;background:#000}
+.pick span{
+  display:block;margin-top:8px;font-size:8px;letter-spacing:.12em;line-height:1.45;
+  color:rgba(255,255,255,.50);
 }
-.frame:active{cursor:grabbing}
-.frame img{
-  width:100%;height:100%;object-fit:cover;
-  display:block;pointer-events:none;
-  transition:transform .6s cubic-bezier(.16,1,.3,1);
-}
-.frame:hover img{transform:scale(1.03)}
-
-/* ── HAS-ACTION: 데스크탑 hover heartbeat ──
-   cubic-bezier(.34,1.56,.64,1) = spring easing — 목표치 살짝 초과 후 안착.
-   scale(1.09) 도달할 때 '두근' 느낌. leave 시엔 기존 .frame img transition으로 복귀. */
-@media(pointer:fine){
-  .frame.has-action:hover img{
-    transform:scale(1.09);
-    transition:transform .38s cubic-bezier(.34,1.56,.64,1);
-  }
-}
-
-.frame-overlay{
-  position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 52%,rgba(0,0,0,.78) 100%);
-  opacity:0;transition:opacity .35s ease;
-  display:flex;flex-direction:column;align-items:flex-start;
-  justify-content:flex-end;padding:18px;gap:4px;
-}
-.frame:hover .frame-overlay{opacity:1}
-.frame-caption{
-  font-size:9px;letter-spacing:.2em;color:rgba(91,79,207,.85);
-  text-transform:uppercase;line-height:1.6;
-}
-
-/* action glow on frame — desktop */
-.frame.has-action{
-  box-shadow:0 0 0 2px rgba(91,79,207,.5),
-             0 0 18px 2px rgba(91,79,207,.18);
-  animation:frameGlow 2.6s ease-in-out infinite;
-}
-@keyframes frameGlow{
-  0%,100%{box-shadow:0 0 0 2px rgba(91,79,207,.4), 0 0 14px 2px rgba(91,79,207,.12)}
-  50%    {box-shadow:0 0 0 2px rgba(91,79,207,.8), 0 0 26px 4px rgba(91,79,207,.28)}
-}
-
-/* ── HAS-ACTION: 모바일 border sparkle ──
-   두꺼운 periwinkle 테두리 + 반짝이는 shimmer.
-   border-color + box-shadow를 함께 oscillate해서 '반짝반짝' 구현.
-   frameGlow animation을 덮어써서 충돌 방지. */
-@media(pointer:coarse){
-  .frame.has-action{
-    border:3px solid var(--dred);
-    box-shadow:none;
-    animation:mobileBorderSparkle 1.5s ease-in-out infinite;
-  }
-  @keyframes mobileBorderSparkle{
-    0%,100%{
-      border-color:rgba(91,79,207,.45);
-      box-shadow:0 0 8px 2px rgba(91,79,207,.18),
-                 inset 0 0 6px 0px rgba(91,79,207,.08);
-    }
-    50%{
-      border-color:rgba(91,79,207,1);
-      box-shadow:0 0 22px 5px rgba(91,79,207,.50),
-                 inset 0 0 10px 1px rgba(91,79,207,.15);
-    }
-  }
-}
-
-/* ACTION badge */
-.frame-action-badge{
-  position:absolute;top:10px;right:10px;z-index:4;
-  font-family:'DM Mono',monospace;
-  font-size:7px;letter-spacing:.22em;
-  padding:3px 8px;
-  background:var(--dred);color:#fff;
-  text-transform:uppercase;
-  pointer-events:none;
-  animation:badgeBlink 1.4s step-end infinite;
-}
-@keyframes badgeBlink{0%,100%{opacity:1}50%{opacity:0}}
-
-/* ── FRAME ACTION LINK (hover overlay 안에 표시) ── */
-.frame-action-link{
-  font-size:7px;letter-spacing:.18em;text-transform:uppercase;
-  padding:6px 10px;background:var(--dred);color:#fff;
-  text-decoration:none;display:inline-block;
-  font-family:'DM Mono',monospace;font-weight:400;
-  transition:background .2s,color .2s;
-  pointer-events:all;
-}
-.frame-action-link:hover{background:transparent;color:var(--dred);box-shadow:inset 0 0 0 1px var(--dred)}
-/* 모바일: overlay 항상 보이게 (낮은 opacity로) */
-@media(pointer:coarse){
-  .frame.has-action .frame-overlay{opacity:.8;pointer-events:all}
-}
-
-/* action section in detail */
-#detail-action-section{
-  margin-top:20px;
-  padding:14px 16px;
-  border:1px solid rgba(91,79,207,.3);
-  background:rgba(91,79,207,.06);
-}
-.action-section-label{
-  font-size:7px;letter-spacing:.32em;color:rgba(91,79,207,.6);
-  text-transform:uppercase;margin-bottom:10px;
-}
-#detail-actions{display:flex;flex-wrap:wrap;gap:8px;}
-
-/* FIX: pointer-events:none so the fading loading screen never blocks clicks */
-#focus-dot{
-  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
-  display:flex;gap:6px;align-items:center;z-index:50;pointer-events:none;
-  transition:opacity .4s;
-}
-#focus-dot.hidden{opacity:0}
-.fdot{width:4px;height:4px;border-radius:50%;background:rgba(91,79,207,.18);transition:all .3s}
-.fdot.active{background:var(--dred);transform:scale(1.5)}
-
-/* ── HINT ── */
 #hint{
-  position:fixed;bottom:42px;left:50%;transform:translateX(-50%);
-  font-size:8px;letter-spacing:.4em;color:rgba(255,255,255,.14);
-  text-transform:uppercase;pointer-events:none;transition:opacity .6s;
+  margin-top:16px;font-size:8px;letter-spacing:.32em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
 }
 
-/* ── LOADING ── */
-/* FIX: pointer-events:none — loading has no interactive children,
-   and this prevents the fading overlay from silently blocking frame clicks */
-#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:var(--bg);pointer-events:none;}
-#loading span{font-size:9px;letter-spacing:.4em;color:rgba(91,79,207,.4);text-transform:uppercase;animation:blink 1.4s ease infinite;}
-@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.slide{overflow:hidden;background:#000}
+.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.veil{
+  position:absolute;inset:0;background:#000;pointer-events:none;
+  --x:50%;--y:42%;
+  transition:opacity 1.05s cubic-bezier(.16,1,.3,1);
+}
+.slide.looking .veil{
+  background:radial-gradient(circle 30vmax at var(--x) var(--y), transparent 0%, rgba(0,0,0,.18) 34%, #000 70%);
+}
+.slide.revealed .veil{opacity:0}
+.subtitle{
+  position:absolute;left:20px;right:20px;bottom:78px;z-index:2;
+  text-align:center;font-weight:300;font-size:12px;line-height:1.7;
+  color:rgba(255,255,255,.92);
+  text-shadow:0 1px 16px #000;
+  opacity:0;transition:opacity .6s cubic-bezier(.16,1,.3,1);
+}
+.slide.revealed .subtitle{opacity:1}
+.slide-bar{
+  position:absolute;top:74px;right:16px;z-index:3;
+  display:flex;align-items:center;gap:8px;
+}
+.count{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.35)}
+.info,.act{
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+}
+.info{
+  color:rgba(255,255,255,.50);background:rgba(8,8,8,.88);
+  border:1px solid color-mix(in srgb, var(--dred) 45%, transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:12px 14px;cursor:pointer;min-height:44px;
+}
+.act{font-size:8px;letter-spacing:.22em;color:var(--dred)}
 
-/* ══════════════════════════════
-   DETAIL PANEL
-══════════════════════════════ */
+#index{
+  position:fixed;z-index:80;display:flex;left:0;right:0;bottom:0;
+  padding:6px 8px 10px;gap:0;overflow-x:auto;justify-content:safe center;
+}
+.tick{
+  flex:0 0 auto;width:28px;height:44px;background:transparent;border:0;cursor:pointer;position:relative;
+}
+.tick::before{
+  content:'';position:absolute;left:8px;right:8px;top:20px;height:2px;
+  background:rgba(255,255,255,.35);
+}
+.tick.on::before{left:4px;right:4px;background:var(--dred)}
+
+#loading{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:#000;pointer-events:none;transition:opacity .4s cubic-bezier(.16,1,.3,1)}
+#loading span{font-size:9px;letter-spacing:.4em;color:color-mix(in srgb, var(--dred) 55%, transparent);text-transform:uppercase}
+#leave{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:9000;transition:opacity .4s cubic-bezier(.16,1,.3,1)}
+#leave.on{opacity:1;pointer-events:all}
+
+@media(min-width:800px){
+  #picks{padding:120px 64px 80px;justify-content:center}
+  #pick-line{font-size:15px}
+  #pick-row{gap:16px}
+  .pick img{height:min(46vh,460px)}
+  .subtitle{font-size:14px;bottom:88px}
+  #index{
+    left:auto;right:10px;top:50%;bottom:auto;transform:translateY(-50%);
+    flex-direction:column;overflow-y:auto;overflow-x:hidden;max-height:70vh;
+    width:44px;padding:0;justify-content:center;
+  }
+  .tick{width:44px;height:16px}
+  .tick::before{left:12px;right:12px;top:7px}
+  .tick.on::before{left:6px;right:6px}
+}
+
 #detail-panel{
   position:fixed;inset:0;z-index:200;
   display:flex;align-items:center;justify-content:center;
@@ -208,115 +141,79 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
   opacity:0;pointer-events:none;
   transition:opacity .35s ease;
 }
-#detail-panel.open{opacity:1;pointer-events:all;}
-
+#detail-panel.open{opacity:1;pointer-events:all}
 #detail-inner{
   display:flex;gap:clamp(24px,4vw,60px);align-items:flex-start;
   width:90%;max-width:860px;
   transform:translateY(14px);
   transition:transform .4s cubic-bezier(.16,1,.3,1);
 }
-#detail-panel.open #detail-inner{transform:translateY(0);}
-
-#detail-img{
-  flex:0 0 auto;
-  width:clamp(140px,24vw,280px);
-  overflow:hidden;
-  border:1px solid rgba(91,79,207,.22);
-}
-#detail-img img{width:100%;height:auto;display:block;}
-
-#detail-text{flex:1 1 auto;overflow-y:auto;max-height:80vh;padding-right:8px;}
-#detail-eyebrow{font-size:8px;letter-spacing:.32em;color:rgba(91,79,207,.55);text-transform:uppercase;margin-bottom:10px;}
+#detail-panel.open #detail-inner{transform:translateY(0)}
+#detail-img{flex:0 0 auto;width:clamp(140px,24vw,280px);overflow:hidden;border:1px solid color-mix(in srgb, var(--dred) 28%, transparent)}
+#detail-img img{width:100%;height:auto;display:block}
+#detail-text{flex:1 1 auto;overflow-y:auto;max-height:80vh;padding-right:8px}
+#detail-eyebrow{font-size:8px;letter-spacing:.32em;color:color-mix(in srgb, var(--dred) 70%, transparent);text-transform:uppercase;margin-bottom:10px}
 #detail-title{
   font-family:'Syne',sans-serif;font-weight:800;
   font-size:clamp(22px,3.5vw,48px);
   color:var(--dred);letter-spacing:-.02em;line-height:1;margin-bottom:10px;
 }
-#detail-technique{font-size:10px;letter-spacing:.12em;line-height:1.75;color:rgba(255,255,255,.52);margin-bottom:16px;}
-#detail-desc{font-size:12px;line-height:1.85;color:rgba(255,255,255,.72);margin-bottom:18px;}
-
-.perspective-block{margin-bottom:14px;padding-top:12px;border-top:1px solid rgba(91,79,207,.12);}
-.perspective-label{font-size:8px;letter-spacing:.28em;color:var(--dred);opacity:.6;text-transform:uppercase;margin-bottom:6px;}
-.perspective-text{font-size:12px;line-height:1.8;color:rgba(255,255,255,.60);}
-
-#detail-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:16px;}
+#detail-technique{font-size:10px;letter-spacing:.12em;line-height:1.75;color:rgba(255,255,255,.50);margin-bottom:16px}
+#detail-desc{font-size:12px;line-height:1.85;color:rgba(255,255,255,.72);margin-bottom:18px}
+.perspective-block{margin-bottom:14px;padding-top:12px;border-top:1px solid color-mix(in srgb, var(--dred) 22%, transparent)}
+.perspective-label{font-size:8px;letter-spacing:.28em;color:var(--dred);opacity:.6;text-transform:uppercase;margin-bottom:6px}
+.perspective-text{font-size:12px;line-height:1.8;color:rgba(255,255,255,.72)}
+#detail-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:16px}
 .tag{
   font-size:8px;letter-spacing:.15em;text-transform:uppercase;
-  padding:4px 10px;border:1px solid rgba(91,79,207,.4);
-  color:rgba(91,79,207,.8);
+  padding:4px 10px;border:1px solid color-mix(in srgb, var(--dred) 45%, transparent);
+  color:color-mix(in srgb, var(--dred) 80%, white);
 }
-
-#detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+#detail-actions{display:flex;flex-wrap:wrap;gap:8px}
 .action-btn{
   font-size:8px;letter-spacing:.18em;text-transform:uppercase;
-  padding:9px 16px;border:1.5px solid var(--dred);
+  padding:9px 16px;border:1px solid var(--dred);
   background:var(--dred);color:#fff;
-  cursor:pointer;text-decoration:none;display:inline-block;
-  font-family:'DM Mono',monospace;
-  transition:background .2s,color .2s,transform .15s;
-  animation:actPulse 2.8s ease infinite;
+  cursor:pointer;text-decoration:none;display:inline-block;font-weight:400;
 }
-.action-btn:hover{background:transparent;color:var(--dred);transform:translateY(-2px);}
-@keyframes actPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(91,79,207,0)}
-  50%{box-shadow:0 0 0 6px rgba(91,79,207,.12)}
-}
-
-#detail-close{
-  display:inline-block;font-size:11px;letter-spacing:.28em;
-  color:rgba(255,255,255,.50);text-transform:uppercase;
-  cursor:pointer;transition:color .2s;
-}
-#detail-close:hover{color:var(--dred)}
-
-/* ── LIKE BUTTON ── */
-#detail-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:18px;}
+#detail-close{display:inline-block;font-size:11px;letter-spacing:.28em;color:rgba(255,255,255,.50);text-transform:uppercase;cursor:pointer}
+#detail-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:18px}
 #like-btn{
   display:flex;align-items:center;gap:7px;
-  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;
-  color:rgba(255,255,255,.35);cursor:pointer;
-  transition:color .2s,transform .15s;
-  user-select:none;background:none;border:none;padding:0;
+  font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.35);
+  background:none;border:none;padding:8px 0;cursor:pointer;min-height:44px;
 }
-#like-btn:hover{color:rgba(91,79,207,.7)}
 #like-btn.liked{color:var(--dred)}
-#like-btn.liked .like-heart{transform:scale(1.2)}
-.like-heart{font-size:14px;transition:transform .2s cubic-bezier(.16,1,.3,1)}
-#like-count{font-size:11px;}
-
-/* NAV — shown only when detail is open */
+.like-heart{font-size:14px}
+#like-count{font-size:11px}
 #detail-nav{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   display:flex;gap:24px;z-index:201;
   opacity:0;pointer-events:none;transition:opacity .3s;
 }
-#detail-panel.open ~ #detail-nav{opacity:1;pointer-events:all;}
-.dn{font-size:13px;letter-spacing:.28em;color:rgba(255,255,255,.50);
-  cursor:pointer;transition:color .2s;padding:12px;user-select:none}
-.dn:hover{color:var(--dred)}
+#detail-panel.open ~ #detail-nav{opacity:1;pointer-events:all}
+.dn{font-size:13px;letter-spacing:.28em;color:rgba(255,255,255,.50);cursor:pointer;padding:12px;user-select:none}
 #detail-counter{font-size:9px;letter-spacing:.22em;color:rgba(255,255,255,.35);display:flex;align-items:center}
+.action-section-label{font-size:7px;letter-spacing:.32em;color:color-mix(in srgb, var(--dred) 70%, transparent);text-transform:uppercase;margin:16px 0 10px}
 
 @media(max-width:680px){
-  /* FIX: 모바일 상세 패널 스크롤
-     기존: #detail-panel이 align-items:center + #detail-text max-height:80vh로
-     콘텐츠 넘치면 close 버튼이 화면 밖으로.
-     수정: 패널을 align-items:flex-start + overflow-y:auto로 전체 스크롤 가능하게.
-     #detail-text의 max-height 제거. */
-  #detail-panel{align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  #detail-inner{
-    flex-direction:column;gap:12px;
-    padding:56px 16px 96px; /* top: 헤더 여백, bottom: nav 버튼 여백 */
-    width:100%;max-width:none;
-  }
-  #detail-img{width:100%;}
-  #detail-text{max-height:none;overflow-y:visible;padding-right:0;}
+  #header{padding:16px}
+  #detail-panel{align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #detail-inner{flex-direction:column;gap:12px;padding:72px 16px 96px;width:100%;max-width:none}
+  #detail-img{width:100%}
+  #detail-text{max-height:none;overflow-y:visible;padding-right:0}
   #detail-technique{display:none}
-  #detail-desc{display:block;font-size:11px;}
-  .perspective-block{display:none}
-  .perspective-block.show-mobile{display:block}
   #detail-title{font-size:clamp(20px,6vw,32px)}
   #detail-nav{bottom:14px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #grain{animation:none}
+  #cur{display:none}
+  html,body{cursor:auto}
+  .veil{opacity:0;transition:none}
+  .subtitle{opacity:1;transition:none}
+  #detail-inner,#detail-panel,#leave,#loading{transition:none}
 }
 </style>
 </head>
@@ -332,18 +229,24 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
     <span class="lt-sep">·</span>
     <span class="lt" id="lt-en">EN</span>
   </div>
-  <div style="display:flex;gap:24px;align-items:center;">
+  <div style="display:flex;gap:16px;align-items:center;">
     <div class="h-cross" id="nav-kin">← KIN</div>
     <div class="h-back">← back</div>
   </div>
 </div>
 
-<div id="strip-wrap">
-  <div id="strip"></div>
+<div id="stage" data-gallery="../data/kindred_gallery_dred.json">
+  <div id="track">
+    <section id="picks">
+      <p class="kicker" id="pick-kicker">Today DRED picked</p>
+      <p id="pick-line" lang="ko"></p>
+      <div id="pick-row"></div>
+      <p id="hint">scroll</p>
+    </section>
+    <div id="reel"></div>
+  </div>
 </div>
-
-<div id="hint">drag to explore</div>
-<div id="focus-dot"></div>
+<nav id="index" aria-label="album"></nav>
 
 <div id="detail-panel">
   <div id="detail-inner">
@@ -367,7 +270,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
         <div id="detail-actions"></div>
       </div>
       <div id="detail-bottom">
-        <button id="like-btn">
+        <button id="like-btn" type="button">
           <span class="like-heart">♡</span>
           <span id="like-count">0</span>
         </button>
@@ -385,624 +288,6 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM
 
 <script src="../js/site-base.js"></script>
 <script src="../js/gallery.js"></script>
-<script>
-/* ── CONFIG ── */
-
-/* ── DRED REPORTER ── */
-function reportToDred(event_type, payload = {}) {
-  reportEvent('dred', { service: 'gallery', event_type, payload });
-}
-
-/* ── STATE ── */
-const IS_TOUCH = window.matchMedia('(pointer:coarse)').matches;
-let lang = localStorage.getItem('kxd_lang') || (navigator.language.startsWith('ko') ? 'ko' : 'en');
-let items = [];
-let currentIdx = 0;
-let hintHidden = false;
-let detailOpen = false;
-
-/* ── PHYSICS STATE ──
-   SPRING → LERP 교체:
-   기존 SPRING_K=0.12 + SPRING_D=0.84 → eigenvalue |λ|≈0.917 (underdamped).
-   1프레임 이동(324px)에서 ~150px 오버슈트 → 덜컹거림의 근본 원인.
-   Lerp: offset += (target-offset)*EASE, eigenvalue=(1-0.26)=0.74, 실수.
-   오버슈트 수학적 불가능. ~15프레임(0.25s) 정착.                        */
-const FRAME_W   = IS_TOUCH ? 240 : 300;
-const FRAME_GAP = 24;
-const STEP      = FRAME_W + FRAME_GAP;
-const VEL_WINDOW = 100;
-const BOOST      = 1.15;   // 1.10 → 1.15: 무거운 관성에 맞게 flick 강화
-const FRICTION   = 0.96;   // 0.90 → 0.96: 무거운 관성 — 손 떼도 천천히 미끄러짐
-const SNAP_EASE  = 0.20;   // 0.26 → 0.20: 스냅 부드럽게
-const MIN_VEL    = 1.2;    // 2.5 → 1.2: 더 오래 코스트하다 스냅
-
-let offset       = 0;
-let physVel      = 0;
-let isSnapping   = false;
-let snapTarget   = 0;
-let isDragging   = false;
-let dragStartX   = 0;
-let dragStartOff = 0;
-let lastMouseX   = 0;
-let lastMoveT    = 0;
-
-/* FIX: dragMoved tracks whether the pointer actually moved a meaningful distance.
-   Used in click handlers to distinguish a real tap from a drag-release.
-   isDragging is already false by the time click fires (reset in mouseup/touchend),
-   so we need a separate flag that persists through the event sequence. */
-let dragMoved = false;
-const DRAG_THRESHOLD = 4; // px — movement below this is treated as a tap
-
-/* wheel 직접 이동 상태 — isDragging과 별도로 관리 */
-let isWheeling   = false;
-let wheelEndTimer = null;
-
-// Rolling velocity buffer
-const velBuf = [];
-
-function pushVel(v) {
-  const now = performance.now();
-  velBuf.push({v, t: now});
-  while (velBuf.length && now - velBuf[0].t > VEL_WINDOW) velBuf.shift();
-}
-
-function rollingVel() {
-  if (!velBuf.length) return 0;
-  const now = performance.now();
-  let sw = 0, svw = 0;
-  for (const s of velBuf) {
-    const age = now - s.t;
-    if (age >= VEL_WINDOW) continue;
-    const w = (VEL_WINDOW - age) / VEL_WINDOW;
-    sw += w; svw += s.v * w;
-  }
-  return sw > 0.01 ? svw / sw : 0;
-}
-
-/* ── CURSOR ── */
-const $cur = document.getElementById('cur');
-if (!IS_TOUCH) {
-  document.addEventListener('mousemove', e => {
-    $cur.style.left = e.clientX + 'px';
-    $cur.style.top  = e.clientY + 'px';
-  });
-} else {
-  $cur.style.display = 'none';
-}
-
-/* ── LANG TOGGLE ── */
-const $ltKo = document.getElementById('lt-ko');
-const $ltEn = document.getElementById('lt-en');
-
-function setLang(l) {
-  lang = l;
-  localStorage.setItem('kxd_lang', l);
-  $ltKo.classList.toggle('active', l === 'ko');
-  $ltEn.classList.toggle('active', l === 'en');
-  if (items.length) renderStrip();
-  /* FIX: fillDetail is async — catch silent failures */
-  if (detailOpen) fillDetail(currentIdx).catch(err => console.error('[DRED] fillDetail error:', err));
-}
-$ltKo.addEventListener('click', () => setLang('ko'));
-$ltEn.addEventListener('click', () => setLang('en'));
-setLang(lang);
-
-/* ── FETCH ── */
-async function fetchItems() {
-  const res = await fetch('../data/kindred_gallery_dred.json');
-  if (!res.ok) throw new Error('fetch failed');
-  const doc = await res.json();
-  try {
-    const extra = await fetch('/api/gallery/dred', { headers: { accept: 'application/json' } });
-    if (extra.ok) {
-      const more = await extra.json();
-      doc.images = mergeGalleryImages(doc.images, more && more.images);
-    }
-  } catch (e) {}
-  return flattenGallery(doc);
-}
-
-/* ── STRIP ── */
-const $strip = document.getElementById('strip');
-const $dots  = document.getElementById('focus-dot');
-let frameEls = [];
-let stripInited = false;
-
-function renderStrip() {
-  $strip.innerHTML = '';
-  $dots.innerHTML  = '';
-  frameEls = [];
-
-  const pad = `calc(50vw - ${FRAME_W/2}px)`;
-  $strip.style.padding = `0 ${pad}`;
-
-  items.forEach((item, i) => {
-    const fr = document.createElement('div');
-    const title  = item[`title_${lang}`] || '';
-    const hasAct = (item.actions?.[lang]?.length || 0) > 0;
-
-    const actHtml = hasAct
-      ? (item.actions[lang] || []).map(a => actionLinkHtml(a, 'frame-action-link')).join('')
-      : '';
-    fr.className = 'frame' + (hasAct ? ' has-action' : '');
-    fr.innerHTML = `
-      <img src="${gallerySrc(item.filename)}" alt="${title}" loading="lazy">
-      <div class="frame-overlay">
-        <div class="frame-caption">${title}</div>
-        ${hasAct ? actHtml : ''}
-      </div>
-      ${hasAct ? '<div class="frame-action-badge">action</div>' : ''}`;
-
-    /* FIX: Root cause of the bug.
-       Original: checked `snapped === i` from live `offset`, which fails when:
-         (a) the spring is mid-animation (offset between two positions), or
-         (b) mousedown interrupted a previous spring, leaving offset misaligned.
-       The result was goToIdx always firing instead of openDetail,
-       causing the "shake with no detail" loop.
-
-       Fix: guard with `dragMoved` (real drag vs tap), then directly call
-       goToIdx(i) + openDetail(i) unconditionally. The strip snaps to the
-       clicked frame while the panel opens — identical to KIN's behavior.
-       Since the panel is full-screen, strip position during transition is invisible. */
-    fr.addEventListener('click', () => {
-      if (dragMoved) return;
-      openDetail(i).catch(err => console.error('[DRED] openDetail error:', err));
-    });
-    if (hasAct) {
-      fr.querySelectorAll('.frame-action-link').forEach(link => {
-        link.addEventListener('click', e => e.stopPropagation());
-      });
-    }
-
-    $strip.appendChild(fr);
-    frameEls.push(fr);
-
-    const dot = document.createElement('div');
-    const activeIdx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-    dot.className = 'fdot' + (i === activeIdx ? ' active' : '');
-    $dots.appendChild(dot);
-  });
-
-  stripInited = true;
-}
-
-/* ── HELPERS ── */
-function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
-
-function maxOffset() { return -(items.length - 1) * STEP; }
-
-function updateDots(idx) {
-  document.querySelectorAll('.fdot').forEach((d, i) =>
-    d.classList.toggle('active', i === idx));
-}
-
-function goToIdx(idx) {
-  if (!items.length) return;
-  idx = clamp(idx, 0, items.length - 1);
-  const target = -idx * STEP;
-  if (Math.abs(offset - target) < 0.3 && !isSnapping) return;
-  snapTarget = target;
-  physVel    = 0;
-  isSnapping = true;
-}
-
-function snapToNearest() {
-  if (!items.length) return;
-  goToIdx(clamp(Math.round(-offset / STEP), 0, items.length - 1));
-}
-
-function hideHint() {
-  if (hintHidden) return;
-  hintHidden = true;
-  document.getElementById('hint').style.opacity = '0';
-}
-
-;(function loop() {
-  if (!isDragging && !isWheeling) {
-    if (isSnapping) {
-      /* Lerp snap — no overshoot, eigenvalue=(1-SNAP_EASE)=0.74 */
-      const d = snapTarget - offset;
-      if (Math.abs(d) < 0.3) {
-        offset = snapTarget; isSnapping = false; physVel = 0;
-      } else {
-        offset += d * SNAP_EASE;
-      }
-    } else if (Math.abs(physVel) >= MIN_VEL) {
-      /* Momentum coast */
-      offset  += physVel;
-      physVel *= FRICTION;
-      const MIN = maxOffset();
-      if (offset > 0)   { offset = 0;   physVel = 0; snapToNearest(); }
-      if (offset < MIN) { offset = MIN; physVel = 0; snapToNearest(); }
-    } else if (physVel !== 0) {
-      /* Velocity too low — snap immediately, no idle goToIdx loop */
-      physVel = 0;
-      snapToNearest();
-    }
-    /* else: fully settled, do nothing */
-  }
-
-  $strip.style.transform = `translateX(${offset.toFixed(2)}px)`;
-
-  if (!detailOpen && items.length) {
-    const idx = clamp(Math.round(-offset / STEP), 0, items.length - 1);
-    if (idx !== currentIdx) { currentIdx = idx; updateDots(idx); }
-  }
-
-  requestAnimationFrame(loop);
-})();
-
-/* ── DRAG — DESKTOP ── */
-if (!IS_TOUCH) {
-  const $wrap = document.getElementById('strip-wrap');
-
-  $wrap.addEventListener('mousedown', e => {
-    if (detailOpen) return;
-    /* FIX: mid-snap interrupt — snap to destination before drag starts
-       so dragStartOff is always frame-aligned, not a mid-spring position */
-    if (isSnapping) { offset = snapTarget; isSnapping = false; }
-    /* wheel 제스처 잔류 차단 */
-    isWheeling = false;
-    clearTimeout(wheelEndTimer);
-    isDragging    = true;
-    dragMoved     = false;
-    physVel       = 0;
-    velBuf.length = 0;
-    dragStartX    = e.clientX;
-    dragStartOff  = offset;
-    lastMouseX    = e.clientX;
-    lastMoveT     = performance.now();
-    $cur.classList.add('drag');
-    hideHint();
-  });
-
-  window.addEventListener('mousemove', e => {
-    if (!isDragging) return;
-    /* FIX: mark as a real drag once movement exceeds threshold */
-    if (!dragMoved && Math.abs(e.clientX - dragStartX) > DRAG_THRESHOLD) {
-      dragMoved = true;
-    }
-    const now = performance.now();
-    const dt  = Math.max(now - lastMoveT, 1);
-    pushVel((e.clientX - lastMouseX) / dt * 16);
-    lastMouseX = e.clientX;
-    lastMoveT  = now;
-    offset = clamp(dragStartOff + (e.clientX - dragStartX), maxOffset(), 0);
-  });
-
-  window.addEventListener('mouseup', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    $cur.classList.remove('drag');
-    const rawVel = rollingVel() * BOOST;
-    const MAX_VEL = STEP * 0.3;
-    physVel = Math.max(-MAX_VEL, Math.min(MAX_VEL, rawVel));
-    velBuf.length = 0;
-    if (Math.abs(physVel) < MIN_VEL) {
-      physVel = 0;
-      snapToNearest();
-    }
-  });
-
-  /* WHEEL_SENSITIVITY: 1.0 = 트랙패드 1:1, 높이면 마우스 휠 반응 강화 */
-  const WHEEL_SENSITIVITY = 1.0;
-  /* 이벤트 하나당 최대 이동량 cap — Windows 고DPI 휠(deltaY≈800) 폭주 방지 */
-  const WHEEL_CAP = 120;
-
-  $wrap.addEventListener('wheel', e => {
-    e.preventDefault();
-    if (detailOpen) return;
-    hideHint();
-
-    /* 진행 중인 snap/momentum 즉시 중단 */
-    if (isSnapping) { offset = snapTarget; isSnapping = false; }
-    physVel    = 0;
-    isWheeling = true;
-
-    /* deltaMode 정규화: 0=pixel, 1=line(Firefox 3→90), 2=page */
-    const multiplier = e.deltaMode === 1 ? 30 : e.deltaMode === 2 ? 300 : 1;
-    const raw   = (e.deltaX !== 0 ? e.deltaX : e.deltaY) * multiplier;
-    const capped = Math.sign(raw) * Math.min(Math.abs(raw), WHEEL_CAP);
-
-    offset = clamp(offset - capped * WHEEL_SENSITIVITY, maxOffset(), 0);
-
-    /* 80ms 무입력 시 제스처 종료 → 가장 가까운 카드로 snap */
-    clearTimeout(wheelEndTimer);
-    wheelEndTimer = setTimeout(() => {
-      isWheeling = false;
-      snapToNearest();
-    }, 120);
-  }, {passive:false});
-}
-
-/* ── DRAG — TOUCH ── */
-if (IS_TOUCH) {
-  const $wrap = document.getElementById('strip-wrap');
-  let tStartX = 0, tStartOff = 0, tLastX = 0, tLastT = 0;
-
-  $wrap.addEventListener('touchstart', e => {
-    if (detailOpen) return;
-    /* FIX: mid-snap interrupt */
-    if (isSnapping) { offset = snapTarget; isSnapping = false; }
-    isDragging    = true;
-    dragMoved     = false;
-    physVel       = 0;
-    velBuf.length = 0;
-    tStartX       = e.touches[0].clientX;
-    tStartOff     = offset;
-    tLastX        = tStartX;
-    tLastT        = performance.now();
-    hideHint();
-  }, {passive:true});
-
-  $wrap.addEventListener('touchmove', e => {
-    if (!isDragging) return;
-    /* FIX: mark as a real drag once movement exceeds threshold */
-    if (!dragMoved && Math.abs(e.touches[0].clientX - tStartX) > DRAG_THRESHOLD) {
-      dragMoved = true;
-    }
-    e.preventDefault();
-    const x   = e.touches[0].clientX;
-    const now = performance.now();
-    const dt  = Math.max(now - tLastT, 1);
-    pushVel((x - tLastX) / dt * 16);
-    tLastX = x;
-    tLastT = now;
-    offset = clamp(tStartOff + (x - tStartX), maxOffset(), 0);
-  }, {passive:false});
-
-  $wrap.addEventListener('touchend', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    physVel = rollingVel() * BOOST;
-    velBuf.length = 0;
-    if (Math.abs(physVel) < MIN_VEL) {
-      physVel = 0;
-      snapToNearest();
-    }
-  });
-}
-
-/* ── DETAIL ── */
-const $panel = document.getElementById('detail-panel');
-
-async function fillDetail(i) {
-  const item = items[i];
-  if (!item) return; /* FIX: guard against out-of-bounds index */
-  const t = lang;
-
-  document.getElementById('detail-eyebrow').textContent   = `DRED · ${String(i+1).padStart(2,'0')} / ${items.length}`;
-  document.getElementById('detail-title').textContent     = item[`title_${t}`] || '';
-  document.getElementById('detail-technique').textContent = item[`technique_${t}`] || '';
-  document.getElementById('detail-desc').textContent      = item[`description_${t}`] || '';
-  document.getElementById('detail-kin').textContent       = item[`kin_perspective_${t}`] || '';
-  document.getElementById('detail-dred').textContent      = item[`dred_perspective_${t}`] || '';
-  document.getElementById('detail-counter').textContent   = `${String(i+1).padStart(2,'0')} / ${items.length}`;
-
-  const $img = document.getElementById('detail-img-el');
-  $img.src = gallerySrc(item.filename);
-  $img.alt = item[`title_${t}`] || '';
-
-  const $actSection = document.getElementById('detail-action-section');
-  const $acts = document.getElementById('detail-actions');
-  $acts.innerHTML = '';
-  const actions = item.actions?.[t] || [];
-  if (actions.length) {
-    actions.forEach(a => {
-      const btn = document.createElement('a');
-      btn.className = 'action-btn';
-      btn.textContent = a.label;
-      btn.href = resolveLink(a.url);
-      if (isExternalLink(a.url)) {
-        btn.target = '_blank';
-        btn.rel = 'noopener noreferrer';
-      }
-      $acts.appendChild(btn);
-    });
-    $actSection.style.display = 'block';
-  } else {
-    $actSection.style.display = 'none';
-  }
-
-  const itemId = item.item_id || String(item.id);
-  updateLikeUI(itemId, 0);
-  fetchLikeCount(itemId).then(count => updateLikeUI(itemId, count)).catch(() => {});
-
-  const $tags = document.getElementById('detail-tags');
-  $tags.innerHTML = '';
-  (item.tags || []).forEach(tag => {
-    const span = document.createElement('span');
-    span.className = 'tag';
-    span.textContent = tag[`name_${t}`] || tag.name_ko || '';
-    if (span.textContent) $tags.appendChild(span);
-  });
-}
-
-/* FIX: openDetail had no error boundary.
-   If fillDetail threw (or any DOM op failed), $panel.classList.add('open')
-   would never be called — panel silently stays closed while detailOpen=true.
-   Now: try/finally ensures detailOpen is rolled back on failure. */
-async function openDetail(i) {
-  if (detailOpen && currentIdx === i) return;
-  /* FIX: instantly position strip before panel opens — prevents spring
-     animation being visible through the semi-transparent panel fade-in */
-  offset     = -i * STEP;
-  isSnapping = false;
-  physVel    = 0;
-  updateDots(i);
-  currentIdx = i;
-  detailOpen = true;
-  document.getElementById('focus-dot').classList.add('hidden');
-  history.pushState({ detail: true }, '');
-  try {
-    await fillDetail(i);
-    $panel.classList.add('open');
-    // DRED 에이전트에 이미지 열람 이벤트 전송
-    const _item = items[i];
-    if (_item) reportToDred('image_viewed', {
-      item_id: _item.item_id,
-      title: _item[`title_${lang}`] || _item.title_ko,
-      style: _item.style,
-      lang,
-    });
-  } catch (err) {
-    console.error('[DRED] openDetail failed:', err);
-    detailOpen = false;
-    document.getElementById('focus-dot').classList.remove('hidden');
-  }
-}
-
-function closeDetailUI() {
-  $panel.classList.remove('open');
-  detailOpen = false;
-  document.getElementById('focus-dot').classList.remove('hidden');
-}
-
-function closeDetail() {
-  if (history.state?.detail) {
-    history.back();
-  } else {
-    closeDetailUI();
-  }
-}
-
-function nav(dir) {
-  const next = (currentIdx + dir + items.length) % items.length;
-  /* FIX: instantly reposition — no spring visible behind open panel */
-  offset     = -next * STEP;
-  isSnapping = false;
-  physVel    = 0;
-  openDetail(next).catch(err => console.error('[DRED] nav error:', err));
-}
-
-/* ── LIKES ── */
-const LIKED_KEY = 'kxd_liked';
-
-function getLiked() {
-  try { return JSON.parse(localStorage.getItem(LIKED_KEY) || '{}'); } catch(e) { return {}; }
-}
-
-function setLiked(itemId, val) {
-  try {
-    const liked = getLiked();
-    if (val) liked[itemId] = true;
-    else delete liked[itemId];
-    localStorage.setItem(LIKED_KEY, JSON.stringify(liked));
-  } catch(e) {}
-}
-
-async function fetchLikeCount(itemId) {
-  return localLikeCount(itemId);
-}
-
-async function callLikeRpc(fn, itemId) {
-  localAdjustLike(itemId, fn === 'increment_like' ? 1 : -1);
-}
-
-function updateLikeUI(itemId, count) {
-  const $btn   = document.getElementById('like-btn');
-  const $heart = $btn.querySelector('.like-heart');
-  const $count = document.getElementById('like-count');
-  const liked  = getLiked()[itemId];
-  $count.textContent = count;
-  if (liked) { $btn.classList.add('liked'); $heart.textContent = '❤'; }
-  else        { $btn.classList.remove('liked'); $heart.textContent = '♡'; }
-}
-
-document.getElementById('like-btn').addEventListener('click', async () => {
-  if (!detailOpen) return;
-  const item   = items[currentIdx];
-  if (!item) return; /* FIX: guard */
-  const itemId = item.item_id || String(item.id);
-  const liked  = getLiked()[itemId];
-  const $count = document.getElementById('like-count');
-  const curCount = parseInt($count.textContent) || 0;
-
-  if (liked) {
-    setLiked(itemId, false);
-    updateLikeUI(itemId, curCount - 1);
-    callLikeRpc('decrement_like', itemId).catch(() => {});
-  } else {
-    setLiked(itemId, true);
-    updateLikeUI(itemId, curCount + 1);
-    callLikeRpc('increment_like', itemId).catch(() => {}); /* FIX: catch RPC failures */
-    // DRED 에이전트에 좋아요 이벤트 전송 (salience 0.7 — 능동적 반응)
-    const _item = items[currentIdx];
-    if (_item) reportToDred('image_liked', {
-      item_id: itemId,
-      title: _item[`title_${lang}`] || _item.title_ko,
-      style: _item.style,
-      lang,
-    });
-  }
-});
-
-document.getElementById('detail-close').addEventListener('click', closeDetail);
-$panel.addEventListener('click', e => { if (e.target === $panel) closeDetail(); });
-document.getElementById('dn-prev').addEventListener('click', () => nav(-1));
-document.getElementById('dn-next').addEventListener('click', () => nav(1));
-
-window.addEventListener('popstate', e => {
-  if (!e.state?.detail && detailOpen) {
-    closeDetailUI();
-  }
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeDetail();
-  if (detailOpen) {
-    if (e.key === 'ArrowRight') nav(1);
-    if (e.key === 'ArrowLeft')  nav(-1);
-  }
-});
-
-// 디테일 열려있을 때 터치 스와이프로 이미지 전환
-let dtx0 = 0;
-document.addEventListener('touchstart', e => { dtx0 = e.touches[0].clientX; }, {passive:true});
-document.addEventListener('touchend', e => {
-  if (!detailOpen) return;
-  const dx = e.changedTouches[0].clientX - dtx0;
-  if (Math.abs(dx) > 50) nav(dx < 0 ? 1 : -1);
-});
-
-/* ── BACK ── */
-const $back = document.querySelector('.h-back');
-const $backOverlay = document.createElement('div');
-Object.assign($backOverlay.style, {
-  position:'fixed',inset:'0',background:'#000',opacity:'0',
-  pointerEvents:'none',zIndex:'9000',transition:'opacity 0.4s ease'
-});
-document.body.appendChild($backOverlay);
-$back.addEventListener('click', () => {
-  $backOverlay.style.pointerEvents = 'all';
-  $backOverlay.style.opacity = '1';
-  setTimeout(() => { window.location.href = '../main.html'; }, 400);
-});
-
-/* ── KIN CROSS-NAV ── */
-const $kinNav = document.getElementById('nav-kin');
-$kinNav.addEventListener('click', () => {
-  const overlay = $backOverlay;
-  overlay.style.pointerEvents = 'all';
-  overlay.style.opacity = '1';
-  setTimeout(() => { window.location.href = '../kin/'; }, 400);
-});
-
-/* ── INIT ── */
-const $loading = document.getElementById('loading');
-fetchItems()
-  .then(data => {
-    items = data;
-    renderStrip();
-    offset = 0; isSnapping = false; physVel = 0; // start clean at frame 0
-    $loading.style.opacity = '0';
-    setTimeout(() => { $loading.style.display = 'none'; }, 400);
-    // DRED 에이전트에 갤러리 방문 이벤트 전송
-    reportToDred('gallery_visit', { item_count: data.length, lang });
-  })
-  .catch(() => {
-    $loading.querySelector('span').textContent = 'error';
-  });
-</script>
+<script src="../js/dred-album.js"></script>
 </body>
 </html>

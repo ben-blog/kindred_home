@@ -24,6 +24,7 @@ import {
   SESSION_BODY_LIMIT,
   SIGNAL_BODY_LIMIT,
 } from './http.js';
+import { observeDueAlbums } from './album-observe.js';
 import { ingestWorld } from './ingest.js';
 import { leaderTickEvent, reduceTick } from './pipeline.js';
 import { publicState } from './present.js';
@@ -259,7 +260,21 @@ async function runIngest(request, options) {
     fetch: fetchImpl,
     now,
   });
-  return json(200, { ok: true, sources });
+  let album = [];
+  try {
+    album = await observeDueAlbums({
+      canon: opened.canon,
+      store,
+      env: options.env ?? process.env,
+      fetchImpl,
+      now,
+      config: opened.config,
+      staticGallery: options.staticGallery,
+    });
+  } catch {
+    album = [];
+  }
+  return json(200, { ok: true, sources, album });
 }
 
 async function postMagic(request, options) {

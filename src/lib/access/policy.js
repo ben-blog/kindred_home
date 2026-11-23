@@ -81,6 +81,7 @@ function isPublic(path, method) {
     if (/^\/api\/gallery\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path)) return true;
   }
   if (path === '/api/world/auth/magic' || path === '/api/world/auth/session') return true;
+  if (method === 'POST' && path === '/api/world/signal') return true;
   if (method === 'POST' && /^\/api\/[a-z0-9]+(?:-[a-z0-9]+)*\/event$/.test(path)) return true;
   return false;
 }

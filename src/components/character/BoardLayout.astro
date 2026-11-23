@@ -1,5 +1,6 @@
 ---
 import Grain from './Grain.astro';
+import Warmth from './Warmth.astro';
 import { cssBezier, cssTime } from '../../lib/character-layout.js';
 
 const { page } = Astro.props;
@@ -68,6 +69,7 @@ const style = [
     </aside>
     <p class="sticker swatch"><i aria-hidden="true"></i> {page.color}</p>
     {page.hub ? <a class="sticker fill cta" href={page.hub}>Open {page.hub}</a> : null}
+    {page.status === 'active' ? <Warmth slug={page.slug} look="sticker" /> : null}
     {
       page.works.length > 0 ? (
         <aside class="sticker works">
@@ -326,6 +328,13 @@ const style = [
     background: var(--accent);
   }
 
+  .warmth {
+    grid-column: 8 / 13;
+    grid-row: 4 / 5;
+    align-self: start;
+    transform: rotate(1.4deg);
+  }
+
   .cta {
     display: flex;
     grid-column: 4 / 8;
@@ -480,6 +489,7 @@ const style = [
     .bio,
     .swatch,
     .cta,
+    .warmth,
     .works,
     .bond,
     .status {
@@ -516,6 +526,7 @@ const style = [
     .bio,
     .swatch,
     .cta,
+    .warmth,
     .works,
     .bond,
     .status {

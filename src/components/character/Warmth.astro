@@ -1,0 +1,71 @@
+---
+const { slug, look = 'plain' } = Astro.props;
+---
+
+<div class:list={['warmth', look === 'sticker' && 'sticker', look === 'accent' && 'accent']} data-warmth={slug}>
+  <button type="button">warmth</button>
+  <p class="warmth-note" data-warmth-note hidden></p>
+</div>
+
+<script>
+  import { bindWarmth } from '../../scripts/warmth.js';
+
+  bindWarmth(document);
+</script>
+
+<style>
+  .warmth {
+    display: grid;
+    gap: 0.45rem;
+    justify-items: start;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    color: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.12);
+    cursor: default;
+  }
+
+  button:focus-visible {
+    outline: 1px solid rgba(255, 255, 255, 0.72);
+    outline-offset: 2px;
+  }
+
+  .accent button {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    color: var(--accent);
+  }
+
+  .sticker button {
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    letter-spacing: 0.16em;
+  }
+
+  .warmth-note {
+    margin: 0;
+    max-width: 22rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    line-height: 1.45;
+    letter-spacing: 0.08em;
+  }
+</style>

@@ -37,6 +37,21 @@ export function createWorldStore(config, fetchImpl = globalThis.fetch) {
   }
 
   return {
+    async recentWarmth({ ipHash, target, since }) {
+      const query = new URLSearchParams({
+        select: 'id',
+        limit: '1',
+        ip_hash: `eq.${ipHash}`,
+        target: `eq.${target}`,
+        source: 'eq.visitor-influence',
+        created_at: `gt.${since}`,
+      });
+      const rows = await request(`${config.url}/rest/v1/world_events?${query}`, {
+        method: 'GET',
+        headers,
+      });
+      return Array.isArray(rows) && rows.length > 0;
+    },
     append(event) {
       return rpc('world_append_event', {
         p_id: event.id,

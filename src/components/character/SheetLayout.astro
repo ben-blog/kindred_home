@@ -1,5 +1,6 @@
 ---
 import Grain from './Grain.astro';
+import Warmth from './Warmth.astro';
 
 const { page } = Astro.props;
 const status = [page.status, page.agent].filter(Boolean).join(' · ');
@@ -21,6 +22,7 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
     <p class="bio">{page.bio}</p>
     <p class="swatch"><i aria-hidden="true"></i> {page.color}</p>
     {page.hub ? <a class="cta" href={page.hub}>Open {page.hub}</a> : null}
+    {page.status === 'active' ? <Warmth slug={page.slug} look="accent" /> : null}
     <div class="frost">
       {
         page.works.length > 0 ? (
@@ -163,6 +165,10 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
     width: 0.9rem;
     height: 0.9rem;
     background: var(--accent);
+  }
+
+  .warmth {
+    margin-top: 1rem;
   }
 
   .cta {

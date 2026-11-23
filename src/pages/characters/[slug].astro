@@ -37,6 +37,7 @@ const [works, relations, entities, characters] = await Promise.all([
 const names = new Map(entities.map((item) => [item.data.slug, item.data.name]));
 const notes = new Map(data.relationships.map((item) => [item.with, item.note]));
 const page = {
+  slug: data.slug,
   name: text(data.name),
   tagline: text(data.profile.tagline),
   bio: text(data.profile.bio),

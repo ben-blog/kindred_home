@@ -3,6 +3,11 @@ import { worldConfig } from '../world/env.js';
 import { classify, loginLocation } from './policy.js';
 
 const ROBOTS = 'noindex, nofollow';
+const PRIVATE_CACHE = {
+  'cache-control': 'private, no-store',
+  'cdn-cache-control': 'no-store',
+  'vercel-cdn-cache-control': 'no-store',
+};
 
 export async function guardRequest(request, options = {}) {
   const url = new URL(request.url);
@@ -34,7 +39,7 @@ function deny(decision, url, cookies = []) {
 function denyPage(location, cookies = []) {
   return new Response(null, {
     status: 302,
-    headers: headers({ location, 'cache-control': 'no-store' }, cookies),
+    headers: headers({ location, ...PRIVATE_CACHE }, cookies),
   });
 }
 
@@ -42,20 +47,21 @@ function unavailable(decision, cookies = []) {
   if (decision.api) return json(503, { error: 'unavailable' }, cookies);
   return new Response('Unavailable.', {
     status: 503,
-    headers: headers({ 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' }, cookies),
+    headers: headers({ 'content-type': 'text/plain; charset=utf-8', ...PRIVATE_CACHE }, cookies),
   });
 }
 
 function json(status, body, cookies) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: headers({ 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }, cookies),
+    headers: headers({ 'content-type': 'application/json; charset=utf-8', ...PRIVATE_CACHE }, cookies),
   });
 }
 
 function stamp(response, cookies = []) {
   const headers = new Headers(response.headers);
   headers.set('x-robots-tag', ROBOTS);
+  for (const [name, value] of Object.entries(PRIVATE_CACHE)) headers.set(name, value);
   for (const cookie of cookies ?? []) headers.append('set-cookie', cookie);
   return new Response(response.body, {
     status: response.status,

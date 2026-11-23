@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { guardRequest } from './access/guard.js';
+
+const PRIVATE_PAGES = [
+  '../pages/world/index.astro',
+  '../pages/world/admin.astro',
+  '../pages/world/admin/album.astro',
+  '../pages/world/brain.astro',
+  '../pages/world/chat/[slug].astro',
+];
 
 const leaderId = '11111111-1111-4111-8111-111111111111';
 const env = {
@@ -62,7 +71,7 @@ const PUBLIC = [
   ['/api/world/tick', 'OPTIONS'],
 ];
 
-const PRIVATE_PAGES = ['/world', '/world/admin', '/world/admin/album', '/world/brain', '/world/chat/kin'];
+const PRIVATE_PAGE_URLS = ['/world', '/world/admin', '/world/admin/album', '/world/brain', '/world/chat/kin'];
 
 const PRIVATE_APIS = [
   ['/api/world', 'GET'],
@@ -76,6 +85,13 @@ const PRIVATE_APIS = [
   ['/api/gallery/kin', 'POST'],
   ['/api/not-a-route', 'GET'],
 ];
+
+test('private pages are rendered on demand so Vercel cannot serve them as static files', () => {
+  for (const file of PRIVATE_PAGES) {
+    const source = readFileSync(new URL(file, import.meta.url), 'utf8');
+    assert.match(source, /export const prerender = false/, file);
+  }
+});
 
 test('public routes stay open without a session', async () => {
   for (const [path, method] of PUBLIC) {
@@ -94,7 +110,7 @@ test('public routes stay open without a session', async () => {
 });
 
 test('private pages redirect and private APIs return 401 without a session', async () => {
-  for (const path of PRIVATE_PAGES) {
+  for (const path of PRIVATE_PAGE_URLS) {
     let called = false;
     const response = await guardRequest(request(path), {
       env: {},
@@ -108,6 +124,7 @@ test('private pages redirect and private APIs return 401 without a session', asy
     const location = response.headers.get('location');
     assert.equal(location.startsWith('/login?next='), true, location);
     assert.equal(response.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.equal(response.headers.get('cache-control'), 'private, no-store');
   }
   for (const [path, method] of PRIVATE_APIS) {
     let called = false;
@@ -159,5 +176,6 @@ test('the cron route is not the leader cookie, and a leader session stamps noind
   });
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('x-robots-tag'), 'noindex, nofollow');
+  assert.equal(response.headers.get('cache-control'), 'private, no-store');
   assert.equal(await response.text(), 'ok');
 });

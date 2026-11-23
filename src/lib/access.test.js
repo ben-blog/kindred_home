@@ -109,6 +109,23 @@ test('public routes stay open without a session', async () => {
   }
 });
 
+test('OPTIONS on a private page does not render it', async () => {
+  let called = false;
+  const response = await guardRequest(request('/world', { method: 'OPTIONS' }), {
+    env: {},
+    next: () => {
+      called = true;
+      return ok();
+    },
+  });
+  assert.equal(called, false);
+  assert.equal(response.status, 204);
+  assert.equal(await response.text(), '');
+  assert.equal(response.headers.get('cache-control'), 'private, no-store');
+  assert.equal(response.headers.get('cdn-cache-control'), 'no-store');
+  assert.equal(response.headers.get('x-robots-tag'), 'noindex, nofollow');
+});
+
 test('private pages redirect and private APIs return 401 without a session', async () => {
   for (const path of PRIVATE_PAGE_URLS) {
     let called = false;

@@ -13,6 +13,9 @@ export async function guardRequest(request, options = {}) {
   const url = new URL(request.url);
   const decision = classify(url, request.method);
   if (decision.access === 'public' || decision.access === 'cron') return options.next();
+  if (decision.access === 'preflight') {
+    return new Response(null, { status: 204, headers: headers(PRIVATE_CACHE) });
+  }
   if (decision.access === 'redirect') return denyPage(decision.location);
 
   const cookies = request.headers.get('cookie') || '';

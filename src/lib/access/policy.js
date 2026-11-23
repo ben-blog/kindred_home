@@ -51,8 +51,14 @@ export function normalizePath(pathname) {
 
 export function classify(url, method = 'GET') {
   const verb = String(method || 'GET').toUpperCase();
-  if (verb === 'OPTIONS') return { access: 'public' };
   const path = normalizePath(url.pathname);
+  // API preflight still reaches the route, which answers 204 only for this
+  // origin. A private page must not: Astro would render its HTML for OPTIONS.
+  if (verb === 'OPTIONS') {
+    if (isPublic(path, 'GET') || isPublic(path, 'POST')) return { access: 'public' };
+    if (path === '/api' || path.startsWith('/api/')) return { access: 'public' };
+    return { access: 'preflight' };
+  }
   if (isPublic(path, verb)) return { access: 'public' };
   if (path === '/api/world/ingest') return { access: 'cron' };
   if (path === '/world/admin' && magicQuery(url)) {

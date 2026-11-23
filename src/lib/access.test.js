@@ -69,6 +69,7 @@ const PUBLIC = [
   ['/api/kin/event', 'POST'],
   ['/api/gallery/kin', 'GET'],
   ['/api/gallery/file?name=still.webp', 'GET'],
+  ['/api/world/signal', 'POST'],
   ['/api/world/auth/magic', 'POST'],
   ['/api/world/auth/session', 'GET'],
   ['/api/world/auth/session', 'POST'],
@@ -87,7 +88,7 @@ const PRIVATE_PAGE_URLS = [
 const PRIVATE_APIS = [
   ['/api/world', 'GET'],
   ['/api/world/tick', 'POST'],
-  ['/api/world/signal', 'POST'],
+  ['/api/world/signal', 'GET'],
   ['/api/world/chat/kin', 'POST'],
   ['/api/world/chat/kin/memory', 'GET'],
   ['/api/world/brain/kin/history', 'GET'],

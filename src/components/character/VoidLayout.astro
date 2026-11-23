@@ -1,5 +1,6 @@
 ---
 import Grain from './Grain.astro';
+import Warmth from './Warmth.astro';
 import { cssBezier, cssTime } from '../../lib/character-layout.js';
 
 const { page } = Astro.props;
@@ -39,6 +40,7 @@ const status = [page.status, page.agent, page.color].filter(Boolean).join(' · '
     <div class="strip">
       {page.works.map((work) => <a href={work.url}>{work.title}</a>)}
       {page.hub ? <a href={page.hub}>Open {page.hub}</a> : null}
+      {page.status === 'active' ? <Warmth slug={page.slug} look="void" /> : null}
     </div>
     <footer class="edge">
       <div>
@@ -197,6 +199,11 @@ const status = [page.status, page.agent, page.color].filter(Boolean).join(' · '
     font-size: 10px;
     letter-spacing: 0.22em;
     text-transform: uppercase;
+  }
+
+  .strip .warmth {
+    flex: 0 0 auto;
+    align-self: center;
   }
 
   .strip a {

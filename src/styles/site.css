@@ -280,6 +280,45 @@ html.frame-world .links {
   border-color: rgba(255, 255, 255, 0.12);
 }
 
+html.frame-world #world-roster li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 1rem;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+html.frame-world #world-roster li:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+html.frame-world #world-roster li a {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  border: 0;
+}
+
+html.frame-world #world-roster .warmth {
+  display: contents;
+}
+
+html.frame-world #world-roster .warmth button {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+html.frame-world #world-roster .warmth-note {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0 0 0.35rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  line-height: 1.45;
+  letter-spacing: 0.08em;
+}
+
 html.frame-world .links a,
 html.frame-world .card {
   border-color: rgba(255, 255, 255, 0.12);

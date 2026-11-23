@@ -192,6 +192,115 @@ test('a signal is same-origin, capped at 2KB, rate limited, and stores a hashed 
   assert.equal(database.status, 429);
 });
 
+test('warmth is one influence for an active character, and the leader skips the address limit', async () => {
+  const saved = [];
+  const store = {
+    async recentWarmth() {
+      return false;
+    },
+    async append(event) {
+      saved.push(event);
+      return { ok: true, duplicate: false };
+    },
+  };
+  const when = Date.parse('2026-11-23T12:00:00.000Z');
+  const press = (body, extra = {}) =>
+    handleWorldSignal(
+      request('/api/world/signal', {
+        method: 'POST',
+        headers: { origin: 'https://kinxdred.com', 'x-real-ip': '198.51.100.20', ...extra.headers },
+        cookie: extra.cookie,
+        body,
+      }),
+      base({
+        store,
+        id: extra.id ?? 'warm-1',
+        now: () => when,
+        limiter: extra.limiter,
+        fetch: extra.fetch,
+      })
+    );
+
+  const ok = await press({ target: 'kin', amount: 1, where: '/characters/kin' }, { id: 'warm-1' });
+  assert.equal(ok.status, 200);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].what, 'influence');
+  assert.equal(saved[0].source, 'visitor-influence');
+  assert.equal(saved[0].payload.kind, 'warmth');
+  assert.equal(saved[0].payload.amount, 1);
+  assert.equal(saved[0].target, 'kin');
+  assert.equal(saved[0].ipHash, hashIp('198.51.100.20', env.WORLD_IP_SALT));
+
+  const badSlug = await press({ target: 'nobody', amount: 1 }, { id: 'warm-2' });
+  assert.equal(badSlug.status, 400);
+  assert.equal(saved.length, 1);
+
+  const badAmount = await press({ target: 'dred', amount: 2 }, { id: 'warm-3' });
+  assert.equal(badAmount.status, 400);
+
+  const badOrigin = await press(
+    { target: 'dred', amount: 1 },
+    { id: 'warm-4', headers: { origin: 'https://evil.example' } }
+  );
+  assert.equal(badOrigin.status, 403);
+  assert.equal(saved.length, 1);
+
+  const limited = await press(
+    { target: 'dred', amount: 1 },
+    { id: 'warm-5', limiter: { allow: () => false } }
+  );
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get('retry-after'), '600');
+  assert.equal(saved.length, 1);
+
+  store.recentWarmth = async () => true;
+  const again = await press(
+    { target: 'kin', amount: 1 },
+    { id: 'warm-6', limiter: { allow: () => true } }
+  );
+  assert.equal(again.status, 429);
+  assert.equal(saved.length, 1);
+  store.recentWarmth = async () => false;
+
+  let asked = false;
+  const leader = await press(
+    { target: 'dred', amount: 1, where: '/world' },
+    {
+      id: 'warm-leader',
+      cookie: 'world_access=leader.access.token',
+      limiter: {
+        allow() {
+          throw new Error('leader press must skip the address limit');
+        },
+      },
+      fetch: async () => {
+        asked = true;
+        return new Response(JSON.stringify({ id: leaderId }), { status: 200 });
+      },
+    }
+  );
+  assert.equal(leader.status, 200);
+  assert.equal(asked, true);
+  assert.equal(saved.length, 2);
+  assert.equal(saved[1].target, 'dred');
+  assert.equal(saved[1].payload.amount, 1);
+
+  const stranger = await press(
+    { target: 'kin', amount: 1 },
+    {
+      id: 'warm-stranger',
+      cookie: 'world_access=stranger.access.token',
+      limiter: { allow: () => false },
+      fetch: async () =>
+        new Response(JSON.stringify({ id: '22222222-2222-4222-8222-222222222222' }), {
+          status: 200,
+        }),
+    }
+  );
+  assert.equal(stranger.status, 429);
+  assert.equal(saved.length, 2);
+});
+
 test('tick requires the leader and returns 409 when a tick is already running', async () => {
   const anonymous = await handleWorldTick(
     request('/api/world/tick', { method: 'POST', headers: { origin: 'https://kinxdred.com' } }),

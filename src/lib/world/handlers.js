@@ -32,7 +32,8 @@ import { createWorldStore } from './store.js';
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const WHERE = /^\/[A-Za-z0-9/_-]{0,120}$/;
 const TOKEN = /^[\x21-\x7E]{1,4096}$/;
-const signalLimiter = createLimiter();
+const WARMTH_WINDOW_MS = 10 * 60 * 1000;
+const warmthLimiter = createLimiter({ limit: 1, windowMs: WARMTH_WINDOW_MS });
 
 export function handleWorldGet(request, options = {}) {
   return guard(() => readWorld(request, options));
@@ -79,58 +80,103 @@ async function postSignal(request, options) {
   const allowed = await allowPost(request, options, 'POST');
   if (allowed.response) return allowed.response;
   const { opened } = allowed;
-  const limiter = options.limiter ?? signalLimiter;
-  const now = options.now ?? Date.now;
-  const ip = clientAddress(request);
-  if (!sameOrigin(request)) {
-    limiter.allow(ip, now());
-    return json(403, { error: 'forbidden' });
-  }
-  if (!limiter.allow(ip, now())) {
-    return json(
-      429,
-      { error: 'too many requests' },
-      { 'retry-after': '60', ...corsHeaders(request, sameOrigin) }
-    );
-  }
-  const read = await readJson(request, SIGNAL_BODY_LIMIT);
-  if (read.error) return json(read.status, { error: read.error }, corsHeaders(request, sameOrigin));
-  const signal = normalizeSignal(read.value, opened.canon);
-  if (!signal) return json(400, { error: 'bad request' }, corsHeaders(request, sameOrigin));
+  const cors = corsHeaders(request, sameOrigin);
+  if (!sameOrigin(request)) return json(403, { error: 'forbidden' });
 
+  const read = await readJson(request, SIGNAL_BODY_LIMIT);
+  if (read.error) return json(read.status, { error: read.error }, cors);
+  const signal = normalizeSignal(read.value, opened.canon);
+  if (!signal) return json(400, { error: 'bad request' }, cors);
+
+  const now = options.now ?? Date.now;
+  const atMs = now();
+  const ip = clientAddress(request);
   const ipHash = hashIp(ip, opened.config.ipSalt);
-  const at = new Date(now()).toISOString();
+  const session = await warmthSession(request, opened.config, options);
+  if (session.response) return session.response;
+
+  if (!session.leader) {
+    const limiter = options.limiter ?? warmthLimiter;
+    if (!limiter.allow(`${ipHash}:${signal.target}`, atMs)) {
+      return json(
+        429,
+        { error: 'too many requests' },
+        { 'retry-after': '600', ...cors },
+        session.cookies
+      );
+    }
+    const reader = options.store ?? createWorldStore(opened.config, options.fetch);
+    if (typeof reader.recentWarmth === 'function') {
+      let recent = false;
+      try {
+        recent = await reader.recentWarmth({
+          ipHash,
+          target: signal.target,
+          since: new Date(atMs - WARMTH_WINDOW_MS).toISOString(),
+        });
+      } catch {
+        return json(502, { error: 'unavailable' }, cors, session.cookies);
+      }
+      if (recent) {
+        return json(
+          429,
+          { error: 'too many requests' },
+          { 'retry-after': '600', ...cors },
+          session.cookies
+        );
+      }
+    }
+  }
+
   const event = {
     id: options.id ?? randomUUID(),
     worldId: opened.canon.world.id,
     tick: null,
-    at,
+    at: new Date(atMs).toISOString(),
     who: `visitor:${ipHash.slice(0, 12)}`,
     what: 'influence',
     where: signal.where,
     target: signal.target,
-    payload: { kind: 'warmth', amount: signal.amount },
+    payload: { kind: 'warmth', amount: 1 },
     source: 'visitor-influence',
   };
   const parsed = eventSchema.safeParse(event);
-  if (!parsed.success) return json(400, { error: 'bad request' }, corsHeaders(request, sameOrigin));
+  if (!parsed.success) return json(400, { error: 'bad request' }, cors, session.cookies);
 
   const store = options.store ?? createWorldStore(opened.config, options.fetch);
   let saved;
   try {
     saved = await store.append({ ...parsed.data, ipHash });
   } catch {
-    return json(502, { error: 'unavailable' }, corsHeaders(request, sameOrigin));
+    return json(502, { error: 'unavailable' }, cors, session.cookies);
   }
   if (saved?.error === 'rate_limited') {
     return json(
       429,
       { error: 'too many requests' },
-      { 'retry-after': '60', ...corsHeaders(request, sameOrigin) }
+      { 'retry-after': '60', ...cors },
+      session.cookies
     );
   }
-  if (!saved?.ok) return json(502, { error: 'unavailable' }, corsHeaders(request, sameOrigin));
-  return json(200, { ok: true }, corsHeaders(request, sameOrigin));
+  if (!saved?.ok) return json(502, { error: 'unavailable' }, cors, session.cookies);
+  return json(200, { ok: true }, cors, session.cookies);
+}
+
+async function warmthSession(request, config, options) {
+  const cookies = request.headers.get('cookie') || '';
+  if (!/(?:^|;\s*)world_(?:access|refresh)=/.test(cookies)) return { leader: false, cookies: [] };
+  const leader = await requireLeader(request, config, options);
+  if (leader.status === 503) {
+    return {
+      response: json(
+        503,
+        { error: 'unavailable' },
+        corsHeaders(request, sameOrigin),
+        leader.cookies ?? []
+      ),
+    };
+  }
+  return { leader: leader.ok === true, cookies: leader.cookies ?? [] };
 }
 
 async function postTick(request, options) {
@@ -358,8 +404,7 @@ function normalizeSignal(body, canon) {
   if (!character) return null;
   const amount = body.amount == null ? 1 : body.amount;
   const max = canon.world?.rules?.maxInfluencePerEvent;
-  if (!Number.isInteger(amount) || amount < 1 || !Number.isInteger(max) || amount > max)
-    return null;
+  if (amount !== 1 || !Number.isInteger(max) || amount > max) return null;
   if (body.where != null && (typeof body.where !== 'string' || !WHERE.test(body.where)))
     return null;
   return { target: body.target, amount, where: body.where ?? null };

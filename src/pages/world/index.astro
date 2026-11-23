@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import { getCollection } from 'astro:content';
+import Warmth from '../../components/character/Warmth.astro';
 import Frame from '../../components/world/Frame.astro';
 import Base from '../../layouts/Base.astro';
 import { text } from '../../lib/locale.js';
@@ -26,6 +27,7 @@ const roster = (await getCollection('characters'))
               <span style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</span>
               <span class="meta" data-stat></span>
             </a>
+            {entry.data.status === 'active' ? <Warmth slug={entry.data.slug} look="world" /> : null}
           </li>
         ))
       }
@@ -36,6 +38,8 @@ const roster = (await getCollection('characters'))
 </Base>
 
 <script>
+  import { bindWarmth } from '../../scripts/warmth.js';
+
   const status = document.querySelector('#world-status');
   const roster = document.querySelector('#world-roster');
   const bonds = document.querySelector('#world-bonds');
@@ -83,8 +87,23 @@ const roster = (await getCollection('characters'))
         stat.textContent = line(character);
         link.append(name, stat);
         li.append(link);
+        if (character.status === 'active') {
+          const warmth = document.createElement('div');
+          warmth.className = 'warmth';
+          warmth.dataset.warmth = slug;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = 'warmth';
+          const note = document.createElement('p');
+          note.className = 'warmth-note';
+          note.dataset.warmthNote = '';
+          note.hidden = true;
+          warmth.append(button, note);
+          li.append(warmth);
+        }
         roster.append(li);
       }
+      bindWarmth(roster);
       for (const relation of state.relations ?? []) {
         const li = document.createElement('li');
         const row = document.createElement('span');

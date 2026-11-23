@@ -179,7 +179,8 @@ export function mountBrain(config) {
     try {
       const body = await loadMap(person.slug);
       if (token !== sphereToken || !body) return;
-      say(body.truncated ? `memory ${body.points.length} · 잘린 map` : `memory ${body.points.length}`);
+      const name = body.source === 'history' ? 'history' : 'map';
+      say(body.truncated ? `${name} ${body.points.length} · 잘림` : `${name} ${body.points.length}`);
       await ensureSphere(token);
       render();
     } catch (error) {
@@ -190,6 +191,46 @@ export function mountBrain(config) {
 
   async function loadMap(slug) {
     if (cache.has(slug)) return cache.get(slug);
+    const history = await loadHistory(slug);
+    if (history === null) return null;
+    const clean = history || (await loadLegacy(slug));
+    if (!clean) return null;
+    cache.set(slug, clean);
+    return clean;
+  }
+
+  async function loadHistory(slug) {
+    const to = new Date().toISOString();
+    const response = await fetch(
+      `/api/world/brain/${slug}/history?from=2000-01-01T00:00:00.000Z&to=${encodeURIComponent(to)}`,
+      { headers: { accept: 'application/json' }, credentials: 'same-origin' }
+    );
+    if (response.status === 401 || response.status === 403) {
+      location.replace('/world/admin');
+      return null;
+    }
+    if (!response.ok) return false;
+    const body = await response.json().catch(() => null);
+    if (!body || !Array.isArray(body.rows)) return false;
+    return {
+      source: 'history',
+      points: body.rows.map(historyPoint),
+      truncated: body.truncated === true,
+      basisFingerprint: typeof body.basisFingerprint === 'string' ? body.basisFingerprint : '',
+      meta: body.meta && typeof body.meta === 'object' ? body.meta : {},
+    };
+  }
+
+  function historyPoint(row) {
+    const snippet = typeof row.snippet === 'string' ? row.snippet : '';
+    return {
+      ...row,
+      label: snippet,
+      snippet,
+    };
+  }
+
+  async function loadLegacy(slug) {
     const response = await fetch(`/api/world/chat/${slug}/memory`, {
       headers: { accept: 'application/json' },
       credentials: 'same-origin',
@@ -205,13 +246,13 @@ export function mountBrain(config) {
     }
     const body = await response.json();
     const points = Array.isArray(body.points) ? body.points : [];
-    const clean = {
-      points,
+    return {
+      source: 'map',
+      points: points.map((point) => ({ ...point, snippet: point.label || '' })),
       truncated: body.truncated === true,
       basisFingerprint: typeof body.basisFingerprint === 'string' ? body.basisFingerprint : '',
+      meta: null,
     };
-    cache.set(slug, clean);
-    return clean;
   }
 
   async function ensureSphere(token) {
@@ -259,10 +300,30 @@ export function mountBrain(config) {
     const extra = [];
     if (view.undated && bounds().from != null) extra.push(`시각 없는 memory ${view.undated}`);
     const cached = cache.get(person.slug);
-    if (cached?.truncated) extra.push('map이 잘려 최근 memory만 있습니다');
-    const base = status.textContent.split(' · ').slice(0, 1).join('');
-    const count = cached ? `memory ${cached.points.length}` : base;
+    if (cached?.truncated) extra.push('응답이 잘려 일부 memory만 있습니다');
+    const count = cached
+      ? `${cached.source === 'history' ? 'history' : 'map'} ${cached.points.length}`
+      : status.textContent.split(' · ')[0];
     say([count, ...extra].filter(Boolean).join(' · '));
+  }
+
+  function captions() {
+    const cached = cache.get(person.slug);
+    if (!cached) return [];
+    if (cached.source !== 'history') {
+      return [
+        'history를 불러오지 못해 memory map을 표시합니다.',
+        'reflection은 이 map에 없습니다.',
+      ];
+    }
+    const meta = cached.meta || {};
+    const lines = [];
+    if (meta.removedSupported === false) lines.push('삭제 이력은 knowledge archive만 지원합니다.');
+    if (meta.weakeningSupported === 'current') {
+      lines.push('약화는 현재 strength, weight, decay만 있습니다.');
+    }
+    if (meta.snapshotsSupported === false) lines.push('snapshots는 현재 값입니다.');
+    return lines;
   }
 
   function renderTimelapse(view) {
@@ -272,6 +333,7 @@ export function mountBrain(config) {
       'created_at 순서로 memory가 나타납니다.',
       bounds().swapped ? '기간을 바꿔 적용했습니다.' : '',
       mobileQuery.matches && points.length > 480 ? '작은 화면의 sphere는 최근 480 memory만 그립니다.' : '',
+      ...captions(),
     ].filter(Boolean);
     panel.replaceChildren(timelapseControls(points, notes));
     syncSphere(points, { cutoff: cursor, marks: null, mode: 'time' });
@@ -410,17 +472,23 @@ export function mountBrain(config) {
     });
     const lines = [
       diff.swapped ? '날짜 A와 B를 바꿔 비교합니다.' : '',
-      diff.additionsOnly
-        ? 'weight, strength, decay가 없어 추가된 memory만 표시합니다. 삭제된 memory는 이 map에 없습니다.'
-        : `현재 snapshot의 ${diff.exposed.join(', ')}만 있습니다. decay > 0 이거나 weight·strength < 0.35인 이전 memory를 약해진 항목으로 표시합니다. 삭제 목록은 없습니다.`,
+      ...captions(),
+      diff.weakened.length ? '약해진 memory는 현재 값 기준입니다.' : '',
+      diff.additionsOnly ? '추가된 memory만 표시합니다.' : '',
     ].filter(Boolean);
     wrap.append(form, ...lines.map(note));
     wrap.append(listBlock(`추가 ${diff.added.length}`, diff.added));
-    if (!diff.additionsOnly) wrap.append(listBlock(`약해짐 ${diff.weakened.length}`, diff.weakened));
+    wrap.append(listBlock(`약해짐 ${diff.weakened.length}`, diff.weakened));
+    wrap.append(listBlock(`삭제 ${diff.removed.length}`, diff.removed));
     panel.replaceChildren(wrap);
-    syncSphere(diff.present, {
-      cutoff: diff.present.length,
-      marks: { added: new Set(diff.added.map((point) => point.id)), weakened: new Set(diff.weakened.map((point) => point.id)) },
+    const drawn = drawable([...diff.present, ...diff.removed]);
+    syncSphere(drawn, {
+      cutoff: drawn.length,
+      marks: {
+        added: new Set(diff.added.map((point) => point.id)),
+        weakened: new Set(diff.weakened.map((point) => point.id)),
+        removed: new Set(diff.removed.map((point) => point.id)),
+      },
       mode: 'diff',
     });
   }
@@ -446,7 +514,8 @@ export function mountBrain(config) {
         model.stepDays > 1
           ? `${model.stepDays}일 단위로 묶은 kind별 memory 수입니다.`
           : '날짜별 kind memory 수입니다. 면은 누적입니다.'
-      )
+      ),
+      ...captions().map(note)
     );
     if (!model.buckets.length) {
       wrap.append(note('이 범위에 memory가 없습니다.'));
@@ -538,7 +607,7 @@ export function mountBrain(config) {
     wrap.className = 'brain-tools';
     const lines = [
       'knowledge, reflection, pattern, experience로 나눕니다.',
-      'reflection은 이 memory map에 없습니다.',
+      ...captions(),
       summary.omittedEmpty ? '긴 범위에서는 memory가 있는 날만 보여 줍니다.' : '',
       summary.undated ? `시각 없는 memory ${summary.undated}` : '',
     ].filter(Boolean);
@@ -616,7 +685,7 @@ export function mountBrain(config) {
     kind.className = 'brain-kind';
     kind.textContent = point.kind || '';
     const label = document.createElement('span');
-    label.textContent = point.label || point.id || '';
+    label.textContent = point.snippet || point.label || point.id || '';
     item.append(kind, label);
     const href = safeHttpUrl(point.url);
     if (href) {
@@ -628,17 +697,35 @@ export function mountBrain(config) {
       item.append(link);
     }
     const metrics = ['weight', 'strength', 'decay'].filter((key) => typeof point[key] === 'number');
-    if (metrics.length) {
+    const bits = metrics.map((key) => `${key} ${point[key]}`);
+    if (point.removedAt) bits.push(`removedAt ${point.removedAt.slice(0, 10)}`);
+    if (bits.length) {
       const meta = document.createElement('span');
       meta.className = 'brain-meta';
-      meta.textContent = metrics.map((key) => `${key} ${point[key]}`).join(' · ');
+      meta.textContent = bits.join(' · ');
       item.append(meta);
     }
     return item;
   }
 
+  function drawable(points) {
+    const seen = new Set();
+    const out = [];
+    for (const point of points) {
+      if (!point || seen.has(point.id)) continue;
+      if (![point.x, point.y, point.z].every((value) => typeof value === 'number' && Number.isFinite(value))) {
+        continue;
+      }
+      seen.add(point.id);
+      out.push(point);
+    }
+    return out;
+  }
+
   function syncSphere(points, options) {
     if (!sphere) return;
+    const placed = drawable(points);
+    points = placed;
     const next = `${person.slug}|${options.mode}|${points.map((point) => point.id).join(',')}|${options.marks ? 'm' : ''}`;
     sphere.setMarks(options.marks);
     if (next !== signature) {

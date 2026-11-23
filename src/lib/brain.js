@@ -1,8 +1,8 @@
 /**
- * Read-only views over one memory-map snapshot.
- * Points keep the proxy shape: id, kind, label, createdAt, x, y, z,
- * and optional weight, strength, decay. There is no second snapshot,
- * so removals and historical weakening are not computable here.
+ * Read-only views over memory history, or a memory-map fallback.
+ * History rows carry snippet, current strength, weight, and decay, and
+ * removedAt when an archived knowledge row is included.
+ * Weakening uses those current numbers. There is no value from the start of the range.
  */
 
 export const SUMMARY_SECTIONS = [
@@ -25,9 +25,11 @@ const METRICS = ['weight', 'strength', 'decay'];
 const WEAK_WEIGHT = 0.35;
 
 export function pointTime(point) {
-  if (!point || typeof point.createdAt !== 'string') return null;
-  const ms = Date.parse(point.createdAt);
-  return Number.isFinite(ms) ? ms : null;
+  return timeOf(point?.createdAt);
+}
+
+export function removedTime(point) {
+  return timeOf(point?.removedAt);
 }
 
 export function startOfLocalDay(ms) {
@@ -120,21 +122,26 @@ export function diffMemories(points, dayA, dayB) {
   const to = endOfLocalDay(swapped ? a : b);
   const present = [];
   const added = [];
+  const removed = [];
   const list = Array.isArray(points) ? points : [];
   const exposed = METRICS.filter((key) => list.some((point) => typeof point?.[key] === 'number'));
   for (const point of list) {
-    const ms = pointTime(point);
-    if (ms == null || ms > to) continue;
+    const created = pointTime(point);
+    const gone = removedTime(point);
+    if (gone != null && gone > from && gone <= to) removed.push(point);
+    if (created == null || created > to) continue;
+    if (gone != null && gone <= to) continue;
     present.push(point);
-    if (ms >= from) added.push(point);
+    if (created >= from) added.push(point);
   }
   present.sort(byTime);
   added.sort(byTime);
+  removed.sort(byRemoved);
   const weakened = [];
   if (exposed.length) {
     for (const point of present) {
-      const ms = pointTime(point);
-      if (ms == null || ms >= from) continue;
+      const created = pointTime(point);
+      if (created == null || created >= from) continue;
       if (isWeak(point)) weakened.push(point);
     }
   }
@@ -145,9 +152,9 @@ export function diffMemories(points, dayA, dayB) {
     present,
     added,
     weakened,
-    removed: [],
+    removed,
     exposed,
-    additionsOnly: exposed.length === 0,
+    additionsOnly: exposed.length === 0 && removed.length === 0,
   };
 }
 
@@ -274,10 +281,16 @@ function orderKinds(values) {
 }
 
 function isWeak(point) {
-  if (typeof point.decay === 'number' && point.decay > 0) return true;
   if (typeof point.weight === 'number' && point.weight < WEAK_WEIGHT) return true;
   if (typeof point.strength === 'number' && point.strength < WEAK_WEIGHT) return true;
+  if (typeof point.decay === 'number' && point.decay > 0 && point.decay < 0.5) return true;
   return false;
+}
+
+function timeOf(value) {
+  if (typeof value !== 'string') return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : null;
 }
 
 function byTime(a, b) {
@@ -286,5 +299,14 @@ function byTime(a, b) {
   if (left == null && right == null) return String(a.id).localeCompare(String(b.id));
   if (left == null) return -1;
   if (right == null) return 1;
+  return left - right || String(a.id).localeCompare(String(b.id));
+}
+
+function byRemoved(a, b) {
+  const left = removedTime(a);
+  const right = removedTime(b);
+  if (left == null && right == null) return String(a.id).localeCompare(String(b.id));
+  if (left == null) return 1;
+  if (right == null) return -1;
   return left - right || String(a.id).localeCompare(String(b.id));
 }

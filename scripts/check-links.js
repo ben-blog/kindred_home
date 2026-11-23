@@ -13,6 +13,7 @@ const failures = [];
 
 const preserved = [
   'index.html',
+  'robots.txt',
   'main.html',
   'favicon.svg',
   'kin/index.html',
@@ -49,6 +50,29 @@ for (const rel of [
   'world/admin/album/index.html',
 ]) {
   if (existsSync(path.join(staticRoot, rel))) failures.push(`private page was prerendered: ${rel}`);
+}
+
+const robots = readFileSync(path.join(staticRoot, 'robots.txt'), 'utf8');
+if (!robots.includes('Sitemap: https://www.kinxdred.com/sitemap-index.xml')) {
+  failures.push('robots.txt is missing the sitemap');
+}
+for (const rule of ['Disallow: /world', 'Disallow: /api/', 'Disallow: /login']) {
+  if (!robots.includes(rule)) failures.push(`robots.txt is missing ${rule}`);
+}
+const sitemapIndex = path.join(staticRoot, 'sitemap-index.xml');
+const sitemap = path.join(staticRoot, 'sitemap-0.xml');
+if (!existsSync(sitemapIndex) || !existsSync(sitemap)) {
+  failures.push('sitemap-index.xml or sitemap-0.xml was not built');
+} else {
+  const body = readFileSync(sitemap, 'utf8');
+  for (const blocked of ['/world', '/login', '/api/', '/auth/']) {
+    if (body.includes(`https://www.kinxdred.com${blocked}`)) {
+      failures.push(`sitemap lists a private path: ${blocked}`);
+    }
+  }
+  for (const page of ['https://www.kinxdred.com/', 'https://www.kinxdred.com/kin', 'https://www.kinxdred.com/characters/']) {
+    if (!body.includes(page)) failures.push(`sitemap is missing ${page}`);
+  }
 }
 if (existsSync(path.join(repoRoot, '.vercel', 'output', 'functions', '_middleware.func'))) {
   failures.push('the session gate was built as an edge function');

@@ -52,6 +52,23 @@ function sse(chunks) {
   });
 }
 
+function quietStore() {
+  return {
+    async latest() {
+      return null;
+    },
+    async findEvent() {
+      return null;
+    },
+    async listPendingInfluence() {
+      return [];
+    },
+    async append() {
+      return { ok: true, duplicate: false };
+    },
+  };
+}
+
 function base(extra = {}) {
   return {
     env,
@@ -59,6 +76,7 @@ function base(extra = {}) {
     slug: 'kin',
     vitals: { energy: 5, mood: 2 },
     limiter: createLimiter(),
+    store: quietStore(),
     ...extra,
   };
 }
@@ -513,4 +531,173 @@ test('an upstream timeout is 504 and a streamed error stays a generic event', as
   assert.equal(text.includes('credit'), false);
   assert.match(text, /"type":"error"/);
   assert.match(text, /"message":"unavailable"/);
+});
+
+test('the leader chat sends world_state and queues one daily warmth', async () => {
+  const events = [
+    {
+      seq: 3,
+      id: 'visitor-warmth',
+      worldId: 'kinxdred',
+      at: '2026-11-23T01:00:00.000Z',
+      who: 'visitor:secretaddress',
+      what: 'influence',
+      target: 'kin',
+      payload: { kind: 'warmth', amount: 1 },
+      source: 'visitor-influence',
+      ipHash: 'ab'.repeat(32),
+    },
+  ];
+  const state = {
+    worldId: 'kinxdred',
+    leaderSlug: 'ben',
+    rules: { energyMax: 10, maxInfluencePerEvent: 5 },
+    characters: { kin: { slug: 'kin', status: 'active', energy: 4, mood: 3, level: 2 } },
+    log: [
+      {
+        id: 'recent',
+        at: '2026-11-22T10:00:00.000Z',
+        what: 'influence',
+        target: 'kin',
+        payload: { kind: 'warmth', amount: 1 },
+        source: 'visitor-influence',
+        who: 'visitor:recentsecret',
+      },
+    ],
+  };
+  const store = {
+    events,
+    async latest() {
+      return { state, last_event_seq: 2 };
+    },
+    async findEvent(id) {
+      return events.find((event) => event.id === id) ?? null;
+    },
+    async listPendingInfluence(_worldId, target, afterSeq) {
+      return events.filter(
+        (event) => event.target === target && event.what === 'influence' && event.seq > afterSeq
+      );
+    },
+    async append(event) {
+      if (events.some((item) => item.id === event.id)) return { ok: true, duplicate: true };
+      events.push({ ...event, seq: 4 });
+      return { ok: true, duplicate: false };
+    },
+  };
+  const bodies = [];
+  const fetch = leaderFetch(leaderId, async (_href, init) => {
+    bodies.push(JSON.parse(init.body));
+    return new Response(sse(['data: {"type":"done","mood":"calm"}\n\n']), {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  });
+  const now = Date.parse('2026-11-22T16:30:00.000Z');
+  const first = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({ fetch, store, now: () => now, vitals: { energy: 4, mood: 3 } })
+  );
+  assert.equal(first.status, 200);
+  assert.deepEqual(bodies[0].world_state, {
+    energy: 4,
+    energy_max: 10,
+    mood: 3,
+    level: 2,
+    pending_warmth: 3,
+    recent_warmth: 1,
+    daily_chat_bonus_granted_now: true,
+  });
+  assert.equal(bodies[0].userId, 'ben');
+  const packed = JSON.stringify(bodies[0]);
+  assert.equal(packed.includes('visitor:'), false);
+  assert.equal(packed.includes('secret'), false);
+  assert.equal(packed.includes(env.WORLD_SUPABASE_SERVICE_KEY), false);
+  assert.equal(packed.includes(env.KIN_AGENT_TOKEN), false);
+  const grant = events.find((event) => event.payload?.grant === 'ben-chat-daily');
+  assert.equal(grant.source, 'visitor-influence');
+  assert.equal(grant.who, 'ben');
+  assert.equal(grant.payload.amount, 2);
+  assert.equal(grant.ipHash, undefined);
+
+  const second = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'again' }] },
+    }),
+    base({ fetch, store, now: () => now, vitals: { energy: 4, mood: 3 } })
+  );
+  assert.equal(second.status, 200);
+  assert.equal(bodies[1].world_state.daily_chat_bonus_granted_now, false);
+  assert.equal(events.filter((event) => event.payload?.grant === 'ben-chat-daily').length, 1);
+});
+
+test('a visitor chat and a failed warmth queue still leave the reply intact', async () => {
+  let appended = false;
+  const store = {
+    async latest() {
+      return null;
+    },
+    async findEvent() {
+      return null;
+    },
+    async listPendingInfluence() {
+      return [];
+    },
+    async append() {
+      appended = true;
+      throw new Error('db down https://secret.railway.app');
+    },
+  };
+  const anonymous = await handleWorldChat(
+    request('/api/world/chat/kin', { body: { messages: [{ role: 'user', content: 'hey' }] } }),
+    base({
+      store,
+      fetch: () => {
+        throw new Error('agent should not be called');
+      },
+    })
+  );
+  assert.equal(anonymous.status, 401);
+  assert.equal(appended, false);
+
+  const cross = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      headers: { origin: 'https://evil.example' },
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({
+      store,
+      fetch: () => {
+        throw new Error('agent should not be called');
+      },
+    })
+  );
+  assert.equal(cross.status, 403);
+  assert.equal(appended, false);
+
+  const fetch = leaderFetch(leaderId, async () => {
+    return new Response(
+      sse(['data: {"type":"token","text":"hey"}\n\ndata: {"type":"done","mood":"calm"}\n\n']),
+      {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      }
+    );
+  });
+  const response = await handleWorldChat(
+    request('/api/world/chat/kin', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }] },
+    }),
+    base({ fetch, store })
+  );
+  assert.equal(response.status, 200);
+  const text = await response.text();
+  assert.match(text, /"text":"hey"/);
+  assert.equal(text.includes('railway'), false);
+  assert.equal(text.includes('secret'), false);
+  assert.equal(text.includes('db down'), false);
 });

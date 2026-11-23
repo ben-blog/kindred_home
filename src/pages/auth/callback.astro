@@ -1,0 +1,71 @@
+---
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import { finishCallback, safeNext } from '../../lib/world/callback.js';
+
+const url = new URL(Astro.request.url);
+const finished = await finishCallback(Astro.request);
+if (finished) return finished;
+const next = safeNext(url.searchParams.get('next'));
+const tried = url.searchParams.has('token_hash') || url.searchParams.has('code');
+---
+
+<Base frame="world" title="Login — kinxdred" description="Leader sign-in for kinxdred." robots="noindex">
+  <header class="phone-bar">
+    <a href="/">kinxdred</a>
+    <a href="/world/admin">hub</a>
+  </header>
+  <div class="phone-sheet">
+    <p class="eyebrow">leader</p>
+    <h1>Login</h1>
+    <p class="world-status" id="auth-status" aria-live="polite">
+      {tried ? 'The link did not work.' : 'Signing in.'}
+    </p>
+    {tried ? <p class="world-copy"><a href="/login">Request another link.</a></p> : null}
+  </div>
+<script define:vars={{ next, tried }}>
+  const status = document.querySelector('#auth-status');
+
+  function say(text) {
+    if (status) status.textContent = text;
+  }
+
+  function verifier() {
+    try {
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index) || '';
+        if (key.endsWith('-code-verifier')) return localStorage.getItem(key) || '';
+      }
+    } catch {
+      return '';
+    }
+    return '';
+  }
+
+  async function exchange(body) {
+    const response = await fetch('/api/world/auth/session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      say('The link did not work.');
+      return;
+    }
+    history.replaceState(null, '', '/auth/callback');
+    location.replace(next);
+  }
+
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+  const code = new URLSearchParams(location.search).get('code');
+  const saved = verifier();
+  let pending = null;
+  if (accessToken && refreshToken) pending = exchange({ accessToken, refreshToken });
+  else if (code && saved) pending = exchange({ code, codeVerifier: saved });
+  else if (!tried || (code && !saved)) say('The link did not work.');
+  if (pending) pending.catch(() => say('Unavailable.'));
+</script>
+</Base>

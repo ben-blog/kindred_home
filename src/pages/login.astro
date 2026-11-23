@@ -54,37 +54,30 @@ import Base from '../layouts/Base.astro';
   }
 
   const params = new URLSearchParams(location.search);
-  const tokenHash = params.get('token_hash');
-  const type = params.get('type');
   const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const accessToken = hash.get('access_token');
-  const refreshToken = hash.get('refresh_token');
-  if (tokenHash || accessToken || params.get('error')) {
-    const next = params.get('next');
-    history.replaceState(null, '', next ? `/login?next=${encodeURIComponent(next)}` : '/login');
+  const handed =
+    params.has('token_hash') ||
+    params.has('code') ||
+    params.has('error') ||
+    hash.has('access_token') ||
+    hash.has('error') ||
+    hash.has('error_code');
+  if (handed) {
+    const target = new URL('/auth/callback', location.origin);
+    params.forEach((value, key) => {
+      if (key !== 'next') target.searchParams.append(key, value);
+    });
+    target.searchParams.set('next', nextPath());
+    target.hash = location.hash;
+    location.replace(target.toString());
   }
 
-  try {
-    if (params.get('error')) {
-      say('The link did not work.');
-    } else if (tokenHash && type) {
-      const response = await fetch('/api/world/auth/session', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ tokenHash, type }),
-      });
-      if (!response.ok) say('The link did not work.');
-    } else if (accessToken && refreshToken) {
-      const response = await fetch('/api/world/auth/session', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ accessToken, refreshToken }),
-      });
-      if (!response.ok) say('The link did not work.');
+  if (!handed) {
+    try {
+      await refresh();
+    } catch {
+      say('Unavailable.');
     }
-    await refresh();
-  } catch {
-    say('Unavailable.');
   }
 
   form.addEventListener('submit', async (event) => {

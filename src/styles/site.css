@@ -281,24 +281,38 @@ html.frame-world .links {
 }
 
 html.frame-world #world-roster li {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 1rem;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+html.frame-world #world-roster li:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 html.frame-world #world-roster li a {
-  flex: 1;
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
+  border: 0;
 }
 
 html.frame-world #world-roster .warmth {
-  padding-top: 0.55rem;
+  display: contents;
+}
+
+html.frame-world #world-roster .warmth button {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 
 html.frame-world #world-roster .warmth-note {
-  margin: 0.35rem 0 0;
-  max-width: 16rem;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0 0 0.35rem;
   color: rgba(255, 255, 255, 0.5);
   font-size: 10px;
   line-height: 1.45;
@@ -2051,15 +2065,6 @@ html.frame-character:has(.brain) body {
     align-items: flex-start;
     gap: 0.2rem;
     min-height: 44px;
-  }
-
-  html.frame-world #world-roster li {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  html.frame-world #world-roster .warmth button {
-    width: 100%;
   }
 
   html.frame-world input,

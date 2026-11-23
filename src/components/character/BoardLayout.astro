@@ -68,8 +68,10 @@ const style = [
       {page.bio}
     </aside>
     <p class="sticker swatch"><i aria-hidden="true"></i> {page.color}</p>
-    {page.hub ? <a class="sticker fill cta" href={page.hub}>Open {page.hub}</a> : null}
-    {page.status === 'active' ? <Warmth slug={page.slug} look="sticker" /> : null}
+    <div class="pair">
+      {page.hub ? <a class="sticker fill cta" href={page.hub}>Open {page.hub}</a> : null}
+      {page.status === 'active' ? <Warmth slug={page.slug} look="board" /> : null}
+    </div>
     {
       page.works.length > 0 ? (
         <aside class="sticker works">
@@ -328,17 +330,17 @@ const style = [
     background: var(--accent);
   }
 
-  .warmth {
-    grid-column: 8 / 13;
+  .pair {
+    display: flex;
+    flex-wrap: wrap;
+    grid-column: 4 / 13;
     grid-row: 4 / 5;
-    align-self: start;
-    transform: rotate(1.4deg);
+    align-items: center;
+    gap: 14px 18px;
   }
 
   .cta {
     display: flex;
-    grid-column: 4 / 8;
-    grid-row: 4 / 5;
     align-items: center;
     justify-content: center;
     font-family: var(--font-display);
@@ -488,8 +490,7 @@ const style = [
     .tag,
     .bio,
     .swatch,
-    .cta,
-    .warmth,
+    .pair,
     .works,
     .bond,
     .status {
@@ -526,7 +527,6 @@ const style = [
     .bio,
     .swatch,
     .cta,
-    .warmth,
     .works,
     .bond,
     .status {

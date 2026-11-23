@@ -1,8 +1,9 @@
 ---
-const { slug, look = 'plain' } = Astro.props;
+const { slug, look = 'world' } = Astro.props;
+const character = look === 'board' || look === 'void' || look === 'sheet';
 ---
 
-<div class:list={['warmth', look === 'sticker' && 'sticker', look === 'accent' && 'accent']} data-warmth={slug}>
+<div class:list={['warmth', character && 'character', look]} data-warmth={slug}>
   <button type="button">warmth</button>
   <p class="warmth-note" data-warmth-note hidden></p>
 </div>
@@ -14,58 +15,75 @@ const { slug, look = 'plain' } = Astro.props;
 </script>
 
 <style>
-  .warmth {
-    display: grid;
-    gap: 0.45rem;
-    justify-items: start;
-  }
-
-  button {
+  .character button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 44px;
-    padding: 0.75rem 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 10px 14px;
+    border: 1px solid var(--accent);
     background: transparent;
-    color: rgba(255, 255, 255, 0.92);
-    font-family: var(--font-body);
-    font-size: 11px;
-    font-weight: 400;
-    letter-spacing: 0.22em;
+    color: var(--accent);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1;
     text-transform: uppercase;
     cursor: pointer;
+    transition:
+      transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 220ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  button:disabled {
-    color: rgba(255, 255, 255, 0.35);
-    border-color: rgba(255, 255, 255, 0.12);
+  .board button {
+    transform: rotate(1.2deg);
+  }
+
+  .character button:hover,
+  .character button:active {
+    background: var(--accent);
+    color: var(--ink);
+  }
+
+  .board button:hover,
+  .board button:active {
+    transform: rotate(0deg) translate(-3px, -4px);
+  }
+
+  .character button:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .character button:disabled {
     cursor: default;
   }
 
-  button:focus-visible {
-    outline: 1px solid rgba(255, 255, 255, 0.72);
-    outline-offset: 2px;
-  }
-
-  .accent button {
-    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-    color: var(--accent);
-  }
-
-  .sticker button {
-    min-height: 44px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font-family: inherit;
-    letter-spacing: 0.16em;
-  }
-
   .warmth-note {
-    margin: 0;
-    max-width: 22rem;
+    display: none;
+    margin: 0.45rem 0 0;
+    text-transform: none;
+    max-width: 16rem;
     color: rgba(255, 255, 255, 0.5);
+    font-family: var(--font-body);
     font-size: 10px;
+    font-weight: 400;
     line-height: 1.45;
     letter-spacing: 0.08em;
+  }
+
+  .warmth-note.is-on {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .character button,
+    .board button:hover,
+    .board button:active {
+      transform: none;
+      transition: none;
+    }
   }
 </style>

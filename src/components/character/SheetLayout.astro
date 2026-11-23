@@ -22,7 +22,7 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
     <p class="bio">{page.bio}</p>
     <p class="swatch"><i aria-hidden="true"></i> {page.color}</p>
     {page.hub ? <a class="cta" href={page.hub}>Open {page.hub}</a> : null}
-    {page.status === 'active' ? <Warmth slug={page.slug} look="accent" /> : null}
+    {page.status === 'active' ? <Warmth slug={page.slug} look="sheet" /> : null}
     <div class="frost">
       {
         page.works.length > 0 ? (

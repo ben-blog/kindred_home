@@ -27,7 +27,7 @@ const roster = (await getCollection('characters'))
               <span style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</span>
               <span class="meta" data-stat></span>
             </a>
-            {entry.data.status === 'active' ? <Warmth slug={entry.data.slug} /> : null}
+            {entry.data.status === 'active' ? <Warmth slug={entry.data.slug} look="world" /> : null}
           </li>
         ))
       }

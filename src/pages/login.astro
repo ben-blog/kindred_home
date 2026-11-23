@@ -8,6 +8,11 @@ import Base from '../layouts/Base.astro';
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap"
   />
+  <header class="phone-bar">
+    <a href="/">kinxdred</a>
+    <a href="/world/admin">hub</a>
+  </header>
+  <div class="phone-sheet">
   <p class="eyebrow">leader</p>
   <h1>Login</h1>
   <p class="world-copy">메일로 들어온 링크로 들어옵니다.</p>
@@ -19,6 +24,7 @@ import Base from '../layouts/Base.astro';
     </div>
     <p class="world-status" id="auth-status" aria-live="polite"></p>
   </form>
+  </div>
 </Base>
 
 <script>
@@ -29,8 +35,9 @@ import Base from '../layouts/Base.astro';
   const status = document.querySelector('#auth-status');
   if (email && form) attachImeEnterGuard(email, form);
 
-  function say(text) {
+  function say(text, sent = false) {
     status.textContent = text;
+    status.classList.toggle('is-sent', sent);
   }
 
   function nextPath() {
@@ -89,7 +96,7 @@ import Base from '../layouts/Base.astro';
         headers: { 'content-type': 'application/json', accept: 'application/json' },
         body: JSON.stringify({ email: email.value }),
       });
-      say(response.ok ? 'Check your email.' : 'Unavailable.');
+      say(response.ok ? 'Check your email.' : 'Unavailable.', response.ok);
     } catch {
       say('Unavailable.');
     }

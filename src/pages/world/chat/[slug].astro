@@ -1,6 +1,6 @@
 ---
-import { readFileSync, existsSync } from 'node:fs';
-import path from 'node:path';
+export const prerender = false;
+
 import { getCollection } from 'astro:content';
 import Grain from '../../../components/character/Grain.astro';
 import Base from '../../../layouts/Base.astro';
@@ -16,25 +16,25 @@ const expressionModules = import.meta.glob('../../../content/expressions/*.json'
 const expressions = new Map(
   Object.values(expressionModules).map((file) => [file.slug, file])
 );
+const galleryModules = import.meta.glob('../../../../public/data/kindred_gallery_*.json', {
+  eager: true,
+  import: 'default',
+});
 
-export async function getStaticPaths() {
-  const characters = await getCollection('characters');
-  return characters
-    .filter((entry) => isPublicStatus(entry.data.status) && entry.data.agent?.chat)
-    .map((entry) => ({
-      params: { slug: entry.data.slug },
-      props: { entry },
-    }));
+const entry = (await getCollection('characters')).find(
+  (item) => item.data.slug === Astro.params.slug
+);
+if (!entry || !isPublicStatus(entry.data.status) || !entry.data.agent?.chat) {
+  return new Response('Not found.', { status: 404, headers: { 'cache-control': 'private, no-store' } });
 }
-
-const { entry } = Astro.props;
 const data = entry.data;
 const surface = characterSurface(data);
 const name = text(data.name);
 const tagline = text(data.profile.tagline);
 const idle = text(data.voice.idle);
-const galleryPath = path.join(process.cwd(), 'public', 'data', `kindred_gallery_${data.slug}.json`);
-const gallery = existsSync(galleryPath) ? JSON.parse(readFileSync(galleryPath, 'utf8')) : { images: [] };
+const gallery =
+  Object.entries(galleryModules).find(([file]) => file.endsWith(`/kindred_gallery_${data.slug}.json`))?.[1] ??
+  { images: [] };
 const frames = callFrames(gallery, expressions.get(data.slug));
 const opening = openingFrame(frames);
 const copy = {
@@ -93,7 +93,7 @@ const copy = {
       <p class="call-name">{name}</p>
       <time id="call-timer" datetime="PT0S">00:00</time>
       <a href="/world/brain">brain</a>
-      <a class="call-end" href="/world/admin">{copy.end}</a>
+      <a class="call-end" href="/world/admin"><span class="call-end-label">{copy.end}</span><span class="call-hub-label">hub</span></a>
     </header>
     <section class="call-stage" data-mood="calm" aria-label={name}>
       {

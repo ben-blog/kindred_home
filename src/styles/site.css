@@ -1887,3 +1887,259 @@ html.frame-character:has(.brain) body {
     animation: none;
   }
 }
+
+.phone-bar,
+.brain-hub,
+.call-hub-label {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  html.frame-world,
+  html.frame-world body,
+  html.frame-character:has(.brain),
+  html.frame-character:has(.brain) body,
+  html.frame-character:has(.call),
+  html.frame-character:has(.call) body {
+    min-height: 100dvh;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .phone-bar {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 44px;
+    padding-top: env(safe-area-inset-top);
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    background: rgba(0, 0, 0, 0.92);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(14px);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .phone-bar a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+  }
+
+  .phone-sheet,
+  .hub {
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .phone-sheet {
+    padding-top: 1.25rem;
+  }
+
+  .hub {
+    padding-top: 1rem;
+  }
+
+  html.frame-world .world-top {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    flex-wrap: wrap;
+    padding-top: max(0.15rem, env(safe-area-inset-top));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: 0.15rem;
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  html.frame-world .world-top nav {
+    flex-wrap: wrap;
+    gap: 0 0.35rem;
+  }
+
+  html.frame-world .world-top a,
+  html.frame-world .world-copy a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  html.frame-world .world-main {
+    width: auto;
+    max-width: 100%;
+    padding: 1.25rem max(1rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom))
+      max(1rem, env(safe-area-inset-left));
+  }
+
+  html.frame-world h1,
+  html.frame-world .world-copy,
+  html.frame-world .world-status,
+  html.frame-world .links a,
+  html.frame-world .card {
+    overflow-wrap: break-word;
+  }
+
+  html.frame-world .links a,
+  html.frame-world .card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-height: 44px;
+  }
+
+  html.frame-world input,
+  html.frame-world select,
+  html.frame-world textarea,
+  .brain-field input,
+  .brain input:not([type='range']) {
+    font-size: 16px;
+  }
+
+  html.frame-world button,
+  html.frame-world .album-list button,
+  .hub-card {
+    min-height: 44px;
+  }
+
+  html.frame-world .world-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  html.frame-world .world-actions button {
+    width: 100%;
+  }
+
+  html.frame-world .album label:has(input[type='checkbox']) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+  }
+
+  html.frame-world input[type='checkbox'] {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+  }
+
+  html.frame-world .world-status.is-sent {
+    margin-top: 0.2rem;
+    padding: 1rem;
+    background: rgba(8, 8, 8, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  html.frame-world .album-preview,
+  html.frame-world img {
+    max-width: 100%;
+  }
+
+  .hub-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brain {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .brain-bar {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    flex-wrap: nowrap;
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    background: rgba(8, 8, 8, 0.94);
+    backdrop-filter: blur(14px);
+  }
+
+  .brain-bar a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .brain-bar a:not(:first-child):not(.brain-hub) {
+    display: none;
+  }
+
+  .brain-hub {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  .brain-custom {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .brain-field {
+    width: 100%;
+  }
+
+  .brain-field input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .brain input[type='range'] {
+    min-height: 44px;
+  }
+
+  .brain-tabs,
+  .brain-people,
+  .brain-ranges {
+    width: 100%;
+  }
+
+  .brain-tabs button,
+  .brain-people button,
+  .brain-ranges button,
+  .brain-custom button {
+    min-height: 44px;
+  }
+
+  .brain-stage,
+  .brain-panel,
+  .brain-chart,
+  .brain-sphere,
+  .brain-sphere canvas {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .call-bar {
+    position: sticky;
+    top: 0;
+    background: rgba(8, 8, 8, 0.94);
+    backdrop-filter: blur(14px);
+  }
+
+  .call-end-label {
+    display: none;
+  }
+
+  .call-hub-label {
+    display: inline;
+  }
+}

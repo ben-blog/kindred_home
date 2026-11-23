@@ -91,6 +91,7 @@ const copy = {
       <a href="/characters">characters</a>
       <p class="call-name">{name}</p>
       <time id="call-timer" datetime="PT0S">00:00</time>
+      <a href="/world/brain">brain</a>
       <a class="call-end" href="/world/admin">{copy.end}</a>
     </header>
     <section class="call-stage" data-mood="calm" aria-label={name}>
@@ -156,6 +157,26 @@ const copy = {
       </form>
       <p class="call-status" id="call-status" aria-live="polite"></p>
     </section>
+    <div class="call-sheet" id="call-sheet" hidden>
+      <button type="button" class="call-sheet-scrim" data-close aria-label="close"></button>
+      <div
+        class="call-sheet-panel"
+        id="call-sheet-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={copy.memory}
+      >
+        <button type="button" class="call-sheet-handle" id="call-sheet-handle" aria-label={copy.memory}></button>
+        <div class="call-sheet-tabs" role="tablist">
+          <button type="button" role="tab" id="call-sheet-tab-sphere" aria-selected="true">{copy.memory}</button>
+          <button type="button" role="tab" id="call-sheet-tab-trace" aria-selected="false">{copy.thinking}</button>
+        </div>
+        <div class="call-sheet-body">
+          <div class="call-sheet-sphere" id="call-sheet-sphere" role="tabpanel"></div>
+          <div class="call-sheet-trace" id="call-sheet-trace" role="tabpanel" hidden></div>
+        </div>
+      </div>
+    </div>
   </div>
 </Base>
 
@@ -166,6 +187,12 @@ const copy = {
   import { mountCall } from '../../../scripts/call-chat.js';
 
   mountCall(window.__kindredCall);
+</script>
+
+<script>
+  import { mountCallSheet } from '../../../scripts/call-sheet.js';
+
+  mountCallSheet();
 </script>
 
 <script>

@@ -1,0 +1,97 @@
+---
+import { getCollection } from 'astro:content';
+import Grain from '../../components/character/Grain.astro';
+import Base from '../../layouts/Base.astro';
+import { characterSurface } from '../../lib/character-layout.js';
+import { text } from '../../lib/locale.js';
+import { isPublicStatus } from '../../lib/publish.js';
+
+const people = (await getCollection('characters'))
+  .filter(
+    (entry) =>
+      isPublicStatus(entry.data.status) && entry.data.agent?.memory && entry.data.agent?.chat
+  )
+  .sort((a, b) => a.data.slug.localeCompare(b.data.slug))
+  .map((entry) => {
+    const surface = characterSurface(entry.data);
+    return {
+      slug: entry.data.slug,
+      name: text(entry.data.name),
+      layout: surface.layout,
+      accent: surface.accent,
+      ground: surface.ground,
+      ink: surface.ink,
+    };
+  });
+const first = people[0];
+---
+
+<Base
+  frame="character"
+  title="Brain — kinxdred"
+  description="Leader memory map."
+  accent={first?.accent || '#ffffff'}
+  ground={first?.ground || '#080806'}
+  ink={first?.ink || '#080806'}
+>
+  <link
+    slot="head"
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap"
+  />
+  <div class="brain" data-layout={first?.layout || 'sheet'}>
+    <Grain />
+    <header class="brain-bar">
+      <a href="/">kinxdred</a>
+      <a href="/characters">characters</a>
+      <a href="/world">world</a>
+      <a href="/world/admin">admin</a>
+      {
+        people.map((person) => (
+          <a href={`/world/chat/${person.slug}/`}>{person.name}</a>
+        ))
+      }
+    </header>
+    <div class="brain-body">
+      <div class="brain-intro">
+        <p class="brain-kicker">leader</p>
+        <h1>Brain</h1>
+      </div>
+      <div class="brain-controls">
+        <div class="brain-people" id="brain-people" role="group" aria-label="character"></div>
+        <div class="brain-ranges" id="brain-ranges" role="group" aria-label="기간"></div>
+        <form class="brain-custom" id="brain-custom" hidden>
+          <label class="brain-field">
+            부터
+            <input type="date" id="brain-from" name="from" />
+          </label>
+          <label class="brain-field">
+            까지
+            <input type="date" id="brain-to" name="to" />
+          </label>
+          <button type="submit">적용</button>
+        </form>
+      </div>
+      <div class="brain-tabs" role="tablist" aria-label="보기">
+        <button type="button" role="tab" data-tab="timelapse" aria-selected="true">Timelapse</button>
+        <button type="button" role="tab" data-tab="diff" aria-selected="false">Diff</button>
+        <button type="button" role="tab" data-tab="regions" aria-selected="false">Regions</button>
+        <button type="button" role="tab" data-tab="daily" aria-selected="false">하루 요약</button>
+      </div>
+      <p class="brain-status" id="brain-status" aria-live="polite">불러오는 중</p>
+      <div class="brain-stage">
+        <div class="brain-sphere" id="brain-sphere"></div>
+        <div class="brain-panel" id="brain-panel"></div>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script define:vars={{ people }}>
+  window.__kindredBrain = { people };
+</script>
+<script>
+  import { mountBrain } from '../../scripts/brain-page.js';
+
+  mountBrain(window.__kindredBrain);
+</script>

@@ -621,11 +621,20 @@ export function mountCall(config) {
     setSearch(searchToggle.getAttribute('aria-pressed') !== 'true');
   });
 
+  const mobileQuery = window.matchMedia('(max-width: 800px)');
   document.querySelector('#call-think-toggle')?.addEventListener('click', () => {
+    if (mobileQuery.matches) {
+      root.dispatchEvent(new CustomEvent('call-sheet', { detail: { tab: 'trace' } }));
+      return;
+    }
     const panel = document.querySelector('#call-think');
     panel.hidden = !panel.hidden;
   });
   document.querySelector('#call-memory-toggle')?.addEventListener('click', () => {
+    if (mobileQuery.matches) {
+      root.dispatchEvent(new CustomEvent('call-sheet', { detail: { tab: 'sphere' } }));
+      return;
+    }
     document.querySelector('#call-memory')?.classList.toggle('is-open');
   });
   root.addEventListener('memory-hover', (event) => {

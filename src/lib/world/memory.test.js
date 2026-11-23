@@ -146,6 +146,44 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
   assert.equal(shaded.points[0].intensity, 0.333);
   assert.equal(shaded.points[1].emotion, undefined);
   assert.equal(shaded.points[1].intensity, undefined);
+  const weighed = parseMemoryMap(
+    {
+      basisFingerprint: 'abc123def456',
+      points: [
+        {
+          id: 'w',
+          kind: 'knowledge',
+          x: 0,
+          y: 1,
+          z: 0,
+          weight: 0.5,
+          strength: 2,
+          decay: 0.25,
+          salience: 0.9,
+          secret: 'hidden',
+        },
+        {
+          id: 'bad',
+          kind: 'knowledge',
+          x: 1,
+          y: 0,
+          z: 0,
+          weight: -1,
+          strength: 'high',
+          decay: Number.NaN,
+        },
+      ],
+    },
+    'kin'
+  );
+  assert.equal(weighed.points[0].weight, 0.5);
+  assert.equal(weighed.points[0].strength, 2);
+  assert.equal(weighed.points[0].decay, 0.25);
+  assert.equal(weighed.points[0].salience, undefined);
+  assert.equal(JSON.stringify(weighed).includes('hidden'), false);
+  assert.equal(weighed.points[1].weight, undefined);
+  assert.equal(weighed.points[1].strength, undefined);
+  assert.equal(weighed.points[1].decay, undefined);
 
   const retrieved = parseTrace({
     stage: 'retrieved',

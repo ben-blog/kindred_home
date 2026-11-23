@@ -5,6 +5,9 @@ const EMOTIONS = new Set(memoryEmotions);
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const MODEL = /^[A-Za-z0-9._:-]{1,80}$/;
 const KEY = /^[\x21-\x7E]{20,4096}$/;
+const ATTEMPT_TIMEOUT_MS = 25_000;
+const RETRY_DELAY_MS = 1_500;
+const RETRYABLE_HTTP = new Set([500, 502, 503, 529]);
 
 export function albumModel(env) {
   const named = env?.ANTHROPIC_ALBUM_MODEL;
@@ -54,6 +57,7 @@ export function parseCaption(raw) {
 
 export function captionFailure(status, raw) {
   const message = redact(errorMessage(raw));
+  const type = errorType(raw);
   if (
     status === 402 ||
     /credit balance|billing|insufficient credit|payment required/i.test(message)
@@ -79,12 +83,37 @@ export function captionFailure(status, raw) {
       detail: 'The caption model is rate limited. Wait a minute, then regenerate.',
     };
   }
+  if (status === 529 || type === 'overloaded_error') {
+    return {
+      status: 502,
+      error: 'caption',
+      detail: 'The caption model is busy right now. Wait a minute, then regenerate.',
+      retryable: true,
+    };
+  }
   if (status === 404 || /model/i.test(message)) {
     return {
       status: 502,
       error: 'caption',
       detail:
         'The caption model name was rejected. Set ANTHROPIC_ALBUM_MODEL to a vision model, then regenerate.',
+    };
+  }
+  if (status === 400 || type === 'invalid_request_error') {
+    return {
+      status: 502,
+      error: 'caption',
+      detail: message
+        ? `The caption request was rejected: ${message}`
+        : 'The caption model did not answer. Regenerate.',
+    };
+  }
+  if (RETRYABLE_HTTP.has(status)) {
+    return {
+      status: 502,
+      error: 'caption',
+      detail: 'The caption model did not answer. Regenerate.',
+      retryable: true,
     };
   }
   return {
@@ -114,7 +143,14 @@ export function captionRequest({ model, character, note, imageBase64 }) {
   };
 }
 
-export async function requestCaption({ env, bytes, character, note, fetchImpl }) {
+export async function requestCaption({
+  env,
+  bytes,
+  character,
+  note,
+  fetchImpl,
+  sleep = wait,
+}) {
   const key = anthropicKey(env);
   if (!key) {
     return { status: 503, error: 'caption', detail: 'ANTHROPIC_API_KEY is not set.' };
@@ -130,6 +166,44 @@ export async function requestCaption({ env, bytes, character, note, fetchImpl })
   if (!voiceFor(character.slug)) {
     return { status: 502, error: 'caption', detail: 'This character has no caption voice.' };
   }
+  const imageBytes = byteSize(bytes);
+  const body = JSON.stringify(
+    captionRequest({
+      model,
+      character,
+      note,
+      imageBase64: Buffer.from(bytes).toString('base64'),
+    })
+  );
+  let last = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await sleep(RETRY_DELAY_MS);
+    const result = await attemptCaption({
+      key,
+      body,
+      imageBytes,
+      fetchImpl,
+    });
+    if (result.caption) return result;
+    last = result;
+    if (!result.retryable) break;
+  }
+  if (!last) {
+    return {
+      status: 502,
+      error: 'caption',
+      detail: 'The caption model did not answer. Regenerate.',
+    };
+  }
+  return {
+    status: last.status,
+    error: last.error,
+    detail: last.detail,
+  };
+}
+
+async function attemptCaption({ key, body, imageBytes, fetchImpl }) {
+  const started = Date.now();
   let response;
   try {
     response = await fetchImpl('https://api.anthropic.com/v1/messages', {
@@ -139,31 +213,56 @@ export async function requestCaption({ env, bytes, character, note, fetchImpl })
         'x-api-key': key,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(
-        captionRequest({
-          model,
-          character,
-          note,
-          imageBase64: Buffer.from(bytes).toString('base64'),
-        })
-      ),
+      body,
       redirect: 'error',
       cache: 'no-store',
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     });
-  } catch {
+  } catch (error) {
+    const failureCase = isTimeout(error) ? 'timeout' : 'network';
+    logCaptionFailure({
+      case: failureCase,
+      status: null,
+      errorType: null,
+      message: error?.message || '',
+      elapsedMs: Date.now() - started,
+      imageBytes,
+    });
     return {
       status: 502,
       error: 'caption',
-      detail: 'The caption model did not answer. Regenerate.',
+      detail:
+        failureCase === 'timeout'
+          ? 'The caption model took too long. Regenerate.'
+          : 'The caption model did not answer. Regenerate.',
+      retryable: true,
     };
   }
   const raw = await response.text();
-  if (!response.ok) return captionFailure(response.status, raw);
+  const elapsedMs = Date.now() - started;
+  if (!response.ok) {
+    logCaptionFailure({
+      case: 'http',
+      status: response.status,
+      errorType: errorType(raw),
+      message: errorMessage(raw),
+      elapsedMs,
+      imageBytes,
+    });
+    return captionFailure(response.status, raw);
+  }
   let payload;
   try {
     payload = JSON.parse(raw);
   } catch {
+    logCaptionFailure({
+      case: 'bad_json',
+      status: response.status,
+      errorType: null,
+      message: '',
+      elapsedMs,
+      imageBytes,
+    });
     return {
       status: 502,
       error: 'caption',
@@ -182,6 +281,20 @@ export async function requestCaption({ env, bytes, character, note, fetchImpl })
     };
   }
   return { caption };
+}
+
+function logCaptionFailure({ case: failureCase, status, errorType, message, elapsedMs, imageBytes }) {
+  console.error(
+    JSON.stringify({
+      scope: 'album-caption',
+      case: failureCase,
+      status,
+      errorType,
+      message: redact(message),
+      elapsedMs,
+      imageBytes,
+    })
+  );
 }
 
 function systemPrompt(character) {
@@ -295,9 +408,34 @@ function errorMessage(raw) {
   }
 }
 
+function errorType(raw) {
+  try {
+    const body = JSON.parse(raw);
+    const type = body?.error?.type;
+    return typeof type === 'string' ? type.slice(0, 80) : null;
+  } catch {
+    return null;
+  }
+}
+
 function redact(text) {
   return String(text || '')
     .replace(/sk-ant-[A-Za-z0-9_-]+/g, '[redacted]')
     .replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
     .slice(0, 180);
+}
+
+function isTimeout(error) {
+  return error?.name === 'TimeoutError' || error?.name === 'AbortError';
+}
+
+function byteSize(bytes) {
+  if (!bytes) return 0;
+  if (typeof bytes.byteLength === 'number') return bytes.byteLength;
+  if (typeof bytes.length === 'number') return bytes.length;
+  return 0;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

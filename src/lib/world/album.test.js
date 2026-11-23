@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadCanon } from '../../../world/load.js';
 import { albumNames, galleryRow, handleAlbum, publishSubmission, sniffImage } from './album.js';
-import { captionFailure, cleanCaption, parseCaption } from './album-caption.js';
+import { captionFailure, cleanCaption, parseCaption, requestCaption } from './album-caption.js';
 import { composeFeltMemory } from './felt.js';
 import { publicImages } from './gallery-feed.js';
 import { handleGalleryFeed, handleGalleryFile } from './gallery-public.js';
@@ -215,6 +215,195 @@ test('a caption names a missing credit balance instead of hiding it', () => {
   assert.equal(failure.error, 'credit');
   assert.match(failure.detail, /no credit/);
   assert.equal(failure.detail.includes('sk-ant'), false);
+});
+
+test('captionFailure names overloaded and invalid request failures', () => {
+  const busy = captionFailure(
+    529,
+    JSON.stringify({ error: { type: 'overloaded_error', message: 'Overloaded' } })
+  );
+  assert.equal(busy.retryable, true);
+  assert.match(busy.detail, /busy right now/);
+  const invalid = captionFailure(
+    400,
+    JSON.stringify({
+      error: {
+        type: 'invalid_request_error',
+        message: 'Image exceeds size limit. key sk-ant-secretvalue1234567890',
+      },
+    })
+  );
+  assert.match(invalid.detail, /rejected/);
+  assert.match(invalid.detail, /Image exceeds size limit/);
+  assert.equal(invalid.detail.includes('sk-ant-secretvalue'), false);
+  assert.match(invalid.detail, /\[redacted\]/);
+});
+
+test('requestCaption logs distinct failures and retries timeout once', async () => {
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => logs.push(args.join(' '));
+  const sleeps = [];
+  let calls = 0;
+  try {
+    const timeout = await requestCaption({
+      env,
+      bytes: new Uint8Array([1, 2, 3, 4]),
+      character: { slug: 'kin' },
+      note: '',
+      sleep: async (ms) => {
+        sleeps.push(ms);
+      },
+      fetchImpl: async () => {
+        calls += 1;
+        const error = new Error('The operation was aborted due to timeout');
+        error.name = 'TimeoutError';
+        throw error;
+      },
+    });
+    assert.equal(timeout.status, 502);
+    assert.match(timeout.detail, /took too long/);
+    assert.equal(timeout.retryable, undefined);
+    assert.equal(calls, 2);
+    assert.deepEqual(sleeps, [1500]);
+    assert.equal(logs.length, 2);
+    const first = JSON.parse(logs[0]);
+    assert.equal(first.scope, 'album-caption');
+    assert.equal(first.case, 'timeout');
+    assert.equal(first.status, null);
+    assert.equal(first.errorType, null);
+    assert.equal(first.imageBytes, 4);
+    assert.equal(typeof first.elapsedMs, 'number');
+    assert.equal(JSON.stringify(first).includes('sk-ant'), false);
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test('requestCaption retries overloaded once and surfaces a busy detail', async () => {
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => logs.push(args.join(' '));
+  let calls = 0;
+  try {
+    const busy = await requestCaption({
+      env,
+      bytes: new Uint8Array([9, 9]),
+      character: { slug: 'kin' },
+      note: '',
+      sleep: async () => {},
+      fetchImpl: async () => {
+        calls += 1;
+        return new Response(
+          JSON.stringify({ error: { type: 'overloaded_error', message: 'Overloaded' } }),
+          { status: 529, headers: { 'content-type': 'application/json' } }
+        );
+      },
+    });
+    assert.equal(calls, 2);
+    assert.match(busy.detail, /busy right now/);
+    assert.equal(JSON.parse(logs[0]).case, 'http');
+    assert.equal(JSON.parse(logs[0]).status, 529);
+    assert.equal(JSON.parse(logs[0]).errorType, 'overloaded_error');
+    assert.equal(JSON.parse(logs[0]).imageBytes, 2);
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test('requestCaption recovers after one network failure and keeps max_tokens', async () => {
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => logs.push(args.join(' '));
+  const bodies = [];
+  let calls = 0;
+  try {
+    const ok = await requestCaption({
+      env,
+      bytes: new Uint8Array([7]),
+      character: { slug: 'kin' },
+      note: 'bus',
+      sleep: async () => {},
+      fetchImpl: async (_url, init) => {
+        calls += 1;
+        bodies.push(JSON.parse(init.body));
+        if (calls === 1) throw new TypeError('fetch failed');
+        return new Response(
+          JSON.stringify({
+            content: [{ type: 'text', text: JSON.stringify(caption()) }],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        );
+      },
+    });
+    assert.equal(calls, 2);
+    assert.equal(ok.caption.ko.title, '창가');
+    assert.equal(bodies[0].max_tokens, 2500);
+    assert.equal(JSON.parse(logs[0]).case, 'network');
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test('requestCaption does not retry bad JSON or a 400 invalid request', async () => {
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => logs.push(args.join(' '));
+  try {
+    let badJsonCalls = 0;
+    const badJson = await requestCaption({
+      env,
+      bytes: new Uint8Array([1]),
+      character: { slug: 'kin' },
+      note: '',
+      sleep: async () => {
+        throw new Error('should not sleep');
+      },
+      fetchImpl: async () => {
+        badJsonCalls += 1;
+        return new Response('not-json', {
+          status: 200,
+          headers: { 'content-type': 'text/plain' },
+        });
+      },
+    });
+    assert.equal(badJsonCalls, 1);
+    assert.match(badJson.detail, /did not answer/);
+    assert.equal(JSON.parse(logs[0]).case, 'bad_json');
+
+    let invalidCalls = 0;
+    const invalid = await requestCaption({
+      env,
+      bytes: new Uint8Array([1, 2]),
+      character: { slug: 'kin' },
+      note: '',
+      sleep: async () => {
+        throw new Error('should not sleep');
+      },
+      fetchImpl: async () => {
+        invalidCalls += 1;
+        return new Response(
+          JSON.stringify({
+            error: {
+              type: 'invalid_request_error',
+              message: 'image too large for sk-ant-shouldhide123456789',
+            },
+          }),
+          { status: 400, headers: { 'content-type': 'application/json' } }
+        );
+      },
+    });
+    assert.equal(invalidCalls, 1);
+    assert.match(invalid.detail, /image too large/i);
+    assert.equal(invalid.detail.includes('sk-ant-shouldhide'), false);
+    const httpLog = JSON.parse(logs[1]);
+    assert.equal(httpLog.case, 'http');
+    assert.equal(httpLog.status, 400);
+    assert.equal(httpLog.errorType, 'invalid_request_error');
+    assert.match(httpLog.message, /\[redacted\]/);
+  } finally {
+    console.error = originalError;
+  }
 });
 
 test('gallery copy has to include both languages, both perspectives, and a felt memory', () => {

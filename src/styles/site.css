@@ -888,13 +888,21 @@ html.frame-character:has(.call) body {
   pointer-events: none;
 }
 
-.call-memory-view canvas {
+.call-memory-view canvas,
+.brain-sphere canvas {
   position: absolute;
   inset: 0;
   z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.call-memory-view canvas.is-grabbing,
+.brain-sphere canvas.is-grabbing {
+  cursor: grabbing;
 }
 
 .call-memory-legend {

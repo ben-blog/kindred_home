@@ -10,10 +10,10 @@ import {
   memoryEmotions,
 } from '../config/memory-emotions.js';
 import { memoryKindCss, memoryKindRgb } from '../lib/memory-kind.js';
+import { stepOrbMotion } from '../lib/orb-motion.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
 
 const PULSE_MS = 980;
-const SPIN = 0.16;
 
 export async function mountSphere(root, call, options) {
   let reduced = options.reduced === true;
@@ -55,8 +55,22 @@ export async function mountSphere(root, call, options) {
   scene.add(tilt);
   const rig = new THREE.Group();
   tilt.add(rig);
-  let spin = 0.62;
-  rig.rotation.y = spin;
+  const orient = new THREE.Quaternion();
+  orient.setFromEuler(new THREE.Euler(0, reduced ? 0.7 : 0.62, 0, 'XYZ'));
+  rig.quaternion.copy(orient);
+  const turnYaw = new THREE.Quaternion();
+  const turnPitch = new THREE.Quaternion();
+  const axisY = new THREE.Vector3(0, 1, 0);
+  const axisX = new THREE.Vector3(1, 0, 0);
+  let dragVx = 0;
+  let dragVy = 0;
+  let dragging = false;
+  let dragPointer = null;
+  let dragX = 0;
+  let dragY = 0;
+  let dragAt = 0;
+  let dragMoved = 0;
+  let releasedAt = -1e15;
 
   const accentColor = displayColor(THREE, accent);
   const globe = new THREE.SphereGeometry(1, mobile ? 32 : 64, mobile ? 18 : 40);
@@ -414,7 +428,73 @@ export async function mountSphere(root, call, options) {
     renderer.render(scene, camera);
   }
 
+  function turn(yaw, pitch) {
+    if (!yaw && !pitch) return;
+    turnYaw.setFromAxisAngle(axisY, yaw);
+    turnPitch.setFromAxisAngle(axisX, pitch);
+    orient.premultiply(turnPitch).premultiply(turnYaw);
+    rig.quaternion.copy(orient);
+  }
+
+  function ensureFrame() {
+    if (stopped || frame) return;
+    last = performance.now();
+    frame = requestAnimationFrame(animate);
+  }
+
+  const canvas = renderer.domElement;
+  canvas.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    dragging = true;
+    dragPointer = event.pointerId;
+    dragX = event.clientX;
+    dragY = event.clientY;
+    dragAt = event.timeStamp;
+    dragMoved = 0;
+    dragVx = 0;
+    dragVy = 0;
+    canvas.classList.add('is-grabbing');
+    showLabel(null);
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch {
+      /* Capture can fail if the pointer already ended. */
+    }
+    ensureFrame();
+  });
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  function endDrag(event) {
+    if (dragPointer !== event.pointerId) return;
+    dragging = false;
+    dragPointer = null;
+    releasedAt = performance.now();
+    canvas.classList.remove('is-grabbing');
+    try {
+      canvas.releasePointerCapture(event.pointerId);
+    } catch {
+      /* The pointer may already have been released. */
+    }
+    ensureFrame();
+  }
+
   renderer.domElement.addEventListener('pointermove', (event) => {
+    if (dragging && dragPointer === event.pointerId) {
+      const dx = event.clientX - dragX;
+      const dy = event.clientY - dragY;
+      const dt = Math.max(0.016, (event.timeStamp - dragAt) / 1000);
+      dragX = event.clientX;
+      dragY = event.clientY;
+      dragAt = event.timeStamp;
+      dragMoved += Math.hypot(dx, dy);
+      const sens = 0.007;
+      dragVx = (dx * sens) / dt;
+      dragVy = (dy * sens) / dt;
+      turn(dx * sens, dy * sens);
+      if (reduced) paint(performance.now());
+      return;
+    }
     const bounds = renderer.domElement.getBoundingClientRect();
     pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
     pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
@@ -432,6 +512,10 @@ export async function mountSphere(root, call, options) {
     if (!focusId) showLabel(null);
   });
   renderer.domElement.addEventListener('click', () => {
+    if (dragMoved > 5) {
+      dragMoved = 0;
+      return;
+    }
     const record = hit();
     focusId = record?.id || '';
     showLabel(record);
@@ -443,29 +527,43 @@ export async function mountSphere(root, call, options) {
 
   let stopped = false;
   function animate(now) {
-    if (stopped || reduced) return;
+    if (stopped) return;
     frame = requestAnimationFrame(animate);
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    spin += dt * SPIN;
-    rig.rotation.y = spin;
+    if (!dragging) {
+      const step = stepOrbMotion(
+        { vx: dragVx, vy: dragVy, releasedAt },
+        dt,
+        { reduced, now }
+      );
+      turn(step.dyaw, step.dpitch);
+      dragVx = step.vx;
+      dragVy = step.vy;
+    }
     records.forEach((record) => record.shown.lerp(record.target, 0.08));
     paint(now);
+    if (reduced && !dragging && dragVx === 0 && dragVy === 0) {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+    }
   }
 
   function holdStill() {
     if (frame) cancelAnimationFrame(frame);
     frame = 0;
     records.forEach((record) => record.shown.copy(record.target));
-    rig.rotation.y = 0.7;
     paint(performance.now());
   }
 
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   motion.addEventListener('change', () => {
     reduced = motion.matches;
+    dragVx = 0;
+    dragVy = 0;
     if (reduced) holdStill();
     else if (!frame) {
+      releasedAt = -1e15;
       last = performance.now();
       frame = requestAnimationFrame(animate);
     }

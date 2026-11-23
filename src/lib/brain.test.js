@@ -102,6 +102,30 @@ test('diff highlights additions and only marks weakness when a metric exists', (
     ['fresh']
   );
   assert.deepEqual(weighed.removed, []);
+
+  const archived = diffMemories(
+    [
+      point('kept', 'knowledge', at(2026, 11, 1), { strength: 0.9, decay: 0.92, weight: 0.83 }),
+      point('stale', 'knowledge', at(2026, 11, 1), { strength: 0.8, decay: 0.2, weight: 0.16 }),
+      point('gone', 'knowledge', at(2026, 11, 1), { removedAt: at(2026, 11, 12), weight: 0.1 }),
+      point('born', 'reflection', at(2026, 11, 12), { snippet: 'a longer reflection' }),
+    ],
+    '2026-11-10',
+    '2026-11-15'
+  );
+  assert.deepEqual(
+    archived.weakened.map((item) => item.id),
+    ['stale']
+  );
+  assert.deepEqual(
+    archived.removed.map((item) => item.id),
+    ['gone']
+  );
+  assert.equal(archived.present.some((item) => item.id === 'gone'), false);
+  assert.deepEqual(
+    archived.added.map((item) => item.id),
+    ['born']
+  );
 });
 
 test('regions accumulate by day and the daily cards keep the four sections', () => {
@@ -111,16 +135,24 @@ test('regions accumulate by day and the daily cards keep the four sections', () 
     point('k2', 'knowledge', at(2026, 11, 3, 1)),
     point('d1', 'declaration', at(2026, 11, 3, 2)),
     point('p1', 'pattern', at(2026, 11, 3, 3)),
+    point('r1', 'reflection', at(2026, 11, 3, 4)),
   ];
   const bounds = rangeBounds('custom', Date.now(), { from: '2026-11-01', to: '2026-11-03' });
   const regions = regionModel(points, bounds);
-  assert.deepEqual(regions.kinds, ['knowledge', 'experience', 'declaration', 'pattern']);
+  assert.deepEqual(regions.kinds, [
+    'knowledge',
+    'experience',
+    'declaration',
+    'pattern',
+    'reflection',
+  ]);
   assert.equal(regions.buckets.length, 3);
   assert.equal(regions.buckets[0].counts.knowledge, 1);
   assert.equal(regions.buckets[1].counts.knowledge, 0);
   assert.equal(regions.buckets[2].cumulative.knowledge, 2);
   assert.equal(regions.totals.pattern, 1);
-  assert.equal(regions.max, 5);
+  assert.equal(regions.totals.reflection, 1);
+  assert.equal(regions.max, 6);
 
   const summary = summarizeDays(points, bounds);
   assert.equal(summary.includeEmpty, true);
@@ -128,7 +160,7 @@ test('regions accumulate by day and the daily cards keep the four sections', () 
   assert.equal(summary.cards[0].day > summary.cards[2].day, true);
   const newest = summary.cards[0];
   assert.equal(newest.sections.find((section) => section.id === 'knowledge').items.length, 1);
-  assert.equal(newest.sections.find((section) => section.id === 'reflection').items.length, 0);
+  assert.equal(newest.sections.find((section) => section.id === 'reflection').items.length, 1);
   assert.equal(newest.sections.find((section) => section.id === 'behavior').items.length, 1);
   assert.equal(newest.sections.find((section) => section.id === 'user').items.length, 0);
   assert.deepEqual(

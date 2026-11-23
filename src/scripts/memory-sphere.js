@@ -166,7 +166,9 @@ export async function mountSphere(root, call, options) {
     const crowd = pointSize(next.length, layout);
     records = next.map((point) => {
       const prior = previous.get(point.id);
-      const target = new THREE.Vector3(point.x, point.y, point.z).normalize();
+      const raw = new THREE.Vector3(point.x, point.y, point.z);
+      const length = raw.length();
+      const target = length > 0 && length < 0.92 ? raw : raw.clone().normalize();
       const shown = prior
         ? prior.shown.clone()
         : target.clone().multiplyScalar(reduced || moved ? 1 : arriving ? 1.35 : 2.15);
@@ -293,9 +295,15 @@ export async function mountSphere(root, call, options) {
       }
       let scale = 1;
       if (marks) {
+        const removedMark = marks.removed?.has(record.id);
         const added = marks.added?.has(record.id);
         const weakened = marks.weakened?.has(record.id);
-        if (added) {
+        if (removedMark) {
+          r = 0.72 + r * 0.15;
+          g *= 0.22;
+          b *= 0.22;
+          scale = 0.72;
+        } else if (added) {
           r += (1 - r) * 0.28;
           g += (1 - g) * 0.28;
           b += (1 - b) * 0.28;

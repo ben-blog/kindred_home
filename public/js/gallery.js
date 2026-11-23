@@ -6,8 +6,12 @@ var LIKE_BASE = Object.create(null);
 function flattenGallery(doc) {
   var images = (doc && doc.images) || [];
   return images
-    .filter(function (im) { return im.is_active !== false && im.filename; })
-    .sort(function (a, b) { return (a.order_num || 0) - (b.order_num || 0); })
+    .filter(function (im) {
+      return im.is_active !== false && im.filename;
+    })
+    .sort(function (a, b) {
+      return (a.order_num || 0) - (b.order_num || 0);
+    })
     .map(function (im) {
       var ko = im.ko || {};
       var en = im.en || {};
@@ -79,7 +83,11 @@ function mergeGalleryImages(images, extra) {
 }
 
 function gallerySrc(filename) {
-  return asset('/assets/gallery/' + filename);
+  var name = filename || '';
+  if (name.indexOf('kin_album_') === 0 || name.indexOf('dred_album_') === 0) {
+    return asset('/api/gallery/file?name=' + encodeURIComponent(name));
+  }
+  return asset('/assets/gallery/' + name);
 }
 
 function resolveLink(url) {
@@ -96,7 +104,9 @@ function actionLinkHtml(action, className) {
   var raw = (action && action.url) || '#';
   var href = resolveLink(raw);
   var attrs = isExternalLink(raw) ? ' target="_blank" rel="noopener noreferrer"' : '';
-  return '<a class="' + className + '" href="' + href + '"' + attrs + '>' + (action.label || '') + '</a>';
+  return (
+    '<a class="' + className + '" href="' + href + '"' + attrs + '>' + (action.label || '') + '</a>'
+  );
 }
 
 /* DB count is the baseline. This browser adds one only while kxd_liked is set. */

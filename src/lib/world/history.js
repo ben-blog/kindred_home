@@ -12,7 +12,7 @@ import { httpsOrigin, worldConfig } from './env.js';
 import { corsHeaders, guard, json } from './http.js';
 
 export const HISTORY_RATE_LIMIT = 8;
-export const HISTORY_TIMEOUT_MS = 12_000;
+export const HISTORY_TIMEOUT_MS = 50_000;
 const CACHE_MS = 8_000;
 const UPSTREAM_LIMIT = 8;
 const PAGE_LIMIT = 5_000;
@@ -172,6 +172,7 @@ async function readHistory(request, options) {
 }
 
 async function loadPages(ctx) {
+  const started = ctx.now();
   let cursor = '';
   let fingerprint = '';
   let basisVersion = 0;
@@ -185,6 +186,12 @@ async function loadPages(ctx) {
   let pages = 0;
 
   while (pages < MAX_PAGES && rows.length < MAX_ROWS) {
+    // A full history scan can run well past the old 12s abort. One finished
+    // page is enough; do not start another if this function is near its limit.
+    if (pages > 0 && ctx.now() - started > ctx.timeoutMs * 0.8) {
+      truncated = true;
+      break;
+    }
     if (!ctx.upstreamLimiter.allow('history', ctx.now())) {
       if (pages === 0) return { status: 429, payload: { error: 'too many requests' } };
       truncated = true;

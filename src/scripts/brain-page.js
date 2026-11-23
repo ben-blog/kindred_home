@@ -32,16 +32,19 @@ export function mountBrain(config) {
   const root = document.querySelector('.brain');
   if (!root || root.dataset.mounted === '1') return;
   root.dataset.mounted = '1';
-  const people = Array.isArray(config?.people) ? config.people : [];
+  const person = config?.person;
   const status = document.querySelector('#brain-status');
   const panel = document.querySelector('#brain-panel');
   const sphereRoot = document.querySelector('#brain-sphere');
-  if (!people.length) {
+  if (!person || typeof person.slug !== 'string' || !person.slug) {
     say('memory route가 있는 캐릭터가 없습니다.');
     return;
   }
-
-  let person = people[0];
+  try {
+    localStorage.setItem('kindred-brain-slug', person.slug);
+  } catch {
+    /* The chooser can stay put when storage is blocked. */
+  }
   let preset = '7';
   let custom = { from: '', to: '' };
   let tab = 'timelapse';
@@ -57,50 +60,20 @@ export function mountBrain(config) {
   let sphere = null;
   let sphereToken = 0;
   let signature = '';
-  const cache = new Map();
+  let cached = null;
   const mobileQuery = window.matchMedia('(max-width: 800px)');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  buildPeople();
+  document.documentElement.style.setProperty('--accent', person.accent);
+  document.documentElement.style.setProperty('--ground', person.ground);
+  if (person.ink) document.documentElement.style.setProperty('--ink', person.ink);
+  root.dataset.layout = person.layout || 'sheet';
   buildRanges();
   wireTabs();
   wireCustom();
-  applyPerson(person);
 
   function say(text) {
     if (status) status.textContent = text;
-  }
-
-  function applyPerson(next) {
-    person = next;
-    document.documentElement.style.setProperty('--accent', next.accent);
-    document.documentElement.style.setProperty('--ground', next.ground);
-    if (next.ink) document.documentElement.style.setProperty('--ink', next.ink);
-    root.dataset.layout = next.layout || 'sheet';
-    for (const button of document.querySelectorAll('[data-person]')) {
-      const on = button.dataset.person === next.slug;
-      button.setAttribute('aria-pressed', on ? 'true' : 'false');
-    }
-  }
-
-  function buildPeople() {
-    const host = document.querySelector('#brain-people');
-    host.replaceChildren();
-    for (const item of people) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.person = item.slug;
-      button.textContent = item.name;
-      button.style.color = item.accent;
-      button.addEventListener('click', () => {
-        if (item.slug === person.slug) return;
-        stopPlay();
-        applyPerson(item);
-        signature = '';
-        void refresh();
-      });
-      host.append(button);
-    }
   }
 
   function buildRanges() {
@@ -170,14 +143,14 @@ export function mountBrain(config) {
   }
 
   function mapPoints() {
-    return Array.isArray(cache.get(person.slug)?.points) ? cache.get(person.slug).points : [];
+    return Array.isArray(cached?.points) ? cached.points : [];
   }
 
   async function refresh() {
     say('불러오는 중');
     const token = ++sphereToken;
     try {
-      const body = await loadMap(person.slug);
+      const body = await loadMap();
       if (token !== sphereToken || !body) return;
       const name = body.source === 'history' ? 'history' : 'map';
       say(body.truncated ? `${name} ${body.points.length} · 잘림` : `${name} ${body.points.length}`);
@@ -189,14 +162,14 @@ export function mountBrain(config) {
     }
   }
 
-  async function loadMap(slug) {
-    if (cache.has(slug)) return cache.get(slug);
-    const history = await loadHistory(slug);
+  async function loadMap() {
+    if (cached) return cached;
+    const history = await loadHistory(person.slug);
     if (history === null) return null;
-    const clean = history || (await loadLegacy(slug));
+    const clean = history || (await loadLegacy(person.slug));
     if (!clean) return null;
-    cache.set(slug, clean);
-    return clean;
+    cached = clean;
+    return cached;
   }
 
   async function loadHistory(slug) {
@@ -299,7 +272,6 @@ export function mountBrain(config) {
     else renderTimelapse(view);
     const extra = [];
     if (view.undated && bounds().from != null) extra.push(`시각 없는 memory ${view.undated}`);
-    const cached = cache.get(person.slug);
     if (cached?.truncated) extra.push('응답이 잘려 일부 memory만 있습니다');
     const count = cached
       ? `${cached.source === 'history' ? 'history' : 'map'} ${cached.points.length}`
@@ -308,7 +280,6 @@ export function mountBrain(config) {
   }
 
   function captions() {
-    const cached = cache.get(person.slug);
     if (!cached) return [];
     if (cached.source !== 'history') {
       return [
@@ -732,7 +703,7 @@ export function mountBrain(config) {
       signature = next;
       sphere.setMap({
         points,
-        basisFingerprint: cache.get(person.slug)?.basisFingerprint || person.slug,
+        basisFingerprint: cached?.basisFingerprint || person.slug,
         cutoff: options.cutoff,
       });
       return;

@@ -8,6 +8,7 @@ const PRIVATE_PAGES = [
   '../pages/world/admin.astro',
   '../pages/world/admin/album.astro',
   '../pages/world/brain.astro',
+  '../pages/world/brain/[slug].astro',
   '../pages/world/chat/[slug].astro',
 ];
 
@@ -72,7 +73,14 @@ const PUBLIC = [
   ['/api/world/tick', 'OPTIONS'],
 ];
 
-const PRIVATE_PAGE_URLS = ['/world', '/world/admin', '/world/admin/album', '/world/brain', '/world/chat/kin'];
+const PRIVATE_PAGE_URLS = [
+  '/world',
+  '/world/admin',
+  '/world/admin/album',
+  '/world/brain',
+  '/world/brain/kin',
+  '/world/chat/kin',
+];
 
 const PRIVATE_APIS = [
   ['/api/world', 'GET'],

@@ -92,7 +92,7 @@ const copy = {
       <a href="/characters">characters</a>
       <p class="call-name">{name}</p>
       <time id="call-timer" datetime="PT0S">00:00</time>
-      <a href="/world/brain">brain</a>
+      <a href={`/world/brain/${data.slug}/`}>brain</a>
       <a class="call-end" href="/world/admin"><span class="call-end-label">{copy.end}</span><span class="call-hub-label">hub</span></a>
     </header>
     <section class="call-stage" data-mood="calm" aria-label={name}>

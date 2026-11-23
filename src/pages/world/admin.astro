@@ -42,11 +42,17 @@ const calls = (await getCollection('characters'))
           </a>
         ))
       }
-      <a class="hub-card" href="/world/brain">
-        <span>brain</span>
-        <strong>Brain</strong>
-        <p>memory history를 봅니다.</p>
-      </a>
+      {
+        calls
+          .filter((entry) => entry.data.agent?.memory)
+          .map((entry) => (
+            <a class="hub-card" href={`/world/brain/${entry.data.slug}/`}>
+              <span>brain</span>
+              <strong style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</strong>
+              <p>memory history를 봅니다.</p>
+            </a>
+          ))
+      }
       <a class="hub-card" href="/world/admin/album">
         <span>album</span>
         <strong>앨범</strong>

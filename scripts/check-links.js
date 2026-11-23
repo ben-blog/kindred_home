@@ -40,7 +40,14 @@ if (existsSync(path.join(staticRoot, 'c', 'template', 'index.html'))) {
   failures.push('draft campaign /c/template was published');
 }
 
-for (const rel of ['world/index.html', 'world/admin/index.html', 'world/brain/index.html', 'world/admin/album/index.html']) {
+for (const rel of [
+  'world/index.html',
+  'world/admin/index.html',
+  'world/brain/index.html',
+  'world/brain/kin/index.html',
+  'world/brain/dred/index.html',
+  'world/admin/album/index.html',
+]) {
   if (existsSync(path.join(staticRoot, rel))) failures.push(`private page was prerendered: ${rel}`);
 }
 if (existsSync(path.join(repoRoot, '.vercel', 'output', 'functions', '_middleware.func'))) {
@@ -50,7 +57,7 @@ const renderConfig = path.join(repoRoot, '.vercel', 'output', 'functions', '_ren
 if (!existsSync(renderConfig) || !String(JSON.parse(readFileSync(renderConfig, 'utf8')).runtime || '').startsWith('nodejs')) {
   failures.push('the on-demand function is not the Node runtime');
 }
-for (const pathname of ['/world', '/world/admin', '/world/brain', '/api/world/me']) {
+for (const pathname of ['/world', '/world/admin', '/world/brain', '/world/brain/kin', '/world/brain/dred', '/api/world/me']) {
   const route = firstFunctionRoute(pathname);
   if (!route || route.dest !== '_render') failures.push(`${pathname} is not served by the node function`);
 }

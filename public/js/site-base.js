@@ -1,6 +1,32 @@
 /* Shared browser helpers. Paths are site-root paths; Vercel serves this
    repo from `/` (kindred-home.vercel.app). */
 (function () {
+  /* Supabase sends a disallowed magic link to the site root, often with the
+     session in the hash. The static homepage is served before middleware,
+     so this is what carries those params to the callback. */
+  var path = location.pathname;
+  if (path === '/' || path === '/index.html') {
+    var query = new URLSearchParams(location.search);
+    var hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+    var auth =
+      query.has('code') ||
+      query.has('token_hash') ||
+      query.has('error') ||
+      hash.has('access_token') ||
+      hash.has('error') ||
+      hash.has('error_code');
+    if (auth) {
+      var target = new URL('/auth/callback', location.origin);
+      query.forEach(function (value, key) {
+        if (key !== 'next') target.searchParams.append(key, value);
+      });
+      target.searchParams.set('next', query.get('next') || '/world/admin');
+      target.hash = location.hash;
+      location.replace(target.toString());
+      return;
+    }
+  }
+
   window.asset = function (path) {
     return path;
   };

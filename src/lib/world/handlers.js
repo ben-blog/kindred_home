@@ -5,6 +5,7 @@ import { createState } from '../../../world/state.js';
 import {
   acceptAccessToken,
   clearCookies,
+  exchangeAuthCode,
   leaderRedirect,
   requestMagicLink,
   requireLeader,
@@ -288,6 +289,20 @@ async function establish(body, config, fetchImpl) {
   }
   if (keys.length === 2 && keys.includes('accessToken') && keys.includes('refreshToken')) {
     return acceptAccessToken(config, fetchImpl, body.accessToken, body.refreshToken);
+  }
+  if (
+    keys.includes('code') &&
+    keys.every((key) => key === 'code' || key === 'codeVerifier')
+  ) {
+    if (!TOKEN.test(body.code) || (body.codeVerifier != null && !TOKEN.test(body.codeVerifier))) {
+      return { ok: false, status: 400, error: 'bad request' };
+    }
+    const session = await exchangeAuthCode(config, fetchImpl, body.code, body.codeVerifier);
+    if (!session?.user?.id) return { ok: false, status: 401, error: 'unauthorized' };
+    if (!safeEqual(String(session.user.id).toLowerCase(), config.leaderId)) {
+      return { ok: false, status: 403, error: 'forbidden' };
+    }
+    return { ok: true, session };
   }
   return { ok: false, status: 400, error: 'bad request' };
 }

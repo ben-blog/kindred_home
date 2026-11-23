@@ -1,3 +1,5 @@
+import { callbackLocation } from '../world/callback.js';
+
 /**
  * Deny-by-default access for kinxdred.com.
  * A path is public only when it is listed here. New routes are leader-only
@@ -20,6 +22,7 @@ const PUBLIC_EXACT = new Set([
   '/robots.txt',
   '/sitemap.xml',
   '/login',
+  '/auth/callback',
   '/api/health',
   '/api/event',
 ]);
@@ -61,8 +64,8 @@ export function classify(url, method = 'GET') {
   }
   if (isPublic(path, verb)) return { access: 'public' };
   if (path === '/api/world/ingest') return { access: 'cron' };
-  if (path === '/world/admin' && magicQuery(url)) {
-    return { access: 'redirect', location: `/login${url.search}` };
+  if (path !== '/auth/callback' && path !== '/login' && !path.startsWith('/api') && magicQuery(url)) {
+    return { access: 'redirect', location: callbackLocation(url) };
   }
   return { access: 'leader', api: path === '/api' || path.startsWith('/api/') };
 }

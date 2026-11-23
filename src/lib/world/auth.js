@@ -32,8 +32,13 @@ export function sessionCookies(request, session) {
 }
 
 export function clearCookies(request) {
-  const base = cookieBase(request);
-  return [`${ACCESS_COOKIE}=; ${base}; Max-Age=0`, `${REFRESH_COOKIE}=; ${base}; Max-Age=0`];
+  const flags = cookieFlags(request);
+  const names = [ACCESS_COOKIE, REFRESH_COOKIE];
+  const cookies = [];
+  for (const path of ['/', '/api/world']) {
+    for (const name of names) cookies.push(`${name}=; ${flags}; Path=${path}; Max-Age=0`);
+  }
+  return cookies;
 }
 
 /**
@@ -132,9 +137,37 @@ export async function verifyMagicLink(config, fetchImpl, tokenHash, type) {
   return response;
 }
 
+/**
+ * Where Supabase should send the browser after it accepts the email link.
+ * Production always uses www so the apex and www hosts share one allowlist entry.
+ * The link is finished by /auth/callback, which does not need the browser that asked for it.
+ */
 export function leaderRedirect(request) {
-  const origin = new URL(request.url).origin;
-  return `${origin}/login`;
+  const current = new URL(request.url);
+  const forwarded = request.headers.get('x-forwarded-host');
+  let host = (forwarded || current.host).split(',')[0].trim().toLowerCase();
+  let proto = (request.headers.get('x-forwarded-proto') || current.protocol.replace(':', ''))
+    .split(',')[0]
+    .trim()
+    .toLowerCase();
+  if (host === 'kinxdred.com' || host === 'www.kinxdred.com') {
+    host = 'www.kinxdred.com';
+    proto = 'https';
+  }
+  const target = new URL(`${proto}://${host}/auth/callback`);
+  target.searchParams.set('next', '/world/admin');
+  return target.toString();
+}
+
+export async function exchangeAuthCode(config, fetchImpl, code, verifier) {
+  if (!TOKEN.test(code) || (verifier && !TOKEN.test(verifier))) return null;
+  const url = new URL('/auth/v1/token', config.url);
+  url.searchParams.set('grant_type', 'pkce');
+  const body = { auth_code: code };
+  if (verifier) body.code_verifier = verifier;
+  const response = await authPost(config, fetchImpl, url, body);
+  if (!response?.access_token || !response.user?.id) return null;
+  return response;
 }
 
 export function validEmail(value) {
@@ -205,9 +238,14 @@ async function authPost(config, fetchImpl, path, body) {
   }
 }
 
-function cookieBase(request) {
+function cookieFlags(request) {
   const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
-  return `HttpOnly; Path=/api/world; SameSite=Lax${secure}`;
+  return `HttpOnly; SameSite=Lax${secure}`;
+}
+
+function cookieBase(request) {
+  // The page gate reads this cookie on /world. A path of /api/world never leaves the API.
+  return `${cookieFlags(request)}; Path=/`;
 }
 
 function clamp(value, min, max) {

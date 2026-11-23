@@ -393,7 +393,7 @@ test('magic link uses the anon key on the server and the session cookie is httpO
   assert.equal(calls[0].init.headers.authorization.includes(env.WORLD_SUPABASE_SERVICE_KEY), false);
   assert.equal(JSON.parse(calls[0].init.body).create_user, false);
   const redirect = new URL(calls[0].url).searchParams.get('redirect_to');
-  assert.equal(redirect, 'https://kinxdred.com/login');
+  assert.equal(redirect, 'https://www.kinxdred.com/auth/callback?next=%2Fworld%2Fadmin');
 
   const cross = await handleWorldMagic(
     request('/api/world/auth/magic', {
@@ -440,6 +440,10 @@ test('magic link uses the anon key on the server and the session cookie is httpO
   );
   assert.equal(
     cookies.every((cookie) => cookie.includes('Secure')),
+    true
+  );
+  assert.equal(
+    cookies.every((cookie) => cookie.includes('Path=/;')),
     true
   );
   assert.equal(JSON.stringify(cookies).includes(env.WORLD_SUPABASE_SERVICE_KEY), false);

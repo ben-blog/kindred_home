@@ -57,6 +57,7 @@ const PUBLIC = [
   ['/sitemap.xml', 'GET'],
   ['/og.png', 'GET'],
   ['/login', 'GET'],
+  ['/auth/callback', 'GET'],
   ['/mood-camera', 'GET'],
   ['/mood-camera/play', 'GET'],
   ['/_next/static/chunk.js', 'GET'],
@@ -158,13 +159,17 @@ test('private pages redirect and private APIs return 401 without a session', asy
   }
 });
 
-test('an old magic link on the hub is sent to the login page with its query', async () => {
+test('an old magic link on the hub is sent to the callback with its query', async () => {
   const response = await guardRequest(
     request('/world/admin?token_hash=abc&type=magiclink'),
     { env: {}, next: () => ok() }
   );
   assert.equal(response.status, 302);
-  assert.equal(response.headers.get('location'), '/login?token_hash=abc&type=magiclink');
+  const location = new URL(response.headers.get('location'), 'https://kinxdred.com');
+  assert.equal(location.pathname, '/auth/callback');
+  assert.equal(location.searchParams.get('token_hash'), 'abc');
+  assert.equal(location.searchParams.get('type'), 'magiclink');
+  assert.equal(location.searchParams.get('next'), '/world/admin');
 });
 
 test('the cron route is not the leader cookie, and a leader session stamps noindex', async () => {

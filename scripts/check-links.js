@@ -39,6 +39,21 @@ for (const rel of preserved) {
 if (existsSync(path.join(staticRoot, 'c', 'template', 'index.html'))) {
   failures.push('draft campaign /c/template was published');
 }
+
+for (const rel of ['world/index.html', 'world/admin/index.html', 'world/brain/index.html', 'world/admin/album/index.html']) {
+  if (existsSync(path.join(staticRoot, rel))) failures.push(`private page was prerendered: ${rel}`);
+}
+if (existsSync(path.join(repoRoot, '.vercel', 'output', 'functions', '_middleware.func'))) {
+  failures.push('the session gate was built as an edge function');
+}
+const renderConfig = path.join(repoRoot, '.vercel', 'output', 'functions', '_render.func', '.vc-config.json');
+if (!existsSync(renderConfig) || !String(JSON.parse(readFileSync(renderConfig, 'utf8')).runtime || '').startsWith('nodejs')) {
+  failures.push('the on-demand function is not the Node runtime');
+}
+for (const pathname of ['/world', '/world/admin', '/world/brain', '/api/world/me']) {
+  const route = firstFunctionRoute(pathname);
+  if (!route || route.dest !== '_render') failures.push(`${pathname} is not served by the node function`);
+}
 const d14 = readFileSync(path.join(staticRoot, 'dred/d14/index.html'), 'utf8');
 const threeUrl = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 if (!d14.includes(threeUrl)) failures.push('D14 no longer loads three.js r128 from cdnjs');

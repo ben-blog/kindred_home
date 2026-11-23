@@ -172,6 +172,38 @@ test('an old magic link on the hub is sent to the callback with its query', asyn
   assert.equal(location.searchParams.get('next'), '/world/admin');
 });
 
+test('the gate reads the node env: a fake cookie is unauthorized, and a missing env stays closed', async () => {
+  const source = readFileSync(new URL('../../astro.config.mjs', import.meta.url), 'utf8');
+  assert.match(source, /middlewareMode:\s*'classic'/);
+
+  const closed = await guardRequest(request('/world/admin', { cookie: 'world_access=fake' }), {
+    env: {},
+    fetch: async () => {
+      throw new Error('missing env must not call upstream');
+    },
+    next: () => ok(),
+  });
+  assert.equal(closed.status, 503);
+  assert.equal(await closed.text(), 'Unavailable.');
+
+  const denied = async () => new Response('{}', { status: 401 });
+  const page = await guardRequest(request('/world/brain', { cookie: 'world_access=fake' }), {
+    env,
+    fetch: denied,
+    next: () => ok(),
+  });
+  assert.equal(page.status, 302);
+  assert.equal(page.headers.get('location')?.startsWith('/login?next='), true);
+
+  const api = await guardRequest(request('/api/world/me', { cookie: 'world_access=fake' }), {
+    env,
+    fetch: denied,
+    next: () => ok(),
+  });
+  assert.equal(api.status, 401);
+  assert.equal((await api.json()).error, 'unauthorized');
+});
+
 test('the cron route is not the leader cookie, and a leader session stamps noindex', async () => {
   let cron = false;
   const ingest = await guardRequest(request('/api/world/ingest'), {

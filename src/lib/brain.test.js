@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  brainChoice,
   diffMemories,
   filterPoints,
   formatDay,
@@ -18,6 +20,20 @@ function point(id, kind, createdAt, extra = {}) {
 function at(year, month, day, hour = 12) {
   return new Date(year, month - 1, day, hour).toISOString();
 }
+
+test('a brain page fetches only the character it was given', () => {
+  const source = readFileSync(new URL('../scripts/brain-page.js', import.meta.url), 'utf8');
+  assert.match(source, /loadHistory\(person\.slug\)/);
+  assert.match(source, /loadLegacy\(person\.slug\)/);
+  assert.equal(source.includes('config?.people'), false);
+});
+
+test('the brain chooser returns only a known character', () => {
+  assert.equal(brainChoice('kin', ['dred', 'kin']), '/world/brain/kin/');
+  assert.equal(brainChoice('dred', ['kin']), '');
+  assert.equal(brainChoice('../kin', ['kin']), '');
+  assert.equal(brainChoice('', ['kin', 'dred']), '');
+});
 
 test('ranges use local days and custom dates swap when reversed', () => {
   const now = new Date(2026, 10, 22, 15, 4).getTime();

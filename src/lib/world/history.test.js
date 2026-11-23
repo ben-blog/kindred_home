@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadCanon } from '../../../world/load.js';
 import { createLimiter } from '../proxy.js';
-import { handleWorldHistory, historyPath, parseMemoryHistory } from './history.js';
+import { HISTORY_TIMEOUT_MS, handleWorldHistory, historyPath, parseMemoryHistory } from './history.js';
 
 const canon = loadCanon();
 const leaderId = '11111111-1111-4111-8111-111111111111';
@@ -246,4 +246,38 @@ test('history follows nextCursor and keeps the agent token on the server', async
     }
   );
   assert.equal(headerCheck.status, 200);
+});
+
+test('a slow history page is not aborted at 12 seconds, and a second page waits for time', async () => {
+  assert.equal(HISTORY_TIMEOUT_MS >= 45_000, true);
+  let upstreams = 0;
+  let clock = 0;
+  const response = await handleWorldHistory(
+    request(`/api/world/brain/kin/history?from=${from}&to=${to}`, signedIn),
+    {
+      env,
+      canon,
+      slug: 'kin',
+      limiter: createLimiter(),
+      cache: new Map(),
+      inflight: new Map(),
+      upstreamLimiter: createLimiter({ limit: 10, windowMs: 60_000 }),
+      timeoutMs: 50_000,
+      now: () => clock,
+      fetch: leaderFetch(leaderId, async () => {
+        upstreams += 1;
+        clock = 45_000;
+        return new Response(
+          JSON.stringify(page({ truncated: true, nextCursor: 'cursor-1', rows: [row({ id: 'only' })] })),
+          { status: 200 }
+        );
+      }),
+    }
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(upstreams, 1);
+  assert.equal(body.truncated, true);
+  assert.equal(body.rows.length, 1);
+  assert.equal(body.source, 'history');
 });

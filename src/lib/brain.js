@@ -24,6 +24,12 @@ const KIND_ORDER = [
 const METRICS = ['weight', 'strength', 'decay'];
 const WEAK_WEIGHT = 0.35;
 
+export function brainChoice(last, slugs) {
+  const list = Array.isArray(slugs) ? slugs : [];
+  if (typeof last === 'string' && list.includes(last)) return `/world/brain/${last}/`;
+  return '';
+}
+
 export function pointTime(point) {
   return timeOf(point?.createdAt);
 }

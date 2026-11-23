@@ -10,121 +10,96 @@ const calls = (await getCollection('characters'))
   .sort((a, b) => a.data.slug.localeCompare(b.data.slug));
 ---
 
-<Base frame="world" title="Tick — kinxdred" description="Leader tick for the kinxdred world.">
-  <Frame>
-    <p class="eyebrow">leader</p>
-    <h1>Tick</h1>
-    <p class="world-copy">
-      <a href="/world/admin/album">album</a>
-      <a href="/world/brain">brain</a>
-    </p>
-    <p class="world-copy">Sign in. Then tick.</p>
-    <form class="panel" id="magic-form">
-      <label class="eyebrow" for="leader-email">email</label>
-      <input id="leader-email" name="email" type="email" autocomplete="username" required maxlength="200" />
+<Base frame="world" title="Hub — kinxdred" description="Leader hub for kinxdred." robots="noindex">
+  <link
+    slot="head"
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap"
+  />
+  <div class="hub">
+    <p class="eyebrow">Ben hub</p>
+    <h1>Hub</h1>
+    <p class="world-copy">리더만 들어오는 자리입니다.</p>
+    <div class="hub-grid">
+      <a class="hub-card" href="/world">
+        <span>world</span>
+        <strong>세계</strong>
+        <p>지금 tick과 자리.</p>
+        <em id="hub-world">…</em>
+      </a>
+      {
+        calls.map((entry) => (
+          <a class="hub-card" href={`/world/chat/${entry.data.slug}/`}>
+            <span>chat</span>
+            <strong style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</strong>
+            <p>리더 통화.</p>
+          </a>
+        ))
+      }
+      <a class="hub-card" href="/world/brain">
+        <span>brain</span>
+        <strong>Brain</strong>
+        <p>memory history를 봅니다.</p>
+      </a>
+      <a class="hub-card" href="/world/admin/album">
+        <span>album</span>
+        <strong>앨범</strong>
+        <p>사진을 올리고 검토합니다.</p>
+        <em id="hub-album">…</em>
+      </a>
+    </div>
+    <form class="panel" id="tick-form">
+      <p class="eyebrow">tick</p>
+      <p class="world-copy">세계를 한 tick 진행합니다.</p>
       <div class="world-actions">
-        <button type="submit">send link</button>
-        <button type="button" id="tick-button" disabled>tick</button>
-        <button type="button" id="sign-out" hidden>sign out</button>
+        <button type="button" id="tick-button">tick</button>
+        <button type="button" id="sign-out">나가기</button>
       </div>
       <p class="world-status" id="auth-status" aria-live="polite"></p>
     </form>
-    {
-      calls.length > 0 ? (
-        <>
-          <p class="eyebrow">call</p>
-          <ul class="links">
-            {calls.map((entry) => (
-              <li>
-                <a href={`/world/chat/${entry.data.slug}/`}>
-                  <span style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</span>
-                  <span class="meta">{text(entry.data.profile.tagline)}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null
-    }
-  </Frame>
+  </div>
 </Base>
 
 <script>
-  import { attachImeEnterGuard } from '../../lib/ime-enter.js';
-
-  const form = document.querySelector('#magic-form');
-  const email = document.querySelector('#leader-email');
+  const status = document.querySelector('#auth-status');
   const tickButton = document.querySelector('#tick-button');
   const signOut = document.querySelector('#sign-out');
-  const status = document.querySelector('#auth-status');
-  if (email && form) attachImeEnterGuard(email, form);
+  const worldStatus = document.querySelector('#hub-world');
+  const albumStatus = document.querySelector('#hub-album');
 
   function say(text) {
     status.textContent = text;
   }
 
+  async function readJson(url) {
+    const response = await fetch(url, { headers: { accept: 'application/json' } });
+    if (response.status === 401 || response.status === 403) {
+      location.replace('/login');
+      return null;
+    }
+    if (!response.ok) return { error: true };
+    return response.json().catch(() => ({ error: true }));
+  }
+
   async function refresh() {
-    const response = await fetch('/api/world/auth/session', { headers: { accept: 'application/json' } });
-    if (response.status === 503) {
-      say('Unavailable.');
-      tickButton.disabled = true;
+    const world = await readJson('/api/world');
+    if (!world) return;
+    worldStatus.textContent = world.error
+      ? '연결 없음'
+      : Number.isInteger(world.tick)
+        ? `tick ${world.tick}`
+        : 'tick 없음';
+    const album = await readJson('/api/world/album');
+    if (!album) return;
+    if (album.error || !Array.isArray(album.submissions)) {
+      albumStatus.textContent = '연결 없음';
       return;
     }
-    const body = await response.json().catch(() => ({}));
-    const signedIn = body.signedIn === true;
-    tickButton.disabled = !signedIn;
-    signOut.hidden = !signedIn;
-    email.disabled = signedIn;
-    if (signedIn) say('Signed in.');
+    const pending = album.submissions.filter(
+      (row) => row && row.status !== 'published' && row.status !== 'rejected'
+    ).length;
+    albumStatus.textContent = `대기 ${pending}`;
   }
-
-  const params = new URLSearchParams(location.search);
-  const tokenHash = params.get('token_hash');
-  const type = params.get('type');
-  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const accessToken = hash.get('access_token');
-  const refreshToken = hash.get('refresh_token');
-  if (tokenHash || accessToken || params.get('error')) {
-    history.replaceState(null, '', location.pathname);
-  }
-
-  try {
-    if (params.get('error')) {
-      say('The link did not work.');
-    } else if (tokenHash && type) {
-      const response = await fetch('/api/world/auth/session', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ tokenHash, type }),
-      });
-      say(response.ok ? 'Signed in.' : 'The link did not work.');
-    } else if (accessToken && refreshToken) {
-      const response = await fetch('/api/world/auth/session', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ accessToken, refreshToken }),
-      });
-      say(response.ok ? 'Signed in.' : 'The link did not work.');
-    }
-    await refresh();
-  } catch {
-    say('Unavailable.');
-  }
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    say('Sending.');
-    try {
-      const response = await fetch('/api/world/auth/magic', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
-        body: JSON.stringify({ email: email.value }),
-      });
-      say(response.ok ? 'Check your email.' : 'Unavailable.');
-    } catch {
-      say('Unavailable.');
-    }
-  });
 
   tickButton.addEventListener('click', async () => {
     tickButton.disabled = true;
@@ -135,7 +110,7 @@ const calls = (await getCollection('characters'))
         headers: { accept: 'application/json' },
       });
       if (response.status === 409) say('A tick is already running.');
-      else if (response.status === 401 || response.status === 403) say('Sign in.');
+      else if (response.status === 401 || response.status === 403) location.replace('/login');
       else if (!response.ok) say('Unavailable.');
       else {
         const body = await response.json().catch(() => ({}));
@@ -144,12 +119,17 @@ const calls = (await getCollection('characters'))
     } catch {
       say('Unavailable.');
     }
+    tickButton.disabled = false;
     await refresh().catch(() => {});
   });
 
   signOut.addEventListener('click', async () => {
     await fetch('/api/world/auth/session', { method: 'DELETE' }).catch(() => {});
-    say('');
-    await refresh().catch(() => {});
+    location.replace('/login');
+  });
+
+  refresh().catch(() => {
+    worldStatus.textContent = '연결 없음';
+    albumStatus.textContent = '연결 없음';
   });
 </script>

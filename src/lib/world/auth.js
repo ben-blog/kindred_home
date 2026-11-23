@@ -1,4 +1,4 @@
-import { safeEqual } from './hash.js';
+import { safeEqual } from './equal.js';
 
 const TOKEN = /^[\x21-\x7E]{1,4096}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -134,7 +134,7 @@ export async function verifyMagicLink(config, fetchImpl, tokenHash, type) {
 
 export function leaderRedirect(request) {
   const origin = new URL(request.url).origin;
-  return `${origin}/world/admin`;
+  return `${origin}/login`;
 }
 
 export function validEmail(value) {

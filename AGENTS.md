@@ -206,7 +206,7 @@ Routes, all fail closed with 503 when any world env var is missing or unsafe:
 
 | Route | Who |
 | --- | --- |
-| `GET /api/world` | public current state. The event log and visitor ids are not in the body. |
+| `GET /api/world` | leader session. The event log and visitor ids are not in the body. |
 | `POST /api/world/signal` | same-origin visitor warmth. 2KB body cap. In-memory limit and a database limit, 30 per 60 seconds per hashed address. |
 | `POST /api/world/tick` | the leader session only. 409 when a tick is already running. |
 | `GET /api/world/ingest` | Vercel Cron only. `Authorization: Bearer` must match `CRON_SECRET`. |
@@ -215,7 +215,7 @@ Routes, all fail closed with 503 when any world env var is missing or unsafe:
 | `POST /api/world/chat/<slug>` | the leader session only. Streams the character agent's chat reply. Sends `X-Trace: 1`. Forwards `forceWebSearch: true` when the call page asks for it, and forwards `retrieved` and `web_search` trace events in arrival order. 503 when the world env, the agent origin, or that agent's token is missing. |
 | `GET /api/world/chat/<slug>/memory` | the leader session only. Proxies the character's `agent.memory` map, follows `nextCursor` one page at a time, and caches that map for a few seconds. A changed `basisFingerprint` is reloaded with no `since`. 404 when that field is absent. The call still works without it. |
 
-`/world` is a public read of `GET /api/world`. `/world/admin` is the leader tick page. `/world/chat/<slug>` is the leader's call with a character that has `agent.chat`. The page sends the browser to `/world/admin` until the leader session is present. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` writes that one job into `.vercel/output/config.json`. `vercel.json` does not repeat it. Vercel would otherwise register the same path and schedule twice.
+`/world` and every `/world/*` page are leader-only, except the magic-link login at `/login`. `/world/admin` is the leader hub. `/world/chat/<slug>` is the leader's call with a character that has `agent.chat`. The page sends the browser to `/login` until the leader session is present. Edge middleware denies every path that is not on the public allowlist. The cron is `0 15 * * *` (15:00 UTC, midnight in Seoul), which is the Hobby once-a-day limit. `scripts/apply-legacy-routes.js` writes that one job into `.vercel/output/config.json`. `vercel.json` does not repeat it. Vercel would otherwise register the same path and schedule twice.
 
 The call does not append `world_events`. A later tick could record one as an `agent_action` whose payload `action` is `note` (logged, no stat change) once that shape is chosen.
 

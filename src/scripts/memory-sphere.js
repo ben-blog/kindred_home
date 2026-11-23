@@ -9,6 +9,7 @@ import {
   memoryEmotionLabel,
   memoryEmotions,
 } from '../config/memory-emotions.js';
+import { memoryKindCss, memoryKindRgb } from '../lib/memory-kind.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
 
 const PULSE_MS = 980;
@@ -25,15 +26,21 @@ export async function mountSphere(root, call, options) {
 
   const accent = safeColor(options.accent, '#ffffff');
   const layout = options.layout === 'void' ? 'void' : 'board';
+  const mobile =
+    options.mobile === true ||
+    (options.mobile !== false && window.matchMedia('(max-width: 800px)').matches);
+  const colorMode = options.colorMode === 'kind' ? 'kind' : 'emotion';
+  const ratioCap = mobile ? 1.25 : 2;
+  const drawCap = Number.isFinite(options.drawCap) ? options.drawCap : mobile ? 480 : 4000;
   const width = root.clientWidth || 220;
   const height = root.clientHeight || 220;
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !mobile });
   } catch {
     return null;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratioCap));
   renderer.setSize(width, height, false);
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
@@ -52,7 +59,7 @@ export async function mountSphere(root, call, options) {
   rig.rotation.y = spin;
 
   const accentColor = displayColor(THREE, accent);
-  const globe = new THREE.SphereGeometry(1, 64, 40);
+  const globe = new THREE.SphereGeometry(1, mobile ? 32 : 64, mobile ? 18 : 40);
   const shell = shellMaterial(THREE, accentColor, 1);
   const back = shellMaterial(THREE, accentColor, 0);
   const frontMesh = new THREE.Mesh(globe, shell);
@@ -78,6 +85,13 @@ export async function mountSphere(root, call, options) {
       varying vec3 vColor;
       varying float vFacing;
       void main() {
+        if (aSize <= 0.0) {
+          vFacing = 0.0;
+          vColor = vec3(0.0);
+          gl_PointSize = 0.0;
+          gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+          return;
+        }
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         vec3 viewNormal = normalize(normalMatrix * normalize(position));
         float front = smoothstep(-0.2, 0.85, viewNormal.z);
@@ -112,6 +126,9 @@ export async function mountSphere(root, call, options) {
   let version = '';
   let focusId = '';
   let retrieved = new Set();
+  let cutoff = 0;
+  let pendingCutoff = null;
+  let marks = null;
   let frame = 0;
   let last = performance.now();
   const raycaster = new THREE.Raycaster();
@@ -133,6 +150,7 @@ export async function mountSphere(root, call, options) {
     if (nextWidth < 2 || nextHeight < 2) return;
     camera.aspect = nextWidth / nextHeight;
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, ratioCap));
     renderer.setSize(nextWidth, nextHeight, false);
     pointMaterial.uniforms.uPixelRatio.value = renderer.getPixelRatio();
     pointMaterial.uniforms.uFit.value = fitScale(nextWidth);
@@ -159,7 +177,7 @@ export async function mountSphere(root, call, options) {
         target,
         shown,
         born,
-        color: pointColor(THREE, accent, point, layout),
+        color: pointColor(THREE, accent, point, layout, colorMode),
         size: crowd * intensityScale(point.intensity),
       };
     });
@@ -169,6 +187,8 @@ export async function mountSphere(root, call, options) {
       pointsMesh = null;
     }
     if (!records.length) {
+      cutoff = 0;
+      pendingCutoff = null;
       paintLegend();
       if (reduced) paint(now);
       return;
@@ -190,11 +210,26 @@ export async function mountSphere(root, call, options) {
     pointsMesh.renderOrder = 2;
     pointsMesh.frustumCulled = false;
     rig.add(pointsMesh);
+    cutoff =
+      pendingCutoff == null
+        ? records.length
+        : Math.max(0, Math.min(records.length, pendingCutoff));
+    pendingCutoff = null;
     paintLegend();
     if (reduced) paint(now);
   }
 
+  function isDrawn(index) {
+    if (index < 0 || index >= cutoff) return false;
+    const start = Math.max(0, Math.min(cutoff, records.length) - drawCap);
+    return index >= start;
+  }
+
   function paintLegend() {
+    if (colorMode === 'kind') {
+      paintKindLegend();
+      return;
+    }
     const present = memoryEmotions.filter((emotion) =>
       records.some((record) => record.emotion === emotion)
     );
@@ -206,6 +241,25 @@ export async function mountSphere(root, call, options) {
       swatch.style.background = memoryEmotionCss(accent, emotion, 0.84, layout);
       const name = document.createElement('span');
       name.textContent = memoryEmotionLabel(emotion);
+      item.append(swatch, name);
+      legend.append(item);
+    }
+  }
+
+  function paintKindLegend() {
+    const present = [];
+    for (const record of records) {
+      if (record.kind && !present.includes(record.kind)) present.push(record.kind);
+    }
+    legend.replaceChildren();
+    legend.hidden = present.length === 0;
+    legend.setAttribute('aria-label', 'kinds');
+    for (const kind of present) {
+      const item = document.createElement('li');
+      const swatch = document.createElement('i');
+      swatch.style.background = memoryKindCss(accent, kind, layout);
+      const name = document.createElement('span');
+      name.textContent = kind;
       item.append(swatch, name);
       legend.append(item);
     }
@@ -237,8 +291,29 @@ export async function mountSphere(root, call, options) {
         g += (1 - g) * 0.8;
         b += (1 - b) * 0.8;
       }
+      let scale = 1;
+      if (marks) {
+        const added = marks.added?.has(record.id);
+        const weakened = marks.weakened?.has(record.id);
+        if (added) {
+          r += (1 - r) * 0.28;
+          g += (1 - g) * 0.28;
+          b += (1 - b) * 0.28;
+          scale = 1.35;
+        } else if (weakened) {
+          r = r * 0.35 + 0.62;
+          g *= 0.32;
+          b *= 0.28;
+          scale = 0.8;
+        } else {
+          r *= 0.16;
+          g *= 0.16;
+          b *= 0.16;
+          scale = 0.55;
+        }
+      }
       color.setXYZ(index, r, g, b);
-      size.setX(index, record.size * (1 + pulse * 1.25));
+      size.setX(index, isDrawn(index) ? record.size * (1 + pulse * 1.25) * scale : 0);
     });
     position.needsUpdate = true;
     color.needsUpdate = true;
@@ -288,8 +363,11 @@ export async function mountSphere(root, call, options) {
     if (!pointsMesh || pointer.x > 1) return null;
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObject(pointsMesh);
-    if (!hits.length) return null;
-    return records[hits[0].index] || null;
+    for (const item of hits) {
+      if (!isDrawn(item.index)) continue;
+      return records[item.index] || null;
+    }
+    return null;
   }
 
   function showLabel(record) {
@@ -393,8 +471,9 @@ export async function mountSphere(root, call, options) {
 
   return {
     setMap(detail) {
+      pendingCutoff = Number.isInteger(detail?.cutoff) ? detail.cutoff : null;
       const points = (Array.isArray(detail?.points) ? detail.points : []).filter(
-        (point) => point && point.kind !== 'reflection'
+        (point) => point && (colorMode === 'kind' || point.kind !== 'reflection')
       );
       const nextVersion = detail?.basisFingerprint
         ? String(detail.basisFingerprint)
@@ -406,6 +485,19 @@ export async function mountSphere(root, call, options) {
         version = '';
       }
       rebuild(points, nextVersion);
+    },
+    setCutoff(count) {
+      const next = Math.max(0, Math.min(records.length, count | 0));
+      if (!reduced && next > cutoff) {
+        const now = performance.now();
+        for (let index = cutoff; index < next; index += 1) records[index].born = now;
+      }
+      cutoff = next;
+      if (reduced) paint(performance.now());
+    },
+    setMarks(next) {
+      marks = next && typeof next === 'object' ? next : null;
+      if (reduced) paint(performance.now());
     },
     showRetrieved(items) {
       retrieved = new Set(
@@ -505,7 +597,11 @@ function displayColor(THREE, hex) {
   return new THREE.Color(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
-function pointColor(THREE, accent, point, layout) {
+function pointColor(THREE, accent, point, layout, colorMode) {
+  if (colorMode === 'kind') {
+    const tint = memoryKindRgb(accent, point.kind, layout);
+    return { r: tint.r, g: tint.g, b: tint.b };
+  }
   if (point.emotion) {
     const tint = memoryEmotionColor(accent, point.emotion, point.intensity, layout);
     if (tint) return tint;

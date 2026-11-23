@@ -1207,33 +1207,53 @@ html.frame-character:has(.call) body {
   }
 }
 
+.call-sheet {
+  display: none;
+}
+
 @media (max-width: 800px) {
   .call {
+    position: fixed;
+    top: var(--vv-top, 0px);
+    right: 0;
+    left: 0;
+    width: auto;
+    height: var(--vv-height, 100dvh);
+    max-height: var(--vv-height, 100dvh);
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: calc(env(safe-area-inset-bottom) * var(--kb, 1));
+    padding-left: env(safe-area-inset-left);
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(92px, 20dvh) minmax(0, 1fr);
+    overflow: hidden;
   }
 
   .call-side {
-    max-height: 42dvh;
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
     border-left: 0;
     border-top: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   }
 
   .call-self {
-    width: 72px;
-    height: 96px;
+    width: 56px;
+    height: 72px;
   }
 
   .call-caption {
-    right: 5.6rem;
-    bottom: 0.7rem;
+    right: 4.4rem;
+    bottom: 0.45rem;
+    font-size: 11px;
   }
 
   .call-bar {
-    gap: 0.4rem;
-    padding: 0.65rem 0.65rem;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    padding: 0.55rem 0.7rem;
     font-size: 10px;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
 
   .call-bar a,
@@ -1241,7 +1261,9 @@ html.frame-character:has(.call) body {
   .call-bar time,
   .call-end {
     min-width: 0;
-    white-space: nowrap;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
   }
 
   .call-name {
@@ -1250,12 +1272,13 @@ html.frame-character:has(.call) body {
   }
 
   .call-bar time {
+    margin-left: auto;
     letter-spacing: 0.04em;
   }
 
   .call-end {
     flex: 0 0 auto;
-    padding: 0.4rem 0.45rem;
+    padding: 0.4rem 0.7rem;
   }
 
   .call-side,
@@ -1263,16 +1286,73 @@ html.frame-character:has(.call) body {
   .call-compose,
   .call-actions,
   .call-form textarea,
-  .call-log {
+  .call-log,
+  .call-think,
+  .call-emoji-panel {
     min-width: 0;
     max-width: 100%;
+  }
+
+  .call-log {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .call-log::before {
+    content: '';
+    margin-top: auto;
+  }
+
+  .call-caption {
+    display: none;
+  }
+
+  .call-line p {
+    font-size: 16px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .call-line.is-you p {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .call-line:not(.is-you) p {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+
+  .call-form {
+    padding-top: 0.35rem;
+    background: rgba(8, 8, 8, 0.94);
+  }
+
+  .call-form textarea {
+    font-size: 16px;
+  }
+
+  .call-tool,
+  .call-emoji,
+  .call-search,
+  .call-send,
+  .call-retry,
+  .call-sheet-tabs button {
+    min-height: 44px;
+  }
+
+  .call-emoji {
+    width: 44px;
+    height: 44px;
   }
 
   .call-form textarea:focus,
   .call-emoji:focus-visible,
   .call-search:focus-visible,
   .call-send:focus-visible,
-  .call-retry:focus-visible {
+  .call-retry:focus-visible,
+  .call-tool:focus-visible {
     outline-offset: 0;
   }
 
@@ -1280,13 +1360,114 @@ html.frame-character:has(.call) body {
     width: auto;
   }
 
-  .call-memory-view {
+  .call-memory > .call-memory-view,
+  .call-memory > .call-memory-status {
     display: none;
-    width: 140px;
   }
 
-  .call-memory.is-open .call-memory-view {
+  .call-sheet:not([hidden]) {
     display: block;
+    position: fixed;
+    z-index: 30;
+    inset: 0;
+  }
+
+  .call-sheet-scrim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .call-sheet-panel {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    height: var(--sheet-h, 62dvh);
+    max-height: calc(100dvh - env(safe-area-inset-top) - 1.5rem);
+    padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(var(--sheet-drag, 0px));
+    background: rgba(8, 8, 8, 0.94);
+    border-top: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    backdrop-filter: blur(16px);
+  }
+
+  .call-sheet-handle {
+    width: 100%;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    touch-action: none;
+  }
+
+  .call-sheet-handle::before {
+    content: '';
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .call-sheet-tabs {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0 0.8rem 0.55rem;
+  }
+
+  .call-sheet-tabs button {
+    flex: 1;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.72);
+    font-family: var(--font-body);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .call-sheet-tabs button[aria-selected='true'] {
+    border-color: var(--accent);
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .call-sheet-body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .call-sheet-sphere,
+  .call-sheet-trace {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    padding: 0 0.75rem 0.85rem;
+  }
+
+  .call-sheet-sphere .call-memory-view {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    aspect-ratio: auto;
+  }
+
+  .call-sheet-trace .call-think {
+    display: block;
+    max-height: none;
+    height: 100%;
+    margin: 0;
+    overflow: auto;
   }
 }
 
@@ -1307,5 +1488,334 @@ html.frame-character:has(.call) body {
 
   .call-photo {
     transition: none;
+  }
+}
+
+html.frame-world .world-copy a + a {
+  margin-left: 1rem;
+}
+
+html.frame-character:has(.brain),
+html.frame-character:has(.brain) body {
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.brain {
+  --font-ko: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ground, #080806);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-ko), var(--font-body);
+}
+
+.brain .grain {
+  opacity: 0.02;
+}
+
+.brain-bar,
+.brain-kicker,
+.brain button,
+.brain-status,
+.brain-note,
+.brain-count,
+.brain-kind,
+.brain-meta,
+.brain-density,
+.brain-day header span {
+  font-family: var(--font-body), var(--font-ko);
+}
+
+.brain-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem 1rem;
+  min-width: 0;
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.brain-bar a {
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+}
+
+.brain-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.85rem 1.1rem 1rem;
+}
+
+.brain-intro {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+}
+
+.brain-kicker {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+.brain h1 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+.brain-controls,
+.brain-people,
+.brain-ranges,
+.brain-custom,
+.brain-tabs,
+.brain-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.brain button,
+.brain-field input {
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brain button[aria-pressed='true'],
+.brain button[aria-selected='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.brain-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.brain-field input {
+  color-scheme: dark;
+  font-family: var(--font-body), var(--font-ko);
+}
+
+.brain-custom[hidden] {
+  display: none;
+}
+
+.brain-status,
+.brain-note,
+.brain-count,
+.brain-date,
+.brain-empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.brain-date {
+  color: rgba(255, 255, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+}
+
+.brain-stage {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.15fr) minmax(280px, 0.85fr);
+  gap: 0.8rem;
+  min-height: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.brain-sphere {
+  position: relative;
+  min-width: 0;
+  min-height: 240px;
+  height: 100%;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.05), transparent 58%);
+}
+
+.brain-sphere canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.brain-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.85rem;
+  background: rgba(8, 8, 8, 0.88);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.brain-tools {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.brain-tools input[type='range'] {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.brain-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.brain-density,
+.brain-points {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brain-density li,
+.brain-points li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.brain-density i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+}
+
+.brain-kind {
+  width: auto;
+  height: auto;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brain-meter {
+  flex: 1 1 80px;
+  height: 6px;
+  min-width: 48px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.brain-meter span {
+  display: block;
+  height: 100%;
+}
+
+.brain-day {
+  display: grid;
+  gap: 0.45rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.brain-day header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.brain-day h3 {
+  margin: 0.2rem 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-body), var(--font-ko);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brain-points a {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.brain-more,
+.brain-meta {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 800px) {
+  .brain-body {
+    overflow: auto;
+    padding-right: max(0.8rem, env(safe-area-inset-right));
+    padding-left: max(0.8rem, env(safe-area-inset-left));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .brain-stage {
+    grid-template-columns: minmax(0, 1fr);
+    flex: none;
+  }
+
+  .brain-sphere {
+    height: min(52dvh, 420px);
+  }
+
+  .brain-panel {
+    overflow: visible;
+  }
+
+  .brain h1 {
+    font-size: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brain .grain {
+    animation: none;
   }
 }

@@ -1,8 +1,9 @@
 /**
  * Adapter for the agent memory map and the chat trace.
  * GET map: { character, basisVersion, basisFingerprint, total, limit, truncated, nextCursor, points }
- * points: { id, kind, label, createdAt, x, y, z, url?, emotion?, intensity? }.
+ * points: { id, kind, label, createdAt, x, y, z, url?, emotion?, intensity?, weight?, strength?, decay? }.
  * Label is one line, at most 80 characters.
+ * weight, strength, and decay are copied only when they are finite numbers. The map is one snapshot.
  * url, when present, is an http(s) source. A missing or unsafe url is left off the point.
  * emotion, when present, is joy, playful, calm, shy, sad, intense, or tired.
  * intensity, when present, is a number from 0 to 1. A bad emotion or intensity is left off.
@@ -353,7 +354,17 @@ function cleanPoint(point) {
   if (emotion) clean.emotion = emotion;
   const intensity = cleanIntensity(point.intensity);
   if (intensity != null) clean.intensity = intensity;
+  for (const key of ['weight', 'strength', 'decay']) {
+    const metric = cleanMetric(point[key]);
+    if (metric != null) clean[key] = metric;
+  }
   return clean;
+}
+
+function cleanMetric(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  if (value < 0 || value > 1_000_000) return null;
+  return Math.round(value * 10000) / 10000;
 }
 
 function cleanEmotion(value) {

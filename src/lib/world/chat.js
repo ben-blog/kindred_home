@@ -5,6 +5,7 @@ import { httpsOrigin, worldConfig } from './env.js';
 import { corsHeaders, guard, json, readJson } from './http.js';
 import { parseTrace } from './memory.js';
 import { resolveExpression } from './mood.js';
+import { perceiveChat } from './perception.js';
 import { createWorldStore } from './store.js';
 
 export const CHAT_BODY_LIMIT = 96 * 1024;
@@ -96,7 +97,17 @@ async function dispatch(request, options) {
   if (parsed.forceWebSearch) payload.forceWebSearch = true;
 
   const fetchImpl = options.fetch ?? globalThis.fetch;
-  const vitals = await readVitals(options, config, canon, slug, fetchImpl);
+  // Leader session only, checked above. Numbers and one bool for the agent.
+  // A failed warmth queue does not stop the reply. See perceiveChat.
+  const perceived = await perceiveChat({
+    store: options.store ?? createWorldStore(config, fetchImpl),
+    canon,
+    slug,
+    now: new Date(now()),
+    leader: true,
+  });
+  if (perceived.worldState) payload.world_state = perceived.worldState;
+  const vitals = options.vitals ? numbersOf(options.vitals) : perceived.vitals;
   const headers = new Headers();
   headers.set('content-type', 'application/json; charset=utf-8');
   headers.set('accept', 'text/event-stream');
@@ -216,17 +227,6 @@ function normalizeChat(body) {
     plan = JSON.parse(encoded);
   }
   return { messages, sessionId, plan, forceWebSearch };
-}
-
-async function readVitals(options, config, canon, slug, fetchImpl) {
-  if (options.vitals) return numbersOf(options.vitals);
-  try {
-    const store = options.store ?? createWorldStore(config, fetchImpl);
-    const row = await store.latest(canon.world.id);
-    return numbersOf(row?.state?.characters?.[slug]);
-  } catch {
-    return {};
-  }
 }
 
 function numbersOf(value) {

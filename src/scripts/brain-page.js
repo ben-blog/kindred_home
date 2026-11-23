@@ -206,7 +206,7 @@ export function mountBrain(config) {
       { headers: { accept: 'application/json' }, credentials: 'same-origin' }
     );
     if (response.status === 401 || response.status === 403) {
-      location.replace('/world/admin');
+      location.replace('/login');
       return null;
     }
     if (!response.ok) return false;
@@ -236,7 +236,7 @@ export function mountBrain(config) {
       credentials: 'same-origin',
     });
     if (response.status === 401 || response.status === 403) {
-      location.replace('/world/admin');
+      location.replace('/login');
       return null;
     }
     if (!response.ok) {
@@ -759,7 +759,7 @@ export function mountBrain(config) {
       }
       const body = await response.json().catch(() => ({}));
       if (!body.signedIn) {
-        location.replace('/world/admin');
+        location.replace('/login');
         return;
       }
       await refresh();

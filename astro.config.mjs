@@ -8,6 +8,6 @@ export default defineConfig({
   trailingSlash: 'ignore',
   devToolbar: { enabled: false },
   // Chat streams a model reply. 60s is the hobby function cap. Other routes still abort on their own timers.
-  adapter: vercel({ imageService: false, maxDuration: 60 }),
+  adapter: vercel({ imageService: false, maxDuration: 60, middlewareMode: 'edge' }),
   redirects: astroRedirects,
 });

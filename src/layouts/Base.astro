@@ -1,7 +1,7 @@
 ---
 import '../styles/site.css';
 
-const { title, description, accent = '', ground = '', ink = '', frame = 'site' } = Astro.props;
+const { title, description, accent = '', ground = '', ink = '', frame = 'site', robots = '' } = Astro.props;
 const parts = [];
 if (/^#[0-9A-Fa-f]{6}$/.test(accent)) parts.push(`--accent:${accent}`);
 if (/^#[0-9A-Fa-f]{6}$/.test(ground)) parts.push(`--ground:${ground}`);
@@ -24,6 +24,8 @@ const bare = character || world;
     <slot name="head" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {robots ? <meta name="robots" content={robots} /> : null}
+    <script src="/js/site-base.js" is:inline></script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

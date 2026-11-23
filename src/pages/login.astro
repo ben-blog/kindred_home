@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base frame="world" title="Login — kinxdred" description="Leader sign-in for kinxdred.">
+  <link
+    slot="head"
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap"
+  />
+  <p class="eyebrow">leader</p>
+  <h1>Login</h1>
+  <p class="world-copy">메일로 들어온 링크로 들어옵니다.</p>
+  <form class="panel" id="magic-form">
+    <label class="eyebrow" for="leader-email">email</label>
+    <input id="leader-email" name="email" type="email" autocomplete="username" required maxlength="200" />
+    <div class="world-actions">
+      <button type="submit">send link</button>
+    </div>
+    <p class="world-status" id="auth-status" aria-live="polite"></p>
+  </form>
+</Base>
+
+<script>
+  import { attachImeEnterGuard } from '../lib/ime-enter.js';
+
+  const form = document.querySelector('#magic-form');
+  const email = document.querySelector('#leader-email');
+  const status = document.querySelector('#auth-status');
+  if (email && form) attachImeEnterGuard(email, form);
+
+  function say(text) {
+    status.textContent = text;
+  }
+
+  function nextPath() {
+    const next = new URLSearchParams(location.search).get('next') || '';
+    if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) return '/world/admin';
+    return next;
+  }
+
+  async function refresh() {
+    const response = await fetch('/api/world/auth/session', { headers: { accept: 'application/json' } });
+    if (!response.ok) return;
+    const body = await response.json().catch(() => ({}));
+    if (body.signedIn === true) location.replace(nextPath());
+  }
+
+  const params = new URLSearchParams(location.search);
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type');
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+  if (tokenHash || accessToken || params.get('error')) {
+    const next = params.get('next');
+    history.replaceState(null, '', next ? `/login?next=${encodeURIComponent(next)}` : '/login');
+  }
+
+  try {
+    if (params.get('error')) {
+      say('The link did not work.');
+    } else if (tokenHash && type) {
+      const response = await fetch('/api/world/auth/session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ tokenHash, type }),
+      });
+      if (!response.ok) say('The link did not work.');
+    } else if (accessToken && refreshToken) {
+      const response = await fetch('/api/world/auth/session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ accessToken, refreshToken }),
+      });
+      if (!response.ok) say('The link did not work.');
+    }
+    await refresh();
+  } catch {
+    say('Unavailable.');
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    say('Sending.');
+    try {
+      const response = await fetch('/api/world/auth/magic', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({ email: email.value }),
+      });
+      say(response.ok ? 'Check your email.' : 'Unavailable.');
+    } catch {
+      say('Unavailable.');
+    }
+  });
+</script>

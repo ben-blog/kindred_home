@@ -336,8 +336,76 @@ html.frame-world button:disabled {
   cursor: default;
 }
 
-html.frame-world:has(.album) .world-main {
+html.frame-world:has(.album) .world-main,
+html.frame-world:has(.hub) .world-main {
   width: min(960px, calc(100% - 3rem));
+}
+
+.hub {
+  --font-ko: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  font-family: var(--font-ko), var(--font-body);
+}
+
+.hub h1 {
+  font-size: clamp(40px, 6vw, 72px);
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.2rem;
+}
+
+.hub-card {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 1rem;
+  background: rgba(8, 8, 8, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  text-decoration: none;
+  backdrop-filter: blur(14px);
+}
+
+.hub-card span,
+.hub-card em {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-body), var(--font-ko);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hub-card strong {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hub-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (max-width: 700px) {
+  html.frame-world:has(.hub) .world-main {
+    width: auto;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .hub-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hub-card strong {
+    font-size: 24px;
+  }
 }
 
 html.frame-world .album-columns {

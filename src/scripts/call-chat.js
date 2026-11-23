@@ -344,7 +344,7 @@ export function mountCall(config) {
       headers: { accept: 'application/json' },
     });
     if (response.status === 401 || response.status === 403) {
-      location.replace('/world/admin');
+      location.replace('/login');
       return;
     }
     if (response.status === 429) {
@@ -472,7 +472,7 @@ export function mountCall(config) {
         return 'fail';
       }
       if (response.status === 401 || response.status === 403) {
-        location.replace('/world/admin');
+        location.replace('/login');
         return 'auth';
       }
       if (response.status === 429) {
@@ -595,7 +595,7 @@ export function mountCall(config) {
       }
       const body = await response.json().catch(() => ({}));
       if (!body.signedIn) {
-        location.replace('/world/admin');
+        location.replace('/login');
         return;
       }
       started = Date.now();

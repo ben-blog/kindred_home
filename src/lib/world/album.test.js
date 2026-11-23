@@ -345,6 +345,82 @@ test('requestCaption recovers after one network failure and keeps max_tokens', a
   }
 });
 
+test('requestCaption treats a programmer TypeError as internal and does not retry', async () => {
+  const logs = [];
+  const originalError = console.error;
+  console.error = (...args) => logs.push(args.join(' '));
+  try {
+    const failure = await requestCaption({
+      env,
+      bytes: new Uint8Array([1]),
+      character: { slug: 'kin' },
+      note: '',
+      sleep: async () => {
+        throw new Error('should not sleep');
+      },
+      fetchImpl: /** @type {any} */ ('not-a-function'),
+    });
+    assert.match(failure.detail, /did not answer/);
+    assert.equal(failure.retryable, undefined);
+    assert.equal(logs.length, 1);
+    assert.equal(JSON.parse(logs[0]).case, 'internal');
+    assert.match(JSON.parse(logs[0]).message, /not a function|is not a function/i);
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test('generate uses globalThis.fetch when options.fetch is omitted', async () => {
+  const draftPath = `drafts/${submissionId}.webp`;
+  const store = memoryStore({
+    submissions: [
+      [
+        submissionId,
+        {
+          id: submissionId,
+          character: 'kin',
+          status: 'drafted',
+          draft_path: draftPath,
+          generated: { leaderNote: 'bus window' },
+        },
+      ],
+    ],
+    files: new Map([[draftPath, new Uint8Array([1, 2, 3])]]),
+  });
+  const anthropicCalls = [];
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const href = String(url);
+    if (href.endsWith('/auth/v1/user')) {
+      return new Response(JSON.stringify({ id: leaderId }), { status: 200 });
+    }
+    if (href === 'https://api.anthropic.com/v1/messages') {
+      anthropicCalls.push(JSON.parse(init.body).model);
+      return new Response(
+        JSON.stringify({
+          content: [{ type: 'text', text: JSON.stringify(caption()) }],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      );
+    }
+    throw new Error(href);
+  };
+  try {
+    const { fetch: _omit, ...withoutFetch } = authed({ store });
+    void _omit;
+    const response = await handleAlbum(
+      request(`/api/world/album/${submissionId}/generate`, { method: 'POST', cookie }),
+      withoutFetch
+    );
+    assert.equal(response.status, 200);
+    assert.equal(anthropicCalls.length, 1);
+    const body = await response.json();
+    assert.equal(body.caption?.ko?.title, '창가');
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
 test('requestCaption does not retry bad JSON or a 400 invalid request', async () => {
   const logs = [];
   const originalError = console.error;

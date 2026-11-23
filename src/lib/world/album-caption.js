@@ -148,7 +148,7 @@ export async function requestCaption({
   bytes,
   character,
   note,
-  fetchImpl,
+  fetchImpl = globalThis.fetch,
   sleep = wait,
 }) {
   const key = anthropicKey(env);
@@ -219,7 +219,7 @@ async function attemptCaption({ key, body, imageBytes, fetchImpl }) {
       signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
     });
   } catch (error) {
-    const failureCase = isTimeout(error) ? 'timeout' : 'network';
+    const failureCase = catchCase(error);
     logCaptionFailure({
       case: failureCase,
       status: null,
@@ -235,7 +235,7 @@ async function attemptCaption({ key, body, imageBytes, fetchImpl }) {
         failureCase === 'timeout'
           ? 'The caption model took too long. Regenerate.'
           : 'The caption model did not answer. Regenerate.',
-      retryable: true,
+      retryable: failureCase !== 'internal',
     };
   }
   const raw = await response.text();
@@ -427,6 +427,18 @@ function redact(text) {
 
 function isTimeout(error) {
   return error?.name === 'TimeoutError' || error?.name === 'AbortError';
+}
+
+function catchCase(error) {
+  if (isTimeout(error)) return 'timeout';
+  if (isInternalTypeError(error)) return 'internal';
+  return 'network';
+}
+
+function isInternalTypeError(error) {
+  if (!(error instanceof TypeError) && error?.name !== 'TypeError') return false;
+  const message = String(error?.message || '');
+  return !/fetch failed|failed to fetch|networkerror|load failed/i.test(message);
 }
 
 function byteSize(bytes) {

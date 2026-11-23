@@ -250,6 +250,7 @@ async function generate(request, opened, row, options) {
     bytes,
     character,
     note: row.generated?.leaderNote || '',
+    fetchImpl: options.fetch ?? globalThis.fetch,
   });
   if (result.error) {
     return fail(result.status, { error: result.error, detail: result.detail }, opened);

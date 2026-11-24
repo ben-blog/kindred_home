@@ -78,6 +78,10 @@ var y = 0;
 var target = 0;
 var offsets = [];
 var detailOpen = false;
+var gridOpen = false;
+var gridOpener = null;
+var gridRevealRemaining = null;
+var revealDeadline = 0;
 var revealTimer = 0;
 var wheelLock = 0;
 var viewed = Object.create(null);
@@ -89,6 +93,10 @@ var $line = document.getElementById('pick-line');
 var $row = document.getElementById('pick-row');
 var $kicker = document.getElementById('pick-kicker');
 var $index = document.getElementById('index');
+var $ticks = document.getElementById('index-ticks');
+var $grid = document.getElementById('grid-panel');
+var $sheet = document.getElementById('grid-sheet');
+var $gridClose = document.getElementById('grid-close');
 var $panel = document.getElementById('detail-panel');
 var $ltKo = document.getElementById('lt-ko');
 var $ltEn = document.getElementById('lt-en');
@@ -138,7 +146,11 @@ function paintCopy() {
     if (cap && chosen) cap.textContent = titleOf(chosen);
     if (photo && chosen) photo.alt = titleOf(chosen);
   }
-  var ticks = $index.children;
+  var tiles = $sheet.children;
+  for (var n = 0; n < tiles.length; n += 1) {
+    tiles[n].setAttribute('aria-label', titleOf(items[n]));
+  }
+  var ticks = $ticks.children;
   for (var k = 0; k < ticks.length; k += 1) {
     ticks[k].setAttribute('aria-label', titleOf(items[k]) || String(k + 1));
   }
@@ -174,6 +186,7 @@ function renderSlides() {
     count.textContent = String(i + 1).padStart(2, '0');
     bar.appendChild(count);
     bar.appendChild(info);
+    bar.appendChild(gridEntry());
     if ((item.actions[lang] || item.actions.ko || []).length) {
       var badge = document.createElement('span');
       badge.className = 'act';
@@ -189,7 +202,7 @@ function renderSlides() {
 }
 
 function renderIndex() {
-  $index.innerHTML = '';
+  $ticks.innerHTML = '';
   items.forEach(function (item, i) {
     var tick = document.createElement('button');
     tick.type = 'button';
@@ -198,13 +211,117 @@ function renderIndex() {
     tick.addEventListener('click', function () {
       go(i + 1);
     });
-    $index.appendChild(tick);
+    $ticks.appendChild(tick);
   });
   markIndex();
+  renderGrid();
+}
+
+function gridEntry() {
+  var button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'grid-entry';
+  button.textContent = 'index';
+  button.setAttribute('aria-haspopup', 'dialog');
+  button.setAttribute('aria-expanded', String(gridOpen));
+  button.setAttribute('aria-controls', 'grid-panel');
+  button.addEventListener('click', function () {
+    openGrid(button);
+  });
+  return button;
+}
+
+function markGrid() {
+  var ids = (pick && pick.item_ids) || [];
+  Array.prototype.forEach.call($sheet.children, function (tile, i) {
+    if (index === i + 1) tile.setAttribute('aria-current', 'true');
+    else tile.removeAttribute('aria-current');
+    tile.querySelector('.grid-today').hidden = ids.indexOf(items[i].id) < 0;
+  });
+}
+
+function renderGrid() {
+  $sheet.innerHTML = '';
+  document.getElementById('grid-count').textContent = items.length + ' photos';
+  items.forEach(function (item, i) {
+    var tile = document.createElement('button');
+    tile.type = 'button';
+    tile.className = 'grid-tile';
+    tile.setAttribute('aria-label', titleOf(item));
+    var image = document.createElement('img');
+    image.src = gallerySrc(item.filename);
+    image.alt = '';
+    image.loading = 'lazy';
+    image.draggable = false;
+    var number = document.createElement('span');
+    number.className = 'grid-number';
+    number.textContent = String(i + 1).padStart(2, '0');
+    var today = document.createElement('span');
+    today.className = 'grid-today';
+    today.textContent = 'today';
+    tile.appendChild(image);
+    tile.appendChild(number);
+    tile.appendChild(today);
+    tile.addEventListener('click', function () {
+      closeGrid();
+      go(i + 1, reduced);
+      arm(currentSlide());
+    });
+    $sheet.appendChild(tile);
+  });
+  markGrid();
+  if (gridOpen) focusGrid();
+}
+
+function focusGrid() {
+  var current = $sheet.querySelector('[aria-current="true"]');
+  (current || $gridClose).focus({ preventScroll: true });
+  if (current) current.scrollIntoView({ block: 'nearest' });
+}
+
+function openGrid(opener) {
+  if (detailOpen || gridOpen) return;
+  gridOpener = opener;
+  gridOpen = true;
+  touching = false;
+  // Pause the reveal while the visitor is browsing the index.
+  gridRevealRemaining = revealDeadline ? Math.max(0, revealDeadline - performance.now()) : null;
+  window.clearTimeout(revealTimer);
+  document.body.classList.add('grid-open');
+  $grid.inert = false;
+  $grid.setAttribute('aria-hidden', 'false');
+  $grid.classList.add('open');
+  document.querySelectorAll('.grid-entry').forEach(function (button) {
+    button.setAttribute('aria-expanded', 'true');
+  });
+  stage.inert = true;
+  $index.inert = true;
+  document.getElementById('header').inert = true;
+  markGrid();
+  focusGrid();
+}
+
+function closeGrid() {
+  if (!gridOpen) return;
+  gridOpen = false;
+  $grid.classList.remove('open');
+  document.body.classList.remove('grid-open');
+  stage.inert = false;
+  $index.inert = false;
+  document.getElementById('header').inert = false;
+  document.querySelectorAll('.grid-entry').forEach(function (button) {
+    button.setAttribute('aria-expanded', 'false');
+  });
+  if (gridOpener && gridOpener.isConnected) gridOpener.focus({ preventScroll: true });
+  $grid.inert = true;
+  $grid.setAttribute('aria-hidden', 'true');
+  if (gridRevealRemaining !== null) arm(currentSlide(), gridRevealRemaining);
+  gridRevealRemaining = null;
 }
 
 function renderPicks() {
   $row.innerHTML = '';
+  markGrid();
   if (!pick) return;
   $line.textContent = pick.line || '';
   (pick.item_ids || []).forEach(function (id) {
@@ -240,7 +357,7 @@ function measure() {
 }
 
 function markIndex() {
-  var ticks = $index.children;
+  var ticks = $ticks.children;
   for (var i = 0; i < ticks.length; i += 1) {
     ticks[i].classList.toggle('on', index > 0 && i === index - 1);
   }
@@ -263,12 +380,16 @@ function reveal(slide) {
   slide.classList.add('revealed');
 }
 
-function arm(slide) {
+function arm(slide, delay) {
   window.clearTimeout(revealTimer);
+  revealDeadline = 0;
   if (!slide || reduced || slide.classList.contains('revealed')) return;
+  var wait = delay === undefined ? REVEAL_MS : delay;
+  revealDeadline = performance.now() + wait;
   revealTimer = window.setTimeout(function () {
+    revealDeadline = 0;
     reveal(slide);
-  }, REVEAL_MS);
+  }, wait);
 }
 
 function noteView(i) {
@@ -289,16 +410,19 @@ function go(next, instant) {
   target = offsets[index] || 0;
   if (instant || reduced) y = target;
   markIndex();
+  markGrid();
   var slide = currentSlide();
   if (slide) {
     arm(slide);
     noteView(index - 1);
   } else {
     window.clearTimeout(revealTimer);
+    revealDeadline = 0;
   }
 }
 
 function point(clientX, clientY) {
+  if (gridOpen || detailOpen) return;
   var slide = currentSlide();
   if (!slide || reduced || slide.classList.contains('revealed')) return;
   var rect = slide.getBoundingClientRect();
@@ -402,6 +526,7 @@ function fillDetail(i) {
 
 function openDetail(i) {
   if (!items[i]) return;
+  closeGrid();
   go(i + 1, true);
   detailOpen = true;
   history.pushState({ detail: true }, '');
@@ -507,10 +632,24 @@ window.addEventListener('popstate', function (event) {
 });
 
 window.addEventListener('keydown', function (event) {
-  if (event.key === 'Escape') closeDetail();
   if (detailOpen) {
+    if (event.key === 'Escape') closeDetail();
     if (event.key === 'ArrowRight') navDetail(1);
     if (event.key === 'ArrowLeft') navDetail(-1);
+    return;
+  }
+  if (gridOpen) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeGrid();
+    }
+    if (event.key === 'Tab') {
+      var controls = [$gridClose].concat(Array.prototype.slice.call($sheet.children));
+      var at = controls.indexOf(document.activeElement);
+      var next = (at + (event.shiftKey ? -1 : 1) + controls.length) % controls.length;
+      event.preventDefault();
+      controls[next].focus();
+    }
     return;
   }
   if (event.key === 'ArrowDown' || event.key === 'ArrowRight' || event.key === 'PageDown') {
@@ -526,7 +665,7 @@ window.addEventListener('keydown', function (event) {
 window.addEventListener(
   'wheel',
   function (event) {
-    if (detailOpen) return;
+    if (detailOpen || gridOpen) return;
     event.preventDefault();
     var now = performance.now();
     if (now < wheelLock) return;
@@ -545,7 +684,7 @@ var stage = document.getElementById('stage');
 stage.addEventListener(
   'touchstart',
   function (event) {
-    if (detailOpen || event.target.closest('button, a, #index')) return;
+    if (detailOpen || gridOpen || event.target.closest('button, a, #index')) return;
     touching = true;
     touchX = event.touches[0].clientX;
     touchY = event.touches[0].clientY;
@@ -556,7 +695,7 @@ stage.addEventListener(
 stage.addEventListener(
   'touchmove',
   function (event) {
-    if (!touching || detailOpen) return;
+    if (!touching || detailOpen || gridOpen) return;
     point(event.touches[0].clientX, event.touches[0].clientY);
     if (Math.abs(event.touches[0].clientY - touchY) > 12) event.preventDefault();
   },
@@ -564,7 +703,7 @@ stage.addEventListener(
 );
 
 stage.addEventListener('touchend', function (event) {
-  if (!touching) return;
+  if (!touching || detailOpen || gridOpen) return;
   touching = false;
   var dy = event.changedTouches[0].clientY - touchY;
   var dx = event.changedTouches[0].clientX - touchX;
@@ -578,7 +717,7 @@ stage.addEventListener('pointermove', function (event) {
 });
 
 stage.addEventListener('click', function (event) {
-  if (event.target.closest('button, a, #index, #picks')) return;
+  if (gridOpen || detailOpen || event.target.closest('button, a, #index, #picks')) return;
   reveal(currentSlide());
 });
 
@@ -614,6 +753,14 @@ back.addEventListener('click', function () {
 });
 document.getElementById('nav-kin').addEventListener('click', function () {
   leave('../kin/');
+});
+
+document.querySelector('#index .grid-entry').addEventListener('click', function (event) {
+  openGrid(event.currentTarget);
+});
+$gridClose.addEventListener('click', closeGrid);
+$grid.addEventListener('click', function (event) {
+  if (event.target === $grid || event.target === $sheet) closeGrid();
 });
 
 setLang(lang);

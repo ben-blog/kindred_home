@@ -217,6 +217,7 @@ test('the proxy streams the agent reply and stamps an expression', async () => {
     const body = JSON.parse(init.body);
     assert.equal(body.userId, 'ben');
     assert.equal(body.sessionId, 'session-1');
+    assert.equal(Object.hasOwn(body, 'leaderAdultMode'), false);
     assert.equal(body.messages.at(-1).content, 'hey');
     assert.deepEqual(body.currentPlan, { currentGoal: 'listen' });
     return new Response(
@@ -257,6 +258,76 @@ test('the proxy streams the agent reply and stamps an expression', async () => {
   assert.deepEqual(events.at(-1).plan, { currentGoal: 'stay' });
   assert.equal(events.at(-1).character, undefined);
   assert.equal(seen.length, 1);
+});
+
+test('leader DRED chat sets adult mode and preserves session and world state', async () => {
+  let payload;
+  const response = await handleWorldChat(
+    request('/api/world/chat/dred', {
+      ...signedIn,
+      body: {
+        messages: [{ role: 'user', content: 'hey' }],
+        sessionId: 'dred-session-1',
+        continue: false,
+      },
+    }),
+    base({
+      slug: 'dred',
+      fetch: leaderFetch(leaderId, (href, init) => {
+        assert.equal(href, 'https://dred-agent.example.test/api/dred/chat');
+        payload = JSON.parse(init.body);
+        return new Response(sse(['data: {"type":"done"}\n\n']), {
+          headers: { 'content-type': 'text/event-stream' },
+        });
+      }),
+    })
+  );
+  assert.equal(response.status, 200);
+  await response.text();
+  assert.equal(payload.leaderAdultMode, true);
+  assert.equal(Object.hasOwn(payload, 'continue'), false);
+  assert.equal(payload.sessionId, 'dred-session-1');
+  assert.deepEqual(payload.messages, [{ role: 'user', content: 'hey' }]);
+  const initial = canon.characters.find((character) => character.slug === 'dred').initial;
+  assert.deepEqual(payload.world_state, {
+    energy: initial.energy,
+    energy_max: canon.world.rules.energyMax,
+    mood: initial.mood,
+    level: initial.level,
+    pending_warmth: 2,
+    recent_warmth: 0,
+    daily_chat_bonus_granted_now: true,
+  });
+});
+
+test('client adult mode flags are rejected before calling either agent', async () => {
+  for (const slug of ['kin', 'dred']) {
+    for (const leaderAdultMode of [true, false]) {
+      for (const continuing of [true, false]) {
+        let called = false;
+        const response = await handleWorldChat(
+          request(`/api/world/chat/${slug}`, {
+            ...signedIn,
+            body: {
+              messages: [{ role: continuing ? 'assistant' : 'user', content: 'hey' }],
+              continue: continuing,
+              leaderAdultMode,
+            },
+          }),
+          base({
+            slug,
+            fetch: leaderFetch(leaderId, () => {
+              called = true;
+              throw new Error('agent must not run');
+            }),
+          })
+        );
+        assert.equal(response.status, 400);
+        assert.deepEqual(await response.json(), { error: 'bad request' });
+        assert.equal(called, false);
+      }
+    }
+  }
 });
 
 test('a split SSE event is reassembled and low energy can settle on tired', async () => {
@@ -841,6 +912,9 @@ test('continue injects a synthetic newest user turn and keeps character routing'
       { role: 'user', content: CONTINUE_PROMPT },
     ]);
     assert.equal(Object.hasOwn(payload, 'continue'), false);
+    assert.equal(payload.sessionId, `continue-${slug}`);
+    if (slug === 'dred') assert.equal(payload.leaderAdultMode, true);
+    else assert.equal(Object.hasOwn(payload, 'leaderAdultMode'), false);
   }
 });
 

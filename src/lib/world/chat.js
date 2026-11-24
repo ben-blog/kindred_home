@@ -105,6 +105,7 @@ async function dispatch(request, options) {
   }
 
   const payload = { messages: parsed.messages };
+  if (slug === 'dred') payload.leaderAdultMode = true;
   if (parsed.sessionId) payload.sessionId = parsed.sessionId;
   if (route.chatUser) payload.userId = route.chatUser;
   if (parsed.plan) payload.currentPlan = parsed.plan;

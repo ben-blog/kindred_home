@@ -55,10 +55,12 @@ const others = people.filter((item) => item.slug !== person.slug);
       <a href="/">kinxdred</a>
       <a class="brain-hub" href="/world/admin">hub</a>
       <a href="/world/brain">brain</a>
-      <a href={`/world/chat/${person.slug}/`}>{person.name}</a>
+      <a href={`/world/chat/${person.slug}/`} aria-current="page" style={`color:${person.accent}`}>
+        {person.name}
+      </a>
       {
         others.map((item) => (
-          <a href={`/world/brain/${item.slug}/`} style={`color:${item.accent}`}>
+          <a href={`/world/brain/${item.slug}/`}>
             {item.name}
           </a>
         ))

@@ -6,18 +6,13 @@ export function bindWarmth(root) {
   for (const control of root.querySelectorAll('[data-warmth]')) {
     if (bound.has(control)) continue;
     const button = control.querySelector('button');
-    const note = control.querySelector('[data-warmth-note]');
+    const note =
+      control.querySelector('[data-warmth-note]') ??
+      control.closest('[data-character]')?.querySelector('[data-warmth-note]');
     const target = control.dataset.warmth;
     if (!button || !note || !target) continue;
     bound.add(control);
-    button.addEventListener('click', () =>
-      sendWarmth(
-        button,
-        note,
-        target,
-        control.classList.contains('character') ? 'warmth sent' : NOTE
-      )
-    );
+    button.addEventListener('click', () => sendWarmth(button, note, target, control));
   }
 }
 
@@ -28,9 +23,13 @@ export function rateNote(retryAfter) {
   return `already sent, try again in ${minutes} min`;
 }
 
-async function sendWarmth(button, note, target, successNote) {
+async function sendWarmth(button, note, target, control) {
   button.disabled = true;
-  let message = 'Warmth did not send.';
+  button.dataset.sending = 'true';
+  const fail = control.dataset.noteFail || 'Warmth did not send.';
+  let message = fail;
+  let wait = 0;
+  let outcome = 'failed';
   try {
     const where = globalThis.location.pathname;
     const body = { target, amount: 1 };
@@ -40,13 +39,52 @@ async function sendWarmth(button, note, target, successNote) {
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify(body),
     });
-    if (response.ok) message = successNote;
-    else if (response.status === 429) message = rateNote(response.headers.get('retry-after'));
+    if (response.ok) {
+      outcome = 'sent';
+      message =
+        control.dataset.noteSent ||
+        (control.classList.contains('character') ? 'warmth sent' : NOTE);
+      control.dispatchEvent(new CustomEvent('warmth:sent', { bubbles: true }));
+    } else if (response.status === 429) {
+      outcome = 'waiting';
+      message = warmthWaitNote(response.headers.get('retry-after'), control.dataset.noteWait);
+      if (control.dataset.noteWait) {
+        const seconds = Number(response.headers.get('retry-after'));
+        wait = Number.isFinite(seconds) && seconds > 0 ? seconds : 600;
+      }
+    }
   } catch {
-    message = 'Warmth did not send.';
+    message = fail;
   }
+  note.dataset.outcome = outcome;
+  if (outcome === 'failed' && control.dataset.noteFail)
+    control.dispatchEvent(new CustomEvent('warmth:failed', { bubbles: true }));
   note.textContent = message;
   note.hidden = false;
   note.classList.add('is-on');
-  button.disabled = false;
+  delete button.dataset.sending;
+  if (wait) {
+    const label = button.textContent;
+    button.dataset.waitUntil = String(Date.now() + wait * 1000);
+    const update = () => {
+      const seconds = (Number(button.dataset.waitUntil) - Date.now()) / 1000;
+      if (seconds <= 0) {
+        delete button.dataset.waitUntil;
+        button.disabled = false;
+        button.textContent = label;
+      } else {
+        button.textContent = warmthWaitNote(seconds, control.dataset.noteWait);
+        setTimeout(update, Math.min(seconds * 1000, 60000));
+      }
+    };
+    update();
+  } else button.disabled = false;
+}
+
+export function warmthWaitNote(retryAfter, template) {
+  if (!template) return rateNote(retryAfter);
+  const seconds = Number(retryAfter);
+  const minutes =
+    Number.isFinite(seconds) && seconds > 0 ? Math.max(1, Math.ceil(seconds / 60)) : 10;
+  return template.replace('{minutes}', String(minutes));
 }

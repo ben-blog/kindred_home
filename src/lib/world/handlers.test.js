@@ -592,3 +592,43 @@ function leaderFetch(id) {
     throw new Error(href);
   };
 }
+
+test('pending read failure preserves GET 200 without a prediction', async () => {
+  const state = createState(canon);
+  const response = await handleWorldGet(
+    request('/api/world'),
+    base({
+      store: {
+        latest: async () => ({ state, last_event_seq: 17 }),
+        pendingEvents: async () => {
+          throw new Error('offline');
+        },
+      },
+    })
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.next, undefined);
+  assert.equal(body.tick, 0);
+});
+
+test('world handler reads pending events after the persisted cursor', async () => {
+  const state = createState(canon);
+  const response = await handleWorldGet(
+    request('/api/world'),
+    base({
+      store: {
+        latest: async () => ({ state, last_event_seq: 17 }),
+        pendingEvents: async (id, cursor) => {
+          assert.equal(id, state.worldId);
+          assert.equal(cursor, 17);
+          return [];
+        },
+      },
+    })
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.pending, 0);
+  assert.equal(body.next.kin.energy, state.characters.kin.energy - state.rules.energyIdleDecay);
+});

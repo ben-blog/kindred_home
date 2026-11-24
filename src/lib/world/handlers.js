@@ -72,7 +72,16 @@ async function readWorld(request, options) {
     return json(502, { error: 'unavailable' });
   }
   const state = row?.state ?? createState(opened.canon);
-  const view = publicState(state);
+  let extras;
+  try {
+    const records = await store.pendingEvents(opened.canon.world.id, row?.last_event_seq ?? 0);
+    const at = new Date((options.now ?? Date.now)()).toISOString();
+    const preview = reduceTick(state, records, leaderTickEvent(state, 'preview', at));
+    extras = { preview: preview.state };
+  } catch {
+    // A queued-event read must not hide the last persisted snapshot.
+  }
+  const view = publicState(state, extras);
   if (!view) return json(502, { error: 'unavailable' });
   return json(200, view);
 }

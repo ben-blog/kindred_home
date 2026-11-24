@@ -134,6 +134,35 @@ export function createWorldStore(config, fetchImpl = globalThis.fetch) {
         p_input_events: null,
       });
     },
+    async pendingEvents(worldId, afterSeq) {
+      requireSlug(worldId);
+      const query = new URLSearchParams({
+        select: 'seq,id,world_id,at,who,what,place,target,payload,source',
+        world_id: `eq.${worldId}`,
+        seq: `gt.${Number.isInteger(afterSeq) && afterSeq >= 0 ? afterSeq : 0}`,
+        what: 'neq.tick',
+        order: 'seq.asc',
+        limit: '2000',
+      });
+      const rows = await request(`${config.url}/rest/v1/world_events?${query}`, {
+        method: 'GET',
+        headers,
+      });
+      if (!Array.isArray(rows)) throw new Error('store');
+      return rows.map((row) => ({
+        seq: row.seq,
+        id: row.id,
+        worldId: row.world_id,
+        at: row.at,
+        who: row.who,
+        what: row.what,
+        where: row.place,
+        target: row.target,
+        payload: row.payload,
+        source: row.source,
+        tick: null,
+      }));
+    },
     async latest(worldId) {
       const rows = await request(
         `${config.url}/rest/v1/world_snapshots?select=tick,state,last_event_seq&world_id=eq.${encodeURIComponent(worldId)}&order=tick.desc&limit=1`,

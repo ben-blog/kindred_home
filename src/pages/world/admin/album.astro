@@ -2,8 +2,9 @@
 export const prerender = false;
 
 import { getCollection } from 'astro:content';
-import Frame from '../../../components/world/Frame.astro';
-import Base from '../../../layouts/Base.astro';
+import Layout from '../../../components/admin/Layout.astro';
+import { adminCopy as copy } from '../../../lib/admin-copy.js';
+import '../../../styles/admin.css';
 import { memoryEmotions } from '../../../config/memory-emotions.js';
 import { text } from '../../../lib/locale.js';
 import { isPublicStatus } from '../../../lib/publish.js';
@@ -13,34 +14,21 @@ const people = (await getCollection('characters'))
   .sort((a, b) => a.data.slug.localeCompare(b.data.slug));
 
 const fields = [
-  ['title', 'title'],
-  ['technique', 'technique'],
-  ['description', 'description'],
-  ['kin_perspective', 'kin perspective'],
-  ['dred_perspective', 'dred perspective'],
+  ['title', copy.title],
+  ['technique', copy.technique],
+  ['description', copy.description],
+  ['kin_perspective', 'KIN 시점'],
+  ['dred_perspective', 'DRED 시점'],
 ];
 ---
 
-<Base frame="world" title="Album — kinxdred" description="Leader album for the kinxdred galleries." robots="noindex">
-  <Frame>
+<Layout title="앨범">
     <div class="album">
-      <p class="eyebrow">leader</p>
-      <h1>Album</h1>
-      <p class="world-copy">
-        <a href="/world/admin">hub</a>
-        <a href="/world/brain">brain</a>
-      </p>
-      <form class="panel" id="magic-form">
-        <label class="eyebrow" for="leader-email">email</label>
-        <input id="leader-email" name="email" type="email" autocomplete="username" required maxlength="200" />
-        <div class="world-actions">
-          <button type="submit">send link</button>
-          <button type="button" id="sign-out" hidden>sign out</button>
-        </div>
-      </form>
-      <div id="studio" hidden>
+      <p class="eyebrow">leader album</p>
+      <h1>{copy.album}</h1>
+      <div id="studio">
         <form class="panel" id="upload-form">
-          <label class="eyebrow" for="album-character">character</label>
+          <label class="eyebrow" for="album-character">{copy.character}</label>
           <select id="album-character" name="character" required>
             {
               people.map((entry) => (
@@ -48,14 +36,19 @@ const fields = [
               ))
             }
           </select>
-          <label class="eyebrow" for="album-file">picture</label>
+          <label class="eyebrow" for="album-file">{copy.picture}</label>
           <input id="album-file" name="image" type="file" accept="image/png,image/jpeg,image/webp" required />
-          <label class="eyebrow" for="album-note">note</label>
-          <input id="album-note" name="note" type="text" maxlength="200" placeholder="optional, one line" />
+          <label class="eyebrow" for="album-note">{copy.note}</label>
+          <input id="album-note" name="note" type="text" maxlength="200" placeholder="선택, 한 줄" />
           <div class="world-actions">
-            <button type="submit">upload</button>
+            <button class="btn ghost" type="submit">{copy.upload}</button>
           </div>
         </form>
+        <div class="album-tabs" role="tablist" aria-label="앨범 상태">
+          <button class="btn ghost" role="tab" data-tab="pending" aria-selected="true">검토 대기</button>
+          <button class="btn ghost" role="tab" data-tab="published" aria-selected="false">게시됨</button>
+          <button class="btn ghost" role="tab" data-tab="rejected" aria-selected="false">거절됨</button>
+        </div>
         <ul class="album-list" id="album-list"></ul>
         <form class="panel" id="review" hidden>
           <img class="album-preview" id="review-image" alt="" />
@@ -96,42 +89,36 @@ const fields = [
           </select>
           <label class="eyebrow" for="field-intensity">intensity</label>
           <input id="field-intensity" type="number" min="0" max="1" step="0.01" />
-          <label class="eyebrow" for="field-reason">why</label>
+          <label class="eyebrow" for="field-reason">{copy.reason}</label>
           <input id="field-reason" maxlength="180" />
           <label class="eyebrow" for="field-main">
-            <input id="field-main" type="checkbox" /> show on main
+            <input id="field-main" type="checkbox" /> {copy.main}
           </label>
           <div class="world-actions">
-            <button type="button" id="save">save</button>
-            <button type="button" id="regenerate">regenerate</button>
-            <button type="button" id="publish">approve and publish</button>
+            <button class="btn ghost" type="button" id="save">{copy.save}</button>
+            <button class="btn ghost" type="button" id="regenerate">{copy.regenerate}</button>
+            <button class="btn ghost" type="button" id="publish">{copy.publish}</button>
           </div>
-          <label class="eyebrow" for="reject-reason">reject because</label>
+          <label class="eyebrow" for="reject-reason">{copy.reason}</label>
           <input id="reject-reason" maxlength="500" />
           <div class="world-actions">
-            <button type="button" id="reject">reject</button>
+            <button class="btn ghost" type="button" id="reject">{copy.rejectConfirm}</button>
           </div>
         </form>
       </div>
-      <p class="world-status" id="album-status" aria-live="polite"></p>
+      <p class="world-status" id="album-status" data-admin-message aria-live="polite"></p>
     </div>
-  </Frame>
-</Base>
+</Layout>
 
 <script>
-  import { attachImeEnterGuard } from '../../../lib/ime-enter.js';
-
-  const form = document.querySelector('#magic-form');
-  const email = document.querySelector('#leader-email');
-  const signOut = document.querySelector('#sign-out');
-  const studio = document.querySelector('#studio');
+  import { adminCopy as copy, adminMessage, relativeTime } from '../../../lib/admin-copy.js';
   const status = document.querySelector('#album-status');
   const uploadForm = document.querySelector('#upload-form');
   const list = document.querySelector('#album-list');
   const review = document.querySelector('#review');
+  review.addEventListener('submit', (event) => event.preventDefault());
   const reviewImage = document.querySelector('#review-image');
   const reviewMeta = document.querySelector('#review-meta');
-  if (email && form) attachImeEnterGuard(email, form);
 
   const jsonHeaders = { 'content-type': 'application/json', accept: 'application/json' };
   let current = null;
@@ -142,47 +129,70 @@ const fields = [
   }
 
   async function readBody(response) {
+    if ([401, 403].includes(response.status)) location.replace('/login?next=/world/admin/album');
     return response.json().catch(() => ({}));
   }
 
   function detail(body, fallback) {
-    return body.detail || fallback;
+    return adminMessage(copy.fail, { detail: body.detail || fallback });
   }
 
-  async function refreshSession() {
-    const response = await fetch('/api/world/auth/session', { headers: { accept: 'application/json' } });
-    if (response.status === 503) {
-      say('Unavailable.');
-      studio.hidden = true;
-      return false;
-    }
-    const body = await readBody(response);
-    const signedIn = body.signedIn === true;
-    studio.hidden = !signedIn;
-    signOut.hidden = !signedIn;
-    email.disabled = signedIn;
-    if (signedIn) {
-      say('Signed in.');
-      await loadList();
-    }
-    return signedIn;
-  }
-
+  let rows = [];
+  let tab = 'pending';
+  let initialItem = new URLSearchParams(location.search).get('id');
   async function loadList() {
     const response = await fetch('/api/world/album', { headers: { accept: 'application/json' } });
-    if (!response.ok) return;
+    if ([401, 403].includes(response.status)) { location.replace('/login?next=/world/admin/album'); return; }
+    if (!response.ok) throw new Error(`앨범 목록 (${response.status})`);
     const body = await readBody(response);
-    list.replaceChildren();
-    for (const item of body.submissions || []) {
-      const entry = document.createElement('li');
-      const button = document.createElement('button');
-      button.type = 'button';
-      const title = item.caption?.en?.title || item.caption?.ko?.title || 'untitled';
-      button.textContent = `${item.character} · ${item.status} · ${title}`;
-      button.addEventListener('click', () => openItem(item));
-      entry.append(button);
-      list.append(entry);
+    rows = body.submissions || [];
+    if (initialItem) {
+      const item = rows.find((row) => row.id === initialItem);
+      if (item) {
+        tab = ['published', 'rejected'].includes(item.status) ? item.status : 'pending';
+        openItem(item);
+      } else say('사진을 찾을 수 없습니다.');
+      initialItem = null;
     }
+    renderList();
+  }
+  function renderList() {
+    const pending = rows.filter((row) => ['drafted', 'generated'].includes(row.status)).length;
+    for (const button of document.querySelectorAll('[data-tab]')) {
+      button.setAttribute('aria-selected', String(button.dataset.tab === tab));
+      if (button.dataset.tab === 'pending') button.textContent = `${copy.queue} ${pending}`;
+    }
+    list.replaceChildren();
+    const visible = rows.filter((row) => tab === 'pending' ? ['drafted', 'generated'].includes(row.status) : row.status === tab)
+      .sort((a, b) => tab === 'pending' ? new Date(a.createdAt) - new Date(b.createdAt) : new Date(b.updatedAt) - new Date(a.updatedAt));
+    for (const item of visible) {
+      const entry = document.createElement('li');
+      const button = document.createElement('button'); button.type = 'button';
+      button.setAttribute('aria-current', String(item.id === current?.id));
+      const thumb = document.createElement('span'); thumb.className = 'thumb';
+      if (item.ready) {
+        const image = document.createElement('img'); image.src = `/api/world/album/${encodeURIComponent(item.id)}/file`; image.alt = ''; image.loading = 'lazy'; thumb.append(image);
+      }
+      const label = document.createElement('span');
+      label.textContent = item.caption?.ko?.title || item.caption?.en?.title || copy.untitled;
+      const meta = document.createElement('small');
+      const tag = document.createElement('span'); tag.className = `tag ${item.status === 'generated' ? 'ready' : ''}`; tag.textContent = item.status;
+      meta.append(tag, `${item.character} · ${relativeTime(item.createdAt)}`); label.append(meta);
+      button.append(thumb, label);
+      button.addEventListener('click', () => { openItem(item); renderList(); });
+      entry.append(button); list.append(entry);
+    }
+    if (!visible.length) { const empty = document.createElement('li'); empty.textContent = tab === 'pending' ? copy.noReview : '사진이 없습니다'; list.append(empty); }
+  }
+  for (const button of document.querySelectorAll('[data-tab]')) {
+    button.addEventListener('click', () => { tab = button.dataset.tab; renderList(); });
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...document.querySelectorAll('[data-tab]')];
+      const next = tabs[(tabs.indexOf(button) + (event.key === 'ArrowRight' ? 1 : 2)) % tabs.length];
+      next.focus(); next.click();
+    });
   }
 
   function setFields(caption) {
@@ -238,8 +248,13 @@ const fields = [
 
   function openItem(item) {
     current = item;
+    const url = new URL(location.href); url.searchParams.set('id', item.id); history.replaceState(null, '', url);
+    document.querySelector('#reject-reason').value = '';
+
     review.hidden = false;
-    reviewImage.src = item.ready ? `/api/world/album/${item.id}/file` : '';
+    reviewImage.hidden = !item.ready;
+    if (item.ready) reviewImage.src = `/api/world/album/${encodeURIComponent(item.id)}/file`;
+    else reviewImage.removeAttribute('src');
     reviewImage.alt = item.caption?.en?.title || item.character;
     reviewMeta.textContent = [item.character, item.status, item.leaderNote, item.reviewerNote]
       .filter(Boolean)
@@ -265,7 +280,7 @@ const fields = [
       body: JSON.stringify({ character, note, type: file.type, bytes: file.size }),
     });
     const createdBody = await readBody(created);
-    if (!created.ok) throw new Error(detail(createdBody, 'The upload did not start.'));
+    if (!created.ok) throw new Error(detail(createdBody, '업로드 시작 실패'));
     const size = createdBody.chunkBytes;
     for (let index = 0, offset = 0; offset < file.size; index += 1) {
       const piece = file.slice(offset, offset + size);
@@ -276,22 +291,22 @@ const fields = [
       });
       if (!sent.ok) {
         const body = await readBody(sent);
-        throw new Error(detail(body, 'A piece of the upload failed.'));
+        throw new Error(detail(body, '사진 전송 실패'));
       }
       offset += size;
     }
     const received = await fetch(`/api/world/album/${createdBody.id}/receive`, { method: 'POST' });
     const receivedBody = await readBody(received);
-    if (!received.ok) throw new Error(detail(receivedBody, 'The picture could not be saved.'));
+    if (!received.ok) throw new Error(detail(receivedBody, '사진 저장 실패'));
     const generated = await fetch(`/api/world/album/${createdBody.id}/generate`, { method: 'POST' });
     const generatedBody = await readBody(generated);
     await loadList();
     if (!generated.ok) {
       openItem(receivedBody);
-      throw new Error(detail(generatedBody, 'The caption failed. Regenerate.'));
+      throw new Error(detail(generatedBody, '캡션 생성 실패. 다시 써 주세요.'));
     }
     openItem(generatedBody);
-    say('Caption ready.');
+    say(copy.captionReady);
   }
 
   const params = new URLSearchParams(location.search);
@@ -315,33 +330,11 @@ const fields = [
 
   if (!handed) {
     try {
-      await refreshSession();
+      await loadList();
     } catch {
-      say('Unavailable.');
+      say(adminMessage(copy.fail, { detail: '서버 응답 없음' }));
     }
   }
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    say('Sending.');
-    try {
-      const response = await fetch('/api/world/auth/magic', {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify({ email: email.value }),
-      });
-      say(response.ok ? 'Check your email.' : 'Unavailable.');
-    } catch {
-      say('Unavailable.');
-    }
-  });
-
-  signOut.addEventListener('click', async () => {
-    await fetch('/api/world/auth/session', { method: 'DELETE' }).catch(() => {});
-    studio.hidden = true;
-    say('');
-    await refreshSession().catch(() => {});
-  });
 
   uploadForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -349,7 +342,7 @@ const fields = [
     const file = document.querySelector('#album-file').files[0];
     if (!file) return;
     busy = true;
-    say('Uploading.');
+    say(copy.uploading);
     try {
       await upload(
         file,
@@ -357,7 +350,7 @@ const fields = [
         document.querySelector('#album-note').value
       );
     } catch (error) {
-      say(error.message || 'The upload failed.');
+      say(error.message || '업로드 실패');
     }
     busy = false;
   });
@@ -369,14 +362,14 @@ const fields = [
       body: JSON.stringify(caption ? { caption } : {}),
     });
     const body = await readBody(response);
-    if (!response.ok) throw new Error(detail(body, 'That did not work.'));
+    if (!response.ok) throw new Error(detail(body, '서버 요청 실패'));
     return body;
   }
 
   document.querySelector('#save').addEventListener('click', async () => {
     if (!current || busy) return;
     busy = true;
-    say('Saving.');
+    say(copy.saving);
     try {
       const response = await fetch(`/api/world/album/${current.id}`, {
         method: 'PATCH',
@@ -384,10 +377,10 @@ const fields = [
         body: JSON.stringify({ caption: readCaption() }),
       });
       const body = await readBody(response);
-      if (!response.ok) throw new Error(detail(body, 'The caption is missing a field.'));
+      if (!response.ok) throw new Error(detail(body, '캡션에 빠진 항목이 있습니다'));
       openItem(body);
       await loadList();
-      say('Saved.');
+      say(copy.saved);
     } catch (error) {
       say(error.message);
     }
@@ -397,14 +390,14 @@ const fields = [
   document.querySelector('#regenerate').addEventListener('click', async () => {
     if (!current || busy) return;
     busy = true;
-    say('Writing.');
+    say(copy.writing);
     try {
       const response = await fetch(`/api/world/album/${current.id}/generate`, { method: 'POST' });
       const body = await readBody(response);
-      if (!response.ok) throw new Error(detail(body, 'The caption failed. Regenerate.'));
+      if (!response.ok) throw new Error(detail(body, '캡션 생성 실패. 다시 써 주세요.'));
       openItem(body);
       await loadList();
-      say('Caption ready.');
+      say(copy.captionReady);
     } catch (error) {
       say(error.message);
     }
@@ -413,11 +406,12 @@ const fields = [
 
   document.querySelector('#publish').addEventListener('click', async () => {
     if (!current || busy) return;
+    if (!confirm(copy.confirmPublish)) return;
     busy = true;
-    say('Publishing.');
+    say(copy.publishing);
     try {
       const body = await postCaption(`/api/world/album/${current.id}/publish`, readCaption());
-      say(body.url ? `Published. ${body.url}` : 'Published.');
+      say(copy.published);
       await loadList();
       if (body.status) openItem({ ...current, status: 'published', galleryItemId: body.itemId, ready: true });
     } catch (error) {
@@ -431,11 +425,11 @@ const fields = [
     if (!current || busy) return;
     const reason = document.querySelector('#reject-reason').value.trim();
     if (!reason) {
-      say('A rejection needs a reason.');
+      say(copy.reasonRequired);
       return;
     }
     busy = true;
-    say('Rejecting.');
+    say(copy.saving);
     try {
       const response = await fetch(`/api/world/album/${current.id}/reject`, {
         method: 'POST',
@@ -443,10 +437,10 @@ const fields = [
         body: JSON.stringify({ reason }),
       });
       const body = await readBody(response);
-      if (!response.ok) throw new Error(detail(body, 'That did not work.'));
+      if (!response.ok) throw new Error(detail(body, '서버 요청 실패'));
       openItem(body);
       await loadList();
-      say('Rejected.');
+      say(copy.rejected);
     } catch (error) {
       say(error.message);
     }

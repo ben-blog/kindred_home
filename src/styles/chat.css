@@ -961,3 +961,39 @@
     transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
+
+.call.call .call-continue-bar,
+.call.call .call-continue-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 16px;
+  background: rgba(8, 8, 8, 0.88);
+  backdrop-filter: blur(14px);
+  color: rgba(255, 255, 255, 0.72);
+  font:
+    12px/1.5 'DM Mono',
+    monospace;
+}
+.call.call .call-continue-bar {
+  border-top: 1px solid var(--chat-line);
+}
+.call.call .call-continue-controls {
+  justify-content: flex-end;
+}
+.call.call .call-continue-bar button,
+.call.call .call-continue-controls button {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--chat-line);
+  border-radius: 12px;
+  background: var(--chat-bubble);
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  cursor: pointer;
+}
+.call.call .call-continue-controls button:disabled {
+  opacity: 0.5;
+}

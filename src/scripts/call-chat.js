@@ -1,3 +1,4 @@
+import { CONTINUE_MAX, CONTINUE_GAP_MS, isContinueRequest } from '../lib/chat-continue.js';
 import { createMessageId, excerptFrom, isReplyId, normalizeReply } from '../lib/chat-reply.js';
 import { dayKey, groupsTogether, nearBottom } from '../lib/chat-thread.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
@@ -42,6 +43,65 @@ export function mountCall(config) {
   const cursor = { calm: 1 };
   let plan;
   let sessionId = '';
+
+  const continueBar = root.querySelector('#call-continue-bar');
+  const continueStart = root.querySelector('#call-continue-start');
+  let continueRun = null;
+  let continueBusy = false;
+  let continueWanted = false;
+  let submitVersion = 0;
+
+  function stopContinue() {
+    continueWanted = false;
+    continueRun?.abort();
+    continueRun = null;
+    continueBar.hidden = true;
+    continueStart.disabled = false;
+  }
+
+  function startContinue() {
+    if (
+      continueRun ||
+      continueBusy ||
+      !started ||
+      !messages.some((item) => item.role === 'assistant')
+    )
+      return;
+    if (draining || pending.length) {
+      continueWanted = true;
+      return;
+    }
+    if (messages.at(-1)?.role !== 'assistant' || Date.now() < holdUntil) return;
+    continueWanted = false;
+    const controller = new AbortController();
+    continueRun = controller;
+    continueBusy = true;
+    continueBar.hidden = false;
+    continueStart.disabled = true;
+    void (async () => {
+      try {
+        for (let count = 0; count < CONTINUE_MAX; count += 1) {
+          await new Promise((resolve) => {
+            const finish = () => {
+              clearTimeout(timer);
+              controller.signal.removeEventListener('abort', finish);
+              resolve();
+            };
+            const timer = setTimeout(finish, CONTINUE_GAP_MS);
+            controller.signal.addEventListener('abort', finish, { once: true });
+          });
+          if (controller.signal.aborted) break;
+          if ((await perform(null, controller)) !== 'ok') break;
+        }
+      } finally {
+        if (continueRun === controller) stopContinue();
+        continueBusy = false;
+        drain();
+      }
+    })();
+  }
+  root.querySelector('#call-continue-stop').addEventListener('click', stopContinue);
+  continueStart.addEventListener('click', startContinue);
 
   let started = 0;
   let draining = false;
@@ -500,6 +560,7 @@ export function mountCall(config) {
     let expression = 'calm';
     let world = null;
     let media = null;
+    let completed = false;
     const paint = (flush) => {
       const shown = flush ? reply : stablePrefix(reply);
       if (shown) typing(body, false);
@@ -520,6 +581,7 @@ export function mountCall(config) {
       } else if (data.type === 'trace' && data.stage === 'web_search') {
         addWebSearch(turn, data);
       } else if (data.type === 'done') {
+        completed = true;
         media = data.media || null;
         if (typeof data.expression === 'string') expression = data.expression;
         if (data.world && typeof data.world === 'object') world = data.world;
@@ -538,14 +600,22 @@ export function mountCall(config) {
         throw failure;
       }
     };
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      for (const data of parser.push(value)) handle(data);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        for (const data of parser.push(value)) handle(data);
+      }
+      for (const data of parser.flush()) handle(data);
+      paint(true);
+      return { reply, expression, world, media, completed };
+    } catch (error) {
+      paint(true);
+      await reader.cancel().catch(() => {});
+      throw error;
+    } finally {
+      reader.releaseLock();
     }
-    for (const data of parser.flush()) handle(data);
-    paint(true);
-    return { reply, expression, world, media };
   }
 
   function step(label, value) {
@@ -780,39 +850,70 @@ export function mountCall(config) {
     if (messages.at(-1)?.role === 'user') messages.pop();
   }
 
-  async function perform(batch) {
-    const text = joinBatch(batch);
-    const quote = batch[0].reply_to;
-    messages.push({
-      id: batch[0].row?.dataset.id || createMessageId(),
-      reply_to: quote,
-      role: 'user',
-      content: text,
-    });
+  function discardContinue(body, turn) {
+    typing(body, false);
+    const row = body.closest('.call-line');
+    if (body.textContent) return;
+    const previous = row.threadRecord?.previous;
+    const day = row.previousElementSibling;
+    row.remove();
+    if (day?.classList.contains('call-day') && !day.nextElementSibling) day.remove();
+    turn.article.remove();
+    if (lastLine?.item === row) lastLine = previous || null;
+    else {
+      let next = lastLine;
+      while (next && next.previous?.item !== row) next = next.previous;
+      if (next) next.previous = previous || null;
+    }
+    previous?.item.classList.remove('has-next');
+    const stamp = previous?.item.querySelector('.call-time');
+    if (stamp) stamp.hidden = false;
+  }
+
+  async function perform(batch, continuation = null) {
+    const controller = continuation || new AbortController();
+    const text = continuation ? copy.continueReceived : joinBatch(batch);
+    const quote = batch?.[0].reply_to;
+    if (!continuation)
+      messages.push({
+        id: batch[0].row?.dataset.id || createMessageId(),
+        reply_to: quote,
+        role: 'user',
+        content: text,
+      });
     const { body, turn } = openTurn(text);
     status.textContent = '';
     stage.classList.add('is-talking');
     try {
       const payload = { messages: clampHistory(messages) };
+      if (continuation) payload.continue = true;
       if (quote) payload.reply_to = { id: quote.id, excerpt: quote.excerpt };
       if (sessionId) payload.sessionId = sessionId;
       if (plan) payload.plan = plan;
-      if (searchToggle?.getAttribute('aria-pressed') === 'true') payload.forceWebSearch = true;
-      setSearch(false);
+      if (!continuation && searchToggle?.getAttribute('aria-pressed') === 'true')
+        payload.forceWebSearch = true;
+      if (!continuation) setSearch(false);
       let response;
       try {
         response = await fetch(`/api/world/chat/${slug}`, {
           method: 'POST',
           headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
           body: JSON.stringify(payload),
+          signal: controller.signal,
         });
-      } catch {
+      } catch (error) {
+        if (continuation) throw error;
         failTurn(body, turn, 'network');
         return 'fail';
       }
       if (response.status === 401 || response.status === 403) {
         location.replace('/login');
         return 'auth';
+      }
+      if (response.status === 429 && continuation) {
+        holdUntil = Date.now() + retryDelayMs(response.headers.get('retry-after'));
+        armHold(holdUntil);
+        throw new Error('rate');
       }
       if (response.status === 429) {
         typing(body, false);
@@ -824,6 +925,7 @@ export function mountCall(config) {
         return 'rate';
       }
       if (!response.ok || !response.body) {
+        if (continuation) throw new Error('response');
         failTurn(body, turn, '', response.status);
         return 'fail';
       }
@@ -831,10 +933,13 @@ export function mountCall(config) {
       try {
         result = await readStream(response, body, turn);
       } catch (error) {
+        if (continuation) throw error;
         failTurn(body, turn, error?.reason === 'stream' ? 'stream' : 'network', response.status);
         return 'fail';
       }
+      if (controller.signal.aborted) throw new Error('aborted');
       const reply = typeof result.reply === 'string' ? result.reply.trim() : '';
+      if (continuation && (!reply || !result.completed)) throw new Error('empty');
       if (!reply && !safeHttpUrl(result.media?.url)) {
         failTurn(body, turn, 'empty', response.status);
         return 'fail';
@@ -849,6 +954,10 @@ export function mountCall(config) {
       armSaved(turn.saved);
       return 'ok';
     } catch {
+      if (continuation) {
+        discardContinue(body, turn);
+        return 'fail';
+      }
       failTurn(body, turn, 'network');
       return 'fail';
     } finally {
@@ -858,7 +967,7 @@ export function mountCall(config) {
   }
 
   function drain() {
-    if (!started) return;
+    if (!started || continueBusy) return;
     if (Date.now() < holdUntil) return;
     if (draining) {
       rerun = true;
@@ -879,9 +988,12 @@ export function mountCall(config) {
         const batch = takeBatch(pending);
         if (!batch.length) break;
         release(batch);
+        const version = submitVersion;
         const result = await perform(batch);
         if (result === 'auth') return;
         if (result === 'ok') {
+          if (version === submitVersion && isContinueRequest(joinBatch(batch)))
+            continueWanted = true;
           failures = 0;
           continue;
         }
@@ -891,6 +1003,7 @@ export function mountCall(config) {
           armHold(holdUntil);
           return;
         }
+        continueWanted = false;
         showRetry(batch, 'parked');
         failures += 1;
       }
@@ -900,6 +1013,7 @@ export function mountCall(config) {
         rerun = false;
         drain();
       }
+      if (continueWanted && !pending.length) startContinue();
     }
   }
 
@@ -911,6 +1025,8 @@ export function mountCall(config) {
     try {
       const value = input.value.trim();
       if (!value) return;
+      submitVersion += 1;
+      stopContinue();
       input.value = '';
       autosize();
       document.querySelector('#call-empty')?.remove();

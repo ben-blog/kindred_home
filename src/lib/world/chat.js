@@ -1,4 +1,5 @@
 import { applyReplyToContent, normalizeReply } from '../chat-reply.js';
+import { CONTINUE_PROMPT, createContinueLimiter } from '../chat-continue.js';
 import { chatMedia } from '../chat-media.js';
 import { CHAT_MAX_MESSAGES, CHAT_MAX_TEXT, clampChatText } from '../chat-compose.js';
 import { upstreamTokens, clientAddress, createLimiter, sameOrigin } from '../proxy.js';
@@ -20,6 +21,7 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const TOKEN = /^[\x21-\x7E]{1,4096}$/;
 const CHAT_PATH = /^\/api\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:[_-][a-z0-9]+)*)+$/;
 
+const sharedContinueLimiter = createContinueLimiter();
 const sharedLimiter = createLimiter({ limit: CHAT_RATE_LIMIT, windowMs: CHAT_RATE_WINDOW_MS });
 
 export function chatRoutes(characters) {
@@ -91,6 +93,16 @@ async function dispatch(request, options) {
   if (read.error) return json(read.status, { error: read.error }, cors, leader.cookies);
   const parsed = normalizeChat(read.value);
   if (!parsed) return json(400, { error: 'bad request' }, cors, leader.cookies);
+
+  const continueLimiter = options.continueLimiter ?? sharedContinueLimiter;
+  if (!continueLimiter.allow(parsed.sessionId || ip, parsed.continue, now())) {
+    return json(
+      429,
+      { error: 'too many requests' },
+      { 'retry-after': '60', ...cors },
+      leader.cookies
+    );
+  }
 
   const payload = { messages: parsed.messages };
   if (parsed.sessionId) payload.sessionId = parsed.sessionId;
@@ -186,11 +198,14 @@ function normalizeChat(body) {
   if (
     !keys.includes('messages') ||
     keys.some(
-      (key) => !['messages', 'sessionId', 'plan', 'forceWebSearch', 'reply_to'].includes(key)
+      (key) =>
+        !['messages', 'sessionId', 'plan', 'forceWebSearch', 'reply_to', 'continue'].includes(key)
     )
   ) {
     return null;
   }
+  if (Object.hasOwn(body, 'continue') && typeof body.continue !== 'boolean') return null;
+  const continuing = body.continue === true;
   if (!Array.isArray(body.messages) || body.messages.length === 0) return null;
   const window = body.messages.slice(-CHAT_MAX_MESSAGES);
   const messages = [];
@@ -200,14 +215,16 @@ function normalizeChat(body) {
     const last = index === window.length - 1;
     const content = message.content.trim();
     if (last) {
-      if (message.role !== 'user' || !content || content.length > CHAT_MAX_TEXT) return null;
-      messages.push({ role: 'user', content });
+      if (message.role !== (continuing ? 'assistant' : 'user') || !content) return null;
+      if (!continuing && content.length > CHAT_MAX_TEXT) return null;
+      messages.push({ role: message.role, content: clampChatText(content, CHAT_MAX_TEXT) });
       continue;
     }
     if (!content) continue;
     messages.push({ role: message.role, content: clampChatText(content, CHAT_MAX_TEXT) });
   }
-  if (!messages.length || messages.at(-1).role !== 'user') return null;
+  if (!messages.length) return null;
+  if (continuing) messages.push({ role: 'user', content: CONTINUE_PROMPT });
   let forceWebSearch = false;
   if (body.forceWebSearch != null) {
     if (typeof body.forceWebSearch !== 'boolean') return null;
@@ -233,9 +250,10 @@ function normalizeChat(body) {
   if (Object.hasOwn(body, 'reply_to')) {
     const reply = normalizeReply(body.reply_to);
     if (reply === null) return null;
+    if (continuing) return null;
     messages.at(-1).content = applyReplyToContent(messages.at(-1).content, reply);
   }
-  return { messages, sessionId, plan, forceWebSearch };
+  return { messages, sessionId, plan, forceWebSearch, continue: continuing };
 }
 
 function numbersOf(value) {

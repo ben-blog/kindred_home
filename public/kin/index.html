@@ -504,17 +504,16 @@ async function fetchItems() {
 /* ── GALLERY ── */
 const $gallery = document.getElementById('gallery');
 
-// NEW 스티커: 최신 2개 아이템 (order_num 기준 마지막 2개)
+// NEW 스티커: 최신 2개 아이템 (시간 역순 맨 앞 2개)
 const NEW_COUNT = 2;
 
 function renderGallery() {
   $gallery.innerHTML = '';
-  const newStart = Math.max(0, items.length - NEW_COUNT);
   items.forEach((item, i) => {
     const t = document.createElement('div');
     const title  = item[`title_${lang}`] || item.title_ko || '';
     const hasAct = (item.actions?.[lang]?.length || 0) > 0;
-    const isNew  = i >= newStart;
+    const isNew  = i < NEW_COUNT;
     const actHtml = hasAct
       ? (item.actions[lang] || []).map(a => actionLinkHtml(a, 'thumb-action-link')).join('')
       : '';

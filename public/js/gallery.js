@@ -3,15 +3,33 @@
 
 var LIKE_BASE = Object.create(null);
 
+function compareGalleryNewestFirst(a, b) {
+  var left = galleryRecency(a);
+  var right = galleryRecency(b);
+  if (left.time !== right.time) return right.time - left.time;
+  if (left.order !== right.order) return right.order - left.order;
+  if (left.id < right.id) return -1;
+  if (left.id > right.id) return 1;
+  return 0;
+}
+
+function galleryRecency(image) {
+  var time = Date.parse((image && (image.created_at || image.createdAt)) || '');
+  var order = image && Number.isInteger(image.order_num) ? image.order_num : 0;
+  return {
+    time: Number.isFinite(time) ? time : 0,
+    order: order,
+    id: String((image && (image.id || image.item_id || image.filename)) || ''),
+  };
+}
+
 function flattenGallery(doc) {
   var images = (doc && doc.images) || [];
   return images
     .filter(function (im) {
       return im.is_active !== false && im.filename;
     })
-    .sort(function (a, b) {
-      return (a.order_num || 0) - (b.order_num || 0);
-    })
+    .sort(compareGalleryNewestFirst)
     .map(function (im) {
       var ko = im.ko || {};
       var en = im.en || {};
@@ -28,6 +46,7 @@ function flattenGallery(doc) {
         filename: im.filename,
         style: im.style || '',
         order_num: im.order_num || 0,
+        created_at: im.created_at || im.createdAt || '',
         character: (doc.character || '').toLowerCase(),
         show_on_main: im.show_on_main === true,
         like_count: likeCount,

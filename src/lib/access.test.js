@@ -68,6 +68,7 @@ const PUBLIC = [
   ['/api/event', 'POST'],
   ['/api/kin/event', 'POST'],
   ['/api/gallery/kin', 'GET'],
+  ['/api/gallery/dred/pick', 'GET'],
   ['/api/gallery/file?name=still.webp', 'GET'],
   ['/api/world/signal', 'POST'],
   ['/api/world/auth/magic', 'POST'],
@@ -95,6 +96,7 @@ const PRIVATE_APIS = [
   ['/api/world/album', 'GET'],
   ['/api/world/album/11111111-1111-4111-8111-111111111111/publish', 'POST'],
   ['/api/gallery/kin', 'POST'],
+  ['/api/gallery/dred/pick', 'POST'],
   ['/api/not-a-route', 'GET'],
 ];
 

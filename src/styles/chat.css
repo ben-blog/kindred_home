@@ -997,3 +997,10 @@
 .call.call .call-continue-controls button:disabled {
   opacity: 0.5;
 }
+
+.call.call .call-adult-mode {
+  margin-left: 0.5rem;
+}
+.call.call .call-adult-mode[aria-pressed='true'] {
+  font-weight: 600;
+}

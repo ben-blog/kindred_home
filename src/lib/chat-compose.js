@@ -198,6 +198,17 @@ export function insertAtCaret(input, insert, { composing = false, start, end } =
   return true;
 }
 
+export function settleChatStream({ reply, completed = false, media = null, error = null }) {
+  const text = typeof reply === 'string' ? reply.trim() : '';
+  const hasMedia = Boolean(media && typeof media === 'object');
+  if (text || hasMedia) {
+    return { ok: true, reply: text, completed: Boolean(completed), keptPartial: !completed };
+  }
+  if (error?.reason === 'stream') return { ok: false, reason: 'stream' };
+  if (error) return { ok: false, reason: error.reason || 'network' };
+  return { ok: false, reason: 'empty' };
+}
+
 export function createSseReader() {
   const decoder = new TextDecoder();
   let buffer = '';

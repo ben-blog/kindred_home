@@ -40,6 +40,10 @@ const gallery =
 const frames = callFrames(gallery, expressions.get(data.slug));
 const opening = openingFrame(frames);
 const copy = {
+  continueStart: text({ en: '계속 말하기' }),
+  continueStop: text({ en: '멈추기' }),
+  continueStatus: text({ en: '이야기하는 중' }),
+  continueReceived: text({ en: '이어서 이야기하기' }),
   end: text({ en: 'end' }),
   you: text({ en: 'you' }),
   say: text({ en: 'say' }),
@@ -121,6 +125,11 @@ const copy = {
         <button type="button" role="menuitem" data-action="reply">↶ <span>Reply</span></button>
         <button type="button" role="menuitem" data-action="copy">▢ <span>{copy.copy}</span></button>
       </div>
+      <div class="call-continue-bar" id="call-continue-bar" hidden>
+        <span role="status">{copy.continueStatus}</span>
+        <button id="call-continue-stop" type="button">{copy.continueStop}</button>
+      </div>
+      <div class="call-continue-controls"><button id="call-continue-start" type="button">{copy.continueStart}</button></div>
       <form class="call-form" id="call-form" novalidate>
         <button type="button" class="call-search call-icon" id="call-search" aria-pressed="false" aria-label={copy.webSearchLabel}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></button>
         <label class="call-field"><span class="call-sr">Message</span><textarea id="call-input" name="message" rows="1" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="send" inputmode="text" data-1p-ignore data-lpignore="true" maxlength="2000" placeholder="Message"></textarea></label>

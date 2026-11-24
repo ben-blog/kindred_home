@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadCanon } from '../../../world/load.js';
+import { CONTINUE_PROMPT, createContinueLimiter } from '../chat-continue.js';
 import { createLimiter } from '../proxy.js';
 import { handleWorldChat } from './chat.js';
 
@@ -76,6 +77,7 @@ function base(extra = {}) {
     slug: 'kin',
     vitals: { energy: 5, mood: 2 },
     limiter: createLimiter(),
+    continueLimiter: createContinueLimiter(),
     store: quietStore(),
     ...extra,
   };
@@ -806,4 +808,109 @@ test('invalid reply metadata fails closed before the agent request', async () =>
     })
   );
   assert.equal(response.status, 400);
+});
+
+test('continue injects a synthetic newest user turn and keeps character routing', async () => {
+  for (const slug of ['kin', 'dred']) {
+    let payload;
+    const response = await handleWorldChat(
+      request(`/api/world/chat/${slug}`, {
+        ...signedIn,
+        body: {
+          messages: [{ role: 'assistant', content: 'earlier' }],
+          continue: true,
+          sessionId: `continue-${slug}`,
+        },
+      }),
+      base({
+        slug,
+        fetch: leaderFetch(leaderId, (href, init) => {
+          assert.equal(href, `https://${slug}-agent.example.test/api/${slug}/chat`);
+          payload = JSON.parse(init.body);
+          return new Response(
+            sse(['data: {"type":"token","text":"next"}\n\n', 'data: {"type":"done"}\n\n']),
+            { headers: { 'content-type': 'text/event-stream' } }
+          );
+        }),
+      })
+    );
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), /next/);
+    assert.deepEqual(payload.messages, [
+      { role: 'assistant', content: 'earlier' },
+      { role: 'user', content: CONTINUE_PROMPT },
+    ]);
+    assert.equal(Object.hasOwn(payload, 'continue'), false);
+  }
+});
+
+test('continue validates the flag and requires a nonempty final assistant turn', async () => {
+  const assistant = [{ role: 'assistant', content: 'earlier' }];
+  for (const body of [
+    { messages: [{ role: 'user', content: 'hey' }], continue: true },
+    { messages: assistant },
+    { messages: assistant, continue: false },
+    { messages: assistant, continue: 'yes' },
+    { messages: assistant, continue: null },
+    { messages: assistant, continue: true, unknown: true },
+    { messages: [], continue: true },
+    { messages: [{ role: 'assistant', content: ' ' }], continue: true },
+  ]) {
+    const response = await handleWorldChat(
+      request('/api/world/chat/kin', { ...signedIn, body }),
+      base({
+        fetch: leaderFetch(leaderId, () => {
+          assert.fail('invalid continuation must not call the agent');
+        }),
+      })
+    );
+    assert.equal(response.status, 400);
+  }
+});
+
+test('continue cap isolates sessions, blocks the 31st request and resets on a normal user turn', async () => {
+  const continueLimiter = createContinueLimiter();
+  let calls = 0;
+  const options = base({
+    continueLimiter,
+    limiter: createLimiter({ limit: 100 }),
+    fetch: leaderFetch(leaderId, () => {
+      calls += 1;
+      return new Response(sse(['data: {"type":"token","text":"next"}\n\n']), {
+        headers: { 'content-type': 'text/event-stream' },
+      });
+    }),
+  });
+  const send = (sessionId, continuing = true) =>
+    handleWorldChat(
+      request('/api/world/chat/kin', {
+        ...signedIn,
+        body: {
+          sessionId,
+          continue: continuing,
+          messages: [{ role: continuing ? 'assistant' : 'user', content: 'hey' }],
+        },
+      }),
+      options
+    );
+  for (let i = 0; i < 30; i += 1) {
+    const response = await send('session-a');
+    assert.equal(response.status, 200);
+    await response.text();
+  }
+  const blocked = await send('session-a');
+  assert.equal(blocked.status, 429);
+  assert.deepEqual(await blocked.json(), { error: 'too many requests' });
+  assert.equal(blocked.headers.get('retry-after'), '60');
+  assert.equal(calls, 30);
+  for (const [session, continuing] of [
+    ['session-b', true],
+    ['session-a', false],
+    ['session-a', true],
+  ]) {
+    const response = await send(session, continuing);
+    assert.equal(response.status, 200);
+    await response.text();
+  }
+  assert.equal(calls, 33);
 });

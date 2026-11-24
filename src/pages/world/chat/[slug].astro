@@ -4,6 +4,7 @@ export const prerender = false;
 import { getCollection } from 'astro:content';
 import Grain from '../../../components/character/Grain.astro';
 import Base from '../../../layouts/Base.astro';
+import '../../../styles/chat.css';
 import { characterSurface } from '../../../lib/character-layout.js';
 import { callFrames, openingFrame } from '../../../lib/expressions.js';
 import { text } from '../../../lib/locale.js';
@@ -32,6 +33,7 @@ const surface = characterSurface(data);
 const name = text(data.name);
 const tagline = text(data.profile.tagline);
 const idle = text(data.voice.idle);
+const locationNames = Object.fromEntries((await getCollection('locations')).map(item => [item.data.slug, text(item.data.name)]));
 const gallery =
   Object.entries(galleryModules).find(([file]) => file.endsWith(`/kindred_gallery_${data.slug}.json`))?.[1] ??
   { images: [] };
@@ -87,102 +89,54 @@ const copy = {
 >
   <div class="call" data-layout={surface.layout} data-slug={data.slug}>
     <Grain />
-    <header class="call-bar">
-      <a href="/">kinxdred</a>
-      <a href="/characters">characters</a>
-      <p class="call-name">{name}</p>
-      <time id="call-timer" datetime="PT0S">00:00</time>
-      <a href={`/world/brain/${data.slug}/`}>brain</a>
-      <a class="call-end" href="/world/admin"><span class="call-end-label">{copy.end}</span><span class="call-hub-label">hub</span></a>
-    </header>
-    <section class="call-stage" data-mood="calm" aria-label={name}>
-      {
-        opening ? (
-          <>
-            <img class="call-photo is-shown" src={opening.src} alt={opening.title || name} />
-            <img class="call-photo" src={opening.src} alt="" aria-hidden="true" />
-          </>
-        ) : null
-      }
-      <p class="call-caption">{tagline}</p>
-      <div class="call-self"><span>{copy.you}</span></div>
-      <div class="call-memory" id="call-memory">
-        <button type="button" class="call-tool" id="call-memory-toggle">{copy.memory}</button>
-        <div class="call-memory-view" id="call-memory-view"></div>
-        <p class="call-memory-status" id="call-memory-status" hidden>{copy.offline}</p>
+    <a class="call-brand" href="/">kinxdred</a>
+    <main class="call-column">
+      <header class="call-bar">
+        <a class="call-icon" href="/world/admin" aria-label="Back to hub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7" /></svg></a>
+        <button class="call-avatar" id="call-avatar" type="button" aria-label={`View ${name} photo`}>
+          {opening ? <img id="call-avatar-image" src={opening.src} alt={opening.title || name} /> : name.slice(0, 1)}
+        </button>
+        <div class="call-meta"><h1 class="call-name">{name}</h1><p class="call-presence"><b id="call-mood">calm</b><span id="call-location"></span></p></div>
+        <button class="call-icon" id="call-memory-toggle" type="button" aria-label="Memory" aria-controls="call-sheet-panel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><g fill="currentColor" stroke="none"><circle cx="9" cy="8" r="1"/><circle cx="16" cy="10" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="13" cy="16" r="1"/><circle cx="12" cy="11" r="1"/></g></svg></button>
+      </header>
+      <div class="call-thread">
+        <ol class="call-log" id="call-log" aria-label={`${name} conversation`}>
+          {idle ? <li class="call-empty" id="call-empty">{idle}</li> : null}
+        </ol>
+        <button class="call-jump" id="call-jump" type="button" hidden>New message ↓</button>
       </div>
-    </section>
-    <section class="call-side">
-      <div class="call-tools">
-        <button type="button" class="call-tool" id="call-think-toggle">{copy.thinking}</button>
-      </div>
-      <div class="call-think" id="call-think" hidden></div>
-      <ol class="call-log" id="call-log">
-        {idle ? <li class="call-empty" id="call-empty">{idle}</li> : null}
-      </ol>
+      <p class="call-status" id="call-status" role="status"></p>
       <form class="call-form" id="call-form" novalidate>
-        <label class="call-label" for="call-input">{copy.say}</label>
-        <div class="call-compose">
-          <textarea id="call-input" name="message" rows="2" maxlength="2000"></textarea>
-          <button
-            type="button"
-            class="call-emoji"
-            id="call-emoji"
-            aria-expanded="false"
-            aria-controls="call-emoji-panel"
-            aria-label={copy.emoji}
-          >
-            <span aria-hidden="true">😊</span>
-          </button>
-        </div>
-        <div
-          class="call-emoji-panel"
-          id="call-emoji-panel"
-          hidden
-          role="dialog"
-          aria-label={copy.emoji}
-        >
-        </div>
-        <div class="call-actions">
-          <button
-            type="button"
-            class="call-search"
-            id="call-search"
-            aria-pressed="false"
-            aria-label={copy.webSearchLabel}
-          >
-            {copy.webSearch}
-          </button>
-          <button class="call-send" type="submit">{copy.send}</button>
-        </div>
+        <button type="button" class="call-search call-icon" id="call-search" aria-pressed="false" aria-label={copy.webSearchLabel}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></button>
+        <label class="call-field"><span class="call-sr">Message</span><textarea id="call-input" name="message" rows="1" maxlength="2000" placeholder="Message"></textarea></label>
+        <button class="call-send call-icon" type="submit" disabled aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button>
       </form>
-      <p class="call-status" id="call-status" aria-live="polite"></p>
-    </section>
-    <div class="call-sheet" id="call-sheet" hidden>
-      <button type="button" class="call-sheet-scrim" data-close aria-label="close"></button>
-      <div
-        class="call-sheet-panel"
-        id="call-sheet-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={copy.memory}
-      >
-        <button type="button" class="call-sheet-handle" id="call-sheet-handle" aria-label={copy.memory}></button>
-        <div class="call-sheet-tabs" role="tablist">
-          <button type="button" role="tab" id="call-sheet-tab-sphere" aria-selected="true">{copy.memory}</button>
-          <button type="button" role="tab" id="call-sheet-tab-trace" aria-selected="false">{copy.thinking}</button>
+    </main>
+    <div class="call-sheet" id="call-sheet">
+      <button type="button" class="call-sheet-scrim" data-close aria-label="Close memory"></button>
+      <section class="call-sheet-panel" id="call-sheet-panel" aria-label="Memory" tabindex="-1">
+        <button type="button" class="call-sheet-handle" id="call-sheet-handle" aria-label="Resize memory, drag down to close"></button>
+        <div class="call-memory-heading"><h2>Memory</h2><button type="button" data-close>Close</button></div>
+        <p class="call-memory-hint"><span class="call-hint-mobile">Pinch to zoom · drag to turn · double-tap a region</span><span class="call-hint-desktop">Scroll to zoom · drag to turn</span></p>
+        <p class="call-sr" id="call-sphere-help">Drag to rotate. Pinch or scroll to zoom. Double-tap a region to zoom; repeat to reset. Zoom buttons are also available.</p>
+        <div class="call-memory" id="call-memory">
+          <div class="call-memory-view" id="call-memory-view" aria-describedby="call-sphere-help"></div>
+          <p class="call-memory-status" id="call-memory-status" hidden>{copy.offline}</p>
         </div>
-        <div class="call-sheet-body">
-          <div class="call-sheet-sphere" id="call-sheet-sphere" role="tabpanel"></div>
-          <div class="call-sheet-trace" id="call-sheet-trace" role="tabpanel" hidden></div>
-        </div>
-      </div>
+        <div class="call-zoom"><button type="button" data-zoom="out" aria-label="Zoom out">−</button><button type="button" data-zoom="in" aria-label="Zoom in">+</button><button type="button" data-zoom="reset" aria-label="Reset zoom">Reset</button></div>
+        <details class="call-debug"><summary>{copy.thinking}</summary><div class="call-think" id="call-think"></div></details>
+      </section>
     </div>
+    <dialog class="call-viewer" id="call-viewer" aria-label="Photo viewer" aria-modal="true">
+      <button class="call-viewer-close" type="button" aria-label="Close photo">Close</button>
+      <div class="call-viewer-stage"><img alt="" draggable="false" /></div>
+      <p>Pinch or scroll to zoom · swipe down to close</p>
+    </dialog>
   </div>
 </Base>
 
-<script define:vars={{ slug: data.slug, name, frames, copy }}>
-  window.__kindredCall = { slug, name, frames, copy };
+<script define:vars={{ slug: data.slug, name, frames, copy, locationNames }}>
+  window.__kindredCall = { slug, name, frames, copy, locationNames };
 </script>
 <script>
   import { mountCall } from '../../../scripts/call-chat.js';

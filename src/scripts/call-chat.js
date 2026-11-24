@@ -1,9 +1,10 @@
+import { dayKey, groupsTogether, nearBottom } from '../lib/chat-thread.js';
+import { safeHttpUrl } from '../lib/safe-url.js';
+import { mountPhotoViewer } from './call-viewer.js';
 import {
   clampHistory,
   createSseReader,
-  EMOJI_GROUPS,
   explainFailure,
-  insertAtCaret,
   joinBatch,
   retryDelayMs,
   stablePrefix,
@@ -16,29 +17,30 @@ export function mountCall(config) {
   root.dataset.mounted = '1';
 
   const { slug, name, frames, copy } = config;
-  const stage = document.querySelector('.call-stage');
-  const photos = [...document.querySelectorAll('.call-photo')];
+  const stage = root;
+  const avatar = document.querySelector('#call-avatar-image');
+  const openPhoto = mountPhotoViewer(root);
+  document
+    .querySelector('#call-avatar')
+    ?.addEventListener('click', (event) =>
+      openPhoto(avatar?.src, avatar?.alt, event.currentTarget)
+    );
   const form = document.querySelector('#call-form');
   const input = document.querySelector('#call-input');
   const log = document.querySelector('#call-log');
   const status = document.querySelector('#call-status');
-  const timer = document.querySelector('#call-timer');
   const searchToggle = document.querySelector('#call-search');
-  const emojiToggle = document.querySelector('#call-emoji');
-  const emojiPanel = document.querySelector('#call-emoji-panel');
   const messages = [];
   const pending = [];
   const cursor = { calm: 1 };
   let plan;
   let sessionId = '';
-  let front = 0;
+
   let started = 0;
   let draining = false;
   let rerun = false;
   let holdUntil = 0;
   let holdTimer = 0;
-  let composing = false;
-  let caret = { start: 0, end: 0 };
   let pendingSaved = null;
   let since = '';
   let polling = false;
@@ -52,35 +54,149 @@ export function mountCall(config) {
     return faces.length ? faces : frames;
   }
 
+  let locationLabel = '';
+  function updatePresence(emotion, world) {
+    document.querySelector('#call-mood').textContent = emotion || 'calm';
+    const place = world?.location;
+    if (typeof place === 'string') locationLabel = config.locationNames?.[place] || place;
+    else if (place && typeof place.name === 'string') locationLabel = place.name;
+    document.querySelector('#call-location').textContent = locationLabel
+      ? ` · ${locationLabel}`
+      : '';
+  }
   function show(emotion) {
     const list = pool(emotion);
-    if (!list.length || photos.length < 2) return;
+    stage.dataset.mood = emotion;
+    updatePresence(emotion);
+    if (!list.length) return;
     const index = cursor[emotion] ?? 0;
     cursor[emotion] = index + 1;
     const frame = list[index % list.length];
-    const next = 1 - front;
-    photos[next].src = frame.src;
-    photos[next].alt = frame.title || name;
-    photos[next].classList.add('is-shown');
-    photos[next].removeAttribute('aria-hidden');
-    photos[front].classList.remove('is-shown');
-    photos[front].setAttribute('aria-hidden', 'true');
-    front = next;
-    stage.dataset.mood = emotion;
+    if (avatar) {
+      avatar.src = frame.src;
+      avatar.alt = frame.title || name;
+    }
     return frame;
   }
 
-  function line(who, value, mine) {
+  let pinned = true;
+  let lastLine = null;
+  const jump = document.querySelector('#call-jump');
+  function pin(force = false) {
+    if (force) pinned = true;
+    if (!pinned) return;
+    requestAnimationFrame(() => {
+      if (pinned) {
+        log.scrollTop = log.scrollHeight;
+        jump.hidden = true;
+      }
+    });
+  }
+  log.addEventListener('scroll', () => {
+    pinned = nearBottom(log);
+    if (pinned) jump.hidden = true;
+  });
+  jump.addEventListener('click', () => pin(true));
+  root.addEventListener('call-viewport', () => pin());
+  new ResizeObserver(() => pin()).observe(log);
+  function autosize() {
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(126, Math.max(42, input.scrollHeight))}px`;
+    document.querySelector('.call-send').disabled = !input.value.trim();
+    pin();
+  }
+  input.addEventListener('input', autosize);
+  input.addEventListener('focus', () => pin());
+  autosize();
+
+  function line(who, value, mine, at = Date.now()) {
     const item = document.createElement('li');
     item.className = mine ? 'call-line is-you' : 'call-line';
-    const label = document.createElement('span');
-    label.textContent = who;
+    const previous = lastLine;
+    const record = { mine, at, item, previous };
+    item.threadRecord = record;
+    if (!previous || dayKey(previous.at) !== dayKey(at)) {
+      const day = document.createElement('li');
+      day.className = 'call-day';
+      const label = document.createElement('span');
+      label.textContent =
+        dayKey(at) === dayKey(Date.now())
+          ? 'Today'
+          : new Date(at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      day.append(label);
+      log.append(day);
+    }
+    if (groupsTogether(previous, record)) {
+      item.classList.add('is-connected');
+      previous.item.classList.add('has-next');
+      const previousTime = previous.item.querySelector('.call-time');
+      if (previousTime) previousTime.hidden = true;
+    }
+    if (!mine && avatar?.src) {
+      const face = document.createElement('img');
+      face.className = 'call-line-avatar';
+      face.src = avatar.src;
+      face.alt = who;
+      item.append(face);
+    }
     const body = document.createElement('p');
     body.textContent = value;
-    item.append(label, body);
+    const stamp = document.createElement('time');
+    stamp.className = 'call-time';
+    stamp.dateTime = new Date(at).toISOString();
+    stamp.textContent = new Date(at).toLocaleTimeString(undefined, {
+      timeZone: 'Asia/Seoul',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    item.append(body, stamp);
     log.append(item);
-    log.scrollTop = log.scrollHeight;
+    lastLine = record;
+    if (!mine && !pinned) jump.hidden = false;
+    pin(mine);
     return { item, body };
+  }
+  function typing(body, on) {
+    const row = body.closest('.call-line');
+    if (!row) return;
+    row.classList.toggle('call-typing', on);
+    body.removeAttribute('aria-label');
+    if (on) {
+      body.replaceChildren(...[0, 1, 2].map(() => document.createElement('i')));
+      body.setAttribute('aria-label', `${name} is typing`);
+    }
+    pin();
+  }
+  function mediaLine(media, existingBody, mine = false, at = Date.now()) {
+    const url = safeHttpUrl(media?.url);
+    if (!url) return;
+    const { item, body } = existingBody
+      ? { item: existingBody.closest('.call-line'), body: existingBody }
+      : line(mine ? copy.you : name, '', mine, at);
+    body.remove();
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'call-media';
+    const image = document.createElement('img');
+    image.src = url;
+    image.alt = typeof media.alt === 'string' ? media.alt : `${name} photo`;
+    button.setAttribute('aria-label', `View ${image.alt}`);
+    image.addEventListener('load', () => pin());
+    image.addEventListener('error', () => {
+      const previous = item.threadRecord?.previous;
+      item.remove();
+      if (lastLine?.item === item) {
+        lastLine = previous || null;
+        previous?.item.classList.remove('has-next');
+        const stamp = previous?.item.querySelector('.call-time');
+        if (stamp) stamp.hidden = false;
+      }
+      pin();
+    });
+    button.append(image);
+    item.prepend(button);
+    button.addEventListener('click', () => openPhoto(url, image.alt, button));
   }
 
   function setQueued(row, queued) {
@@ -144,28 +260,24 @@ export function mountCall(config) {
     );
   }
 
-  function tick() {
-    const seconds = Math.max(0, Math.floor((Date.now() - started) / 1000));
-    const text = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-    timer.textContent = text;
-    timer.dateTime = `PT${seconds}S`;
-  }
-
   async function readStream(response, body, turn) {
     const reader = response.body.getReader();
     const parser = createSseReader();
     let reply = '';
     let expression = 'calm';
     let world = null;
+    let media = null;
     const paint = (flush) => {
       const shown = flush ? reply : stablePrefix(reply);
+      if (shown) typing(body, false);
       body.textContent = shown;
       turn.reply.body.textContent = shown;
-      log.scrollTop = log.scrollHeight;
+      pin();
     };
     const handle = (data) => {
       if (!data || typeof data !== 'object') return;
       if (data.type === 'token' && typeof data.text === 'string') {
+        typing(body, false);
         reply += data.text;
         paint(false);
       } else if (data.type === 'trace' && data.stage === 'retrieved') {
@@ -175,6 +287,7 @@ export function mountCall(config) {
       } else if (data.type === 'trace' && data.stage === 'web_search') {
         addWebSearch(turn, data);
       } else if (data.type === 'done') {
+        media = data.media || null;
         if (typeof data.expression === 'string') expression = data.expression;
         if (data.world && typeof data.world === 'object') world = data.world;
         if (typeof data.sessionId === 'string') {
@@ -199,7 +312,7 @@ export function mountCall(config) {
     }
     for (const data of parser.flush()) handle(data);
     paint(true);
-    return { reply, expression, world };
+    return { reply, expression, world, media };
   }
 
   function step(label, value) {
@@ -221,26 +334,6 @@ export function mountCall(config) {
       index += 1;
       title.textContent = `${index} ${title.dataset.label}`;
     }
-  }
-
-  function safeHttpUrl(value) {
-    if (typeof value !== 'string') return '';
-    const text = value.trim();
-    if (!text || text.length > 300) return '';
-    for (let index = 0; index < text.length; index += 1) {
-      const code = text.charCodeAt(index);
-      if (code <= 32 || code === 127) return '';
-    }
-    let url;
-    try {
-      url = new URL(text);
-    } catch {
-      return '';
-    }
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
-    if (url.username || url.password) return '';
-    if (url.href.length > 300) return '';
-    return url.href;
   }
 
   function fillRetrieved(slot, items) {
@@ -396,6 +489,7 @@ export function mountCall(config) {
 
   function openTurn(text) {
     const { body } = line(name, '', false);
+    typing(body, true);
     const traces = document.createElement('div');
     traces.className = 'call-traces';
     const turn = {
@@ -428,7 +522,9 @@ export function mountCall(config) {
 
   function finishTurn(body, turn, result) {
     const frame = show(result.expression || 'calm');
+    typing(body, false);
     const world = result.world;
+    updatePresence(result.expression, world);
     turn.world.body.textContent = world
       ? `mood ${world.mood ?? copy.none} · energy ${world.energy ?? copy.none}`
       : copy.none;
@@ -436,9 +532,12 @@ export function mountCall(config) {
       ? `${result.expression || 'calm'} · ${frame.title}`
       : result.expression || 'calm';
     body.textContent = result.reply;
+    if (result.media) mediaLine(result.media, result.reply ? null : body);
+    pin();
   }
 
   function failTurn(body, turn, reason, code) {
+    typing(body, false);
     const key = explainFailure({ status: code, reason });
     const message = copy[key] || copy.dropped;
     body.textContent = message;
@@ -476,6 +575,7 @@ export function mountCall(config) {
         return 'auth';
       }
       if (response.status === 429) {
+        typing(body, false);
         body.textContent = copy.wait;
         status.textContent = copy.wait;
         console.warn('[call] chat failed', response.status);
@@ -495,7 +595,7 @@ export function mountCall(config) {
         return 'fail';
       }
       const reply = typeof result.reply === 'string' ? result.reply.trim() : '';
-      if (!reply) {
+      if (!reply && !safeHttpUrl(result.media?.url)) {
         failTurn(body, turn, 'empty', response.status);
         return 'fail';
       }
@@ -507,6 +607,7 @@ export function mountCall(config) {
       failTurn(body, turn, 'network');
       return 'fail';
     } finally {
+      typing(body, false);
       stage.classList.remove('is-talking');
     }
   }
@@ -566,6 +667,7 @@ export function mountCall(config) {
       const value = input.value.trim();
       if (!value) return;
       input.value = '';
+      autosize();
       document.querySelector('#call-empty')?.remove();
       const { item } = line(copy.you, value, true);
       setQueued(item, true);
@@ -599,17 +701,40 @@ export function mountCall(config) {
         return;
       }
       started = Date.now();
-      tick();
-      setInterval(tick, 1000);
       pollMemory();
+      fetch('/api/world')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((world) => {
+          if (world?.characters?.[slug])
+            updatePresence(stage.dataset.mood || 'calm', world.characters[slug]);
+        })
+        .catch(() => {});
       setInterval(pollMemory, 10000);
-      input.focus();
       drain();
     } catch {
       status.textContent = copy.dropped;
     }
   }
 
+  for (const item of Array.isArray(config.history) ? config.history : []) {
+    if (!item || !['assistant', 'user'].includes(item.role)) continue;
+    document.querySelector('#call-empty')?.remove();
+    const mine = item.role === 'user';
+    if (typeof item.content === 'string' && item.content)
+      line(
+        mine ? copy.you : name,
+        item.content,
+        mine,
+        Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now()
+      );
+    if (item.media)
+      mediaLine(
+        item.media,
+        null,
+        mine,
+        Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now()
+      );
+  }
   connect();
 
   function setSearch(on) {
@@ -621,107 +746,10 @@ export function mountCall(config) {
     setSearch(searchToggle.getAttribute('aria-pressed') !== 'true');
   });
 
-  const mobileQuery = window.matchMedia('(max-width: 800px)');
-  document.querySelector('#call-think-toggle')?.addEventListener('click', () => {
-    if (mobileQuery.matches) {
-      root.dispatchEvent(new CustomEvent('call-sheet', { detail: { tab: 'trace' } }));
-      return;
-    }
-    const panel = document.querySelector('#call-think');
-    panel.hidden = !panel.hidden;
-  });
-  document.querySelector('#call-memory-toggle')?.addEventListener('click', () => {
-    if (mobileQuery.matches) {
-      root.dispatchEvent(new CustomEvent('call-sheet', { detail: { tab: 'sphere' } }));
-      return;
-    }
-    document.querySelector('#call-memory')?.classList.toggle('is-open');
-  });
   root.addEventListener('memory-hover', (event) => {
     const id = event.detail?.id || '';
     for (const chip of document.querySelectorAll('.call-chip')) {
       chip.classList.toggle('is-hot', chip.dataset.id === id);
     }
-  });
-
-  function rememberCaret() {
-    if (document.activeElement !== input) return;
-    if (input.selectionStart == null || input.selectionEnd == null) return;
-    caret = { start: input.selectionStart, end: input.selectionEnd };
-  }
-  for (const type of ['keyup', 'pointerup', 'select', 'input']) {
-    input.addEventListener(type, rememberCaret);
-  }
-
-  function setPicker(open) {
-    if (!emojiPanel || !emojiToggle) return;
-    emojiPanel.hidden = !open;
-    emojiToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-
-  if (emojiPanel && emojiToggle) {
-    for (const group of EMOJI_GROUPS) {
-      const section = document.createElement('section');
-      section.className = 'call-emoji-group';
-      const title = document.createElement('p');
-      title.textContent = copy[group.id] || group.id;
-      const grid = document.createElement('div');
-      grid.className = 'call-emoji-grid';
-      grid.setAttribute('role', 'group');
-      grid.setAttribute('aria-label', title.textContent);
-      for (const emoji of group.emoji) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.emoji = emoji;
-        button.textContent = emoji;
-        button.setAttribute('aria-label', emoji);
-        grid.append(button);
-      }
-      section.append(title, grid);
-      emojiPanel.append(section);
-    }
-
-    emojiToggle.addEventListener('pointerdown', () => {
-      if (document.activeElement === input) rememberCaret();
-    });
-    emojiToggle.addEventListener('click', () => {
-      setPicker(emojiPanel.hidden);
-    });
-    emojiPanel.addEventListener('pointerdown', (event) => {
-      const button = event.target.closest('[data-emoji]');
-      if (!button) return;
-      event.preventDefault();
-      if (composing) return;
-      const focused = document.activeElement === input;
-      const placed = insertAtCaret(input, button.dataset.emoji, {
-        composing: false,
-        start: focused ? input.selectionStart : caret.start,
-        end: focused ? input.selectionEnd : caret.end,
-      });
-      if (!placed) return;
-      caret = {
-        start: input.selectionStart ?? caret.start,
-        end: input.selectionEnd ?? caret.end,
-      };
-      input.focus();
-    });
-    document.addEventListener('pointerdown', (event) => {
-      if (emojiPanel.hidden) return;
-      if (emojiPanel.contains(event.target) || emojiToggle.contains(event.target)) return;
-      setPicker(false);
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape' || emojiPanel.hidden) return;
-      setPicker(false);
-      emojiToggle.focus();
-    });
-  }
-
-  input.addEventListener('compositionstart', () => {
-    composing = true;
-  });
-  input.addEventListener('compositionend', () => {
-    composing = false;
-    rememberCaret();
   });
 }

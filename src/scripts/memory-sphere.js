@@ -10,6 +10,7 @@ import {
   memoryEmotions,
 } from '../config/memory-emotions.js';
 import { memoryKindCss, memoryKindRgb } from '../lib/memory-kind.js';
+import { clampZ, pinchZ, wheelZ, doubleTapZ, resetZoom } from '../lib/orb-zoom.js';
 import { stepOrbMotion } from '../lib/orb-motion.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
 
@@ -218,18 +219,13 @@ export async function mountSphere(root, call, options) {
       'color',
       new THREE.BufferAttribute(new Float32Array(records.length * 3), 3)
     );
-    geometry.setAttribute(
-      'aSize',
-      new THREE.BufferAttribute(new Float32Array(records.length), 1)
-    );
+    geometry.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(records.length), 1));
     pointsMesh = new THREE.Points(geometry, pointMaterial);
     pointsMesh.renderOrder = 2;
     pointsMesh.frustumCulled = false;
     rig.add(pointsMesh);
     cutoff =
-      pendingCutoff == null
-        ? records.length
-        : Math.max(0, Math.min(records.length, pendingCutoff));
+      pendingCutoff == null ? records.length : Math.max(0, Math.min(records.length, pendingCutoff));
     pendingCutoff = null;
     paintLegend();
     if (reduced) paint(now);
@@ -443,43 +439,169 @@ export async function mountSphere(root, call, options) {
   }
 
   const canvas = renderer.domElement;
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', 'Memory sphere. Drag to turn; pinch or scroll to zoom.');
+  const touches = new Map();
+  let pinch = null;
+  let tap = null;
+  let suppressClick = false;
+  function ndc(x, y) {
+    const r = canvas.getBoundingClientRect();
+    return new THREE.Vector2(((x - r.left) / r.width) * 2 - 1, 1 - ((y - r.top) / r.height) * 2);
+  }
+  function zoomAt(next, clientX, clientY) {
+    const z = clampZ(next);
+    if (z === camera.position.z) return;
+    const rect = canvas.getBoundingClientRect();
+    const focal = ndc(clientX ?? rect.left + rect.width / 2, clientY ?? rect.top + rect.height / 2);
+    camera.updateMatrixWorld();
+    raycaster.setFromCamera(focal, camera);
+    // Anchor the visible surface; empty-space gestures use its central plane.
+    const anchor =
+      raycaster.ray.intersectSphere(
+        new THREE.Sphere(new THREE.Vector3(), 1),
+        new THREE.Vector3()
+      ) ||
+      raycaster.ray.intersectPlane(
+        new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
+        new THREE.Vector3()
+      );
+    camera.position.z = z;
+    const aim = () => {
+      camera.lookAt(0, 0, 0);
+      camera.updateMatrixWorld();
+    };
+    aim();
+    if (anchor) {
+      // Solve the two screen coordinates while retaining lookAt(origin).
+      const project = () => anchor.clone().project(camera);
+      for (let i = 0; i < 8; i++) {
+        const p = project(),
+          ex = focal.x - p.x,
+          ey = focal.y - p.y;
+        if (Math.hypot(ex, ey) < 0.0005) break;
+        const epsilon = 0.001;
+        camera.position.x += epsilon;
+        aim();
+        const px = project();
+        camera.position.x -= epsilon;
+        camera.position.y += epsilon;
+        aim();
+        const py = project();
+        camera.position.y -= epsilon;
+        aim();
+        const a = (px.x - p.x) / epsilon,
+          b = (py.x - p.x) / epsilon,
+          c = (px.y - p.y) / epsilon,
+          d = (py.y - p.y) / epsilon;
+        const det = a * d - b * c;
+        if (Math.abs(det) < 1e-6) break;
+        camera.position.x += Math.max(-0.4, Math.min(0.4, (ex * d - b * ey) / det));
+        camera.position.y += Math.max(-0.4, Math.min(0.4, (a * ey - ex * c) / det));
+        camera.position.x = THREE.MathUtils.clamp(camera.position.x, -3, 3);
+        camera.position.y = THREE.MathUtils.clamp(camera.position.y, -3, 3);
+        aim();
+      }
+    }
+    dragVx = dragVy = 0;
+    releasedAt = performance.now();
+    paint(performance.now());
+  }
+  function reset() {
+    camera.position.copy(resetZoom());
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    paint(performance.now());
+  }
+  function region(x, y) {
+    const next = doubleTapZ(camera.position.z);
+    if (next === 4.05) reset();
+    else zoomAt(next, x, y);
+  }
+  canvas.addEventListener(
+    'wheel',
+    (event) => {
+      event.preventDefault();
+      zoomAt(
+        wheelZ(camera.position.z, event.deltaY, event.deltaMode, canvas.clientHeight),
+        event.clientX,
+        event.clientY
+      );
+    },
+    { passive: false }
+  );
+  call?.querySelectorAll('[data-zoom]').forEach((button) =>
+    button.addEventListener('click', () => {
+      if (button.dataset.zoom === 'reset') reset();
+      else zoomAt(camera.position.z * (button.dataset.zoom === 'in' ? 0.8 : 1.25));
+    })
+  );
   canvas.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (!touches.size) suppressClick = false;
+    canvas.setPointerCapture(event.pointerId);
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    dragVx = dragVy = 0;
+    if (touches.size >= 2) {
+      const [a, b] = [...touches.values()];
+      pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y), z: camera.position.z };
+      dragging = false;
+      dragPointer = null;
+      suppressClick = true;
+      return;
+    }
     dragging = true;
     dragPointer = event.pointerId;
     dragX = event.clientX;
     dragY = event.clientY;
     dragAt = event.timeStamp;
     dragMoved = 0;
-    dragVx = 0;
-    dragVy = 0;
     canvas.classList.add('is-grabbing');
     showLabel(null);
-    try {
-      canvas.setPointerCapture(event.pointerId);
-    } catch {
-      /* Capture can fail if the pointer already ended. */
-    }
     ensureFrame();
   });
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', endDrag);
-
   function endDrag(event) {
-    if (dragPointer !== event.pointerId) return;
-    dragging = false;
-    dragPointer = null;
-    releasedAt = performance.now();
-    canvas.classList.remove('is-grabbing');
-    try {
-      canvas.releasePointerCapture(event.pointerId);
-    } catch {
-      /* The pointer may already have been released. */
+    touches.delete(event.pointerId);
+    if (pinch) {
+      if (touches.size < 2) pinch = null;
+      dragMoved = 100;
+      dragging = false;
+      dragPointer = null;
+    } else if (dragPointer === event.pointerId) {
+      dragging = false;
+      dragPointer = null;
+      if (event.type === 'pointerup' && dragMoved < 12 && !suppressClick) {
+        const now = performance.now();
+        if (
+          tap &&
+          now - tap.at < 280 &&
+          Math.hypot(event.clientX - tap.x, event.clientY - tap.y) < 12
+        ) {
+          region(event.clientX, event.clientY);
+          tap = null;
+          suppressClick = true;
+        } else tap = { at: now, x: event.clientX, y: event.clientY };
+      }
     }
+    if (!touches.size) canvas.classList.remove('is-grabbing');
+    releasedAt = performance.now();
     ensureFrame();
   }
 
   renderer.domElement.addEventListener('pointermove', (event) => {
+    if (touches.has(event.pointerId))
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch && touches.size >= 2) {
+      const [a, b] = [...touches.values()];
+      zoomAt(
+        pinchZ(pinch.z, pinch.distance, Math.hypot(a.x - b.x, a.y - b.y)),
+        (a.x + b.x) / 2,
+        (a.y + b.y) / 2
+      );
+      return;
+    }
     if (dragging && dragPointer === event.pointerId) {
       const dx = event.clientX - dragX;
       const dy = event.clientY - dragY;
@@ -511,7 +633,17 @@ export async function mountSphere(root, call, options) {
     if (renderer.domElement.contains(event.relatedTarget)) return;
     if (!focusId) showLabel(null);
   });
-  renderer.domElement.addEventListener('click', () => {
+  renderer.domElement.addEventListener('click', (event) => {
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
+    pointer.copy(ndc(event.clientX, event.clientY));
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
+    pointer.copy(ndc(event.clientX, event.clientY));
     if (dragMoved > 5) {
       dragMoved = 0;
       return;
@@ -531,12 +663,8 @@ export async function mountSphere(root, call, options) {
     frame = requestAnimationFrame(animate);
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!dragging) {
-      const step = stepOrbMotion(
-        { vx: dragVx, vy: dragVy, releasedAt },
-        dt,
-        { reduced, now }
-      );
+    if (!dragging && !pinch) {
+      const step = stepOrbMotion({ vx: dragVx, vy: dragVy, releasedAt }, dt, { reduced, now });
       turn(step.dyaw, step.dpitch);
       dragVx = step.vx;
       dragVy = step.vy;

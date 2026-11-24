@@ -1,0 +1,786 @@
+/* Messenger surfaces are scoped to the leader call, leaving preserved hubs alone. */
+.call.call {
+  --chat-sans:
+    'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+  --chat-line: rgba(255, 255, 255, 0.1);
+  --chat-bubble: color-mix(in srgb, var(--accent) 22%, #14121c);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  height: 100dvh;
+  width: 100%;
+  padding: 0;
+  background: #0a0a0c;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--chat-sans);
+  font-weight: 400;
+}
+.call.call [hidden] {
+  display: none !important;
+}
+.call.call button {
+  cursor: pointer;
+}
+.call.call button:focus-visible,
+.call.call a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.call.call .call-brand {
+  position: fixed;
+  left: 28px;
+  top: 28px;
+  color: rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  font:
+    10px 'DM Mono',
+    monospace;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.call.call .call-column {
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 720px;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border-inline: 1px solid var(--chat-line);
+}
+.call.call .call-bar {
+  display: grid;
+  grid-template-columns: 44px 36px minmax(0, 1fr) 44px;
+  flex: 0 0 auto;
+  gap: 8px;
+  height: 56px;
+  padding: 0 8px 0 2px;
+  border-bottom: 1px solid var(--chat-line);
+  background: rgba(16, 16, 20, 0.92);
+  backdrop-filter: blur(16px);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.call.call .call-icon {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+}
+.call.call .call-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.call.call .call-bar > a {
+  color: rgba(255, 255, 255, 0.92);
+}
+.call.call #call-memory-toggle {
+  color: var(--accent);
+}
+.call.call .call-avatar {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  padding: 4px;
+  background: transparent;
+  margin-left: -4px;
+  color: var(--accent);
+}
+.call.call .call-avatar img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+.call.call .call-meta {
+  min-width: 0;
+}
+.call.call .call-name {
+  display: block;
+  min-height: 0;
+  font:
+    800 16px/1.1 'Syne',
+    sans-serif;
+  letter-spacing: 0.06em;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+}
+.call.call .call-presence {
+  font: 12px/1.2 var(--chat-sans);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.5);
+}
+.call.call .call-presence b {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--accent) 70%, white);
+}
+.call.call .call-thread {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.call.call .call-log {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 10px 12px 8px;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+  list-style: none;
+}
+.call.call .call-log::before {
+  content: '';
+  margin-top: auto;
+}
+.call.call .call-empty {
+  margin: auto;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+.call.call .call-day {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 14px 0 16px;
+}
+.call.call .call-day span {
+  border-radius: 999px;
+  padding: 5px 11px;
+  font:
+    10px 'DM Mono',
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+.call.call .call-line {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin: 0 0 10px;
+  padding-left: 38px;
+  min-width: 0;
+}
+.call.call .call-line.is-you {
+  flex-direction: row-reverse;
+  padding-left: 0;
+  padding-right: 38px;
+}
+.call.call .call-line.is-connected {
+  margin-top: -8px;
+}
+.call.call .call-line > .call-line-avatar {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.call.call .call-line.is-connected > .call-line-avatar {
+  visibility: hidden;
+}
+.call.call .call-line p {
+  margin: 0;
+  padding: 8px 12px;
+  max-width: calc(100% - 48px);
+  font:
+    400 16px/1.4 var(--chat-sans),
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Noto Color Emoji';
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  background: var(--chat-bubble);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.call.call .call-line.is-you p {
+  background: #2c2c34;
+}
+.call.call .call-line.is-connected p {
+  border-top-left-radius: 6px;
+}
+.call.call .call-line.has-next p {
+  border-bottom-left-radius: 6px;
+}
+.call.call .call-line.is-you.is-connected p {
+  border-top-left-radius: 18px;
+  border-top-right-radius: 6px;
+}
+.call.call .call-line.is-you.has-next p {
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 6px;
+}
+.call.call .call-time {
+  color: rgba(255, 255, 255, 0.35);
+  font:
+    9px 'DM Mono',
+    monospace;
+  letter-spacing: 0.08em;
+  margin-bottom: 7px;
+  white-space: nowrap;
+}
+.call.call .has-next .call-time {
+  visibility: hidden;
+}
+.call.call .call-line .call-media {
+  display: block;
+  width: min(256px, 70vw);
+  max-width: calc(100% - 48px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.call.call .call-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.call.call .call-typing p {
+  display: flex;
+  gap: 5px;
+  padding: 12px 16px;
+}
+.call.call .call-typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 80%, white);
+  opacity: 0.4;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .call.call .call-typing i {
+    animation: chat-dot 1.2s infinite;
+  }
+  .call.call .call-typing i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .call.call .call-typing i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+}
+@keyframes chat-dot {
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+.call.call .call-jump {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--accent);
+  color: var(--ink);
+  font:
+    10px 'DM Mono',
+    monospace;
+  text-transform: uppercase;
+}
+.call.call .call-form {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: end;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  margin: 0;
+  border-top: 1px solid var(--chat-line);
+  background: rgba(16, 16, 20, 0.92);
+  backdrop-filter: blur(16px);
+}
+.call.call .call-field {
+  min-width: 0;
+  border-radius: 24px;
+  border: 1px solid var(--chat-line);
+  background: rgba(255, 255, 255, 0.06);
+}
+.call.call .call-field:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.call.call .call-form textarea {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  max-height: 126px;
+  padding: 10px 14px;
+  margin: 0;
+  border: 0;
+  border-radius: 24px;
+  resize: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font:
+    16px/21px var(--chat-sans),
+    'Apple Color Emoji',
+    'Segoe UI Emoji',
+    'Noto Color Emoji';
+  outline: none;
+}
+.call.call .call-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+.call.call .call-search.is-on {
+  color: var(--accent);
+  background: var(--chat-bubble);
+  box-shadow: none;
+}
+.call.call .call-send {
+  background: var(--accent);
+  color: var(--ink);
+  opacity: 1;
+}
+.call.call .call-send:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.35);
+  cursor: default;
+}
+.call.call .call-status {
+  flex: 0 0 auto;
+  padding: 6px 16px;
+  margin: 0;
+  font: 12px var(--chat-sans);
+}
+.call.call .call-status:empty {
+  display: none;
+}
+.call.call .call-sheet {
+  display: block;
+  flex: 0 0 340px;
+  width: 340px;
+  min-width: 0;
+}
+.call.call .call-sheet-scrim,
+.call.call .call-sheet-handle,
+.call.call .call-memory-heading [data-close],
+.call.call .call-hint-mobile {
+  display: none;
+}
+.call.call .call-sheet-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 20px 16px 16px;
+  background: #0e0e12;
+  border: 0;
+  border-right: 1px solid var(--chat-line);
+  border-radius: 0;
+  transform: none;
+}
+.call.call .call-memory-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.call.call .call-memory-heading h2 {
+  margin: 0;
+  font:
+    11px 'DM Mono',
+    monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.call.call .call-memory-hint {
+  margin: 5px 0 8px;
+  font:
+    9px/1.5 'DM Mono',
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+.call.call .call-memory {
+  position: relative;
+  inset: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+.call.call .call-memory-view {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: 1;
+}
+.call.call .call-memory-view::before {
+  backdrop-filter: none;
+}
+.call.call .call-memory-view canvas {
+  touch-action: none;
+}
+.call.call .call-memory-legend {
+  display: none;
+}
+.call.call .call-memory-label {
+  position: absolute;
+  top: auto;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 3;
+  padding: 8px;
+  text-align: center;
+  font:
+    11px 'DM Mono',
+    monospace;
+  background: #0e0e12;
+}
+.call.call .call-memory-status {
+  position: absolute;
+  bottom: 16px;
+  font:
+    11px 'DM Mono',
+    monospace;
+}
+.call.call .call-zoom {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.call.call .call-zoom button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.92);
+  background: transparent;
+  font:
+    16px 'DM Mono',
+    monospace;
+}
+.call.call .call-zoom button:last-child {
+  min-width: 76px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.call.call .call-debug {
+  margin-top: 12px;
+  font:
+    10px 'DM Mono',
+    monospace;
+  color: rgba(255, 255, 255, 0.5);
+}
+.call.call .call-debug summary {
+  cursor: pointer;
+  min-height: 24px;
+}
+.call.call .call-think {
+  max-height: 160px;
+  overflow: auto;
+  padding: 0;
+}
+.call.call .call-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.call.call .call-viewer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  border: 0;
+  background: #000;
+  color: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+.call.call .call-viewer[open] {
+  display: flex;
+  flex-direction: column;
+}
+.call.call .call-viewer::backdrop {
+  background: #000;
+}
+.call.call .call-viewer-close {
+  align-self: flex-end;
+  min-width: 64px;
+  min-height: 44px;
+  border: 0;
+  background: #000;
+  color: inherit;
+}
+.call.call .call-viewer-stage {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
+}
+.call.call .call-viewer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  user-select: none;
+}
+.call.call .call-viewer > p {
+  font:
+    10px 'DM Mono',
+    monospace;
+  text-align: center;
+  padding: 12px;
+  margin: 0;
+}
+@media (min-width: 801px) {
+  .call.call .call-line .call-media {
+    width: 256px;
+  }
+}
+@media (max-width: 1200px) {
+  .call.call .call-brand {
+    display: none;
+  }
+}
+@media (max-width: 800px) {
+  .call.call {
+    position: fixed;
+    top: var(--vv-top, 0px);
+    left: 0;
+    right: 0;
+    height: var(--vv-height, 100dvh);
+    max-height: var(--vv-height, 100dvh);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
+  .call.call .call-column {
+    flex: 1;
+    width: 100%;
+    border: 0;
+  }
+  .call.call .call-form {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom) * var(--kb, 1));
+  }
+  .call.call .call-sheet {
+    display: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    z-index: 20;
+  }
+  .call.call .call-sheet.is-open {
+    display: block;
+  }
+  .call.call .call-sheet-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(0, 0, 0, 0.55);
+  }
+  .call.call .call-sheet-panel {
+    position: absolute;
+    inset: auto 0 0;
+    height: var(--sheet-h, 78%);
+    max-height: 100%;
+    padding: 0 0 env(safe-area-inset-bottom);
+    border-top: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    border-right: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.45);
+  }
+  .call.call .call-sheet-handle {
+    display: block;
+    flex: 0 0 44px;
+    width: 100%;
+    height: 44px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    touch-action: none;
+  }
+  .call.call .call-sheet-handle::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.35);
+    margin: auto;
+  }
+  .call.call .call-memory-heading {
+    padding: 0 16px;
+  }
+  .call.call .call-memory-heading [data-close] {
+    display: block;
+    min-width: 44px;
+    min-height: 44px;
+    color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    border: 0;
+    font:
+      10px 'DM Mono',
+      monospace;
+    text-transform: uppercase;
+  }
+  .call.call .call-memory-hint {
+    padding: 0 16px;
+    text-align: center;
+    background: #0e0e12;
+  }
+  .call.call .call-hint-desktop {
+    display: none;
+  }
+  .call.call .call-hint-mobile {
+    display: inline;
+  }
+  .call.call .call-memory {
+    overflow: hidden;
+  }
+  .call.call .call-memory-view {
+    width: min(100%, calc(var(--vv-height, 100dvh) * 0.58));
+    max-height: none;
+    flex-shrink: 0;
+  }
+  .call.call .call-zoom {
+    padding: 8px 0 12px;
+    margin: 0;
+  }
+  .call.call .call-debug {
+    margin: 0 16px 8px;
+  }
+}
+@media (max-width: 800px) {
+  .call.call {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+    max-height: var(--vv-height, 100dvh);
+  }
+  .call.call .call-column {
+    flex: 1;
+    border: 0;
+  }
+  .call.call .call-form {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom) * var(--kb, 1));
+  }
+}
+.call.call .call-line .call-media {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: #000;
+  width: min(256px, 70vw);
+  max-width: calc(100% - 48px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.call.call .call-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+@media (min-width: 801px) {
+  .call.call .call-line .call-media {
+    width: min(320px, 70%);
+  }
+}
+.call.call .call-memory-heading [data-close] {
+  min-width: 64px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font:
+    10px 'DM Mono',
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+@media (max-width: 800px) {
+  .call.call .call-sheet {
+    position: absolute;
+    inset: 0;
+  }
+  .call.call .call-hint-mobile,
+  .call.call .call-memory-heading [data-close] {
+    display: block;
+  }
+  .call.call .call-hint-desktop {
+    display: none;
+  }
+  .call.call .call-memory-heading {
+    padding: 0 16px;
+  }
+  .call.call .call-memory-hint {
+    padding: 0 16px;
+    text-align: center;
+  }
+  .call.call .call-sheet-handle::before {
+    border-radius: 4px;
+  }
+}
+.call.call .call-typing .call-time {
+  visibility: hidden;
+}
+/* The canvas remains square even in short landscape windows. */
+.call.call .call-memory {
+  container-type: size;
+}
+.call.call .call-memory-view {
+  width: min(100cqw, 100cqh);
+  max-height: none;
+  aspect-ratio: 1;
+}

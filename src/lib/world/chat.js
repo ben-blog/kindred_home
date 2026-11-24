@@ -1,3 +1,4 @@
+import { chatMedia } from '../chat-media.js';
 import { CHAT_MAX_MESSAGES, CHAT_MAX_TEXT, clampChatText } from '../chat-compose.js';
 import { upstreamTokens, clientAddress, createLimiter, sameOrigin } from '../proxy.js';
 import { requireLeader } from './auth.js';
@@ -303,6 +304,8 @@ function renderBlock(block, state) {
       mood: state.mood,
     });
     const done = { type: 'done', expression };
+    const media = chatMedia(data.media);
+    if (media) done.media = media;
     if (state.mood != null || state.energy != null) {
       done.world = {};
       if (state.mood != null) done.world.mood = state.mood;

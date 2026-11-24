@@ -11,6 +11,7 @@ import {
   isIncompleteGrapheme,
   joinBatch,
   retryDelayMs,
+  settleChatStream,
   stablePrefix,
   takeBatch,
 } from './chat-compose.js';
@@ -85,6 +86,84 @@ test('the SSE reader keeps a character split across chunks', () => {
   assert.equal(events.length, 1);
   assert.equal(events[0].text, 'Hi 😀');
   assert.equal(events[0].text.includes('\uFFFD'), false);
+});
+
+test('the SSE reader ignores keepalives and comments before a token', () => {
+  const reader = createSseReader();
+  const encoder = new TextEncoder();
+  for (const comment of [': keepalive\n\n', ': ping\n\n', ': The line dropped.\n\n']) {
+    assert.deepEqual(reader.push(encoder.encode(comment)), []);
+  }
+  assert.deepEqual(reader.push(encoder.encode('data: {"type":"token","text":"..."}\n\n')), [
+    { type: 'token', text: '...' },
+  ]);
+  assert.deepEqual(reader.flush(), []);
+});
+
+test('tokens survive a network error as a partial reply', () => {
+  assert.deepEqual(settleChatStream({ reply: '  Still here.  ', error: new Error('network') }), {
+    ok: true,
+    reply: 'Still here.',
+    completed: false,
+    keptPartial: true,
+  });
+});
+
+test('tokens survive a stream error instead of becoming unanswered', () => {
+  assert.deepEqual(settleChatStream({ reply: 'Still here.', error: { reason: 'stream' } }), {
+    ok: true,
+    reply: 'Still here.',
+    completed: false,
+    keptPartial: true,
+  });
+});
+
+test('tokens without done are kept as a partial reply', () => {
+  assert.deepEqual(settleChatStream({ reply: 'Still here.', completed: false }), {
+    ok: true,
+    reply: 'Still here.',
+    completed: false,
+    keptPartial: true,
+  });
+});
+
+test('completed tokens are kept as a complete reply', () => {
+  assert.deepEqual(settleChatStream({ reply: 'Still here.', completed: true }), {
+    ok: true,
+    reply: 'Still here.',
+    completed: true,
+    keptPartial: false,
+  });
+});
+
+test('a network error without tokens fails with network', () => {
+  assert.deepEqual(settleChatStream({ reply: '', error: new Error('network') }), {
+    ok: false,
+    reason: 'network',
+  });
+});
+
+test('a stream error without tokens fails with stream', () => {
+  assert.deepEqual(settleChatStream({ reply: '', error: { reason: 'stream' } }), {
+    ok: false,
+    reason: 'stream',
+  });
+});
+
+test('an empty completed stream without media fails with empty', () => {
+  assert.deepEqual(settleChatStream({ reply: '  ', completed: true }), {
+    ok: false,
+    reason: 'empty',
+  });
+});
+
+test('a media-only stream is kept', () => {
+  assert.deepEqual(settleChatStream({ media: { url: 'https://example.com/photo.png' } }), {
+    ok: true,
+    reply: '',
+    completed: false,
+    keptPartial: true,
+  });
 });
 
 test('history clamps a long assistant turn and drops a blank one', () => {

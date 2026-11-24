@@ -9,6 +9,7 @@ import {
   explainFailure,
   joinBatch,
   retryDelayMs,
+  settleChatStream,
   stablePrefix,
   takeBatch,
 } from '../lib/chat-compose.js';
@@ -32,6 +33,28 @@ export function mountCall(config) {
   const log = document.querySelector('#call-log');
   const status = document.querySelector('#call-status');
   const searchToggle = document.querySelector('#call-search');
+  const adultToggle = slug === 'dred' ? document.querySelector('#call-adult-mode') : null;
+  const adultModeKey = `call:${slug}:adultMode`;
+  const adultModeOn = () => adultToggle?.getAttribute('aria-pressed') === 'true';
+  const setAdultMode = (on) => {
+    if (!adultToggle) return;
+    adultToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    try {
+      localStorage.setItem(adultModeKey, on ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  };
+  if (adultToggle) {
+    let saved = false;
+    try {
+      saved = localStorage.getItem(adultModeKey) === '1';
+    } catch {
+      saved = false;
+    }
+    setAdultMode(saved);
+    adultToggle.addEventListener('click', () => setAdultMode(!adultModeOn()));
+  }
   const replyBar = root.querySelector('#call-reply-bar');
   const menu = root.querySelector('#call-reply-menu');
   let replyTarget = null;
@@ -612,6 +635,7 @@ export function mountCall(config) {
     } catch (error) {
       paint(true);
       await reader.cancel().catch(() => {});
+      if (reply.trim() || media) return { reply, expression, world, media, completed, error };
       throw error;
     } finally {
       reader.releaseLock();
@@ -887,6 +911,7 @@ export function mountCall(config) {
     try {
       const payload = { messages: clampHistory(messages) };
       if (continuation) payload.continue = true;
+      if (slug === 'dred' && adultModeOn()) payload.leaderAdultMode = true;
       if (quote) payload.reply_to = { id: quote.id, excerpt: quote.excerpt };
       if (sessionId) payload.sessionId = sessionId;
       if (plan) payload.plan = plan;
@@ -937,13 +962,23 @@ export function mountCall(config) {
         failTurn(body, turn, error?.reason === 'stream' ? 'stream' : 'network', response.status);
         return 'fail';
       }
-      if (controller.signal.aborted) throw new Error('aborted');
-      const reply = typeof result.reply === 'string' ? result.reply.trim() : '';
-      if (continuation && (!reply || !result.completed)) throw new Error('empty');
-      if (!reply && !safeHttpUrl(result.media?.url)) {
+      const settled = settleChatStream({
+        reply: result.reply,
+        completed: result.completed,
+        media: result.media,
+        error: result.error,
+      });
+      if (!settled.ok) {
+        if (continuation) throw new Error(settled.reason);
+        failTurn(body, turn, settled.reason, response.status);
+        return 'fail';
+      }
+      if (!settled.reply && !safeHttpUrl(result.media?.url)) {
+        if (continuation) throw new Error('empty');
         failTurn(body, turn, 'empty', response.status);
         return 'fail';
       }
+      const reply = settled.reply;
       const replyId = body.closest('.call-line').dataset.id;
       finishTurn(body, turn, { ...result, reply });
       messages.push({

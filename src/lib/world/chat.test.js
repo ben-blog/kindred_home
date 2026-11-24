@@ -3,7 +3,7 @@ import test from 'node:test';
 import { loadCanon } from '../../../world/load.js';
 import { CONTINUE_PROMPT, createContinueLimiter } from '../chat-continue.js';
 import { createLimiter } from '../proxy.js';
-import { handleWorldChat } from './chat.js';
+import { allowLeaderAdultMode, handleWorldChat } from './chat.js';
 
 const canon = loadCanon();
 const leaderId = '11111111-1111-4111-8111-111111111111';
@@ -260,7 +260,7 @@ test('the proxy streams the agent reply and stamps an expression', async () => {
   assert.equal(seen.length, 1);
 });
 
-test('leader DRED chat sets adult mode and preserves session and world state', async () => {
+test('leader DRED chat stays on the normal path unless adult mode is requested', async () => {
   let payload;
   const response = await handleWorldChat(
     request('/api/world/chat/dred', {
@@ -284,7 +284,7 @@ test('leader DRED chat sets adult mode and preserves session and world state', a
   );
   assert.equal(response.status, 200);
   await response.text();
-  assert.equal(payload.leaderAdultMode, true);
+  assert.equal(Object.hasOwn(payload, 'leaderAdultMode'), false);
   assert.equal(Object.hasOwn(payload, 'continue'), false);
   assert.equal(payload.sessionId, 'dred-session-1');
   assert.deepEqual(payload.messages, [{ role: 'user', content: 'hey' }]);
@@ -300,32 +300,79 @@ test('leader DRED chat sets adult mode and preserves session and world state', a
   });
 });
 
-test('client adult mode flags are rejected before calling either agent', async () => {
+test('adult mode is forwarded only for the leader on DRED when explicitly requested', async () => {
+  assert.equal(allowLeaderAdultMode({ slug: 'dred', isLeader: true, requested: true }), true);
+  assert.equal(allowLeaderAdultMode({ slug: 'dred', isLeader: true, requested: false }), false);
+  assert.equal(allowLeaderAdultMode({ slug: 'dred', isLeader: true, requested: undefined }), false);
+  assert.equal(allowLeaderAdultMode({ slug: 'dred', isLeader: false, requested: true }), false);
+  assert.equal(allowLeaderAdultMode({ slug: 'kin', isLeader: true, requested: true }), false);
+
+  let payload;
+  const response = await handleWorldChat(
+    request('/api/world/chat/dred', {
+      ...signedIn,
+      body: { messages: [{ role: 'user', content: 'hey' }], leaderAdultMode: true },
+    }),
+    base({
+      slug: 'dred',
+      fetch: leaderFetch(leaderId, (_href, init) => {
+        payload = JSON.parse(init.body);
+        return new Response(sse(['data: {"type":"done"}\n\n']), {
+          headers: { 'content-type': 'text/event-stream' },
+        });
+      }),
+    })
+  );
+  assert.equal(response.status, 200);
+  await response.text();
+  assert.equal(payload.leaderAdultMode, true);
+});
+
+test('leader DRED with adult mode off omits the flag, and KIN never forwards it', async () => {
+  for (const [slug, body] of [
+    ['dred', { messages: [{ role: 'user', content: 'hey' }], leaderAdultMode: false }],
+    ['dred', { messages: [{ role: 'user', content: 'hey' }] }],
+    ['kin', { messages: [{ role: 'user', content: 'hey' }], leaderAdultMode: true }],
+  ]) {
+    let payload;
+    const response = await handleWorldChat(
+      request(`/api/world/chat/${slug}`, { ...signedIn, body }),
+      base({
+        slug,
+        fetch: leaderFetch(leaderId, (_href, init) => {
+          payload = JSON.parse(init.body);
+          return new Response(sse(['data: {"type":"done"}\n\n']), {
+            headers: { 'content-type': 'text/event-stream' },
+          });
+        }),
+      })
+    );
+    assert.equal(response.status, 200);
+    await response.text();
+    assert.equal(Object.hasOwn(payload, 'leaderAdultMode'), false);
+  }
+});
+
+test('a non-boolean adult mode flag is rejected before calling either agent', async () => {
   for (const slug of ['kin', 'dred']) {
-    for (const leaderAdultMode of [true, false]) {
-      for (const continuing of [true, false]) {
-        let called = false;
-        const response = await handleWorldChat(
-          request(`/api/world/chat/${slug}`, {
-            ...signedIn,
-            body: {
-              messages: [{ role: continuing ? 'assistant' : 'user', content: 'hey' }],
-              continue: continuing,
-              leaderAdultMode,
-            },
+    for (const leaderAdultMode of ['true', 1, null]) {
+      let called = false;
+      const response = await handleWorldChat(
+        request(`/api/world/chat/${slug}`, {
+          ...signedIn,
+          body: { messages: [{ role: 'user', content: 'hey' }], leaderAdultMode },
+        }),
+        base({
+          slug,
+          fetch: leaderFetch(leaderId, () => {
+            called = true;
+            throw new Error('agent must not run');
           }),
-          base({
-            slug,
-            fetch: leaderFetch(leaderId, () => {
-              called = true;
-              throw new Error('agent must not run');
-            }),
-          })
-        );
-        assert.equal(response.status, 400);
-        assert.deepEqual(await response.json(), { error: 'bad request' });
-        assert.equal(called, false);
-      }
+        })
+      );
+      assert.equal(response.status, 400);
+      assert.deepEqual(await response.json(), { error: 'bad request' });
+      assert.equal(called, false);
     }
   }
 });
@@ -775,6 +822,18 @@ test('a visitor chat and a failed warmth queue still leave the reply intact', as
   assert.equal(text.includes('db down'), false);
 });
 
+test('SSE forwards comment keepalives before a token', async () => {
+  const { rewriteSse } = await import('./chat.js');
+  const chunks = [
+    ': ping\n\n',
+    ': keepalive\n\n',
+    ': first comment\n: second comment\n\n',
+    'data: {"type":"token","text":"Still here."}\n\n',
+  ];
+  const response = new Response(rewriteSse(sse(chunks)));
+  assert.equal(await response.text(), chunks.join(''));
+});
+
 test('SSE done passes only sanitized photo metadata', async () => {
   const { rewriteSse } = await import('./chat.js');
   const body = sse([
@@ -913,8 +972,7 @@ test('continue injects a synthetic newest user turn and keeps character routing'
     ]);
     assert.equal(Object.hasOwn(payload, 'continue'), false);
     assert.equal(payload.sessionId, `continue-${slug}`);
-    if (slug === 'dred') assert.equal(payload.leaderAdultMode, true);
-    else assert.equal(Object.hasOwn(payload, 'leaderAdultMode'), false);
+    assert.equal(Object.hasOwn(payload, 'leaderAdultMode'), false);
   }
 });
 

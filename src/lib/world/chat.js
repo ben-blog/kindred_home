@@ -105,7 +105,9 @@ async function dispatch(request, options) {
   }
 
   const payload = { messages: parsed.messages };
-  if (slug === 'dred') payload.leaderAdultMode = true;
+  if (allowLeaderAdultMode({ slug, isLeader: true, requested: parsed.leaderAdultMode })) {
+    payload.leaderAdultMode = true;
+  }
   if (parsed.sessionId) payload.sessionId = parsed.sessionId;
   if (route.chatUser) payload.userId = route.chatUser;
   if (parsed.plan) payload.currentPlan = parsed.plan;
@@ -194,13 +196,18 @@ function messageShape(message) {
   return message;
 }
 
+
+export function allowLeaderAdultMode({ slug, isLeader, requested }) {
+  return slug === 'dred' && isLeader === true && requested === true;
+}
+
 function normalizeChat(body) {
   const keys = Object.keys(body);
   if (
     !keys.includes('messages') ||
     keys.some(
       (key) =>
-        !['messages', 'sessionId', 'plan', 'forceWebSearch', 'reply_to', 'continue'].includes(key)
+        !['messages', 'sessionId', 'plan', 'forceWebSearch', 'reply_to', 'continue', 'leaderAdultMode'].includes(key)
     )
   ) {
     return null;
@@ -254,7 +261,13 @@ function normalizeChat(body) {
     if (continuing) return null;
     messages.at(-1).content = applyReplyToContent(messages.at(-1).content, reply);
   }
-  return { messages, sessionId, plan, forceWebSearch, continue: continuing };
+  let leaderAdultMode = false;
+  if (Object.hasOwn(body, 'leaderAdultMode')) {
+    if (typeof body.leaderAdultMode !== 'boolean') return null;
+    leaderAdultMode = body.leaderAdultMode;
+  }
+  return { messages, sessionId, plan, forceWebSearch, continue: continuing, leaderAdultMode };
+
 }
 
 function numbersOf(value) {
@@ -310,7 +323,10 @@ function renderBlock(block, state) {
       ?.slice(6)
       .trim() || '';
   const line = lines.find((item) => item.startsWith('data:'));
-  if (!line) return '';
+  if (!line) {
+    const commentLines = lines.filter((item) => item.startsWith(':'));
+    return commentLines.length ? `${commentLines.join('\n')}\n\n` : '';
+  }
   let data;
   try {
     data = JSON.parse(line.slice(line.indexOf(':') + 1).trim());

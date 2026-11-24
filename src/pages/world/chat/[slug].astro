@@ -40,6 +40,7 @@ const gallery =
 const frames = callFrames(gallery, expressions.get(data.slug));
 const opening = openingFrame(frames);
 const copy = {
+  adultMode: text({ en: '성인 모드' }),
   continueStart: text({ en: '계속 말하기' }),
   continueStop: text({ en: '멈추기' }),
   continueStatus: text({ en: '이야기하는 중' }),
@@ -129,7 +130,14 @@ const copy = {
         <span role="status">{copy.continueStatus}</span>
         <button id="call-continue-stop" type="button">{copy.continueStop}</button>
       </div>
-      <div class="call-continue-controls"><button id="call-continue-start" type="button">{copy.continueStart}</button></div>
+      <div class="call-continue-controls">
+        <button id="call-continue-start" type="button">{copy.continueStart}</button>
+        {data.slug === 'dred' && (
+          <button type="button" class="call-adult-mode" id="call-adult-mode" aria-pressed="false">
+            {copy.adultMode}
+          </button>
+        )}
+      </div>
       <form class="call-form" id="call-form" novalidate>
         <button type="button" class="call-search call-icon" id="call-search" aria-pressed="false" aria-label={copy.webSearchLabel}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></button>
         <label class="call-field"><span class="call-sr">Message</span><textarea id="call-input" name="message" rows="1" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="send" inputmode="text" data-1p-ignore data-lpignore="true" maxlength="2000" placeholder="Message"></textarea></label>

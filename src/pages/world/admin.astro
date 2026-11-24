@@ -1,147 +1,45 @@
 ---
 export const prerender = false;
-
 import { getCollection } from 'astro:content';
-import Frame from '../../components/world/Frame.astro';
-import Base from '../../layouts/Base.astro';
+import Layout from '../../components/admin/Layout.astro';
 import { text } from '../../lib/locale.js';
-import { isPublicStatus } from '../../lib/publish.js';
-
-const calls = (await getCollection('characters'))
-  .filter((entry) => isPublicStatus(entry.data.status) && entry.data.agent?.chat)
+import { adminCopy as copy } from '../../lib/admin-copy.js';
+import '../../styles/admin.css';
+const people = (await getCollection('characters')).filter(({ data }) => data.status === 'active')
   .sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+const characters = people.map(({ data }) => ({ slug: data.slug, name: text(data.name), color: data.identity.color,
+  gallery: data.aliases[0], chat: !!data.agent?.chat, memory: !!data.agent?.memory }));
 ---
-
-<Base frame="world" title="Hub — kinxdred" description="Leader hub for kinxdred." robots="noindex">
-  <link
-    slot="head"
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&display=swap"
-  />
-  <header class="phone-bar">
-    <a href="/">kinxdred</a>
-    <a href="/world/admin">hub</a>
-  </header>
-  <div class="hub">
-    <p class="eyebrow">Ben hub</p>
-    <h1>Hub</h1>
-    <p class="world-copy">리더만 들어오는 자리입니다.</p>
-    <div class="hub-grid">
-      <a class="hub-card" href="/world">
-        <span>world</span>
-        <strong>세계</strong>
-        <p>지금 tick과 자리.</p>
-        <em id="hub-world">…</em>
-      </a>
-      {
-        calls.map((entry) => (
-          <a class="hub-card" href={`/world/chat/${entry.data.slug}/`}>
-            <span>chat</span>
-            <strong style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</strong>
-            <p>리더 통화.</p>
-          </a>
-        ))
-      }
-      {
-        calls
-          .filter((entry) => entry.data.agent?.memory)
-          .map((entry) => (
-            <a class="hub-card" href={`/world/brain/${entry.data.slug}/`}>
-              <span>brain</span>
-              <strong style={`color:${entry.data.identity.color}`}>{text(entry.data.name)}</strong>
-              <p>memory history를 봅니다.</p>
-            </a>
-          ))
-      }
-      <a class="hub-card" href="/world/admin/album">
-        <span>album</span>
-        <strong>앨범</strong>
-        <p>사진을 올리고 검토합니다.</p>
-        <em id="hub-album">…</em>
-      </a>
-    </div>
-    <form class="panel" id="tick-form">
-      <p class="eyebrow">tick</p>
-      <p class="world-copy">세계를 한 tick 진행합니다.</p>
-      <div class="world-actions">
-        <button type="button" id="tick-button">tick</button>
-        <button type="button" id="sign-out">나가기</button>
+<Layout title="Hub">
+  <div class="head"><div><p class="eyebrow">leader hub</p><h1>Hub</h1></div><p class="status" id="world-status" aria-live="polite"><span class="dot"></span>{copy.loading}</p></div>
+  <section class="panel tick" aria-labelledby="tick-title">
+    <div><p class="eyebrow">next tick</p><h2 id="tick-title">{copy.tickTitle}</h2><ul id="tick-preview"></ul><p id="empty-warmth" class="hint"></p></div>
+    <div class="tick-go"><button class="btn primary" data-tick disabled>Tick 진행</button><p class="hint">{copy.irreversible}</p></div>
+  </section>
+  <div class="chars" id="characters" data-characters={JSON.stringify(characters)}>
+    {characters.map((person) => <article class="panel char" data-character={person.slug} style={`--accent:${person.color}`}>
+      <div class="char-top"><div><span class="char-name">{person.name}</span><span class="face" hidden>피곤한 표정</span></div><span class="where"></span></div>
+      <div data-gauges></div><div class="xp" data-xp></div>
+      <div class="pending"><span data-pending>{copy.loading}</span><span class="mono hint" data-warmth-note hidden aria-live="polite"></span></div>
+      <div class="char-actions" data-warmth={person.slug} data-note-sent={copy.sent} data-note-wait={copy.wait} data-note-fail={copy.warmthFail}>
+        <button class="btn accent" disabled>Warmth +1</button>
+        {person.chat && <a class="btn ghost" href={`/world/chat/${person.slug}/`}>채팅</a>}
+        {person.memory && <a class="btn ghost" href={`/world/brain/${person.slug}/`}>Brain</a>}
       </div>
-      <p class="world-status" id="auth-status" aria-live="polite"></p>
-    </form>
+    </article>)}
   </div>
-</Base>
-
-<script>
-  const status = document.querySelector('#auth-status');
-  const tickButton = document.querySelector('#tick-button');
-  const signOut = document.querySelector('#sign-out');
-  const worldStatus = document.querySelector('#hub-world');
-  const albumStatus = document.querySelector('#hub-album');
-
-  function say(text) {
-    status.textContent = text;
-  }
-
-  async function readJson(url) {
-    const response = await fetch(url, { headers: { accept: 'application/json' } });
-    if (response.status === 401 || response.status === 403) {
-      location.replace('/login');
-      return null;
-    }
-    if (!response.ok) return { error: true };
-    return response.json().catch(() => ({ error: true }));
-  }
-
-  async function refresh() {
-    const world = await readJson('/api/world');
-    if (!world) return;
-    worldStatus.textContent = world.error
-      ? '연결 없음'
-      : Number.isInteger(world.tick)
-        ? `tick ${world.tick}`
-        : 'tick 없음';
-    const album = await readJson('/api/world/album');
-    if (!album) return;
-    if (album.error || !Array.isArray(album.submissions)) {
-      albumStatus.textContent = '연결 없음';
-      return;
-    }
-    const pending = album.submissions.filter(
-      (row) => row && row.status !== 'published' && row.status !== 'rejected'
-    ).length;
-    albumStatus.textContent = `대기 ${pending}`;
-  }
-
-  tickButton.addEventListener('click', async () => {
-    tickButton.disabled = true;
-    say('Ticking.');
-    try {
-      const response = await fetch('/api/world/tick', {
-        method: 'POST',
-        headers: { accept: 'application/json' },
-      });
-      if (response.status === 409) say('A tick is already running.');
-      else if (response.status === 401 || response.status === 403) location.replace('/login');
-      else if (!response.ok) say('Unavailable.');
-      else {
-        const body = await response.json().catch(() => ({}));
-        say(Number.isInteger(body.tick) ? `Tick ${body.tick}.` : 'Ticked.');
-      }
-    } catch {
-      say('Unavailable.');
-    }
-    tickButton.disabled = false;
-    await refresh().catch(() => {});
-  });
-
-  signOut.addEventListener('click', async () => {
-    await fetch('/api/world/auth/session', { method: 'DELETE' }).catch(() => {});
-    location.replace('/login');
-  });
-
-  refresh().catch(() => {
-    worldStatus.textContent = '연결 없음';
-    albumStatus.textContent = '연결 없음';
-  });
-</script>
+  <p class="legend"><span><i class="legend-now"></i>지금</span><span><i class="legend-next"></i>tick 후 예상</span><span id="rule-note"></span></p>
+  <div class="lower">
+    <section class="panel sec" aria-labelledby="q-title"><div class="sec-head"><div><p class="eyebrow">album review</p><h3 id="q-title">{copy.queue}</h3></div><span class="count" id="queue-count"></span></div><ul class="q" id="review-queue"></ul></section>
+    <div class="side">
+      <a class="panel link-card" href="/world/admin/album"><span><span class="eyebrow">album</span><br/><strong>{copy.albumManage}</strong></span><span class="go">→</span><p>{copy.albumDescription}</p></a>
+      <section class="panel sec"><p class="eyebrow">gallery</p><div class="chips" id="gallery-chips">{characters.filter((person) => person.gallery).map((person) => <a class="chip" href={person.gallery}>{person.name} 갤러리</a>)}</div></section>
+      <section class="panel sec"><p class="eyebrow">bonds</p><div class="chips" id="bonds"></div></section>
+    </div>
+  </div>
+  <div class="error" id="error-bar" hidden role="alert"><span data-admin-message></span><button class="btn small ghost" id="retry">{copy.retry}</button></div>
+  <p class="world-status" id="action-status" role="status"></p>
+  <div class="foot"><span>Ben · 로그인됨</span><span id="updated-at"></span></div>
+  <div slot="bottom" class="mobile-tick"><div class="sum" id="mobile-summary">{copy.loading}</div><button class="btn primary" data-tick disabled>Tick 진행</button></div>
+</Layout>
+<script src="../../scripts/admin-hub.js"></script>

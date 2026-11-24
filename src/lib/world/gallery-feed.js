@@ -18,8 +18,27 @@ export function publicImages(staticDoc, rows, likes, tagNames) {
     if (seen.has(String(row.item_id)) || seen.has(`file:${row.filename}`)) continue;
     extra.push(toGalleryImage(row, likes, tagNames));
   }
-  extra.sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
+  extra.sort(compareGalleryNewestFirst);
   return extra;
+}
+
+export function compareGalleryNewestFirst(a, b) {
+  const left = galleryRecency(a);
+  const right = galleryRecency(b);
+  if (left.time !== right.time) return right.time - left.time;
+  if (left.order !== right.order) return right.order - left.order;
+  if (left.id < right.id) return -1;
+  if (left.id > right.id) return 1;
+  return 0;
+}
+
+function galleryRecency(image) {
+  const time = Date.parse(image?.created_at || image?.createdAt || '');
+  return {
+    time: Number.isFinite(time) ? time : 0,
+    order: Number.isInteger(image?.order_num) ? image.order_num : 0,
+    id: String(image?.id || image?.item_id || image?.filename || ''),
+  };
 }
 
 export function toGalleryImage(row, likes, tagNames) {
@@ -31,6 +50,7 @@ export function toGalleryImage(row, likes, tagNames) {
     filename: row.filename,
     style: row.style || '',
     order_num: Number.isInteger(row.order_num) ? row.order_num : 0,
+    created_at: typeof row.created_at === 'string' ? row.created_at : '',
     is_active: true,
     show_on_main: row.show_on_main === true,
     like_count: counts.get(row.item_id) || 0,

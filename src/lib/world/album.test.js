@@ -682,6 +682,36 @@ test('new database rows are added after the static gallery and do not replace it
   );
 });
 
+test('publicImages sorts extra stills newest first', () => {
+  const images = publicImages(
+    { images: [] },
+    [
+      {
+        item_id: 'older',
+        filename: 'older.webp',
+        is_active: true,
+        order_num: 10,
+        created_at: '2026-04-02T00:00:00.000Z',
+      },
+      {
+        item_id: 'newer',
+        filename: 'newer.webp',
+        is_active: true,
+        order_num: 9,
+        created_at: '2026-11-24T12:00:00.000Z',
+      },
+      { item_id: 'undated-high', filename: 'undated-high.webp', is_active: true, order_num: 40 },
+    ],
+    new Map(),
+    new Map()
+  );
+  assert.deepEqual(
+    images.map((image) => image.id),
+    ['newer', 'older', 'undated-high']
+  );
+  assert.equal(images[0].created_at, '2026-11-24T12:00:00.000Z');
+});
+
 test('the public gallery feed hides ids the static file already has', async () => {
   const store = memoryStore({
     rows: [

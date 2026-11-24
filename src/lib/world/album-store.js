@@ -12,6 +12,7 @@ const ITEM_COLUMNS = [
   'filename',
   'style',
   'order_num',
+  'created_at',
   'is_active',
   'show_on_main',
   'title_ko',
@@ -118,7 +119,7 @@ export function createAlbumStore(config, fetchImpl = globalThis.fetch) {
     async activeItems(character) {
       const rows = await jsonRequest(
         rest(
-          `gallery_items?select=${ITEM_COLUMNS}&character=eq.${encodeURIComponent(character)}&is_active=eq.true&order=order_num.asc`
+          `gallery_items?select=${ITEM_COLUMNS}&character=eq.${encodeURIComponent(character)}&is_active=eq.true&order=created_at.desc.nullslast,order_num.desc,item_id.asc`
         ),
         { method: 'GET' }
       );

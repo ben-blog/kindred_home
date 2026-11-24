@@ -64,3 +64,64 @@ test('failed variants fall back once, including when the detail image is reused'
   assert.equal(img.srcset, undefined);
   assert.equal(img.sizes, undefined);
 });
+
+test('flattenGallery sorts by upload time, then order_num, newest first', () => {
+  const images = context.flattenGallery({
+    character: 'kin',
+    images: [
+      { id: 'old-high', filename: 'old-high.webp', order_num: 30, is_active: true, ko: { title: 'old' } },
+      {
+        id: 'new',
+        filename: 'kin_album_new.webp',
+        order_num: 31,
+        created_at: '2026-11-24T12:00:00.000Z',
+        is_active: true,
+        ko: { title: 'new' },
+      },
+      { id: 'older', filename: 'older.webp', order_num: 2, is_active: true, ko: { title: 'older' } },
+      {
+        id: 'tied-a',
+        filename: 'tied-a.webp',
+        order_num: 8,
+        created_at: '2026-11-01T00:00:00.000Z',
+        is_active: true,
+      },
+      {
+        id: 'tied-b',
+        filename: 'tied-b.webp',
+        order_num: 8,
+        created_at: '2026-11-01T00:00:00.000Z',
+        is_active: true,
+      },
+    ],
+  });
+  assert.deepEqual(
+    images.map((image) => image.id),
+    ['new', 'tied-a', 'tied-b', 'old-high', 'older']
+  );
+});
+
+test('mergeGalleryImages keeps new stills and flattenGallery puts them first', () => {
+  const merged = context.mergeGalleryImages(
+    [
+      { id: 'kept', filename: 'kept.webp', order_num: 1, is_active: true },
+      { id: 'later', filename: 'later.webp', order_num: 4, is_active: true },
+    ],
+    [
+      { id: 'kept', filename: 'kept.webp', order_num: 1, created_at: '2026-04-02T00:00:00.000Z' },
+      {
+        id: 'kin_album_new',
+        filename: 'kin_album_new.webp',
+        order_num: 33,
+        created_at: '2026-11-24T12:00:00.000Z',
+        is_active: true,
+      },
+    ]
+  );
+  const images = context.flattenGallery({ character: 'kin', images: merged });
+  assert.deepEqual(
+    images.map((image) => image.id),
+    ['kin_album_new', 'later', 'kept']
+  );
+  assert.equal(images[0].created_at, '2026-11-24T12:00:00.000Z');
+});

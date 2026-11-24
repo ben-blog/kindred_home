@@ -9,7 +9,7 @@
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'DM Mono',monospace;cursor:none;color:rgba(255,255,255,.92)}
-@media(pointer:coarse){html,body{cursor:auto}}
+@media(pointer:coarse){html,body{cursor:auto}#cur{display:none}}
 :root{--dred:#5B4FCF;--bg:#000}
 button,a{font-family:inherit}
 
@@ -88,10 +88,10 @@ button,a{font-family:inherit}
   display:flex;align-items:center;gap:8px;
 }
 .count{font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.35)}
-.info,.act{
+.info,.grid-entry,.act{
   font-size:10px;letter-spacing:.22em;text-transform:uppercase;
 }
-.info{
+.info,.slide-bar .grid-entry{
   color:rgba(255,255,255,.50);background:rgba(8,8,8,.88);
   border:1px solid color-mix(in srgb, var(--dred) 45%, transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
@@ -103,6 +103,10 @@ button,a{font-family:inherit}
   position:fixed;z-index:80;display:flex;left:0;right:0;bottom:0;
   padding:6px 8px 10px;gap:0;overflow-x:auto;justify-content:safe center;
 }
+#index-ticks{display:flex;flex:0 0 auto}
+#index .grid-entry{flex:0 0 auto;min-width:44px;min-height:44px;padding:0 8px;background:none;border:0;color:var(--dred);cursor:pointer}
+.grid-entry{font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+.grid-entry:focus-visible,#grid-close:focus-visible,.grid-tile:focus-visible{outline:2px solid var(--dred);outline-offset:-2px}
 .tick{
   flex:0 0 auto;width:28px;height:44px;background:transparent;border:0;cursor:pointer;position:relative;
 }
@@ -128,9 +132,45 @@ button,a{font-family:inherit}
     flex-direction:column;overflow-y:auto;overflow-x:hidden;max-height:70vh;
     width:44px;padding:0;justify-content:center;
   }
+  #index-ticks{flex-direction:column}
+  #index .grid-entry{writing-mode:vertical-rl;padding:10px 0;align-self:center}
   .tick{width:44px;height:16px}
   .tick::before{left:12px;right:12px;top:7px}
   .tick.on::before{left:6px;right:6px}
+}
+
+body.grid-open #index,body.grid-open #cur{visibility:hidden}
+#grid-panel{
+  position:fixed;inset:0;z-index:250;display:flex;flex-direction:column;
+  padding:24px 16px 0;background:#000;opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .25s cubic-bezier(.16,1,.3,1),visibility .25s;
+}
+#grid-panel.open{opacity:1;visibility:visible;pointer-events:auto}
+#grid-panel,#grid-panel button{cursor:pointer}
+#grid-head{display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;padding-bottom:24px}
+#grid-title{font-size:8px;font-weight:400;letter-spacing:.32em;text-transform:uppercase;color:var(--dred)}
+#grid-count{margin-top:6px;font-size:8px;letter-spacing:.22em;color:rgba(255,255,255,.35)}
+#grid-close{min-height:44px;border:0;background:none;color:rgba(255,255,255,.50);font-size:11px;letter-spacing:.28em;text-transform:uppercase;padding:0 4px}
+#grid-sheet{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:min-content;gap:10px;flex:1;min-height:0;overflow-y:auto;align-content:start;overscroll-behavior:contain;padding-bottom:24px}
+.grid-tile{position:relative;aspect-ratio:1;min-width:44px;min-height:44px;overflow:hidden;border:0;background:#000;padding:0;color:rgba(255,255,255,.50)}
+.grid-tile img{display:block;width:100%;height:100%;object-fit:cover;filter:brightness(.62);transition:filter .25s cubic-bezier(.16,1,.3,1)}
+.grid-tile::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.12);pointer-events:none;transition:opacity .25s}
+.grid-tile[aria-current="true"]{box-shadow:inset 0 0 0 2px var(--dred)}
+.grid-tile[aria-current="true"]::after{border:2px solid var(--dred)}
+.grid-tile:focus-visible img,.grid-tile[aria-current="true"] img{filter:none}
+.grid-tile:focus-visible::after,.grid-tile[aria-current="true"]::after{background:transparent}
+.grid-number,.grid-today{position:absolute;z-index:1;font-size:8px;letter-spacing:.22em;text-transform:uppercase;pointer-events:none}
+.grid-number{left:8px;bottom:8px}
+.grid-today{left:8px;top:8px;color:var(--dred)}
+.grid-today[hidden]{display:none}
+@media(hover:hover) and (pointer:fine){
+  .grid-tile:hover img{filter:none}
+  .grid-tile:hover::after{background:transparent}
+}
+@media(min-width:800px){
+  #grid-panel{padding:32px 32px 0}
+  #grid-head{padding-bottom:7px}
+  #grid-sheet{grid-template-columns:repeat(6,minmax(0,1fr))}
 }
 
 #detail-panel{
@@ -213,7 +253,9 @@ button,a{font-family:inherit}
   html,body{cursor:auto}
   .veil{opacity:0;transition:none}
   .subtitle{opacity:1;transition:none}
-  #detail-inner,#detail-panel,#leave,#loading{transition:none}
+  #detail-inner,#detail-panel,#leave,#loading,#grid-panel,.grid-tile img,.grid-tile::after{transition:none}
+  .grid-tile img{filter:none}
+  .grid-tile::after{background:transparent}
 }
 </style>
 </head>
@@ -246,7 +288,18 @@ button,a{font-family:inherit}
     <div id="reel"></div>
   </div>
 </div>
-<nav id="index" aria-label="album"></nav>
+<nav id="index" aria-label="album">
+  <button type="button" class="grid-entry" aria-haspopup="dialog" aria-expanded="false" aria-controls="grid-panel">index</button>
+  <div id="index-ticks"></div>
+</nav>
+
+<div id="grid-panel" role="dialog" aria-modal="true" aria-labelledby="grid-title" aria-hidden="true" inert>
+  <div id="grid-head">
+    <div><h2 id="grid-title">Index</h2><p id="grid-count">0 photos</p></div>
+    <button type="button" id="grid-close">close ×</button>
+  </div>
+  <div id="grid-sheet"></div>
+</div>
 
 <div id="detail-panel">
   <div id="detail-inner">

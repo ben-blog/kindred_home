@@ -40,7 +40,15 @@ const gallery =
 const frames = callFrames(gallery, expressions.get(data.slug));
 const opening = openingFrame(frames);
 const copy = {
-  adultMode: text({ en: '성인 모드' }),
+  mode1: text({ en: '모드 1' }),
+  mode2: text({ en: '모드 2' }),
+  mode1Name: text({ en: '모드 1, 일반' }),
+  mode2Name: text({ en: '모드 2, 성인' }),
+  modeGroup: text({ en: '대화 모드' }),
+  mode1Chip: text({ en: '현재 모드 1, 일반' }),
+  mode2Chip: text({ en: '현재 모드 2, 성인' }),
+  mode2Notice: text({ en: '모드 2가 켜져 있어요' }),
+  newThread: text({ en: '새 대화' }),
   continueStart: text({ en: '계속 말하기' }),
   continueStop: text({ en: '멈추기' }),
   continueStatus: text({ en: '이야기하는 중' }),
@@ -106,6 +114,9 @@ const copy = {
           {opening ? <img id="call-avatar-image" src={opening.src} alt={opening.title || name} /> : name.slice(0, 1)}
         </button>
         <div class="call-meta"><h1 class="call-name">{name}</h1><p class="call-presence"><b id="call-mood">calm</b><span id="call-location"></span></p></div>
+        {data.slug === 'dred' && (
+          <p class="call-mode-chip" id="call-mode-chip" aria-label={copy.mode1Chip}>{copy.mode1}</p>
+        )}
         <button class="call-icon" id="call-memory-toggle" type="button" aria-label="Memory" aria-controls="call-sheet-panel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><g fill="currentColor" stroke="none"><circle cx="9" cy="8" r="1"/><circle cx="16" cy="10" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="13" cy="16" r="1"/><circle cx="12" cy="11" r="1"/></g></svg></button>
       </header>
       <div class="call-thread">
@@ -131,11 +142,13 @@ const copy = {
         <button id="call-continue-stop" type="button">{copy.continueStop}</button>
       </div>
       <div class="call-continue-controls">
+        <button id="call-new-thread" type="button">{copy.newThread}</button>
         <button id="call-continue-start" type="button">{copy.continueStart}</button>
         {data.slug === 'dred' && (
-          <button type="button" class="call-adult-mode" id="call-adult-mode" aria-pressed="false">
-            {copy.adultMode}
-          </button>
+          <div class="call-mode" id="call-mode" role="radiogroup" aria-label={copy.modeGroup}>
+            <button type="button" id="call-mode-1" role="radio" aria-checked="true" aria-pressed="true" class="is-on" aria-label={copy.mode1Name} tabindex="0">{copy.mode1}</button>
+            <button type="button" id="call-mode-2" role="radio" aria-checked="false" aria-pressed="false" aria-label={copy.mode2Name} tabindex="-1">{copy.mode2}</button>
+          </div>
         )}
       </div>
       <form class="call-form" id="call-form" novalidate>

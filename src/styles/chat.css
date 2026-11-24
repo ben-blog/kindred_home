@@ -62,6 +62,9 @@
   letter-spacing: normal;
   text-transform: none;
 }
+.call.call .call-bar:has(.call-mode-chip) {
+  grid-template-columns: 44px 36px minmax(0, 1fr) auto 44px;
+}
 .call.call .call-icon {
   width: 44px;
   height: 44px;
@@ -133,6 +136,30 @@
   font-weight: 500;
   color: color-mix(in srgb, var(--accent) 70%, white);
 }
+.call.call.is-mode-2 .call-presence,
+.call.call.is-mode-2 .call-presence b {
+  color: color-mix(in srgb, var(--accent) 75%, white);
+}
+.call.call .call-mode-chip {
+  align-self: center;
+  justify-self: end;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  font:
+    10px/1.2 'DM Mono',
+    monospace;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.call.call .call-mode-chip.is-on {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--ink);
+}
 .call.call .call-thread {
   display: flex;
   position: relative;
@@ -161,6 +188,20 @@
   margin: auto;
   color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
+}
+.call.call .call-system {
+  align-self: center;
+  flex: 0 0 auto;
+  margin: 6px 0 10px;
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 62%, white);
+  font:
+    11px/1.4 'DM Mono',
+    monospace;
+  letter-spacing: 0.04em;
 }
 .call.call .call-day {
   display: flex;
@@ -982,9 +1023,13 @@
 }
 .call.call .call-continue-controls {
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.call.call #call-new-thread {
+  margin-right: auto;
 }
 .call.call .call-continue-bar button,
-.call.call .call-continue-controls button {
+.call.call .call-continue-controls > button {
   min-height: 44px;
   padding: 6px 12px;
   border: 1px solid var(--chat-line);
@@ -994,13 +1039,31 @@
   font: inherit;
   cursor: pointer;
 }
-.call.call .call-continue-controls button:disabled {
+.call.call .call-continue-controls > button:disabled {
   opacity: 0.5;
 }
-
-.call.call .call-adult-mode {
-  margin-left: 0.5rem;
+.call.call .call-mode {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--chat-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
 }
-.call.call .call-adult-mode[aria-pressed='true'] {
-  font-weight: 600;
+.call.call .call-mode button {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font: inherit;
+}
+.call.call .call-mode button.is-on {
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+}
+.call.call .call-mode #call-mode-2.is-on {
+  background: var(--accent);
+  color: var(--ink);
 }

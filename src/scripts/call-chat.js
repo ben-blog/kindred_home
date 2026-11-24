@@ -1,10 +1,22 @@
+import {
+  adultModeStorageKey,
+  applyModeState,
+  buildChatPayload,
+  MODE_LABELS,
+} from '../lib/call-mode.js';
+import {
+  clearStoredThread,
+  isSessionId,
+  loadThread,
+  openStorage,
+  saveThread,
+} from '../lib/call-thread.js';
 import { CONTINUE_MAX, CONTINUE_GAP_MS, isContinueRequest } from '../lib/chat-continue.js';
 import { createMessageId, excerptFrom, isReplyId, normalizeReply } from '../lib/chat-reply.js';
 import { dayKey, groupsTogether, nearBottom } from '../lib/chat-thread.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
 import { mountPhotoViewer } from './call-viewer.js';
 import {
-  clampHistory,
   createSseReader,
   explainFailure,
   joinBatch,
@@ -33,28 +45,16 @@ export function mountCall(config) {
   const log = document.querySelector('#call-log');
   const status = document.querySelector('#call-status');
   const searchToggle = document.querySelector('#call-search');
-  const adultToggle = slug === 'dred' ? document.querySelector('#call-adult-mode') : null;
-  const adultModeKey = `call:${slug}:adultMode`;
-  const adultModeOn = () => adultToggle?.getAttribute('aria-pressed') === 'true';
-  const setAdultMode = (on) => {
-    if (!adultToggle) return;
-    adultToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
-    try {
-      localStorage.setItem(adultModeKey, on ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  };
-  if (adultToggle) {
-    let saved = false;
-    try {
-      saved = localStorage.getItem(adultModeKey) === '1';
-    } catch {
-      saved = false;
-    }
-    setAdultMode(saved);
-    adultToggle.addEventListener('click', () => setAdultMode(!adultModeOn()));
-  }
+  const localStore = openStorage('localStorage');
+  const sessionStore = openStorage('sessionStorage');
+  const storedThread = loadThread(localStore, sessionStore, slug);
+  const seededHistory = Array.isArray(config.history) ? config.history : storedThread.messages;
+  const idleText = document.querySelector('#call-empty')?.textContent || '';
+  const mode1 = slug === 'dred' ? document.querySelector('#call-mode-1') : null;
+  const mode2 = slug === 'dred' ? document.querySelector('#call-mode-2') : null;
+  const modeChip = slug === 'dred' ? document.querySelector('#call-mode-chip') : null;
+  const modeBox = slug === 'dred' ? document.querySelector('#call-mode') : null;
+  const adultModeOn = () => mode2?.classList.contains('is-on') === true;
   const replyBar = root.querySelector('#call-reply-bar');
   const menu = root.querySelector('#call-reply-menu');
   let replyTarget = null;
@@ -65,7 +65,10 @@ export function mountCall(config) {
   const pending = [];
   const cursor = { calm: 1 };
   let plan;
-  let sessionId = '';
+  let sessionId = storedThread.sessionId;
+  let completed = storedThread.messages.map((message) => ({ ...message }));
+  let generation = 0;
+  let activeController = null;
 
   const continueBar = root.querySelector('#call-continue-bar');
   const continueStart = root.querySelector('#call-continue-start');
@@ -134,6 +137,91 @@ export function mountCall(config) {
   let pendingSaved = null;
   let since = '';
   let polling = false;
+
+  function showModeNotice() {
+    const text = copy.mode2Notice || MODE_LABELS.notice;
+    if (!text) return;
+    const item = document.createElement('li');
+    item.className = 'call-system';
+    item.textContent = text;
+    log.append(item);
+    pin();
+  }
+
+  function setAdultMode(on, announce = false) {
+    if (!mode1 || !mode2) return;
+    const was = adultModeOn();
+    const next = on === true;
+    applyModeState({ root, mode1, mode2, chip: modeChip }, next, copy);
+    try {
+      localStore?.setItem(adultModeStorageKey(slug), next ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+    if (announce && next && !was) showModeNotice();
+  }
+
+  function remember(turnMessages = completed) {
+    const saved = saveThread(localStore, slug, {
+      sessionId,
+      messages: turnMessages,
+      at: new Date().toISOString(),
+    });
+    completed = saved.messages;
+  }
+
+  function resetThread() {
+    generation += 1;
+    rerun = false;
+    continueWanted = false;
+    holdUntil = 0;
+    clearTimeout(holdTimer);
+    stopContinue();
+    activeController?.abort();
+    activeController = null;
+    messages.length = 0;
+    pending.length = 0;
+    completed = [];
+    sessionId = '';
+    plan = undefined;
+    lastLine = null;
+    replyTarget = null;
+    replyBar.hidden = true;
+    root.querySelector('#call-reply-status').textContent = '';
+    clearStoredThread(localStore, sessionStore, slug);
+    status.textContent = '';
+    stage.classList.remove('is-talking');
+    log.replaceChildren();
+    if (idleText) {
+      const empty = document.createElement('li');
+      empty.className = 'call-empty';
+      empty.id = 'call-empty';
+      empty.textContent = idleText;
+      log.append(empty);
+    }
+    if (adultModeOn()) showModeNotice();
+    input.focus();
+  }
+
+  if (mode1 && mode2) {
+    let saved = false;
+    try {
+      saved = localStore?.getItem(adultModeStorageKey(slug)) === '1';
+    } catch {
+      saved = false;
+    }
+    setAdultMode(saved);
+    mode1.addEventListener('click', () => setAdultMode(false, true));
+    mode2.addEventListener('click', () => setAdultMode(true, true));
+    modeBox?.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      const on = event.key === 'ArrowRight';
+      setAdultMode(on, true);
+      (on ? mode2 : mode1).focus();
+    });
+  }
+  document.querySelector('#call-new-thread')?.addEventListener('click', resetThread);
 
   function pool(emotion) {
     const tagged = frames.filter((frame) => frame.emotions.includes(emotion));
@@ -576,15 +664,17 @@ export function mountCall(config) {
     );
   }
 
-  async function readStream(response, body, turn) {
+  async function readStream(response, body, turn, epoch) {
     const reader = response.body.getReader();
     const parser = createSseReader();
     let reply = '';
     let expression = 'calm';
     let world = null;
     let media = null;
-    let completed = false;
+    let finished = false;
+    const current = () => epoch === generation;
     const paint = (flush) => {
+      if (!current()) return;
       const shown = flush ? reply : stablePrefix(reply);
       if (shown) typing(body, false);
       body.textContent = shown;
@@ -592,7 +682,7 @@ export function mountCall(config) {
       pin();
     };
     const handle = (data) => {
-      if (!data || typeof data !== 'object') return;
+      if (!current() || !data || typeof data !== 'object') return;
       if (data.type === 'token' && typeof data.text === 'string') {
         typing(body, false);
         reply += data.text;
@@ -604,17 +694,13 @@ export function mountCall(config) {
       } else if (data.type === 'trace' && data.stage === 'web_search') {
         addWebSearch(turn, data);
       } else if (data.type === 'done') {
-        completed = true;
+        finished = true;
         media = data.media || null;
         if (typeof data.expression === 'string') expression = data.expression;
         if (data.world && typeof data.world === 'object') world = data.world;
-        if (typeof data.sessionId === 'string') {
+        if (isSessionId(data.sessionId)) {
           sessionId = data.sessionId;
-          try {
-            sessionStorage.setItem(`call:${slug}`, sessionId);
-          } catch {
-            sessionId = data.sessionId;
-          }
+          remember();
         }
         if (data.plan && typeof data.plan === 'object') plan = data.plan;
       } else if (data.type === 'error') {
@@ -631,11 +717,12 @@ export function mountCall(config) {
       }
       for (const data of parser.flush()) handle(data);
       paint(true);
-      return { reply, expression, world, media, completed };
+      return { reply, expression, world, media, completed: finished };
     } catch (error) {
       paint(true);
       await reader.cancel().catch(() => {});
-      if (reply.trim() || media) return { reply, expression, world, media, completed, error };
+      if (reply.trim() || media)
+        return { reply, expression, world, media, completed: finished, error };
       throw error;
     } finally {
       reader.releaseLock();
@@ -895,28 +982,35 @@ export function mountCall(config) {
   }
 
   async function perform(batch, continuation = null) {
+    const epoch = generation;
     const controller = continuation || new AbortController();
+    if (!continuation) activeController = controller;
+    const current = () => epoch === generation;
     const text = continuation ? copy.continueReceived : joinBatch(batch);
     const quote = batch?.[0].reply_to;
-    if (!continuation)
+    if (!continuation) {
       messages.push({
         id: batch[0].row?.dataset.id || createMessageId(),
-        reply_to: quote,
+        reply_to: quote ? { id: quote.id, excerpt: quote.excerpt } : undefined,
         role: 'user',
         content: text,
+        at: batch[0].row?.querySelector('time')?.dateTime || new Date().toISOString(),
       });
+    }
     const { body, turn } = openTurn(text);
     status.textContent = '';
     stage.classList.add('is-talking');
     try {
-      const payload = { messages: clampHistory(messages) };
-      if (continuation) payload.continue = true;
-      if (slug === 'dred' && adultModeOn()) payload.leaderAdultMode = true;
-      if (quote) payload.reply_to = { id: quote.id, excerpt: quote.excerpt };
-      if (sessionId) payload.sessionId = sessionId;
-      if (plan) payload.plan = plan;
-      if (!continuation && searchToggle?.getAttribute('aria-pressed') === 'true')
-        payload.forceWebSearch = true;
+      const payload = buildChatPayload({
+        slug,
+        modeOn: adultModeOn(),
+        messages,
+        sessionId,
+        continuation: Boolean(continuation),
+        quote,
+        plan,
+        forceWebSearch: searchToggle?.getAttribute('aria-pressed') === 'true',
+      });
       if (!continuation) setSearch(false);
       let response;
       try {
@@ -926,11 +1020,13 @@ export function mountCall(config) {
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
-      } catch (error) {
-        if (continuation) throw error;
+      } catch {
+        if (!current()) return 'fail';
+        if (continuation) throw new Error('network');
         failTurn(body, turn, 'network');
         return 'fail';
       }
+      if (!current()) return 'fail';
       if (response.status === 401 || response.status === 403) {
         location.replace('/login');
         return 'auth';
@@ -956,12 +1052,14 @@ export function mountCall(config) {
       }
       let result;
       try {
-        result = await readStream(response, body, turn);
+        result = await readStream(response, body, turn, epoch);
       } catch (error) {
+        if (!current()) return 'fail';
         if (continuation) throw error;
         failTurn(body, turn, error?.reason === 'stream' ? 'stream' : 'network', response.status);
         return 'fail';
       }
+      if (!current()) return 'fail';
       const settled = settleChatStream({
         reply: result.reply,
         completed: result.completed,
@@ -979,16 +1077,20 @@ export function mountCall(config) {
         return 'fail';
       }
       const reply = settled.reply;
-      const replyId = body.closest('.call-line').dataset.id;
+      const row = body.closest('.call-line');
+      const replyId = row.dataset.id;
       finishTurn(body, turn, { ...result, reply });
       messages.push({
         id: replyId,
         role: 'assistant',
         content: reply,
+        at: row.querySelector('time')?.dateTime || new Date().toISOString(),
       });
+      remember(messages);
       armSaved(turn.saved);
       return 'ok';
     } catch {
+      if (!current()) return 'fail';
       if (continuation) {
         discardContinue(body, turn);
         return 'fail';
@@ -996,8 +1098,11 @@ export function mountCall(config) {
       failTurn(body, turn, 'network');
       return 'fail';
     } finally {
-      typing(body, false);
-      stage.classList.remove('is-talking');
+      if (current()) {
+        typing(body, false);
+        stage.classList.remove('is-talking');
+      }
+      if (activeController === controller) activeController = null;
     }
   }
 
@@ -1013,9 +1118,11 @@ export function mountCall(config) {
   }
 
   async function pump() {
+    const epoch = generation;
     let failures = 0;
     try {
       while (pending.length && failures < 2) {
+        if (epoch !== generation) return;
         if (Date.now() < holdUntil) {
           armHold(holdUntil);
           return;
@@ -1025,6 +1132,7 @@ export function mountCall(config) {
         release(batch);
         const version = submitVersion;
         const result = await perform(batch);
+        if (epoch !== generation) return;
         if (result === 'auth') return;
         if (result === 'ok') {
           if (version === submitVersion && isContinueRequest(joinBatch(batch)))
@@ -1044,6 +1152,11 @@ export function mountCall(config) {
       }
     } finally {
       draining = false;
+      if (epoch !== generation) {
+        rerun = false;
+        if (pending.length) drain();
+        return;
+      }
       if (rerun) {
         rerun = false;
         drain();
@@ -1079,12 +1192,29 @@ export function mountCall(config) {
     }
   });
 
-  try {
-    const stored = sessionStorage.getItem(`call:${slug}`) || '';
-    if (/^[a-zA-Z0-9-]{1,64}$/.test(stored)) sessionId = stored;
-  } catch {
-    sessionId = '';
+  for (const item of seededHistory) {
+    if (!item || !['assistant', 'user'].includes(item.role)) continue;
+    document.querySelector('#call-empty')?.remove();
+    const mine = item.role === 'user';
+    const saved = {
+      id: isReplyId(item.id) ? item.id : createMessageId(),
+      reply_to: normalizeReply(item.reply_to) || undefined,
+    };
+    const at = Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now();
+    if (typeof item.content === 'string' && item.content) {
+      line(mine ? copy.you : name, item.content, mine, at, saved);
+      messages.push({
+        ...saved,
+        role: item.role,
+        content: item.content,
+        at: new Date(at).toISOString(),
+      });
+    }
+    if (item.media) mediaLine(item.media, null, mine, at, item.content ? {} : saved);
   }
+  completed = messages.map((message) => ({ ...message }));
+  if (adultModeOn()) showModeNotice();
+  connect();
 
   async function connect() {
     try {
@@ -1115,23 +1245,6 @@ export function mountCall(config) {
       status.textContent = copy.dropped;
     }
   }
-
-  for (const item of Array.isArray(config.history) ? config.history : []) {
-    if (!item || !['assistant', 'user'].includes(item.role)) continue;
-    document.querySelector('#call-empty')?.remove();
-    const mine = item.role === 'user';
-    const saved = {
-      id: isReplyId(item.id) ? item.id : createMessageId(),
-      reply_to: normalizeReply(item.reply_to) || undefined,
-    };
-    const at = Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now();
-    if (typeof item.content === 'string' && item.content) {
-      line(mine ? copy.you : name, item.content, mine, at, saved);
-      messages.push({ ...saved, role: item.role, content: item.content });
-    }
-    if (item.media) mediaLine(item.media, null, mine, at, item.content ? {} : saved);
-  }
-  connect();
 
   function setSearch(on) {
     if (!searchToggle) return;

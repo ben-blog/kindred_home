@@ -38,7 +38,8 @@ export function mountCallSheet() {
       close();
       return;
     }
-    if (keyboard || document.querySelector('#call-viewer')?.open) return;
+    if (document.querySelector('#call-viewer')?.open) return;
+    if (keyboard) document.activeElement?.blur();
     opener = document.activeElement;
     opened = true;
     sheet.inert = false;
@@ -112,7 +113,11 @@ export function mountCallSheet() {
         maxHeight = Math.max(window.innerHeight, viewport?.height || 0);
       const height = viewport?.height || window.innerHeight;
       const top = viewport?.offsetTop || 0;
-      keyboard = Math.max(maxHeight, window.innerHeight) - top - height > 80;
+      // Only an input with focus can raise the keyboard. Browser toolbars also shrink the
+      // visual viewport, and that must not lock the memory toggle.
+      keyboard =
+        document.activeElement?.id === 'call-input' &&
+        Math.max(maxHeight, window.innerHeight) - top - height > 80;
       root.style.setProperty('--vv-top', `${top}px`);
       root.style.setProperty('--vv-height', `${height}px`);
       root.style.setProperty('--kb', keyboard ? '0' : '1');

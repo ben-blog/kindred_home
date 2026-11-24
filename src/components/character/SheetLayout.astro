@@ -3,7 +3,6 @@ import Grain from './Grain.astro';
 import Warmth from './Warmth.astro';
 
 const { page } = Astro.props;
-const status = [page.status, page.agent].filter(Boolean).join(' · ');
 ---
 
 <section class="sheet" data-layout="sheet">
@@ -16,11 +15,9 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
     </nav>
   </header>
   <div class="body">
-    <p class="eyebrow">{status}</p>
     <h1>{page.name}</h1>
     <p class="tagline">{page.tagline}</p>
     <p class="bio">{page.bio}</p>
-    <p class="swatch"><i aria-hidden="true"></i> {page.color}</p>
     {page.hub ? <a class="cta" href={page.hub}>Open {page.hub}</a> : null}
     {page.status === 'active' ? <Warmth slug={page.slug} look="sheet" /> : null}
     <div class="frost">
@@ -52,7 +49,6 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
                     {bond.name} · {bond.kinds}
                     {bond.note ? ` — ${bond.note}` : ''}
                   </span>
-                  {bond.tension !== null ? <span class="url">tension {bond.tension}</span> : null}
                 </li>
               ))}
             </ul>
@@ -121,14 +117,6 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
     padding: 3.2rem 0 4.5rem;
   }
 
-  .eyebrow {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 10px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-
   h1 {
     margin: 0.45rem 0 1rem;
     font-family: var(--font-display);
@@ -148,23 +136,6 @@ const status = [page.status, page.agent].filter(Boolean).join(' · ');
     max-width: 62ch;
     margin: 0.8rem 0 0;
     color: rgba(255, 255, 255, 0.72);
-  }
-
-  .swatch {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin: 1.2rem 0 0;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-  }
-
-  .swatch i {
-    display: inline-block;
-    width: 0.9rem;
-    height: 0.9rem;
-    background: var(--accent);
   }
 
   .warmth {

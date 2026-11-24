@@ -61,6 +61,10 @@ const copy = {
   world: text({ en: 'world' }),
   emotion: text({ en: 'emotion' }),
   reply: text({ en: 'reply' }),
+  copy: text({ en: 'Copy' }),
+  cancelReply: text({ en: 'Cancel reply' }),
+  jumpToQuote: text({ en: 'Jump to quoted message' }),
+  photo: text({ en: 'Photo' }),
   saved: text({ en: 'saved' }),
   none: text({ en: 'none' }),
   pending: text({ en: 'none yet' }),
@@ -106,6 +110,17 @@ const copy = {
         <button class="call-jump" id="call-jump" type="button" hidden>New message ↓</button>
       </div>
       <p class="call-status" id="call-status" role="status"></p>
+      <span class="call-sr" id="call-reply-status" role="status"></span>
+      <div class="call-reply-bar" id="call-reply-bar" hidden>
+        <span class="call-reply-mark" aria-hidden="true">↶</span>
+        <div class="call-reply-summary"><b></b><span></span></div>
+        <button class="call-icon" id="call-reply-cancel" type="button" aria-label={copy.cancelReply}>×</button>
+      </div>
+      <div class="call-search-status" id="call-search-status" role="status" hidden><span>{copy.webSearch}</span></div>
+      <div class="call-reply-menu" id="call-reply-menu" role="menu" aria-label="Message actions" hidden>
+        <button type="button" role="menuitem" data-action="reply">↶ <span>Reply</span></button>
+        <button type="button" role="menuitem" data-action="copy">▢ <span>{copy.copy}</span></button>
+      </div>
       <form class="call-form" id="call-form" novalidate>
         <button type="button" class="call-search call-icon" id="call-search" aria-pressed="false" aria-label={copy.webSearchLabel}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></button>
         <label class="call-field"><span class="call-sr">Message</span><textarea id="call-input" name="message" rows="1" autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" enterkeyhint="send" inputmode="text" data-1p-ignore data-lpignore="true" maxlength="2000" placeholder="Message"></textarea></label>

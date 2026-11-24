@@ -1,7 +1,7 @@
 ---
 import '../styles/site.css';
 
-const { title, description, accent = '', ground = '', ink = '', frame = 'site', robots = '' } = Astro.props;
+const { title, description, accent = '', ground = '', ink = '', frame = 'site', robots = '', image = '/og/og-home.jpg', imageAlt = 'KIN × DRED — Know your kind.' } = Astro.props;
 const parts = [];
 if (/^#[0-9A-Fa-f]{6}$/.test(accent)) parts.push(`--accent:${accent}`);
 if (/^#[0-9A-Fa-f]{6}$/.test(ground)) parts.push(`--ground:${ground}`);
@@ -10,6 +10,9 @@ const style = parts.join(';');
 const character = frame === 'character';
 const world = frame === 'world';
 const bare = character || world;
+const indexable = !robots.toLowerCase().includes('noindex');
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const imageUrl = new URL(image, Astro.site);
 ---
 
 <!doctype html>
@@ -24,6 +27,19 @@ const bare = character || world;
     <slot name="head" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {indexable ? <>
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="kinxdred" />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:url" content={canonical.href} />
+      <meta property="og:image" content={imageUrl.href} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={imageAlt} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <link rel="canonical" href={canonical.href} />
+    </> : null}
     {robots ? <meta name="robots" content={robots} /> : null}
     <script src="/js/site-base.js" is:inline></script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

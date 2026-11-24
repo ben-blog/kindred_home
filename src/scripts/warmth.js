@@ -41,7 +41,9 @@ async function sendWarmth(button, note, target, control) {
     });
     if (response.ok) {
       outcome = 'sent';
-      message = control.dataset.noteSent || NOTE;
+      message =
+        control.dataset.noteSent ||
+        (control.classList.contains('character') ? 'warmth sent' : NOTE);
       control.dispatchEvent(new CustomEvent('warmth:sent', { bubbles: true }));
     } else if (response.status === 429) {
       outcome = 'waiting';

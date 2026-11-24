@@ -6,6 +6,18 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <script src="js/site-base.js"></script>
 <title>KIN × DRED</title>
+<meta name="description" content="KIN and DRED. Two characters, one world. Know your kind.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kinxdred">
+<meta property="og:title" content="KIN × DRED">
+<meta property="og:description" content="KIN and DRED. Two characters, one world. Know your kind.">
+<meta property="og:url" content="https://www.kinxdred.com/main.html">
+<meta property="og:image" content="https://www.kinxdred.com/og/og-home.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KIN × DRED — Know your kind.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://www.kinxdred.com/main.html">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -32,6 +44,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 #sl-dred{right:5vw;color:rgba(91,79,207,.42);transform:translateY(-50%)}
 #title{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
   z-index:40;text-align:center;opacity:0;pointer-events:none}
+#hub-hint{position:fixed;top:calc(50% + clamp(40px,7vw,90px));left:0;width:100%;margin:0;text-align:center;z-index:45;pointer-events:none;font-family:'DM Mono',monospace;font-weight:400;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.72);opacity:0;transition:opacity 1.2s ease}
+#hub-hint.is-visible{opacity:1}
+.tx.no-sheet{cursor:default}
+@media(max-width:680px){#hub-hint{font-size:12px}}
+@media(prefers-reduced-motion:reduce){#hub-hint{transition:none}}
 .t-row{display:flex;align-items:center;gap:.12em;line-height:1}
 .tk{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(44px,8.5vw,116px);
   color:#FFE800;letter-spacing:-.02em}
@@ -337,6 +354,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;cursor:none;fon
 <span class="sl" id="sl-kin">KIN</span>
 <span class="sl" id="sl-dred">DRED</span>
 <div id="title"><div class="t-row"><span class="tk">KIN</span><span class="tx">×</span><span class="td">DRED</span></div></div>
+<p id="hub-hint" aria-live="polite"></p>
 <div id="bot">
   <span class="bn bn-k">Watches first.<br>Speaks later.</span>
   <!-- explore/coming soon 텍스트 제거 -->
@@ -731,6 +749,11 @@ function doCaptureInit() {
 }
 
 /* ── TITLE + UI REVEAL ── */
+let hubHintDismissed = false;
+function hideHubHint() {
+  hubHintDismissed = true;
+  document.getElementById('hub-hint').classList.remove('is-visible');
+}
 function doTitleReveal() {
   if (titleFired) return; titleFired = true;
   const show = (id, delay, dur=1.5) => setTimeout(() => {
@@ -739,6 +762,14 @@ function doTitleReveal() {
     el.style.opacity = '1';
   }, delay);
   show('title',   200, 1.5);
+  setTimeout(() => {
+    if (hubHintDismissed) return;
+    const hint = document.getElementById('hub-hint');
+    hint.textContent = lang === 'ko'
+      ? (IS_TOUCH ? 'KIN 또는 DRED를 눌러 들어가기' : 'KIN 또는 DRED를 클릭')
+      : (IS_TOUCH ? 'tap KIN or DRED' : 'click KIN or DRED');
+    hint.classList.add('is-visible');
+  }, 1800);
   show('sl-kin',  400, 1.2);
   show('sl-dred', 500, 1.2);
   show('bot',     700, 1.5);
@@ -753,6 +784,7 @@ function doTitleReveal() {
 
 function doWorldsReveal() {
   if (worldsFired) return; worldsFired = true;
+  doTitleReveal();
   sessionStorage.setItem('kxd_visited_main', '1');
   fetchMainActions(); // DB fetch → buildPC/buildMobile
 }
@@ -1380,7 +1412,7 @@ if (IS_TOUCH) {
   document.querySelector('.tx').addEventListener('touchend', e => {
     e.stopPropagation();
     if (getPhase(elapsed).n !== 'WORLDS') return;
-    openSheet('kinxdred');
+    if (hasSheetItems('kindred')) openSheet('kinxdred');
   }, {passive:true});
 }
 
@@ -1397,6 +1429,9 @@ if (!IS_TOUCH) {
 ══════════════════════════════════════════════════ */
 let mainActions = { kin: [], kindred: [], dred: [] };
 
+function hasSheetItems(who) {
+  return (mainActions[who] || []).some(item => item.actions?.[lang]?.[0]);
+}
 async function fetchMainActions() {
   try {
     const res = await fetch('data/main-actions.json');
@@ -1405,6 +1440,7 @@ async function fetchMainActions() {
     mainActions.kin     = data.filter(d => d.character === 'kin');
     mainActions.kindred = data.filter(d => d.character === 'kindred');
     mainActions.dred    = data.filter(d => d.character === 'dred');
+    document.querySelector('.tx').classList.toggle('no-sheet', !hasSheetItems('kindred'));
     buildPC();
     buildMobile();
   } catch(e) { console.warn('[main] fetchMainActions:', e); }
@@ -1638,8 +1674,10 @@ const $sheetDim = document.getElementById('sheet-dim');
 let activeSheet = null;
 
 function openSheet(who) {
+  if (!hasSheetItems(who === 'kinxdred' ? 'kindred' : who)) return;
   if (activeSheet) return;
   if (getPhase(elapsed).n !== 'WORLDS') return;
+  hideHubHint();
   activeSheet = who;
   $sheetDim.classList.add('on');
   document.getElementById(who + '-sheet').classList.add('open');
@@ -1688,6 +1726,7 @@ if (IS_TOUCH) {
 const $navOverlay = document.getElementById('nav-overlay');
 
 function navTo(href) {
+  hideHubHint();
   if (href && href.charAt(0) === '/' && href.charAt(1) !== '/' && window.asset) href = asset(href);
   $navOverlay.style.pointerEvents = 'all';
   $navOverlay.style.opacity = '1';

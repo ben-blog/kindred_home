@@ -701,3 +701,23 @@ test('a visitor chat and a failed warmth queue still leave the reply intact', as
   assert.equal(text.includes('secret'), false);
   assert.equal(text.includes('db down'), false);
 });
+
+test('SSE done passes only sanitized photo metadata', async () => {
+  const { rewriteSse } = await import('./chat.js');
+  const body = sse([
+    `data: ${JSON.stringify({ type: 'done', media: { url: 'https://example.com/rain.png', alt: 'Rain', width: 600, height: 800, privateField: 'omit' } })}\n\n`,
+    `data: ${JSON.stringify({ type: 'done', media: { url: 'javascript:alert(1)' } })}\n\n`,
+  ]);
+  const response = new Response(rewriteSse(body));
+  const events = (await response.text())
+    .trim()
+    .split('\n\n')
+    .map((block) => JSON.parse(block.slice(6)));
+  assert.deepEqual(events[0].media, {
+    url: 'https://example.com/rain.png',
+    alt: 'Rain',
+    width: 600,
+    height: 800,
+  });
+  assert.equal(events[1].media, undefined);
+});

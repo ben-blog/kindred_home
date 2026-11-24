@@ -62,6 +62,7 @@ export function parseMemoryMap(raw, slug) {
   const points = [];
   for (const point of raw.points) {
     const clean = cleanPoint(point);
+    if (clean?.origin === 'leader_adult' && slug !== 'dred') continue;
     if (clean) points.push(clean);
     if (points.length >= MAX_POINTS) break;
   }
@@ -345,6 +346,7 @@ function cleanPoint(point) {
   const vector = unitVector(point.x, point.y, point.z);
   if (!vector) return null;
   const clean = { id, kind, label: clipLabel(point.label), ...vector };
+  if (point.origin === 'leader_adult') clean.origin = point.origin;
   if (typeof point.createdAt === 'string' && SINCE.test(point.createdAt)) {
     clean.createdAt = point.createdAt;
   }

@@ -1,6 +1,7 @@
 import { safeHttpUrl } from '../lib/safe-url.js';
 import { memoryKindCss } from '../lib/memory-kind.js';
 import {
+  ADULT_MEMORY_BADGE,
   diffMemories,
   filterPoints,
   formatDay,
@@ -221,7 +222,11 @@ export function mountBrain(config) {
     const points = Array.isArray(body.points) ? body.points : [];
     return {
       source: 'map',
-      points: points.map((point) => ({ ...point, snippet: point.label || '' })),
+      points: points.map(({ origin, ...point }) => ({
+        ...point,
+        ...(origin === 'leader_adult' ? { origin } : {}),
+        snippet: point.label || '',
+      })),
       truncated: body.truncated === true,
       basisFingerprint: typeof body.basisFingerprint === 'string' ? body.basisFingerprint : '',
       meta: null,
@@ -657,7 +662,14 @@ export function mountBrain(config) {
     kind.textContent = point.kind || '';
     const label = document.createElement('span');
     label.textContent = point.snippet || point.label || point.id || '';
-    item.append(kind, label);
+    item.append(kind);
+    if (point.origin === 'leader_adult') {
+      const badge = document.createElement('span');
+      badge.className = 'brain-badge';
+      badge.textContent = ADULT_MEMORY_BADGE;
+      item.append(badge);
+    }
+    item.append(label);
     const href = safeHttpUrl(point.url);
     if (href) {
       const link = document.createElement('a');

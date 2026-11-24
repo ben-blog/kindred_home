@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <title>DRED — Gallery</title>
+<meta name="description" content="DRED's album. Changes the room without moving.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kinxdred">
+<meta property="og:title" content="DRED — Gallery">
+<meta property="og:description" content="DRED's album. Changes the room without moving.">
+<meta property="og:url" content="https://www.kinxdred.com/dred">
+<meta property="og:image" content="https://www.kinxdred.com/og/og-dred.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DRED — Changes the room without moving.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://www.kinxdred.com/dred">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -21,6 +33,11 @@ button,a{font-family:inherit}
   background-size:200px;animation:gr .3s steps(1) infinite}
 @keyframes gr{0%{background-position:0 0}33%{background-position:-40px 30px}66%{background-position:30px -40px}}
 
+.header-links{gap:16px}
+.h-about{font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.50);text-transform:uppercase;padding:8px 4px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+.h-about:hover{color:var(--dred)}
+.h-about:focus-visible{outline:1px solid var(--dred);outline-offset:3px}
+@media(max-width:680px){#header{padding:14px 16px;gap:6px;white-space:nowrap}#header .header-links{gap:6px}.lt{padding:8px 5px}}
 #header{
   position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;justify-content:space-between;align-items:center;
@@ -237,7 +254,12 @@ body.grid-open #index,body.grid-open #cur{visibility:hidden}
 .action-section-label{font-size:7px;letter-spacing:.32em;color:color-mix(in srgb, var(--dred) 70%, transparent);text-transform:uppercase;margin:16px 0 10px}
 
 @media(max-width:680px){
-  #header{padding:16px}
+  .header-links{gap:16px}
+.h-about{font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.50);text-transform:uppercase;padding:8px 4px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+.h-about:hover{color:var(--dred)}
+.h-about:focus-visible{outline:1px solid var(--dred);outline-offset:3px}
+@media(max-width:680px){#header{padding:14px 16px;gap:6px;white-space:nowrap}#header .header-links{gap:6px}.lt{padding:8px 5px}}
+#header{padding:16px}
   #detail-panel{align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch}
   #detail-inner{flex-direction:column;gap:12px;padding:72px 16px 96px;width:100%;max-width:none}
   #detail-img{width:100%}
@@ -271,7 +293,8 @@ body.grid-open #index,body.grid-open #cur{visibility:hidden}
     <span class="lt-sep">·</span>
     <span class="lt" id="lt-en">EN</span>
   </div>
-  <div style="display:flex;gap:16px;align-items:center;">
+  <div class="header-links" style="display:flex;align-items:center;">
+    <a class="h-about" href="/characters/dred/">about</a>
     <div class="h-cross" id="nav-kin">← KIN</div>
     <div class="h-back">← back</div>
   </div>

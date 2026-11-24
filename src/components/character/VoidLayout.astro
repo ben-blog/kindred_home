@@ -12,7 +12,6 @@ const style = [
   `--room-ease:${cssBezier(mark?.easing)}`,
   `--title-track:${(letters * 1.22).toFixed(2)}`,
 ].join(';');
-const status = [page.status, page.agent, page.color].filter(Boolean).join(' · ');
 ---
 
 <section class="void" data-layout="void" data-room-root style={style}>
@@ -45,7 +44,6 @@ const status = [page.status, page.agent, page.color].filter(Boolean).join(' · '
     <footer class="edge">
       <div>
         <p class="tag">{page.tagline}</p>
-        <p class="meta">{status}</p>
       </div>
       <div class="aside">
         <p class="bio">{page.bio}</p>
@@ -54,7 +52,6 @@ const status = [page.status, page.agent, page.color].filter(Boolean).join(' · '
             <p class="meta">
               {bond.name} · {bond.kinds}
               {bond.note ? ` — ${bond.note}` : ''}
-              {bond.tension !== null ? ` · tension ${bond.tension}` : ''}
             </p>
           ))
         }

@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <title>KIN — Gallery</title>
+<meta name="description" content="KIN's gallery. Watches first. Speaks later.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="kinxdred">
+<meta property="og:title" content="KIN — Gallery">
+<meta property="og:description" content="KIN's gallery. Watches first. Speaks later.">
+<meta property="og:url" content="https://www.kinxdred.com/kin">
+<meta property="og:image" content="https://www.kinxdred.com/og/og-kin.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="KIN — Watches first. Speaks later.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://www.kinxdred.com/kin">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -35,6 +47,10 @@ body::after{
   opacity:.6;
 }
 
+.h-about{font-size:10px;letter-spacing:.22em;color:rgba(255,255,255,.55);text-transform:uppercase;padding:8px 4px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+.h-about:hover{color:var(--kin)}
+.h-about:focus-visible{outline:1px solid var(--kin);outline-offset:3px}
+@media(max-width:680px){#header{padding:14px 16px;gap:6px;white-space:nowrap}#header .header-links{gap:6px}.lt{padding:8px 5px}}
 /* ── HEADER ── */
 #header{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 24px;
   display:flex;justify-content:space-between;align-items:center;
@@ -375,6 +391,7 @@ body::after{
     <span class="lt-sep">·</span>
     <span class="lt" id="lt-en">EN</span>
   </div>
+  <a class="h-about" href="/characters/kin/">about</a>
   <div class="h-back" id="nav-back">← back</div>
   <div class="h-cross" id="nav-dred">DRED →</div>
 </div>
@@ -503,11 +520,17 @@ function renderGallery() {
       : '';
     t.className = 'thumb' + (hasAct ? ' has-action' : '');
     t.innerHTML = `
-        <img src="${gallerySrc(item.filename)}" alt="${title}" loading="${i < 8 ? 'eager' : 'lazy'}">
-        <div class="thumb-label">${title}</div>
+        <div class="thumb-label"></div>
         ${isNew ? '<div class="thumb-new"></div>' : ''}
         ${hasAct ? '<div class="thumb-action-badge">action</div>' : ''}
         ${hasAct ? `<div class="thumb-action-overlay">${actHtml}</div>` : ''}`;
+    const img = document.createElement('img');
+    img.alt = title;
+    img.loading = i < 4 ? 'eager' : 'lazy';
+    if (i < 2) img.fetchPriority = 'high';
+    applyGalleryImage(img, item.filename, 'kin-thumb');
+    t.prepend(img);
+    t.querySelector('.thumb-label').textContent = title;
     t.addEventListener('click', () => openViewer(i));
     if (hasAct) {
       t.querySelectorAll('.thumb-action-link').forEach(link => {
@@ -545,7 +568,7 @@ async function fillDetail(i) {
   document.getElementById('detail-counter').textContent   = `${String(i+1).padStart(2,'0')} / ${items.length}`;
 
   const $img = document.getElementById('detail-img-el');
-  $img.src = gallerySrc(item.filename);
+  applyGalleryImage($img, item.filename, 'kin-detail');
   $img.alt = item[`title_${t}`] || '';
 
   const $actSection = document.getElementById('detail-action-section');

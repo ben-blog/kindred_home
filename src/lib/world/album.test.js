@@ -717,6 +717,7 @@ test('a missing gallery file redirects to storage and an existing name is not in
     store: memoryStore(),
   });
   assert.equal(missing.status, 404);
+  assert.equal(missing.headers.get('cache-control'), 'no-store');
   const found = await handleGalleryFile(request('/assets/gallery/kin_album_new.webp'), {
     env,
     filename: 'kin_album_new.webp',
@@ -727,10 +728,32 @@ test('a missing gallery file redirects to storage and an existing name is not in
     },
   });
   assert.equal(found.status, 302);
+  assert.match(found.headers.get('cache-control'), /s-maxage=3600/);
+  assert.match(found.headers.get('cache-control'), /stale-while-revalidate=600/);
+  assert.doesNotMatch(found.headers.get('cache-control'), /private|no-store/);
   assert.equal(
     found.headers.get('location'),
     'https://world.example.test/storage/v1/object/public/assets/kin/kin_album_new.webp'
   );
+});
+
+test('inactive and invalid gallery files return uncached 404 responses', async () => {
+  for (const filename of ['kin_album_inactive.webp', '../x.webp', 'X.webp']) {
+    let lookups = 0;
+    const response = await handleGalleryFile(request('/api/gallery/file'), {
+      env,
+      filename,
+      store: {
+        async itemByFilename() {
+          lookups++;
+          return { character: 'kin', filename, is_active: false };
+        },
+      },
+    });
+    assert.equal(response.status, 404);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.equal(lookups, filename === 'kin_album_inactive.webp' ? 1 : 0);
+  }
 });
 
 test('png, jpeg, and webp signatures are recognized', () => {

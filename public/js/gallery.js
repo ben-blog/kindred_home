@@ -90,6 +90,58 @@ function gallerySrc(filename) {
   return asset('/assets/gallery/' + name);
 }
 
+function galleryImage(filename, role) {
+  var name = filename || '';
+  var plain = { src: gallerySrc(name), srcset: '', sizes: '' };
+  if (
+    name.indexOf('kin_album_') === 0 ||
+    name.indexOf('dred_album_') === 0 ||
+    !/^[a-z0-9][a-z0-9_.-]{0,80}\.webp$/.test(name)
+  )
+    return plain;
+  var sizes = {
+    'kin-thumb': '(max-width: 680px) 50vw, 25vw',
+    'kin-detail': '(max-width: 680px) 100vw, 320px',
+    hero: '100vw',
+    pick: '(min-width: 800px) 300px, 33vw',
+    grid: '(min-width: 800px) 17vw, 33vw',
+    detail: '(max-width: 680px) 100vw, 280px',
+  };
+  var small = asset('/assets/gallery/w600/' + name);
+  var large = asset('/assets/gallery/w1200/' + name);
+  return {
+    src: role === 'hero' || role === 'detail' ? large : small,
+    srcset:
+      small +
+      ' 600w, ' +
+      large +
+      ' 1200w' +
+      (role === 'hero' ? ', ' + gallerySrc(name) + ' 1920w' : ''),
+    sizes: sizes[role] || '',
+  };
+}
+
+function applyGalleryImage(img, filename, role) {
+  var image = galleryImage(filename, role);
+  // A reused detail element must fall back to its current image only.
+  if (img.galleryFallback) img.removeEventListener('error', img.galleryFallback);
+  img.galleryFallback = null;
+  if (image.srcset) {
+    img.galleryFallback = function () {
+      img.removeAttribute('srcset');
+      img.removeAttribute('sizes');
+      img.src = gallerySrc(filename);
+    };
+    img.addEventListener('error', img.galleryFallback, { once: true });
+  }
+  img.decoding = 'async';
+  if (image.sizes) img.sizes = image.sizes;
+  else img.removeAttribute('sizes');
+  if (image.srcset) img.srcset = image.srcset;
+  else img.removeAttribute('srcset');
+  img.src = image.src;
+}
+
 function resolveLink(url) {
   if (!url) return '#';
   if (url.charAt(0) === '/' && url.charAt(1) !== '/') return asset(url);

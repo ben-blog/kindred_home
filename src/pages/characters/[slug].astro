@@ -6,6 +6,7 @@ import VoidLayout from '../../components/character/VoidLayout.astro';
 import Base from '../../layouts/Base.astro';
 import { characterSurface } from '../../lib/character-layout.js';
 import { text } from '../../lib/locale.js';
+import { ogImageFor } from '../../lib/og.js';
 import { compareEntries, isPublicStatus, worksForCharacter } from '../../lib/publish.js';
 
 export async function getStaticPaths() {
@@ -45,7 +46,6 @@ const page = {
   ground: surface.ground,
   ink: surface.ink,
   status: data.status,
-  agent: data.agent?.service ?? '',
   hub: data.aliases[0] || '',
   mark: data.identity.mark ?? null,
   works: worksForCharacter(data.slug, works)
@@ -64,10 +64,6 @@ const page = {
         name: names.get(other) ?? other,
         kinds: relation.data.kinds.join(' · '),
         note: text(note),
-        tension:
-          relation.data.kinds.includes('썸') && typeof relation.data.tension === 'number'
-            ? relation.data.tension
-            : null,
       };
     }),
   others: characters
@@ -88,6 +84,8 @@ const page = {
   ground={page.ground}
   ink={page.ink}
   frame="character"
+  image={ogImageFor(page.slug)}
+  imageAlt={page.name}
 >
   <Layout page={page} />
 </Base>

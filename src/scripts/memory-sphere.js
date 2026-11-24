@@ -13,6 +13,7 @@ import { memoryKindCss, memoryKindRgb } from '../lib/memory-kind.js';
 import { clampZ, pinchZ, wheelZ, doubleTapZ, resetZoom } from '../lib/orb-zoom.js';
 import { stepOrbMotion } from '../lib/orb-motion.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
+import { ADULT_MEMORY_BADGE } from '../lib/brain.js';
 
 const PULSE_MS = 980;
 
@@ -398,6 +399,12 @@ export async function mountSphere(root, call, options) {
     const name = document.createElement('span');
     name.textContent = record.label || record.kind;
     label.append(name);
+    if (record.origin === 'leader_adult') {
+      const badge = document.createElement('span');
+      badge.className = 'brain-badge';
+      badge.textContent = ADULT_MEMORY_BADGE;
+      label.append(badge);
+    }
     const emotion = memoryEmotionLabel(record.emotion);
     if (emotion) {
       const mood = document.createElement('span');

@@ -55,6 +55,7 @@ export function parseMemoryHistory(raw, slug) {
   const rows = [];
   for (const row of raw.rows) {
     const clean = cleanRow(row);
+    if (clean?.origin === 'leader_adult' && slug !== 'dred') continue;
     if (clean) rows.push(clean);
     if (rows.length >= MAX_ROWS) break;
   }
@@ -315,6 +316,7 @@ function cleanRow(row) {
     ...vector,
   };
   const placement = cleanPlacement(row.placement);
+  if (row.origin === 'leader_adult') clean.origin = row.origin;
   if (placement) clean.placement = placement;
   for (const key of ['importance', 'strength', 'decay', 'weight']) {
     const metric = cleanMetric(row[key]);

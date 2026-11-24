@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  ADULT_MEMORY_BADGE,
   brainChoice,
   diffMemories,
   filterPoints,
@@ -20,6 +21,16 @@ function point(id, kind, createdAt, extra = {}) {
 function at(year, month, day, hour = 12) {
   return new Date(year, month - 1, day, hour).toISOString();
 }
+
+test('brain lists and sphere labels use the adult memory badge', () => {
+  assert.equal(ADULT_MEMORY_BADGE, '성인 모드');
+  for (const script of ['brain-page', 'memory-sphere']) {
+    const source = readFileSync(new URL(`../scripts/${script}.js`, import.meta.url), 'utf8');
+    assert.match(source, /origin === 'leader_adult'/);
+    assert.match(source, /badge\.className = 'brain-badge'/);
+    assert.match(source, /badge\.textContent = ADULT_MEMORY_BADGE/);
+  }
+});
 
 test('a brain page fetches only the character it was given', () => {
   const source = readFileSync(new URL('../scripts/brain-page.js', import.meta.url), 'utf8');

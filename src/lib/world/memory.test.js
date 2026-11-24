@@ -235,6 +235,55 @@ test('the memory adapter keeps the public shape and drops secrets', () => {
   assert.equal(parseTrace({ stage: 'web_search', query: 'zines' }).results.length, 0);
 });
 
+test('the memory map keeps only the adult origin and only for DRED', () => {
+  const raw = page({
+    points: [
+      { ...map.points[0], origin: 'leader_adult' },
+      { ...map.points[0], id: 'other', origin: 'unknown' },
+    ],
+  });
+  const dred = parseMemoryMap(raw, 'dred');
+  assert.equal(dred.points[0].origin, 'leader_adult');
+  assert.equal(Object.hasOwn(dred.points[1], 'origin'), false);
+  for (const slug of ['kin', 'other']) {
+    const parsed = parseMemoryMap(raw, slug);
+    assert.deepEqual(
+      parsed.points.map((item) => item.id),
+      ['other']
+    );
+    assert.equal(Object.hasOwn(parsed.points[0], 'origin'), false);
+  }
+});
+
+for (const slug of ['kin', 'dred']) {
+  test(`${slug} memory map requires a leader session before fetching adult memories`, async () => {
+    const path = `/api/world/chat/${slug}/memory`;
+    let calls = 0;
+    const options = {
+      env,
+      canon,
+      slug,
+      limiter: createLimiter(),
+      ...isolated(),
+      fetch: leaderFetch(leaderId, () => {
+        calls += 1;
+        return new Response(
+          JSON.stringify(page({ points: [{ ...map.points[0], origin: 'leader_adult' }] }))
+        );
+      }),
+    };
+    const signed = await handleWorldMemory(request(path, signedIn), options);
+    assert.equal(signed.status, 200);
+    const body = await signed.json();
+    assert.equal(body.points.length, slug === 'dred' ? 1 : 0);
+    if (slug === 'dred') assert.equal(body.points[0].origin, 'leader_adult');
+    const anonymous = await handleWorldMemory(request(path), options);
+    assert.equal(anonymous.status, 401);
+    assert.equal(calls, 1);
+    assert.equal((await anonymous.text()).includes('leader_adult'), false);
+  });
+}
+
 test('memory fails closed without a session, a route, or agent config', async () => {
   const closed = await handleWorldMemory(request('/api/world/chat/kin/memory', signedIn), {
     canon,

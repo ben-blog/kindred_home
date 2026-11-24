@@ -5,6 +5,8 @@
  * Weakening uses those current numbers. There is no value from the start of the range.
  */
 
+export const ADULT_MEMORY_BADGE = '성인 모드';
+
 export const SUMMARY_SECTIONS = [
   { id: 'knowledge', kinds: ['knowledge'] },
   { id: 'reflection', kinds: ['reflection'] },

@@ -126,6 +126,52 @@ test('the history adapter keeps snippets, reflections, and current metrics', () 
   assert.equal(parseMemoryHistory({ rows: 'nope' }, 'kin'), null);
 });
 
+test('history keeps only the adult origin and only for DRED', () => {
+  const raw = page({
+    rows: [row({ origin: 'leader_adult' }), row({ id: 'other', origin: 'unknown' })],
+  });
+  const dred = parseMemoryHistory(raw, 'dred');
+  assert.equal(dred.rows[0].origin, 'leader_adult');
+  assert.equal(Object.hasOwn(dred.rows[1], 'origin'), false);
+  for (const slug of ['kin', 'other']) {
+    const parsed = parseMemoryHistory(raw, slug);
+    assert.deepEqual(
+      parsed.rows.map((item) => item.id),
+      ['other']
+    );
+    assert.equal(Object.hasOwn(parsed.rows[0], 'origin'), false);
+  }
+});
+
+for (const slug of ['kin', 'dred']) {
+  test(`${slug} history requires a leader session before fetching adult memories`, async () => {
+    const path = `/api/world/brain/${slug}/history?from=${from}&to=${to}`;
+    let calls = 0;
+    const options = {
+      env,
+      canon,
+      slug,
+      limiter: createLimiter(),
+      cache: new Map(),
+      inflight: new Map(),
+      upstreamLimiter: createLimiter({ limit: 10, windowMs: 60_000 }),
+      fetch: leaderFetch(leaderId, () => {
+        calls += 1;
+        return new Response(JSON.stringify(page({ rows: [row({ origin: 'leader_adult' })] })));
+      }),
+    };
+    const signed = await handleWorldHistory(request(path, signedIn), options);
+    assert.equal(signed.status, 200);
+    const body = await signed.json();
+    assert.equal(body.rows.length, slug === 'dred' ? 1 : 0);
+    if (slug === 'dred') assert.equal(body.rows[0].origin, 'leader_adult');
+    const anonymous = await handleWorldHistory(request(path), options);
+    assert.equal(anonymous.status, 401);
+    assert.equal(calls, 1);
+    assert.equal((await anonymous.text()).includes('leader_adult'), false);
+  });
+}
+
 test('history fails closed without a session, a route, or a safe window', async () => {
   const closed = await handleWorldHistory(
     request(`/api/world/brain/kin/history?from=${from}&to=${to}`, signedIn),

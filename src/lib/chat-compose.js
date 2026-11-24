@@ -91,6 +91,8 @@ export function takeBatch(pending, maxLen = CHAT_MAX_TEXT) {
   let length = 0;
   while (pending.length) {
     const next = pending[0];
+    // Each quote belongs to one outgoing turn; never merge it with another line.
+    if (batch.length && (batch[0].reply_to || next?.reply_to)) break;
     const text = typeof next?.text === 'string' ? next.text : '';
     if (!text) {
       pending.shift();

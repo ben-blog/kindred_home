@@ -10,17 +10,25 @@ export function bindWarmth(root) {
     const target = control.dataset.warmth;
     if (!button || !note || !target) continue;
     bound.add(control);
-    button.addEventListener('click', () => sendWarmth(button, note, target));
+    button.addEventListener('click', () =>
+      sendWarmth(
+        button,
+        note,
+        target,
+        control.classList.contains('character') ? 'warmth sent' : NOTE
+      )
+    );
   }
 }
 
 export function rateNote(retryAfter) {
   const seconds = Number(retryAfter);
-  const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.max(1, Math.ceil(seconds / 60)) : 10;
+  const minutes =
+    Number.isFinite(seconds) && seconds > 0 ? Math.max(1, Math.ceil(seconds / 60)) : 10;
   return `already sent, try again in ${minutes} min`;
 }
 
-async function sendWarmth(button, note, target) {
+async function sendWarmth(button, note, target, successNote) {
   button.disabled = true;
   let message = 'Warmth did not send.';
   try {
@@ -32,7 +40,7 @@ async function sendWarmth(button, note, target) {
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify(body),
     });
-    if (response.ok) message = NOTE;
+    if (response.ok) message = successNote;
     else if (response.status === 429) message = rateNote(response.headers.get('retry-after'));
   } catch {
     message = 'Warmth did not send.';

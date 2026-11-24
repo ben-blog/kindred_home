@@ -67,7 +67,6 @@ const style = [
       <span class="k">bio</span>
       {page.bio}
     </aside>
-    <p class="sticker swatch"><i aria-hidden="true"></i> {page.color}</p>
     <div class="pair">
       {page.hub ? <a class="sticker fill cta" href={page.hub}>Open {page.hub}</a> : null}
       {page.status === 'active' ? <Warmth slug={page.slug} look="board" /> : null}
@@ -99,21 +98,11 @@ const style = [
                   <br />— {bond.note}
                 </>
               ) : null}
-              {bond.tension !== null ? (
-                <>
-                  <br />
-                  tension {bond.tension}
-                </>
-              ) : null}
             </p>
           ))}
         </aside>
       ) : null
     }
-    <p class="sticker status">
-      {page.status}
-      {page.agent ? ` · ${page.agent}` : ''}
-    </p>
   </div>
 </section>
 
@@ -314,22 +303,6 @@ const style = [
     transform: rotate(-1.6deg);
   }
 
-  .swatch {
-    display: flex;
-    grid-column: 1 / 4;
-    grid-row: 4 / 5;
-    align-items: center;
-    gap: 8px;
-    transform: rotate(-2.2deg);
-  }
-
-  .swatch i {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    background: var(--accent);
-  }
-
   .pair {
     display: flex;
     flex-wrap: wrap;
@@ -418,15 +391,6 @@ const style = [
     margin-top: 0.7rem;
   }
 
-  .status {
-    grid-column: 7 / 10;
-    grid-row: 7 / 8;
-    font-size: 9px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    transform: rotate(-3deg);
-  }
-
   .doodle {
     position: absolute;
     z-index: 1;
@@ -489,11 +453,9 @@ const style = [
     .name,
     .tag,
     .bio,
-    .swatch,
     .pair,
     .works,
-    .bond,
-    .status {
+    .bond {
       grid-column: 1 / -1;
       grid-row: auto;
       margin: 0;
@@ -525,11 +487,9 @@ const style = [
     .sticker:hover,
     .tag,
     .bio,
-    .swatch,
     .cta,
     .works,
-    .bond,
-    .status {
+    .bond {
       transform: none;
     }
   }

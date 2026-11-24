@@ -341,6 +341,12 @@ function checkGallery(file) {
     if (!image.filename) continue;
     const asset = path.join(repoRoot, 'public', 'assets', 'gallery', image.filename);
     if (!existsSync(asset)) errors.push(`data/${file}: missing assets/gallery/${image.filename}`);
+    for (const size of ['w600', 'w1200']) {
+      const thumbnail = `assets/gallery/${size}/${image.filename}`;
+      if (!existsSync(path.join(repoRoot, 'public', thumbnail))) {
+        errors.push(`data/${file}: missing thumbnail ${thumbnail}; run npm run thumbs`);
+      }
+    }
     walkLinks(image, `data/${file}`);
   }
 }

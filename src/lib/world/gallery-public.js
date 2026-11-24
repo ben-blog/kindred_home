@@ -71,7 +71,7 @@ async function file(request, options) {
     status: 302,
     headers: {
       location,
-      'cache-control': 'public, max-age=86400',
+      'cache-control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600',
       'x-content-type-options': 'nosniff',
     },
   });

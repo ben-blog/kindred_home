@@ -1,4 +1,4 @@
-/* global reportEvent, flattenGallery, mergeGalleryImages, gallerySrc, resolveLink, isExternalLink, localLikeCount, localAdjustLike */
+/* global reportEvent, flattenGallery, mergeGalleryImages, applyGalleryImage, resolveLink, isExternalLink, localLikeCount, localAdjustLike */
 /* DRED album. The seed matches src/lib/world/album-pick.js. */
 
 var REVEAL_MS = 1700;
@@ -162,7 +162,7 @@ function renderSlides() {
     var slide = document.createElement('section');
     slide.className = 'slide' + (reduced ? ' revealed' : '');
     var img = document.createElement('img');
-    img.src = gallerySrc(item.filename);
+    applyGalleryImage(img, item.filename, 'hero');
     img.alt = titleOf(item);
     img.draggable = false;
     if (i > 1) img.loading = 'lazy';
@@ -249,7 +249,7 @@ function renderGrid() {
     tile.className = 'grid-tile';
     tile.setAttribute('aria-label', titleOf(item));
     var image = document.createElement('img');
-    image.src = gallerySrc(item.filename);
+    applyGalleryImage(image, item.filename, 'grid');
     image.alt = '';
     image.loading = 'lazy';
     image.draggable = false;
@@ -332,7 +332,7 @@ function renderPicks() {
     button.className = 'pick';
     button.setAttribute('data-id', id);
     var img = document.createElement('img');
-    img.src = gallerySrc(item.filename);
+    applyGalleryImage(img, item.filename, 'pick');
     img.alt = titleOf(item);
     var cap = document.createElement('span');
     cap.textContent = titleOf(item);
@@ -490,7 +490,7 @@ function fillDetail(i) {
   document.getElementById('detail-counter').textContent =
     String(i + 1).padStart(2, '0') + ' / ' + items.length;
   var image = document.getElementById('detail-img-el');
-  image.src = gallerySrc(item.filename);
+  applyGalleryImage(image, item.filename, 'detail');
   image.alt = titleOf(item);
   var section = document.getElementById('detail-action-section');
   var acts = document.getElementById('detail-actions');

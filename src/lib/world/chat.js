@@ -1,3 +1,4 @@
+import { applyReplyToContent, normalizeReply } from '../chat-reply.js';
 import { chatMedia } from '../chat-media.js';
 import { CHAT_MAX_MESSAGES, CHAT_MAX_TEXT, clampChatText } from '../chat-compose.js';
 import { upstreamTokens, clientAddress, createLimiter, sameOrigin } from '../proxy.js';
@@ -184,7 +185,9 @@ function normalizeChat(body) {
   const keys = Object.keys(body);
   if (
     !keys.includes('messages') ||
-    keys.some((key) => !['messages', 'sessionId', 'plan', 'forceWebSearch'].includes(key))
+    keys.some(
+      (key) => !['messages', 'sessionId', 'plan', 'forceWebSearch', 'reply_to'].includes(key)
+    )
   ) {
     return null;
   }
@@ -226,6 +229,11 @@ function normalizeChat(body) {
     }
     if (encoded.length > MAX_PLAN) return null;
     plan = JSON.parse(encoded);
+  }
+  if (Object.hasOwn(body, 'reply_to')) {
+    const reply = normalizeReply(body.reply_to);
+    if (reply === null) return null;
+    messages.at(-1).content = applyReplyToContent(messages.at(-1).content, reply);
   }
   return { messages, sessionId, plan, forceWebSearch };
 }

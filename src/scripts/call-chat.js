@@ -1,3 +1,4 @@
+import { createMessageId, excerptFrom, isReplyId, normalizeReply } from '../lib/chat-reply.js';
 import { dayKey, groupsTogether, nearBottom } from '../lib/chat-thread.js';
 import { safeHttpUrl } from '../lib/safe-url.js';
 import { mountPhotoViewer } from './call-viewer.js';
@@ -30,6 +31,12 @@ export function mountCall(config) {
   const log = document.querySelector('#call-log');
   const status = document.querySelector('#call-status');
   const searchToggle = document.querySelector('#call-search');
+  const replyBar = root.querySelector('#call-reply-bar');
+  const menu = root.querySelector('#call-reply-menu');
+  let replyTarget = null;
+  let menuRow = null;
+  let menuReturn = null;
+  let suppressClickUntil = 0;
   const messages = [];
   const pending = [];
   const cursor = { calm: 1 };
@@ -109,11 +116,220 @@ export function mountCall(config) {
   input.addEventListener('focus', () => pin());
   autosize();
 
-  function line(who, value, mine, at = Date.now()) {
+  function targetFrom(row) {
+    const media = row.querySelector('.call-media img');
+    return {
+      id: row.dataset.id,
+      excerpt: excerptFrom({ content: row.querySelector('p')?.textContent || '' }),
+      thumb: media?.src || '',
+    };
+  }
+
+  function closeMenu(restore = false) {
+    menuRow?.classList.remove('is-selected');
+    menu.hidden = true;
+    menuRow = null;
+    if (restore) menuReturn?.focus({ preventScroll: true });
+  }
+
+  function startReply(row) {
+    if (row.classList.contains('call-typing') || row.classList.contains('is-you')) return;
+    replyTarget = targetFrom(row);
+    closeMenu();
+    const mark = replyBar.querySelector('.call-reply-mark');
+    mark.replaceChildren();
+    if (replyTarget.thumb) {
+      const img = document.createElement('img');
+      img.src = replyTarget.thumb;
+      img.alt = '';
+      mark.append(img);
+    } else mark.textContent = '↶';
+    replyBar.querySelector('b').textContent = name;
+    replyBar.querySelector('.call-reply-summary span').textContent = replyTarget.excerpt;
+    replyBar.hidden = false;
+    root.querySelector('#call-reply-status').textContent = `Replying to ${name}`;
+    pin(true);
+    input.focus();
+  }
+  root.querySelector('#call-reply-cancel').addEventListener('click', () => {
+    replyTarget = null;
+    replyBar.hidden = true;
+    root.querySelector('#call-reply-status').textContent = '';
+    input.focus();
+    pin();
+  });
+
+  function quoteChip(body, quote) {
+    if (!quote) return;
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'call-quote';
+    chip.setAttribute('aria-label', copy.jumpToQuote);
+    const title = document.createElement('b');
+    title.textContent = name;
+    const excerpt = document.createElement('span');
+    excerpt.textContent = quote.excerpt;
+    chip.append(title, excerpt);
+    body.prepend(chip);
+    chip.addEventListener('click', () => {
+      const original = [...log.querySelectorAll('.call-line')].find(
+        (row) => row.dataset.id === quote.id
+      );
+      if (!original) return;
+      pinned = false;
+      original.scrollIntoView({
+        block: 'center',
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
+      original.classList.add('is-highlighted');
+      clearTimeout(original.highlightTimer);
+      original.highlightTimer = setTimeout(() => original.classList.remove('is-highlighted'), 1200);
+    });
+  }
+
+  function showMenu(row) {
+    closeMenu();
+    menuRow = row;
+    menuReturn = row.querySelector('.call-reply-action');
+    row.classList.add('is-selected');
+    menu.hidden = false;
+    const rect = row.querySelector('p, .call-media').getBoundingClientRect();
+    const bounds = root.getBoundingClientRect();
+    menu.style.left = `${Math.max(8, Math.min(rect.left - bounds.left, bounds.width - menu.offsetWidth - 8))}px`;
+    menu.style.top = `${Math.max(8, Math.min(rect.bottom - bounds.top + 4, bounds.height - menu.offsetHeight - 8))}px`;
+    menu.querySelector('button').focus({ preventScroll: true });
+  }
+  menu.addEventListener('click', async (event) => {
+    const action = event.target.closest('[data-action]')?.dataset.action;
+    if (!action || !menuRow) return;
+    if (action === 'reply') startReply(menuRow);
+    else {
+      const text = menuRow.querySelector('p')?.textContent || copy.photo;
+      closeMenu(true);
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        status.textContent = 'Copy unavailable.';
+      }
+    }
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (!menu.hidden && !menu.contains(event.target)) {
+      suppressClickUntil = Date.now() + 800;
+      closeMenu(true);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (menu.hidden) return;
+    const items = [...menu.querySelectorAll('button')];
+    const index = items.indexOf(document.activeElement);
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMenu(true);
+    } else if (['Tab', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      const next =
+        event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? items.length - 1
+            : (index +
+                (event.key === 'ArrowUp' || (event.key === 'Tab' && event.shiftKey) ? -1 : 1) +
+                items.length) %
+              items.length;
+      items[next].focus();
+    }
+  });
+  log.addEventListener('scroll', () => {
+    closeMenu();
+    cancelGesture();
+  });
+  let gesture = null;
+  function cancelGesture() {
+    if (!gesture) return;
+    clearTimeout(gesture.timer);
+    gesture.row.classList.remove('is-swiping');
+    gesture = null;
+  }
+  log.addEventListener('pointerdown', (event) => {
+    if (gesture) {
+      cancelGesture();
+      return;
+    }
+    if (event.pointerType === 'mouse' || !event.isPrimary) return;
+    const bubble = event.target.closest(
+      '.call-line:not(.is-you):not(.call-typing) > p, .call-line:not(.is-you):not(.call-typing) > .call-media'
+    );
+    if (!bubble) return;
+    const row = bubble.closest('.call-line');
+    gesture = { row, id: event.pointerId, x: event.clientX, y: event.clientY, swipe: false };
+    gesture.timer = setTimeout(() => {
+      if (!gesture) return;
+      showMenu(row);
+      suppressClickUntil = Date.now() + 800;
+      cancelGesture();
+    }, 450);
+  });
+  log.addEventListener('pointermove', (event) => {
+    if (!gesture || gesture.id !== event.pointerId) return;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    if (Math.hypot(dx, dy) >= 12) clearTimeout(gesture.timer);
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) >= 12) {
+      cancelGesture();
+      return;
+    }
+    gesture.swipe = dx >= 48 && dx > Math.abs(dy);
+    gesture.row.classList.toggle('is-swiping', gesture.swipe);
+  });
+  document.addEventListener('pointerup', (event) => {
+    if (menuRow) {
+      suppressClickUntil = Date.now() + 800;
+      return;
+    }
+    if (!gesture || gesture.id !== event.pointerId) return;
+    const { row, swipe } = gesture;
+    cancelGesture();
+    if (swipe) {
+      suppressClickUntil = Date.now() + 800;
+      startReply(row);
+    }
+  });
+  document.addEventListener('pointercancel', cancelGesture);
+  log.addEventListener('contextmenu', (event) => {
+    const row = event.target.closest('.call-line:not(.is-you):not(.call-typing)');
+    if (!row) return;
+    event.preventDefault();
+    cancelGesture();
+    suppressClickUntil = Date.now() + 800;
+    showMenu(row);
+  });
+  log.addEventListener(
+    'click',
+    (event) => {
+      if (Date.now() < suppressClickUntil) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    },
+    true
+  );
+
+  function line(who, value, mine, at = Date.now(), saved = {}) {
     const item = document.createElement('li');
     item.className = mine ? 'call-line is-you' : 'call-line';
+    item.dataset.id = isReplyId(saved.id) ? saved.id : createMessageId();
     const previous = lastLine;
-    const record = { mine, at, item, previous };
+    const record = {
+      mine,
+      at,
+      item,
+      previous,
+      id: item.dataset.id,
+      role: mine ? 'user' : 'assistant',
+      content: value,
+      reply_to: saved.reply_to,
+    };
     item.threadRecord = record;
     if (!previous || dayKey(previous.at) !== dayKey(at)) {
       const day = document.createElement('li');
@@ -141,6 +357,7 @@ export function mountCall(config) {
     }
     const body = document.createElement('p');
     body.textContent = value;
+    if (mine) quoteChip(body, saved.reply_to);
     const stamp = document.createElement('time');
     stamp.className = 'call-time';
     stamp.dateTime = new Date(at).toISOString();
@@ -151,6 +368,22 @@ export function mountCall(config) {
       hour12: false,
     });
     item.append(body, stamp);
+    if (!mine) {
+      const reply = document.createElement('button');
+      reply.type = 'button';
+      reply.className = 'call-reply-action';
+      reply.textContent = '↶';
+      const update = () =>
+        reply.setAttribute('aria-label', `Reply to ${name}: ${targetFrom(item).excerpt}`);
+      update();
+      new MutationObserver(update).observe(body, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      reply.addEventListener('click', () => startReply(item));
+      item.append(reply);
+    }
     log.append(item);
     lastLine = record;
     if (!mine && !pinned) jump.hidden = false;
@@ -168,12 +401,12 @@ export function mountCall(config) {
     }
     pin();
   }
-  function mediaLine(media, existingBody, mine = false, at = Date.now()) {
+  function mediaLine(media, existingBody, mine = false, at = Date.now(), saved = {}) {
     const url = safeHttpUrl(media?.url);
     if (!url) return;
     const { item, body } = existingBody
       ? { item: existingBody.closest('.call-line'), body: existingBody }
-      : line(mine ? copy.you : name, '', mine, at);
+      : line(mine ? copy.you : name, '', mine, at, saved);
     body.remove();
     const button = document.createElement('button');
     button.type = 'button';
@@ -549,12 +782,19 @@ export function mountCall(config) {
 
   async function perform(batch) {
     const text = joinBatch(batch);
-    messages.push({ role: 'user', content: text });
+    const quote = batch[0].reply_to;
+    messages.push({
+      id: batch[0].row?.dataset.id || createMessageId(),
+      reply_to: quote,
+      role: 'user',
+      content: text,
+    });
     const { body, turn } = openTurn(text);
     status.textContent = '';
     stage.classList.add('is-talking');
     try {
       const payload = { messages: clampHistory(messages) };
+      if (quote) payload.reply_to = { id: quote.id, excerpt: quote.excerpt };
       if (sessionId) payload.sessionId = sessionId;
       if (plan) payload.plan = plan;
       if (searchToggle?.getAttribute('aria-pressed') === 'true') payload.forceWebSearch = true;
@@ -599,8 +839,13 @@ export function mountCall(config) {
         failTurn(body, turn, 'empty', response.status);
         return 'fail';
       }
+      const replyId = body.closest('.call-line').dataset.id;
       finishTurn(body, turn, { ...result, reply });
-      messages.push({ role: 'assistant', content: reply });
+      messages.push({
+        id: replyId,
+        role: 'assistant',
+        content: reply,
+      });
       armSaved(turn.saved);
       return 'ok';
     } catch {
@@ -669,9 +914,13 @@ export function mountCall(config) {
       input.value = '';
       autosize();
       document.querySelector('#call-empty')?.remove();
-      const { item } = line(copy.you, value, true);
+      const quote = replyTarget;
+      replyTarget = null;
+      replyBar.hidden = true;
+      root.querySelector('#call-reply-status').textContent = '';
+      const { item } = line(copy.you, value, true, Date.now(), { reply_to: quote });
       setQueued(item, true);
-      pending.push({ text: value, row: item });
+      pending.push({ text: value, row: item, reply_to: quote });
       drain();
       input.focus();
     } finally {
@@ -720,20 +969,16 @@ export function mountCall(config) {
     if (!item || !['assistant', 'user'].includes(item.role)) continue;
     document.querySelector('#call-empty')?.remove();
     const mine = item.role === 'user';
-    if (typeof item.content === 'string' && item.content)
-      line(
-        mine ? copy.you : name,
-        item.content,
-        mine,
-        Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now()
-      );
-    if (item.media)
-      mediaLine(
-        item.media,
-        null,
-        mine,
-        Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now()
-      );
+    const saved = {
+      id: isReplyId(item.id) ? item.id : createMessageId(),
+      reply_to: normalizeReply(item.reply_to) || undefined,
+    };
+    const at = Number.isFinite(Date.parse(item.at)) ? Date.parse(item.at) : Date.now();
+    if (typeof item.content === 'string' && item.content) {
+      line(mine ? copy.you : name, item.content, mine, at, saved);
+      messages.push({ ...saved, role: item.role, content: item.content });
+    }
+    if (item.media) mediaLine(item.media, null, mine, at, item.content ? {} : saved);
   }
   connect();
 
@@ -741,6 +986,8 @@ export function mountCall(config) {
     if (!searchToggle) return;
     searchToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
     searchToggle.classList.toggle('is-on', on);
+    root.querySelector('#call-search-status').hidden = !on;
+    pin();
   }
   searchToggle?.addEventListener('click', () => {
     setSearch(searchToggle.getAttribute('aria-pressed') !== 'true');
